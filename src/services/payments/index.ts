@@ -39,7 +39,9 @@ export const useFilteredPayments = (gymId: number | string) => {
 
   // Outstanding: Use memberStatus from API
   const outstandingPayments = data
-    .filter((member) => member.memberStatus === 'Outstanding')
+    .filter(
+      (member) => member.memberStatus === 'Outstanding' && member.currentCycle
+    )
     .sort((a, b) => {
       // Sort by urgency: buffer end date or due date
       const aDate = a.currentCycle.bufferEndDate
@@ -55,7 +57,9 @@ export const useFilteredPayments = (gymId: number | string) => {
   const expiredPayments = data
     .filter(
       (member) =>
-        member.memberStatus === 'Expired' || member.memberStatus === 'Debts'
+        (member.memberStatus === 'Expired' ||
+          member.memberStatus === 'Debts') &&
+        member.currentCycle
     )
     .sort((a, b) => {
       // Sort by most overdue first
@@ -70,7 +74,9 @@ export const useFilteredPayments = (gymId: number | string) => {
 
   // Completed: Use memberStatus from API
   const completedPayments = data
-    .filter((member) => member.memberStatus === 'Completed')
+    .filter(
+      (member) => member.memberStatus === 'Completed' && member.currentCycle
+    )
     .sort(
       (a, b) =>
         new Date(b.currentCycle.lastAmountPaidDate).getTime() -
@@ -78,11 +84,13 @@ export const useFilteredPayments = (gymId: number | string) => {
     );
 
   // History: All payments sorted by recent
-  const historyPayments = data.sort(
-    (a, b) =>
-      new Date(b.currentCycle.lastAmountPaidDate).getTime() -
-      new Date(a.currentCycle.lastAmountPaidDate).getTime()
-  );
+  const historyPayments = data
+    .filter((member) => member.currentCycle)
+    .sort(
+      (a, b) =>
+        new Date(b.currentCycle.lastAmountPaidDate).getTime() -
+        new Date(a.currentCycle.lastAmountPaidDate).getTime()
+    );
 
   return {
     isLoading,
