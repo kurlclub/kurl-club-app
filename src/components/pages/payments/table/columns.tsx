@@ -3,7 +3,7 @@
 import Link from 'next/link';
 
 import { ColumnDef } from '@tanstack/react-table';
-import { Eye, MoreHorizontal, Receipt } from 'lucide-react';
+import { Eye, FileText, MoreHorizontal, Receipt } from 'lucide-react';
 
 import { FeeStatusBadge } from '@/components/shared/badges/fee-status-badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -41,7 +41,9 @@ const UrgencyIndicator = ({
 const ActionsCell: React.FC<{
   user: MemberPaymentDetails;
   onRecord?: (member: MemberPaymentDetails) => void;
-}> = ({ user, onRecord }) => {
+  onGenerateInvoice?: (member: MemberPaymentDetails) => void;
+  showInvoice?: boolean;
+}> = ({ user, onRecord, onGenerateInvoice, showInvoice = false }) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -68,6 +70,15 @@ const ActionsCell: React.FC<{
           <Receipt className="h-4 w-4 mr-2" />
           Record payment
         </DropdownMenuItem>
+        {showInvoice && (
+          <DropdownMenuItem
+            className="shad-select-item"
+            onClick={() => onGenerateInvoice?.(user)}
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            Generate Invoice
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -75,7 +86,9 @@ const ActionsCell: React.FC<{
 
 export const createPaymentColumns = (
   onRecord?: (member: MemberPaymentDetails) => void,
-  membershipPlans: Array<{ membershipPlanId: number; planName: string }> = []
+  membershipPlans: Array<{ membershipPlanId: number; planName: string }> = [],
+  onGenerateInvoice?: (member: MemberPaymentDetails) => void,
+  showInvoice: boolean = false
 ): ColumnDef<MemberPaymentDetails>[] => [
   {
     accessorKey: 'memberIdentifier',
@@ -344,6 +357,13 @@ export const createPaymentColumns = (
   {
     id: 'actions',
     header: 'Actions',
-    cell: ({ row }) => <ActionsCell user={row.original} onRecord={onRecord} />,
+    cell: ({ row }) => (
+      <ActionsCell
+        user={row.original}
+        onRecord={onRecord}
+        onGenerateInvoice={onGenerateInvoice}
+        showInvoice={showInvoice}
+      />
+    ),
   },
 ];

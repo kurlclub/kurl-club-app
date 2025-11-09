@@ -13,6 +13,7 @@ import { useGymBranch } from '@/providers/gym-branch-provider';
 import { useFilteredPayments } from '@/services/payments';
 import type { MemberPaymentDetails } from '@/types/payment';
 
+import { InvoiceGenerator } from './invoice-generator';
 import { ManagePaymentSheet } from './manage-payment';
 import { createPaymentColumns } from './table/columns';
 import { TableView } from './table/table-view';
@@ -110,7 +111,14 @@ const getStatsConfig = (
 export function PaymentsTab({ type, formOptions }: Props) {
   const [selectedPayment, setSelectedPayment] =
     useState<MemberPaymentDetails | null>(null);
+  const [selectedInvoiceMember, setSelectedInvoiceMember] =
+    useState<MemberPaymentDetails | null>(null);
   const { isOpen, openSheet, closeSheet } = useSheet();
+  const {
+    isOpen: isInvoiceOpen,
+    openSheet: openInvoice,
+    closeSheet: closeInvoice,
+  } = useSheet();
 
   const { gymBranch } = useGymBranch();
   const gymId = gymBranch?.gymId;
@@ -128,9 +136,16 @@ export function PaymentsTab({ type, formOptions }: Props) {
     openSheet();
   };
 
+  const handleGenerateInvoice = (member: MemberPaymentDetails) => {
+    setSelectedInvoiceMember(member);
+    openInvoice();
+  };
+
   const columns = createPaymentColumns(
     handleRecord,
-    formOptions?.membershipPlans || []
+    formOptions?.membershipPlans || [],
+    handleGenerateInvoice,
+    type === 'history'
   );
 
   const getPaymentsData = () => {
@@ -188,6 +203,11 @@ export function PaymentsTab({ type, formOptions }: Props) {
             open={isOpen}
             onOpenChange={closeSheet}
             member={selectedPayment}
+          />
+          <InvoiceGenerator
+            open={isInvoiceOpen}
+            onOpenChange={closeInvoice}
+            member={selectedInvoiceMember}
           />
         </>
       )}

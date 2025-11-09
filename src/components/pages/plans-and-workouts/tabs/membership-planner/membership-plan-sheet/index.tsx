@@ -1,18 +1,24 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { ChevronLeft } from 'lucide-react';
+import { z } from 'zod/v4';
 
 import { KSheet } from '@/components/shared/form/k-sheet';
 import { Button } from '@/components/ui/button';
 import { useAppDialog } from '@/hooks/use-app-dialog';
 import { useGymBranch } from '@/providers/gym-branch-provider';
+import { membershipPlanSchema } from '@/schemas';
 import { useGymMembers } from '@/services/member';
 import { MembershipPlan } from '@/types/membership-plan';
 
 import { MemberList } from './member-list';
 import { Overview } from './overview';
+
+type MembershipPlanFormData = z.infer<typeof membershipPlanSchema>;
 
 interface PackageManageSheetProps {
   plan: MembershipPlan | null;
@@ -48,6 +54,16 @@ export function MembershipPlanSheet({
   const [isEditMode, setIsEditMode] = useState(false);
   const [isMemberListVisible, setIsMemberListVisible] = useState(false);
 
+  const form = useForm<MembershipPlanFormData>({
+    resolver: zodResolver(membershipPlanSchema),
+    defaultValues: {
+      planName: '',
+      fee: '',
+      details: '',
+      durationInDays: '',
+    },
+  });
+
   const { showConfirm } = useAppDialog();
 
   const { gymBranch } = useGymBranch();
@@ -62,18 +78,31 @@ export function MembershipPlanSheet({
 
   useEffect(() => {
     if (isOpen) {
-      setEditedPlan(plan || DEFAULT_PLAN);
+      const planData = plan || DEFAULT_PLAN;
+      setEditedPlan(planData);
       setIsEditMode(!plan);
       setSelectedDay(null);
       setIsMemberListVisible(false);
-    }
-  }, [plan, isOpen]);
 
-  const handleSavePlan = () => {
+      form.reset({
+        planName: planData.planName,
+        fee: planData.fee,
+        details: planData.details,
+        durationInDays: planData.durationInDays,
+      });
+    }
+  }, [plan, isOpen, form]);
+
+  const handleSavePlan = async (data: MembershipPlanFormData) => {
+    const updatedPlan = {
+      ...editedPlan,
+      ...data,
+    };
+
     if (plan) {
-      onUpdate(editedPlan);
+      onUpdate(updatedPlan);
     } else {
-      onSaveNew(editedPlan);
+      onSaveNew(updatedPlan);
     }
     setIsEditMode(false);
     closeSheet();
@@ -191,7 +220,11 @@ export function MembershipPlanSheet({
             >
               Cancel
             </Button>
-            <Button onClick={handleSavePlan} className="h-[46px] min-w-[73px]">
+            <Button
+              type="submit"
+              form="membership-plan-form"
+              className="h-[46px] min-w-[73px]"
+            >
               Save Changes
             </Button>
           </>
@@ -215,19 +248,26 @@ export function MembershipPlanSheet({
       {isMemberListVisible ? (
         <MemberList members={planMembers} />
       ) : (
-        <div className="space-y-5">
-          <Overview
-            plan={editedPlan}
-            planMembers={planMembers}
-            isEditMode={isEditMode}
-            isNewPlan={!plan}
-            onUpdatePlan={setEditedPlan}
-            onImmediateUpdate={handleImmediateUpdate}
-            onDelete={handleDeletePlan}
-            onEdit={() => setIsEditMode(!isEditMode)}
-            onShowMembers={() => setIsMemberListVisible(true)}
-          />
-        </div>
+        <FormProvider {...form}>
+          <form
+            id="membership-plan-form"
+            onSubmit={form.handleSubmit(handleSavePlan)}
+            className="space-y-5"
+          >
+            <Overview
+              plan={editedPlan}
+              planMembers={planMembers}
+              isEditMode={isEditMode}
+              isNewPlan={!plan}
+              onUpdatePlan={setEditedPlan}
+              onImmediateUpdate={handleImmediateUpdate}
+              onDelete={handleDeletePlan}
+              onEdit={() => setIsEditMode(!isEditMode)}
+              onShowMembers={() => setIsMemberListVisible(true)}
+              control={form.control}
+            />
+          </form>
+        </FormProvider>
       )}
     </KSheet>
   );

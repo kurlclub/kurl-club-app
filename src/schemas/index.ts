@@ -562,3 +562,16 @@ export const gymUpdateSchema = z.object({
   ProfilePicture: z.instanceof(File).optional().nullable(),
   Status: z.string().optional(),
 });
+
+export const membershipPlanSchema = z.object({
+  planName: z.string().min(1, 'Plan name is required'),
+  fee: z.union([
+    z.string().min(1, 'Fee is required'),
+    z.number().min(1, 'Fee must be greater than 0'),
+  ]),
+  details: z.string().optional(),
+  durationInDays: z.union([
+    z.string().min(1, 'Duration is required'),
+    z.number().min(1, 'Duration must be at least 1 day'),
+  ]),
+});

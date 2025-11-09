@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import {
   type ExtendBufferRequest,
   type PaymentRequest,
+  emailPaymentReport,
+  exportPaymentReport,
   extendBuffer,
   fullPayment,
   getPaymentHistory,
@@ -90,4 +92,33 @@ export function usePaymentHistory(memberId: number) {
     queryFn: () => getPaymentHistory(memberId),
     enabled: !!memberId,
   });
+}
+
+export function useInvoiceManagement() {
+  const exportMutation = useMutation({
+    mutationFn: (paymentId: number) => exportPaymentReport(paymentId),
+  });
+
+  const emailMutation = useMutation({
+    mutationFn: (paymentId: number) => emailPaymentReport(paymentId),
+    onSuccess: (result) => {
+      if (result.success) {
+        toast.success(result.success);
+      } else if (result.error) {
+        toast.error(result.error);
+      }
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to send invoice email'
+      );
+    },
+  });
+
+  return {
+    exportInvoice: exportMutation.mutateAsync,
+    sendInvoiceEmail: emailMutation.mutateAsync,
+    isExporting: exportMutation.isPending,
+    isSending: emailMutation.isPending,
+  };
 }

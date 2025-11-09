@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { Clock, Edit, Info } from 'lucide-react';
+import { Clock, Edit, FileText, Info } from 'lucide-react';
 
 import { FeeStatusBadge } from '@/components/shared/badges/fee-status-badge';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ import {
 } from '@/lib/utils';
 import { useMemberPaymentDetails } from '@/services/member';
 
+import { InvoiceGenerator } from '../../payments/invoice-generator';
 import { ManagePaymentSheet } from '../../payments/manage-payment';
 
 interface PaymentCardProps {
@@ -29,6 +30,11 @@ interface PaymentCardProps {
 function PaymentCard({ memberId, formOptions }: PaymentCardProps) {
   const { data: paymentData, isLoading } = useMemberPaymentDetails(memberId);
   const { isOpen, openSheet, closeSheet } = useSheet();
+  const {
+    isOpen: isInvoiceOpen,
+    openSheet: openInvoice,
+    closeSheet: closeInvoice,
+  } = useSheet();
   const queryClient = useQueryClient();
 
   const handleCloseSheet = () => {
@@ -101,14 +107,24 @@ function PaymentCard({ memberId, formOptions }: PaymentCardProps) {
           <div className="tracking-tight text-white text-base font-normal leading-normal">
             Dues & Payments
           </div>
-          <Button
-            onClick={openSheet}
-            className="text-white hover:bg-primary-blue-400"
-            variant="ghost"
-            size="sm"
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={openInvoice}
+              className="text-white hover:bg-primary-blue-400"
+              variant="ghost"
+              size="sm"
+            >
+              <FileText className="h-4 w-4" />
+            </Button>
+            <Button
+              onClick={openSheet}
+              className="text-white hover:bg-primary-blue-400"
+              variant="ghost"
+              size="sm"
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         {/* Buffer Period Banner */}
@@ -205,6 +221,11 @@ function PaymentCard({ memberId, formOptions }: PaymentCardProps) {
       <ManagePaymentSheet
         open={isOpen}
         onOpenChange={handleCloseSheet}
+        member={paymentData.data}
+      />
+      <InvoiceGenerator
+        open={isInvoiceOpen}
+        onOpenChange={closeInvoice}
         member={paymentData.data}
       />
     </>

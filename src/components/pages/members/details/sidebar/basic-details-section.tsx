@@ -140,6 +140,9 @@ export function EditableField({
   suffix,
   customInput,
 }: EditableFieldProps) {
+  const displayValue =
+    typeof value === 'number' && value === 0 ? '' : (value ?? '');
+
   return (
     <div className="py-3 flex flex-col gap-2">
       <Label className="text-primary-blue-100 font-normal text-sm leading-normal">
@@ -152,7 +155,7 @@ export function EditableField({
           <div className="flex items-center pb-1.5 border-b gap-2 border-primary-blue-300 group focus-within:border-white hover:border-white k-transition">
             <Input
               maxLength={suffix ? 6 : undefined}
-              value={value === 0 || isNaN(Number(value)) ? '' : value}
+              value={displayValue}
               onChange={(e) => onChange(e.target.value)}
               className="border-0 rounded-none h-auto p-0 text-[15px]! focus-visible:outline-0 focus-visible:ring-0"
             />
@@ -166,7 +169,7 @@ export function EditableField({
       ) : (
         <div className="flex items-center gap-1">
           <p className="text-white text-[15px] leading-[140%] font-normal">
-            {value}
+            {displayValue}
           </p>
           {suffix && (
             <span className="block text-white text-[15px] leading-[140%] font-normal">

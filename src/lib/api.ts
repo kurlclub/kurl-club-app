@@ -3,8 +3,9 @@ import { API_BASE_URL } from './utils/index';
 type Params = Record<string, string | number | boolean>;
 
 const baseFetch: typeof fetch = async (url, options = {}) => {
-  const { next, ...restOptions } = options as RequestInit & {
+  const { next, responseType, ...restOptions } = options as RequestInit & {
     next?: { revalidate?: number; cache?: string };
+    responseType?: 'json' | 'blob';
   };
 
   const response = await fetch(`${API_BASE_URL}${url}`, {
@@ -46,11 +47,19 @@ const baseFetch: typeof fetch = async (url, options = {}) => {
   // Handle no-content response (204)
   if (response.status === 204) return;
 
+  // Handle blob response
+  if (responseType === 'blob') {
+    const blob = await response.blob();
+    const contentDisposition = response.headers.get('content-disposition');
+    return { blob, contentDisposition };
+  }
+
   return response.json();
 };
 
 interface GetOptions extends RequestInit {
   params?: Params;
+  responseType?: 'json' | 'blob';
 }
 
 export const api = {

@@ -78,3 +78,44 @@ export const getPaymentHistory = async (memberId: number) => {
     throw error;
   }
 };
+
+export const exportPaymentReport = async (paymentId: number) => {
+  try {
+    const { blob, contentDisposition } = await api.get<{
+      blob: Blob;
+      contentDisposition: string | null;
+    }>(`/Payment/export-report/${paymentId}`, { responseType: 'blob' });
+
+    let filename = `PaymentReceipt_#${paymentId}.pdf`;
+
+    if (contentDisposition) {
+      const utf8Match = contentDisposition.match(
+        /filename\*=UTF-8''(.+?)(?:;|$)/
+      );
+      const regularMatch = contentDisposition.match(/filename=([^;]+)/);
+
+      if (utf8Match?.[1]) {
+        filename = decodeURIComponent(utf8Match[1]);
+      } else if (regularMatch?.[1]) {
+        filename = regularMatch[1].replace(/["']/g, '').trim();
+      }
+    }
+
+    return { blob, filename };
+  } catch (error) {
+    console.error('Error exporting payment report:', error);
+    throw error;
+  }
+};
+
+export const emailPaymentReport = async (paymentId: number) => {
+  try {
+    const response = await api.post(`/Payment/email-report/${paymentId}`);
+    return { success: 'Invoice sent successfully!', data: response };
+  } catch (error) {
+    console.error('Error sending invoice email:', error);
+    const errorMessage =
+      error instanceof Error ? error.message : 'Failed to send invoice email';
+    return { error: errorMessage };
+  }
+};

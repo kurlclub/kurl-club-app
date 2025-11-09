@@ -1,8 +1,13 @@
 'use client';
 
+import { Control } from 'react-hook-form';
+
 import { Clock, PenLine, User2 } from 'lucide-react';
 
-import { KInput } from '@/components/shared/form/k-input';
+import {
+  KFormField,
+  KFormFieldType,
+} from '@/components/shared/form/k-formfield';
 import RichTextEditor from '@/components/shared/rich-text-editor';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -17,6 +22,13 @@ import { getInitials, getProfilePictureSrc } from '@/lib/utils';
 import { Member } from '@/types/members';
 import { MembershipPlan } from '@/types/membership-plan';
 
+interface MembershipPlanFormData {
+  planName: string;
+  fee: string | number;
+  details?: string;
+  durationInDays: string | number;
+}
+
 interface OverviewProps {
   plan: MembershipPlan;
   planMembers?: Member[];
@@ -27,6 +39,7 @@ interface OverviewProps {
   onDelete: () => void;
   onEdit: () => void;
   onShowMembers: () => void;
+  control?: Control<MembershipPlanFormData>;
 }
 
 export function Overview({
@@ -38,6 +51,7 @@ export function Overview({
   onImmediateUpdate,
   onEdit,
   onShowMembers,
+  control,
 }: OverviewProps) {
   const handleDefaultChange = (checked: boolean) => {
     const updatedPlan = { ...plan, isActive: checked };
@@ -158,52 +172,44 @@ export function Overview({
       </div>
       {isEditMode ? (
         <div className="space-y-4">
-          <KInput
+          <KFormField
+            fieldType={KFormFieldType.INPUT}
+            control={control!}
+            name="planName"
             label="Membership Plan Name"
-            placeholder=" "
-            value={plan.planName}
-            onChange={(e) =>
-              onUpdatePlan({ ...plan, planName: e.target.value })
-            }
-            disabled={!isEditMode}
+            placeholder="Enter plan name"
             mandetory
           />
-          <KInput
+          <KFormField
+            fieldType={KFormFieldType.INPUT}
+            control={control!}
+            name="fee"
             label="Amount in (INR)"
             placeholder="Enter amount"
-            value={plan.fee}
-            onChange={(e) => {
-              const value = e.target.value;
-              onUpdatePlan({
-                ...plan,
-                fee: value === '' ? '' : Number(value) || '',
-              });
-            }}
-            disabled={!isEditMode}
+            type="number"
             mandetory
           />
 
-          <RichTextEditor
-            content={plan.details}
-            onUpdate={(value: string) =>
-              onUpdatePlan({ ...plan, details: value })
-            }
+          <KFormField
+            fieldType={KFormFieldType.SKELETON}
+            control={control!}
+            name="details"
+            renderSkeleton={(field) => (
+              <RichTextEditor
+                content={String(field.value || '')}
+                onUpdate={(value: string) => field.onChange(value)}
+              />
+            )}
           />
 
-          <div className="flex flex-col md:flex-row gap-4">
-            <KInput
+          <div className="flex flex-col w-1/2 md:flex-row gap-4">
+            <KFormField
+              fieldType={KFormFieldType.INPUT}
+              control={control!}
+              name="durationInDays"
               label="Duration (days)"
               type="number"
               placeholder="Enter duration"
-              value={plan.durationInDays}
-              onChange={(e) => {
-                const value = e.target.value;
-                onUpdatePlan({
-                  ...plan,
-                  durationInDays: value === '' ? '' : Number(value) || '',
-                });
-              }}
-              disabled={!isEditMode}
               mandetory
             />
           </div>
