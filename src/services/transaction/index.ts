@@ -110,7 +110,7 @@ export const exportPaymentReport = async (paymentId: number) => {
 
 export const emailPaymentReport = async (paymentId: number) => {
   try {
-    const response = await api.post(`/Payment/email-report/${paymentId}`);
+    const response = await api.post(`/Email/email-payment-report/${paymentId}`);
     return { success: 'Invoice sent successfully!', data: response };
   } catch (error) {
     console.error('Error sending invoice email:', error);
