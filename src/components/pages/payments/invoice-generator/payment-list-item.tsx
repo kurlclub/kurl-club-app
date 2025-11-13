@@ -22,7 +22,7 @@ export function PaymentListItem({
       }`}
       onClick={() => onSelect(payment.id)}
     >
-      <CardContent className="p-3">
+      <CardContent className="py-3 px-2">
         <div className="flex justify-between items-start">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-0.5">
