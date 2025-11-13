@@ -1,4 +1,4 @@
-import { FormProvider, useForm } from 'react-hook-form';
+import { FormProvider, UseFormReturn, useForm } from 'react-hook-form';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
@@ -25,6 +25,162 @@ import { createMember } from '@/services/member';
 
 type CreateMemberDetailsData = z.infer<typeof createMemberSchema>;
 
+type MembershipPlanSubset = {
+  membershipPlanId: number;
+  planName: string;
+  fee: number;
+  billingType?: 'Recurring' | 'PerSession';
+};
+
+// ============================================================================
+// HELPER COMPONENTS
+// ============================================================================
+
+const FieldRow = ({ children }: { children: React.ReactNode }) => (
+  <div className="flex justify-between gap-3 flex-wrap sm:flex-nowrap">
+    {children}
+  </div>
+);
+
+const FieldColumn = ({ children }: { children: React.ReactNode }) => (
+  <div className="w-full sm:w-1/2">{children}</div>
+);
+
+const PaymentModeOptions = [
+  { label: 'Cash', value: '0' },
+  { label: 'UPI', value: '1' },
+];
+
+const PerSessionPayment = ({
+  form,
+  selectedPlan,
+}: {
+  form: UseFormReturn<CreateMemberDetailsData>;
+  selectedPlan: MembershipPlanSubset;
+}) => {
+  const customRate = form.watch('customSessionRate');
+  const numberOfSessions = form.watch('numberOfSessions');
+  const sessionRate = customRate ? Number(customRate) : selectedPlan.fee;
+  const sessionsNum = numberOfSessions ? Number(numberOfSessions) : 0;
+  const totalAmount = sessionsNum > 0 ? sessionRate * sessionsNum : 0;
+
+  return (
+    <div className="space-y-4 p-4 bg-secondary-blue-600/50 rounded-lg border border-secondary-blue-400">
+      <div>
+        <KFormField
+          fieldType={KFormFieldType.INPUT}
+          control={form.control}
+          name="customSessionRate"
+          label="Custom Session Rate (Optional)"
+          placeholder={`Default: ₹${selectedPlan.fee}`}
+          type="number"
+        />
+        <div className="mt-2 p-2 bg-primary-green-500/10 border border-primary-green-500/20 rounded-md">
+          <p className="text-xs text-gray-300">
+            💡 <strong>Per Session Billing:</strong> Leave empty to use
+            plan&apos;s default rate of ₹{selectedPlan.fee} per session
+          </p>
+        </div>
+      </div>
+      <KFormField
+        fieldType={KFormFieldType.INPUT}
+        control={form.control}
+        name="numberOfSessions"
+        label="Number of Sessions"
+        placeholder="Enter sessions"
+        type="number"
+      />
+      <FieldRow>
+        <FieldColumn>
+          <KFormField
+            fieldType={KFormFieldType.SELECT}
+            control={form.control}
+            name="feeStatus"
+            label="Fee Status"
+            options={feeStatusOptions}
+          />
+        </FieldColumn>
+        <FieldColumn>
+          <KFormField
+            suffix={totalAmount > 0 ? `/ ${totalAmount.toLocaleString()}` : ''}
+            fieldType={KFormFieldType.INPUT}
+            control={form.control}
+            name="amountPaid"
+            label="Amount Paid"
+            type="number"
+            maxLength={10}
+          />
+        </FieldColumn>
+      </FieldRow>
+      <KFormField
+        fieldType={KFormFieldType.SELECT}
+        control={form.control}
+        name="modeOfPayment"
+        label="Mode of Payment"
+        options={PaymentModeOptions}
+      />
+    </div>
+  );
+};
+
+const RecurringPayment = ({
+  form,
+  selectedPlan,
+}: {
+  form: UseFormReturn<CreateMemberDetailsData>;
+  selectedPlan: MembershipPlanSubset;
+}) => (
+  <div className="space-y-4 p-4 bg-secondary-blue-600/50 rounded-lg border border-secondary-blue-400">
+    <FieldRow>
+      <FieldColumn>
+        <KFormField
+          fieldType={KFormFieldType.SELECT}
+          control={form.control}
+          name="feeStatus"
+          label="Fee Status"
+          options={feeStatusOptions}
+        />
+      </FieldColumn>
+      <FieldColumn>
+        <KFormField
+          suffix={`/ ${selectedPlan.fee.toLocaleString()}`}
+          fieldType={KFormFieldType.INPUT}
+          control={form.control}
+          name="amountPaid"
+          label="Amount Paid"
+          maxLength={10}
+        />
+      </FieldColumn>
+    </FieldRow>
+    <KFormField
+      fieldType={KFormFieldType.SELECT}
+      control={form.control}
+      name="modeOfPayment"
+      label="Mode of Payment"
+      options={PaymentModeOptions}
+    />
+  </div>
+);
+
+const PaymentSection = ({
+  form,
+  selectedPlan,
+}: {
+  form: UseFormReturn<CreateMemberDetailsData>;
+  selectedPlan: MembershipPlanSubset;
+}) => {
+  const isPerSession =
+    selectedPlan.billingType === 'PerSession' ||
+    selectedPlan.planName?.toLowerCase().includes('session');
+
+  return isPerSession ? (
+    <PerSessionPayment form={form} selectedPlan={selectedPlan} />
+  ) : (
+    <RecurringPayment form={form} selectedPlan={selectedPlan} />
+  );
+};
+
+// MAIN COMPONENT
 type CreateMemberDetailsProps = {
   onSubmit?: (data: CreateMemberDetailsData) => void;
   closeSheet: () => void;
@@ -58,6 +214,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
       workoutPlanId: '',
       modeOfPayment: '',
       customSessionRate: '',
+      numberOfSessions: '',
     },
   });
 
@@ -76,6 +233,10 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
 
       if (key === 'personalTrainer') {
         return formData.append(key, value === '' ? '0' : String(value));
+      }
+
+      if (key === 'numberOfSessions' && value === '') {
+        return;
       }
 
       formData.append(key, String(value));
@@ -139,7 +300,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
           className="space-y-4"
           onSubmit={form.handleSubmit(handleSubmit)}
         >
-          <div className="items-start gap-2 mb-6 flex justify-between ">
+          <div className="items-start gap-2 mb-6 flex justify-between">
             <KFormField
               fieldType={KFormFieldType.SKELETON}
               control={form.control}
@@ -157,26 +318,23 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
               Gym no: #{memberDetails.gymNo}
             </Badge>
           </div>
+
           <h5 className="text-white text-base font-normal leading-normal mt-0!">
             Basic Details
           </h5>
-          {/* Member Name */}
+
           <KFormField
             fieldType={KFormFieldType.INPUT}
             control={form.control}
             name="name"
             label="Member Name"
           />
-
-          {/* Email */}
           <KFormField
             fieldType={KFormFieldType.INPUT}
             control={form.control}
             name="email"
             label="Email"
           />
-
-          {/* Phone */}
           <KFormField
             fieldType={KFormFieldType.PHONE_INPUT}
             control={form.control}
@@ -185,9 +343,8 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
             placeholder="(555) 123-4567"
           />
 
-          {/* Gender */}
-          <div className="flex justify-between gap-3 flex-wrap sm:flex-nowrap">
-            <div className="w-full sm:w-1/2 ">
+          <FieldRow>
+            <FieldColumn>
               <KFormField
                 fieldType={KFormFieldType.SELECT}
                 control={form.control}
@@ -195,160 +352,39 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                 label="Gender"
                 options={genderOptions}
               />
-            </div>
-
-            {/* Package */}
-            <div className="w-full sm:w-1/2 ">
+            </FieldColumn>
+            <FieldColumn>
               <KFormField
                 fieldType={KFormFieldType.SELECT}
                 control={form.control}
-                name="membershipPlanId"
-                label="Package"
-                options={formOptions?.membershipPlans.map((plan) => ({
-                  label: plan.planName,
-                  value: String(plan.membershipPlanId),
-                }))}
+                name="bloodGroup"
+                label="Blood Group"
+                options={bloodGroupOptions}
               />
-            </div>
-          </div>
-          <div className="flex justify-between gap-3 flex-wrap sm:flex-nowrap">
-            {/* height */}
-            <div className="w-full sm:w-1/2 ">
+            </FieldColumn>
+          </FieldRow>
+
+          <FieldRow>
+            <FieldColumn>
               <KFormField
                 fieldType={KFormFieldType.INPUT}
                 control={form.control}
                 name="height"
                 label="Height (In Centimeters)"
               />
-            </div>
-
-            {/* weight */}
-            <div className="w-full sm:w-1/2 ">
+            </FieldColumn>
+            <FieldColumn>
               <KFormField
                 fieldType={KFormFieldType.INPUT}
                 control={form.control}
                 name="weight"
                 label="Weight (In Kilograms)"
               />
-            </div>
-          </div>
+            </FieldColumn>
+          </FieldRow>
 
-          {/* Fee Status & Amount Paid - Only for Recurring plans */}
-          {(() => {
-            const selectedPlanId = form.watch('membershipPlanId');
-            const selectedPlan = formOptions?.membershipPlans.find(
-              (plan) => String(plan.membershipPlanId) === selectedPlanId
-            );
-
-            // Check if plan name contains 'session' or 'per session' as fallback
-            const isPerSession =
-              selectedPlan?.billingType === 'PerSession' ||
-              selectedPlan?.planName?.toLowerCase().includes('session');
-
-            if (!selectedPlan || !isPerSession) {
-              return (
-                <div className="flex justify-between gap-3 flex-wrap sm:flex-nowrap">
-                  {/* Fee Status */}
-                  <div className="w-full sm:w-1/2 ">
-                    <KFormField
-                      fieldType={KFormFieldType.SELECT}
-                      control={form.control}
-                      name="feeStatus"
-                      label="Fee Status"
-                      options={feeStatusOptions}
-                    />
-                  </div>
-
-                  {/* Amount Paid */}
-                  <div className="w-full sm:w-1/2 ">
-                    {(() => {
-                      const planFeeSuffix = selectedPlan
-                        ? `/ ${selectedPlan.fee.toLocaleString()}`
-                        : '';
-
-                      return (
-                        <KFormField
-                          suffix={planFeeSuffix}
-                          fieldType={KFormFieldType.INPUT}
-                          control={form.control}
-                          name="amountPaid"
-                          label="Amount Paid"
-                          maxLength={10}
-                        />
-                      );
-                    })()}
-                  </div>
-                </div>
-              );
-            }
-            return null;
-          })()}
-
-          {/* Custom Session Rate - Only for PerSession plans */}
-          {(() => {
-            const selectedPlanId = form.watch('membershipPlanId');
-            const selectedPlan = formOptions?.membershipPlans.find(
-              (plan) => String(plan.membershipPlanId) === selectedPlanId
-            );
-
-            // Check if plan name contains 'session' or 'per session' as fallback
-            const isPerSession =
-              selectedPlan?.billingType === 'PerSession' ||
-              selectedPlan?.planName?.toLowerCase().includes('session');
-
-            if (isPerSession && selectedPlan) {
-              return (
-                <div className="space-y-2">
-                  <KFormField
-                    fieldType={KFormFieldType.INPUT}
-                    control={form.control}
-                    name="customSessionRate"
-                    label="Custom Session Rate (Optional)"
-                    placeholder={`Default: ₹${selectedPlan.fee}`}
-                    type="number"
-                  />
-                  <p className="text-xs text-gray-400 dark:text-gray-500">
-                    Leave empty to use plan&apos;s default rate of ₹
-                    {selectedPlan.fee} per session
-                  </p>
-                </div>
-              );
-            }
-            return null;
-          })()}
-
-          {/* Mode of Payment - Only for Recurring plans */}
-          {(() => {
-            const selectedPlanId = form.watch('membershipPlanId');
-            const selectedPlan = formOptions?.membershipPlans.find(
-              (plan) => String(plan.membershipPlanId) === selectedPlanId
-            );
-
-            // Check if plan name contains 'session' or 'per session' as fallback
-            const isPerSession =
-              selectedPlan?.billingType === 'PerSession' ||
-              selectedPlan?.planName?.toLowerCase().includes('session');
-
-            if (!selectedPlan || !isPerSession) {
-              return (
-                <KFormField
-                  fieldType={KFormFieldType.SELECT}
-                  control={form.control}
-                  name="modeOfPayment"
-                  label="Mode of Payment"
-                  options={[
-                    { label: 'Cash', value: '0' },
-                    { label: 'UPI', value: '1' },
-                  ]}
-                />
-              );
-            }
-            return null;
-          })()}
-
-          <div className="flex justify-between gap-3 flex-wrap sm:flex-nowrap">
-            {/* Date of joining */}
-            <div className="w-full sm:w-1/2 ">
+          <FieldRow>
+            <FieldColumn>
               <KFormField
                 fieldType={KFormFieldType.DATE_PICKER}
                 control={form.control}
@@ -357,22 +393,19 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                 mode="single"
                 floating
               />
-            </div>
-
-            {/* Date of birth */}
-            <div className="w-full sm:w-1/2 ">
+            </FieldColumn>
+            <FieldColumn>
               <KFormField
                 fieldType={KFormFieldType.DATE_INPUT}
                 control={form.control}
                 name="dob"
                 label="Date of birth"
               />
-            </div>
-          </div>
+            </FieldColumn>
+          </FieldRow>
 
-          <div className="flex justify-between gap-3 flex-wrap sm:flex-nowrap">
-            {/* Personal Trainer */}
-            <div className="w-full sm:w-1/2 ">
+          <FieldRow>
+            <FieldColumn>
               <KFormField
                 fieldType={KFormFieldType.SELECT}
                 control={form.control}
@@ -387,21 +420,21 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                     : []
                 }
               />
-            </div>
-
-            {/* Blood Group */}
-            <div className="w-full sm:w-1/2 ">
+            </FieldColumn>
+            <FieldColumn>
               <KFormField
                 fieldType={KFormFieldType.SELECT}
                 control={form.control}
-                name="bloodGroup"
-                label="Blood Group"
-                options={bloodGroupOptions}
+                name="membershipPlanId"
+                label="Package"
+                options={formOptions?.membershipPlans.map((plan) => ({
+                  label: plan.planName,
+                  value: String(plan.membershipPlanId),
+                }))}
               />
-            </div>
-          </div>
+            </FieldColumn>
+          </FieldRow>
 
-          {/* Workout Plan */}
           <KFormField
             fieldType={KFormFieldType.SELECT}
             control={form.control}
@@ -413,7 +446,17 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
             }))}
           />
 
-          {/* Address Details */}
+          {(() => {
+            const selectedPlanId = form.watch('membershipPlanId');
+            const selectedPlan = formOptions?.membershipPlans.find(
+              (plan) => String(plan.membershipPlanId) === selectedPlanId
+            );
+
+            return selectedPlan ? (
+              <PaymentSection form={form} selectedPlan={selectedPlan} />
+            ) : null;
+          })()}
+
           <h5 className="text-white text-base font-normal leading-normal mt-8!">
             Address Details
           </h5>

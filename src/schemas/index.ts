@@ -379,6 +379,16 @@ export const createMemberSchema = z.object({
       },
       { message: 'Session rate must be greater than 0' }
     ),
+  numberOfSessions: z
+    .string()
+    .optional()
+    .refine(
+      (val) => {
+        if (!val || val === '') return true;
+        return Number(val) > 0;
+      },
+      { message: 'Number of sessions must be greater than 0' }
+    ),
 });
 
 export const workoutPlanSchema = z.object({
