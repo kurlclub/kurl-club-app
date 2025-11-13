@@ -8,6 +8,7 @@ import {
   Calendar,
   CheckSquare,
   CreditCard,
+  Hourglass,
   Square,
   Wallet,
 } from 'lucide-react';
@@ -21,6 +22,7 @@ import { KSheet } from '@/components/shared/form/k-sheet';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import { useAppDialog } from '@/hooks/use-app-dialog';
 import { paymentMethodOptions } from '@/lib/constants';
 import type { MemberPaymentDetails } from '@/types/payment';
@@ -129,39 +131,65 @@ export function ManageSessionPaymentSheet({
     >
       {!member ? null : (
         <div className="space-y-6">
-          {/* Member Summary */}
+          {/* Member Summary Card */}
           <div className="rounded-md border border-primary-blue-400 bg-secondary-blue-500 px-4 py-3">
-            <div className="flex items-center justify-between mb-2">
-              <div>
-                <div className="text-xs font-medium text-primary-green-200 tracking-wide uppercase">
-                  #
-                  {member.memberIdentifier ||
-                    `KC${member.memberId.toString().padStart(3, '0')}`}
-                </div>
-                <h1 className="text-base text-white">{member.memberName}</h1>
-              </div>
-              <Badge className="bg-primary-green-500">
-                ₹{member.customSessionRate || 0}/session
-              </Badge>
-            </div>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Wallet className="w-5 h-5 text-primary-blue-200" />
-                <div>
-                  <div className="text-primary-blue-200 text-xs">
-                    Unpaid Sessions
-                  </div>
-                  <div className="text-white">
-                    {member.unpaidSessions || 0} sessions
+            <div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-end gap-2">
+                  <h1 className="text-base text-white font-semibold">
+                    {member.memberName}
+                  </h1>
+                  <div className="text-xs font-medium text-primary-blue-200 tracking-wide">
+                    #
+                    {member.memberIdentifier ||
+                      `KC${member.memberId.toString().padStart(3, '0')}`}
                   </div>
                 </div>
+                <Badge className="bg-primary-blue-400 text-primary-blue-100">
+                  ₹{member.customSessionRate || 0}/session
+                </Badge>
               </div>
-              <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-primary-blue-200" />
-                <div>
-                  <div className="text-primary-blue-200 text-xs">Total Due</div>
-                  <div className="text-white">
-                    ₹{member.totalSessionDebt || 0}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Wallet className="w-5 h-5 text-primary-blue-200" />
+                  <div>
+                    <div className="text-primary-blue-200 text-xs">Rate</div>
+                    <div className="text-white">
+                      ₹{member.customSessionRate || 0}
+                    </div>
+                  </div>
+                </div>
+                <Separator
+                  orientation="vertical"
+                  className="h-12 hidden sm:block bg-primary-blue-400"
+                />
+
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-primary-blue-200" />
+                  <div>
+                    <div className="text-primary-blue-200 text-xs">
+                      Sessions
+                    </div>
+                    <div className="text-white">
+                      {member.unpaidSessions || 0}
+                    </div>
+                  </div>
+                </div>
+
+                <Separator
+                  orientation="vertical"
+                  className="h-12 hidden sm:block bg-primary-blue-400"
+                />
+
+                <div className="flex items-center gap-2">
+                  <Hourglass className="w-5 h-5 text-primary-blue-200" />
+                  <div>
+                    <div className="text-primary-blue-200 text-xs">
+                      Total Due
+                    </div>
+                    <div className="text-white">
+                      ₹{member.totalSessionDebt || 0}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -171,26 +199,26 @@ export function ManageSessionPaymentSheet({
           {/* Session List */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h4 className="font-medium text-gray-900 dark:text-white">
+              <h4 className="font-semibold text-white text-sm">
                 Select Sessions to Pay
               </h4>
               <button
                 type="button"
                 onClick={handleSelectAll}
-                className="text-sm text-primary-green-500 hover:text-primary-green-600 flex items-center gap-1"
+                className="text-xs font-semibold text-primary-green-500 hover:text-primary-green-400 flex items-center gap-1.5 k-transition"
               >
                 {selectedSessions.length === member?.sessionPayments?.length ? (
                   <>
-                    <CheckSquare className="w-4 h-4" /> Deselect All
+                    <CheckSquare className="w-3.5 h-3.5" /> Deselect All
                   </>
                 ) : (
                   <>
-                    <Square className="w-4 h-4" /> Select All
+                    <Square className="w-3.5 h-3.5" /> Select All
                   </>
                 )}
               </button>
             </div>
-            <div className="space-y-2 max-h-[300px] overflow-y-auto">
+            <div className="space-y-2 max-h-[300px] overflow-y-auto no-scrollbar">
               {member.sessionPayments && member.sessionPayments.length > 0 ? (
                 member.sessionPayments.map((session) => {
                   const isSelected = selectedSessions.includes(
@@ -200,66 +228,84 @@ export function ManageSessionPaymentSheet({
                     <div
                       key={session.sessionId}
                       onClick={() => handleSessionToggle(session.sessionId)}
-                      className={`flex items-center justify-between p-3 border rounded-md cursor-pointer transition-all ${
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-md cursor-pointer transition-all duration-200 ease-in-out ${
                         isSelected
-                          ? 'border-primary-green-500 bg-primary-green-500/10'
-                          : 'border-gray-200 dark:border-secondary-blue-400 bg-white dark:bg-background-dark hover:border-primary-green-500/50'
+                          ? 'bg-primary-green-600/10 border border-primary-green-300/30'
+                          : 'bg-secondary-blue-400/50 hover:bg-secondary-blue-400/70 border border-transparent'
                       }`}
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-5 h-5">
-                          {isSelected ? (
-                            <CheckSquare className="w-5 h-5 text-primary-green-500" />
-                          ) : (
-                            <Square className="w-5 h-5 text-gray-400" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900 dark:text-white">
-                            {new Date(session.sessionDate).toLocaleDateString(
-                              'en-IN',
-                              {
-                                day: 'numeric',
-                                month: 'short',
-                                year: 'numeric',
-                              }
-                            )}
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Session #{session.sessionId}
-                          </p>
-                        </div>
+                      <div className="flex items-center justify-center">
+                        {isSelected ? (
+                          <CheckSquare className="w-4 h-4 text-primary-green-500" />
+                        ) : (
+                          <Square className="w-4 h-4 text-primary-blue-200" />
+                        )}
                       </div>
-                      <span className="font-semibold text-gray-900 dark:text-white">
+                      <div className="flex-1">
+                        <p className="text-[13.5px] font-medium text-white">
+                          {new Date(session.sessionDate).toLocaleDateString(
+                            'en-IN',
+                            {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                            }
+                          )}
+                        </p>
+                      </div>
+                      <div className="text-xs text-primary-blue-200">
+                        Session #{session.sessionId}
+                      </div>
+                      <div className="text-sm font-medium text-white">
                         ₹{session.sessionRate}
-                      </span>
+                      </div>
                     </div>
                   );
                 })
               ) : (
-                <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
-                  No unpaid sessions
-                </p>
+                <div className="flex flex-col items-center justify-center py-12 bg-secondary-blue-400/50 rounded-md border border-dashed border-secondary-blue-400">
+                  <Calendar className="w-8 h-8 text-primary-blue-300 mb-3 opacity-50" />
+                  <p className="text-sm font-medium text-white mb-1">
+                    No unpaid sessions
+                  </p>
+                  <p className="text-xs text-primary-blue-200">
+                    All sessions have been paid
+                  </p>
+                </div>
               )}
             </div>
           </div>
 
           {/* Selected Amount Display */}
           {selectedSessions.length > 0 && (
-            <div className="p-4 bg-primary-green-500/10 border border-primary-green-500/20 rounded-md">
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">
-                    {selectedSessions.length} session(s) selected
-                  </p>
+            <div className="rounded-md border border-primary-blue-400 bg-secondary-blue-500 px-4 py-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CheckSquare className="w-5 h-5 text-primary-green-500" />
+                  <div>
+                    <div className="text-primary-blue-200 text-xs">
+                      Selected Sessions
+                    </div>
+                    <div className="text-white font-semibold">
+                      {selectedSessions.length} session
+                      {selectedSessions.length > 1 ? 's' : ''}
+                    </div>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Total Amount
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    ₹{selectedAmount}
-                  </p>
+                <Separator
+                  orientation="vertical"
+                  className="h-12 bg-primary-blue-400"
+                />
+                <div className="flex items-center gap-2">
+                  <CreditCard className="w-5 h-5 text-primary-blue-200" />
+                  <div>
+                    <div className="text-primary-blue-200 text-xs">
+                      Total Amount
+                    </div>
+                    <div className="text-white font-bold text-lg">
+                      ₹{selectedAmount.toLocaleString()}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -271,7 +317,7 @@ export function ManageSessionPaymentSheet({
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center gap-2 text-white">
                   <CreditCard className="w-4 h-4" />
-                  Record Payment
+                  Record Session Payment
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -309,7 +355,10 @@ export function ManageSessionPaymentSheet({
                       Processing...
                     </div>
                   ) : (
-                    'Record Payment'
+                    <div className="flex items-center gap-2">
+                      <CreditCard className="w-4 h-4" />
+                      Record Payment
+                    </div>
                   )}
                 </Button>
               </CardContent>
