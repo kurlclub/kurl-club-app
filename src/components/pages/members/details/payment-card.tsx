@@ -58,6 +58,15 @@ function PaymentCard({ memberId, formOptions }: PaymentCardProps) {
   }
 
   const { currentCycle, memberStatus, membershipPlanId } = paymentData.data;
+
+  if (!currentCycle) {
+    return (
+      <div className="rounded-lg h-full bg-secondary-blue-500 p-5 pb-7 w-full">
+        <p className="text-white">No current cycle data available</p>
+      </div>
+    );
+  }
+
   const status = getPaymentBadgeStatus(
     currentCycle.status,
     currentCycle.pendingAmount

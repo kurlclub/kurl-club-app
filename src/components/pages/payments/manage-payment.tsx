@@ -55,7 +55,7 @@ export function ManagePaymentSheet({
 }: ManagePaymentSheetProps) {
   const [showHistory, setShowHistory] = useState(false);
   const [paymentType, setPaymentType] = useState<'partial' | 'full'>('partial');
-  const pending = member?.currentCycle.pendingAmount || 0;
+  const pending = member?.currentCycle?.pendingAmount || 0;
   const { gymBranch } = useGymBranch();
   const {
     recordPartialPayment,
@@ -202,7 +202,7 @@ export function ManagePaymentSheet({
                       Total Fee
                     </div>
                     <div className="text-white">
-                      ₹{member.currentCycle.planFee}
+                      ₹{member.currentCycle?.planFee || 0}
                     </div>
                   </div>
                 </div>
@@ -218,7 +218,7 @@ export function ManagePaymentSheet({
                       Due Date
                     </div>
                     <div className="text-white">
-                      {member.currentCycle.dueDate
+                      {member.currentCycle?.dueDate
                         ? formatDateTime(member.currentCycle.dueDate, 'date')
                         : 'N/A'}
                     </div>

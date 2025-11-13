@@ -38,6 +38,7 @@ export type MemberDetails = {
   fullAddress: string;
   workoutPlan: number;
   profilePicture: string | File | null;
+  customSessionRate?: number; // For per-session billing members
 };
 
 export type WorkoutPlan = 'Weight loss' | 'Muscle gain' | 'General fitness';

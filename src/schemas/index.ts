@@ -369,6 +369,16 @@ export const createMemberSchema = z.object({
   amountPaid: z.string().min(0, 'Amount paid must be a positive number'),
   workoutPlanId: z.string().min(1, 'Workout plan selection is required'),
   modeOfPayment: z.string().min(1, 'Payment method is required'),
+  customSessionRate: z
+    .string()
+    .optional()
+    .refine(
+      (val) => {
+        if (!val || val === '') return true;
+        return Number(val) > 0;
+      },
+      { message: 'Session rate must be greater than 0' }
+    ),
 });
 
 export const workoutPlanSchema = z.object({
@@ -565,6 +575,9 @@ export const gymUpdateSchema = z.object({
 
 export const membershipPlanSchema = z.object({
   planName: z.string().min(1, 'Plan name is required'),
+  billingType: z.enum(['Recurring', 'PerSession'], {
+    error: 'Billing type is required',
+  }),
   fee: z.union([
     z.string().min(1, 'Fee is required'),
     z.number().min(1, 'Fee must be greater than 0'),
@@ -574,4 +587,15 @@ export const membershipPlanSchema = z.object({
     z.string().min(1, 'Duration is required'),
     z.number().min(1, 'Duration must be at least 1 day'),
   ]),
+  defaultSessionRate: z
+    .union([z.string(), z.number()])
+    .optional()
+    .refine(
+      (val) => {
+        if (val === undefined || val === '') return true;
+        const num = typeof val === 'string' ? Number(val) : val;
+        return num > 0;
+      },
+      { message: 'Session rate must be greater than 0' }
+    ),
 });

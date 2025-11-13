@@ -134,6 +134,7 @@ export const createPaymentColumns = (
     header: 'Due Date',
     cell: ({ row }) => {
       const { currentCycle } = row.original;
+      if (!currentCycle) return <div className="min-w-24">-</div>;
       const { dueDate, bufferEndDate } = currentCycle;
       if (!dueDate) return <div className="min-w-24">-</div>;
 
@@ -177,6 +178,7 @@ export const createPaymentColumns = (
     header: 'Buffer',
     cell: ({ row }) => {
       const { currentCycle } = row.original;
+      if (!currentCycle) return <div className="min-w-24">-</div>;
       const { bufferEndDate, pendingAmount } = currentCycle;
 
       // Shows when there's no buffer OR payment is completed
@@ -213,6 +215,7 @@ export const createPaymentColumns = (
     sortingFn: (rowA, rowB) => {
       const aData = rowA.original.currentCycle;
       const bData = rowB.original.currentCycle;
+      if (!aData || !bData) return 0;
 
       // Completed payments go to bottom
       if (aData.pendingAmount === 0 && bData.pendingAmount > 0) return 1;
@@ -247,6 +250,7 @@ export const createPaymentColumns = (
     },
     filterFn: (row, id, value: string[]) => {
       const { currentCycle } = row.original;
+      if (!currentCycle) return false;
       const { bufferEndDate, dueDate } = currentCycle;
 
       // Use buffer end date if exists, otherwise use due date
@@ -278,6 +282,7 @@ export const createPaymentColumns = (
     header: 'Payment Summary',
     cell: ({ row }) => {
       const { currentCycle } = row.original;
+      if (!currentCycle) return <div className="min-w-[180px]">-</div>;
       const { pendingAmount, amountPaid, planFee } = currentCycle;
       const progress = planFee > 0 ? (amountPaid / planFee) * 100 : 0;
 
@@ -304,10 +309,11 @@ export const createPaymentColumns = (
   },
   {
     id: 'currentCycle.status',
-    accessorFn: (row) => row.currentCycle.status,
+    accessorFn: (row) => row.currentCycle?.status,
     header: 'Status',
     cell: ({ row }) => {
       const { currentCycle } = row.original;
+      if (!currentCycle) return <div className="min-w-24">-</div>;
       const status = currentCycle.status;
       const pendingAmount = currentCycle.pendingAmount;
 
@@ -320,7 +326,9 @@ export const createPaymentColumns = (
       );
     },
     filterFn: (row, id, value: string[]) => {
-      return value.includes(row.original.currentCycle.status);
+      return row.original.currentCycle
+        ? value.includes(row.original.currentCycle.status)
+        : false;
     },
   },
   {
@@ -328,6 +336,7 @@ export const createPaymentColumns = (
     header: 'Package',
     cell: ({ row }) => {
       const { currentCycle, membershipPlanId } = row.original;
+      if (!currentCycle) return <div className="min-w-[120px]">-</div>;
       const { planFee } = currentCycle;
       const planName = membershipPlans.find(
         (p) => p.membershipPlanId === membershipPlanId

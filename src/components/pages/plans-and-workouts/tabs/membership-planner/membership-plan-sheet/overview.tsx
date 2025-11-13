@@ -1,6 +1,6 @@
 'use client';
 
-import { Control } from 'react-hook-form';
+import { Control, useWatch } from 'react-hook-form';
 
 import { Clock, PenLine, User2 } from 'lucide-react';
 
@@ -24,9 +24,11 @@ import { MembershipPlan } from '@/types/membership-plan';
 
 interface MembershipPlanFormData {
   planName: string;
+  billingType: 'Recurring' | 'PerSession';
   fee: string | number;
   details?: string;
   durationInDays: string | number;
+  defaultSessionRate?: string | number;
 }
 
 interface OverviewProps {
@@ -53,6 +55,13 @@ export function Overview({
   onShowMembers,
   control,
 }: OverviewProps) {
+  const watchedBillingType = useWatch({
+    control: control!,
+    name: 'billingType',
+    defaultValue: plan.billingType,
+  });
+  const billingType = control ? watchedBillingType : plan.billingType;
+
   const handleDefaultChange = (checked: boolean) => {
     const updatedPlan = { ...plan, isActive: checked };
 
@@ -180,15 +189,42 @@ export function Overview({
             placeholder="Enter plan name"
             mandetory
           />
+
+          <KFormField
+            fieldType={KFormFieldType.SELECT}
+            control={control!}
+            name="billingType"
+            label="Billing Type"
+            placeholder="Select billing type"
+            mandetory
+            options={[
+              { label: 'Recurring (Fixed cycle)', value: 'Recurring' },
+              { label: 'Per Session (Pay per visit)', value: 'PerSession' },
+            ]}
+          />
+
           <KFormField
             fieldType={KFormFieldType.INPUT}
             control={control!}
             name="fee"
-            label="Amount in (INR)"
+            label={
+              billingType === 'PerSession'
+                ? 'Default Session Rate (INR)'
+                : 'Amount in (INR)'
+            }
             placeholder="Enter amount"
             type="number"
             mandetory
           />
+
+          {billingType === 'PerSession' && (
+            <div className="p-3 bg-primary-green-500/10 border border-primary-green-500/20 rounded-md">
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                💡 <strong>Per Session Billing:</strong> Members will be charged
+                per attendance. You can set custom rates for individual members.
+              </p>
+            </div>
+          )}
 
           <KFormField
             fieldType={KFormFieldType.SKELETON}
@@ -207,7 +243,11 @@ export function Overview({
               fieldType={KFormFieldType.INPUT}
               control={control!}
               name="durationInDays"
-              label="Duration (days)"
+              label={
+                billingType === 'PerSession'
+                  ? 'Validity (days)'
+                  : 'Duration (days)'
+              }
               type="number"
               placeholder="Enter duration"
               mandetory

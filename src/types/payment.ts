@@ -19,15 +19,34 @@ export interface PaymentCycle {
   lastAmountPaidDate: string;
 }
 
+export interface SessionPayment {
+  sessionId: number;
+  attendanceId: number;
+  memberId: number;
+  sessionDate: string;
+  sessionRate: number;
+  amountPaid: number;
+  pendingAmount: number;
+  status: 'Paid' | 'Pending' | 'Partial';
+  paymentDate?: string;
+}
+
 export interface MemberPaymentDetails {
   memberId: number;
   memberName: string;
   membershipPlanId: number;
-  currentCycle: PaymentCycle;
-  previousCycles: PaymentCycle[];
-  totalDebtCycles: number;
-  totalDebtAmount: number;
+  billingType: 'Recurring' | 'PerSession';
+  // For Recurring billing
+  currentCycle?: PaymentCycle;
+  previousCycles?: PaymentCycle[];
+  totalDebtCycles?: number;
+  totalDebtAmount?: number;
+  // For PerSession billing
+  sessionPayments?: SessionPayment[];
+  unpaidSessions?: number;
+  totalSessionDebt?: number;
+  customSessionRate?: number;
+  // Common fields
   memberStatus: 'Outstanding' | 'Expired' | 'Completed' | 'Debts';
-  // Computed fields for backward compatibility
   memberIdentifier?: string;
 }

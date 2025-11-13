@@ -57,6 +57,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
       bloodGroup: '',
       workoutPlanId: '',
       modeOfPayment: '',
+      customSessionRate: '',
     },
   });
 
@@ -232,54 +233,118 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
             </div>
           </div>
 
-          <div className="flex justify-between gap-3 flex-wrap sm:flex-nowrap">
-            {/* Fee Status */}
-            <div className="w-full sm:w-1/2 ">
-              <KFormField
-                fieldType={KFormFieldType.SELECT}
-                control={form.control}
-                name="feeStatus"
-                label="Fee Status"
-                options={feeStatusOptions}
-              />
-            </div>
+          {/* Fee Status & Amount Paid - Only for Recurring plans */}
+          {(() => {
+            const selectedPlanId = form.watch('membershipPlanId');
+            const selectedPlan = formOptions?.membershipPlans.find(
+              (plan) => String(plan.membershipPlanId) === selectedPlanId
+            );
 
-            {/* Amount Paid */}
-            <div className="w-full sm:w-1/2 ">
-              {(() => {
-                const selectedPlanId = form.watch('membershipPlanId');
-                const selectedPlan = formOptions?.membershipPlans.find(
-                  (plan) => String(plan.membershipPlanId) === selectedPlanId
-                );
-                const planFeeSuffix = selectedPlan
-                  ? `/ ${selectedPlan.fee.toLocaleString()}`
-                  : '';
+            // Check if plan name contains 'session' or 'per session' as fallback
+            const isPerSession =
+              selectedPlan?.billingType === 'PerSession' ||
+              selectedPlan?.planName?.toLowerCase().includes('session');
 
-                return (
+            if (!selectedPlan || !isPerSession) {
+              return (
+                <div className="flex justify-between gap-3 flex-wrap sm:flex-nowrap">
+                  {/* Fee Status */}
+                  <div className="w-full sm:w-1/2 ">
+                    <KFormField
+                      fieldType={KFormFieldType.SELECT}
+                      control={form.control}
+                      name="feeStatus"
+                      label="Fee Status"
+                      options={feeStatusOptions}
+                    />
+                  </div>
+
+                  {/* Amount Paid */}
+                  <div className="w-full sm:w-1/2 ">
+                    {(() => {
+                      const planFeeSuffix = selectedPlan
+                        ? `/ ${selectedPlan.fee.toLocaleString()}`
+                        : '';
+
+                      return (
+                        <KFormField
+                          suffix={planFeeSuffix}
+                          fieldType={KFormFieldType.INPUT}
+                          control={form.control}
+                          name="amountPaid"
+                          label="Amount Paid"
+                          maxLength={10}
+                        />
+                      );
+                    })()}
+                  </div>
+                </div>
+              );
+            }
+            return null;
+          })()}
+
+          {/* Custom Session Rate - Only for PerSession plans */}
+          {(() => {
+            const selectedPlanId = form.watch('membershipPlanId');
+            const selectedPlan = formOptions?.membershipPlans.find(
+              (plan) => String(plan.membershipPlanId) === selectedPlanId
+            );
+
+            // Check if plan name contains 'session' or 'per session' as fallback
+            const isPerSession =
+              selectedPlan?.billingType === 'PerSession' ||
+              selectedPlan?.planName?.toLowerCase().includes('session');
+
+            if (isPerSession && selectedPlan) {
+              return (
+                <div className="space-y-2">
                   <KFormField
-                    suffix={planFeeSuffix}
                     fieldType={KFormFieldType.INPUT}
                     control={form.control}
-                    name="amountPaid"
-                    label="Amount Paid"
-                    maxLength={10}
+                    name="customSessionRate"
+                    label="Custom Session Rate (Optional)"
+                    placeholder={`Default: ₹${selectedPlan.fee}`}
+                    type="number"
                   />
-                );
-              })()}
-            </div>
-          </div>
+                  <p className="text-xs text-gray-400 dark:text-gray-500">
+                    Leave empty to use plan&apos;s default rate of ₹
+                    {selectedPlan.fee} per session
+                  </p>
+                </div>
+              );
+            }
+            return null;
+          })()}
 
-          {/* Mode of Payment */}
-          <KFormField
-            fieldType={KFormFieldType.SELECT}
-            control={form.control}
-            name="modeOfPayment"
-            label="Mode of Payment"
-            options={[
-              { label: 'Cash', value: '0' },
-              { label: 'UPI', value: '1' },
-            ]}
-          />
+          {/* Mode of Payment - Only for Recurring plans */}
+          {(() => {
+            const selectedPlanId = form.watch('membershipPlanId');
+            const selectedPlan = formOptions?.membershipPlans.find(
+              (plan) => String(plan.membershipPlanId) === selectedPlanId
+            );
+
+            // Check if plan name contains 'session' or 'per session' as fallback
+            const isPerSession =
+              selectedPlan?.billingType === 'PerSession' ||
+              selectedPlan?.planName?.toLowerCase().includes('session');
+
+            if (!selectedPlan || !isPerSession) {
+              return (
+                <KFormField
+                  fieldType={KFormFieldType.SELECT}
+                  control={form.control}
+                  name="modeOfPayment"
+                  label="Mode of Payment"
+                  options={[
+                    { label: 'Cash', value: '0' },
+                    { label: 'UPI', value: '1' },
+                  ]}
+                />
+              );
+            }
+            return null;
+          })()}
 
           <div className="flex justify-between gap-3 flex-wrap sm:flex-nowrap">
             {/* Date of joining */}

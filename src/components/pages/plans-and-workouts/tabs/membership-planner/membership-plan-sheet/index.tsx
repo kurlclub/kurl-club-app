@@ -37,6 +37,8 @@ const DEFAULT_PLAN: MembershipPlan = {
   fee: '',
   durationInDays: '',
   isActive: true,
+  billingType: 'Recurring',
+  defaultSessionRate: undefined,
 };
 
 export function MembershipPlanSheet({
@@ -58,9 +60,11 @@ export function MembershipPlanSheet({
     resolver: zodResolver(membershipPlanSchema),
     defaultValues: {
       planName: '',
+      billingType: 'Recurring',
       fee: '',
       details: '',
       durationInDays: '',
+      defaultSessionRate: undefined,
     },
   });
 
@@ -86,17 +90,28 @@ export function MembershipPlanSheet({
 
       form.reset({
         planName: planData.planName,
+        billingType: planData.billingType || 'Recurring',
         fee: planData.fee,
         details: planData.details,
         durationInDays: planData.durationInDays,
+        defaultSessionRate: planData.defaultSessionRate,
       });
     }
   }, [plan, isOpen, form]);
 
   const handleSavePlan = async (data: MembershipPlanFormData) => {
-    const updatedPlan = {
-      ...editedPlan,
-      ...data,
+    const updatedPlan: MembershipPlan = {
+      membershipPlanId: editedPlan.membershipPlanId,
+      gymId: editedPlan.gymId,
+      planName: data.planName,
+      billingType: data.billingType,
+      fee: data.fee,
+      details: data.details || '',
+      durationInDays: data.durationInDays,
+      isActive: editedPlan.isActive,
+      defaultSessionRate: data.defaultSessionRate
+        ? Number(data.defaultSessionRate)
+        : undefined,
     };
 
     if (plan) {
