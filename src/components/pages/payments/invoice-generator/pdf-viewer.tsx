@@ -45,12 +45,12 @@ export function PDFViewer({ isLoading, pdfUrl, onDownload }: PDFViewerProps) {
       <CardContent className="p-0 h-full">
         <div className="relative bg-gradient-to-b from-gray-900 to-gray-950 h-full">
           {/* Floating Action Bar */}
-          <div className="absolute top-3 right-3 z-10 flex gap-2">
+          <div className="absolute top-1 right-5 z-10 flex gap-2">
             <Button
               size="sm"
               variant="secondary"
               onClick={onDownload}
-              className="h-8 px-3 bg-primary-blue-400 hover:bg-primary-blue-300 text-white border-0 shadow-lg"
+              className="h-8 px-2 bg-primary-blue-400 hover:bg-primary-blue-300 text-white border-0 shadow-lg"
             >
               <Download className="w-3.5 h-3.5 mr-1.5" />
               Download

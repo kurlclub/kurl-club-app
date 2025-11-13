@@ -7,12 +7,15 @@ import { AnimatePresence, motion } from 'motion/react';
 import { toast } from 'sonner';
 
 import { KSheet } from '@/components/shared/form/k-sheet';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useAppDialog } from '@/hooks/use-app-dialog';
 import {
   useInvoiceManagement,
   usePaymentHistory,
 } from '@/hooks/use-payment-management';
+import { getAvatarColor } from '@/lib/avatar-utils';
 import type { MemberPaymentDetails } from '@/types/payment';
 
 import { MobilePreviewPopup } from './mobile-preview-popup';
@@ -118,14 +121,14 @@ export function InvoiceGenerator({
     <KSheet
       isOpen={open}
       onClose={handleClose}
-      title="Generate Invoice"
+      title="Payment history"
       footer={footer}
-      className={`w-[480px] transition-all duration-500 ease-in-out ${
-        selectedPayment ? 'md:w-[900px] lg:w-[1100px]' : 'md:w-[480px]'
+      className={`w-[480px] transition-all duration-500 ease-in-out${
+        selectedPayment ? 'md:w-[900px] lg:w-[800px]' : 'md:w-[480px]'
       }`}
     >
       {!member ? null : (
-        <div className="relative space-y-6 md:space-y-0 h-full">
+        <div className="relative md:space-y-0 h-full">
           {/* Member Info Header - Mobile Only */}
           <div className="md:hidden rounded-lg border border-primary-blue-400 bg-gradient-to-br from-secondary-blue-500 to-primary-blue-500 px-5 py-4 shadow-sm mb-6">
             <div className="flex items-center justify-between">
@@ -157,11 +160,39 @@ export function InvoiceGenerator({
           </div>
 
           {/* Two-Panel Layout */}
-          <div className="flex flex-col md:flex-row md:gap-6 md:h-[calc(100vh-280px)]">
+          <div className="flex flex-col md:flex-row md:gap-6 h-full">
             {/* Left Panel - Payment History List */}
             <div
               className={`space-y-3 ${selectedPayment ? 'md:w-[380px] md:flex-shrink-0' : 'md:w-full'}`}
             >
+              <div className="flex items-start gap-3 mb-5">
+                <div className="flex items-center gap-3">
+                  <Avatar className="size-[64px]">
+                    <AvatarImage
+                      // src={`data:image/png;base64,${details?.profilePicture}`}
+                      alt="Profile picture"
+                    />
+                    <AvatarFallback
+                      className="font-medium text-xl leading-normal"
+                      style={getAvatarColor('Prasoon')}
+                    >
+                      PM
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col gap-1">
+                    <span className="font-mediu text-[20px] ">
+                      Prasoon Mohan
+                    </span>
+                    <span className="text-primary-blue-50 text-nowrap text-[13px]">
+                      Member since 13/03/2024
+                    </span>
+                  </div>
+                </div>
+                <Badge className="bg-neutral-ochre-500 flex items-center w-fit justify-center text-sm rounded-full h-[30px] py-[8.5px] px-4 border border-neutral-ochre-800 bg-opacity-10">
+                  Gym no:
+                  <span className="uppercase ml-1">#290897</span>
+                </Badge>
+              </div>
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-white">
                   Select Payment Transaction
@@ -171,7 +202,7 @@ export function InvoiceGenerator({
                   {paymentHistory.length !== 1 ? 's' : ''}
                 </div>
               </div>
-              <div className="space-y-2 max-h-[280px] md:max-h-[calc(100vh-320px)] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-primary-blue-400 scrollbar-track-transparent">
+              <div className="space-y-2 max-h-[280px] md:max-h-[calc(100vh-350px)] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-primary-blue-400 scrollbar-track-transparent">
                 {isLoading ? (
                   <div className="flex flex-col items-center justify-center py-12 text-primary-blue-300">
                     <Loader2 className="w-8 h-8 mb-3 animate-spin" />
@@ -208,7 +239,7 @@ export function InvoiceGenerator({
                   animate={{ opacity: 1, width: 'auto' }}
                   exit={{ opacity: 0, width: 0 }}
                   transition={{ duration: 0.4, ease: 'easeInOut' }}
-                  className="hidden md:flex md:flex-col md:flex-1 space-y-3 overflow-hidden h-full"
+                  className="hidden md:flex md:flex-col md:flex-1 space-y-3 overflow-hidden h-full max-w-[477px]"
                 >
                   <motion.div
                     initial={{ x: 20, opacity: 0 }}
