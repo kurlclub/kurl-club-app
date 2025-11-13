@@ -1,7 +1,7 @@
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import { Download, Plus } from 'lucide-react';
+import { Download, GitPullRequest, Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { useGymFormOptions } from '@/hooks/use-gymform-options';
@@ -24,6 +24,7 @@ export const MembersHeader = ({
   closeSheet,
   gymId,
 }: MembersHeaderProps) => {
+  const router = useRouter();
   const [showAddMemberForm, setShowAddMemberForm] = useState(false);
   const [cameFromSetup, setCameFromSetup] = useState(false);
   const { formOptions } = useGymFormOptions(gymId);
@@ -61,10 +62,18 @@ export const MembersHeader = ({
   return (
     <div className="flex items-center justify-end flex-wrap gap-2">
       <div className="flex items-center space-x-2 flex-wrap">
-        <Button variant="outline" className="h-10" onClick={onImportClick}>
+        <Button
+          onClick={() => router.push('/members/requests')}
+          variant="outline"
+          className="h-10"
+        >
+          <GitPullRequest className=" h-4 w-4" />
+          Requests
+        </Button>
+        {/* <Button variant="outline" className="h-10" onClick={onImportClick}>
           <Download className=" h-4 w-4" />
           Import
-        </Button>
+        </Button> */}
         <Button className="h-10" onClick={handleAddNewClick}>
           <Plus className="h-4 w-4" />
           Add new
