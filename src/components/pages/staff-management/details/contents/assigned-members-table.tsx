@@ -1,6 +1,6 @@
 'use client';
 
-import { columns } from '@/components/pages/members/table/columns';
+import { columns } from '@/components/pages/members/table/all-members-columns';
 import {
   DataTable,
   DataTableToolbar,

@@ -124,3 +124,54 @@ export const useMemberPaymentDetails = (memberId: number | string) => {
     enabled: !!memberId,
   });
 };
+
+export const fetchPendingOnboardingMembers = async (gymId: number | string) => {
+  const response = await api.get<ApiResponse<Member[]>>(
+    `/Member/onboarding/${gymId}`
+  );
+  return response.data || [];
+};
+
+export const usePendingOnboardingMembers = (gymId: number | string) => {
+  return useQuery({
+    queryKey: ['pendingOnboardingMembers', gymId],
+    queryFn: () => fetchPendingOnboardingMembers(gymId),
+    enabled: !!gymId,
+    staleTime: 1000 * 60 * 3,
+    refetchOnMount: true,
+    retry: 1,
+  });
+};
+
+export const fetchPendingMemberDetails = async (id: string | number) => {
+  const response = await api.get<{ status: string; data: MemberDetails }>(
+    `/Member/onboarding/details/${id}`
+  );
+  return response.data;
+};
+
+export const rejectOnboardingMember = async (
+  id: string | number,
+  queryClient?: QueryClient
+) => {
+  try {
+    await api.delete(`/Member/onboarding/${id}`);
+
+    if (queryClient) {
+      await queryClient.invalidateQueries({
+        queryKey: ['pendingOnboardingMembers'],
+      });
+    }
+
+    return { success: 'Onboarding request rejected successfully!' };
+  } catch (error) {
+    console.error('Error rejecting onboarding member:', error);
+
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : 'An unexpected error occurred while rejecting the request.';
+
+    return { error: errorMessage };
+  }
+};

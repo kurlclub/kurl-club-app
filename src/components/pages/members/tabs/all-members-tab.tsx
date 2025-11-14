@@ -12,7 +12,7 @@ import { searchItems } from '@/lib/utils';
 import { bulkImportMembers, useGymMembers } from '@/services/member';
 import { Member } from '@/types/members';
 
-import { columns } from '../table/columns';
+import { columns } from '../table/all-members-columns';
 
 type AllMembersTabProps = {
   gymId?: number;

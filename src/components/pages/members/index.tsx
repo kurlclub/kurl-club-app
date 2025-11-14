@@ -8,22 +8,29 @@ import { StudioLayout } from '@/components/shared/layout';
 import { useSheet } from '@/hooks/use-sheet';
 import { useTabState } from '@/hooks/use-tab-state';
 import { useGymBranch } from '@/providers/gym-branch-provider';
+import { usePendingOnboardingMembers } from '@/services/member';
 
 import { MembersHeader } from './members-header';
 import { AllMembersTab, PendingOnboardingTab } from './tabs';
 
-const tabs: TabItem[] = [
-  { id: 'all-members', label: 'All Members' },
-  { id: 'pending-onboarding', label: 'Pending Onboarding (0)' },
-];
-
 export default function Members() {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const searchParams = useSearchParams();
-  const { activeTab, handleTabChange } = useTabState(tabs, 'all-members');
   const { isOpen, openSheet, closeSheet } = useSheet();
   const { gymBranch } = useGymBranch();
   const gymId = gymBranch?.gymId;
+
+  const { data: pendingMembers = [] } = usePendingOnboardingMembers(gymId!);
+
+  const tabs: TabItem[] = [
+    { id: 'all-members', label: 'All Members' },
+    {
+      id: 'pending-onboarding',
+      label: `Pending Onboarding (${pendingMembers.length})`,
+    },
+  ];
+
+  const { activeTab, handleTabChange } = useTabState(tabs, 'all-members');
 
   useEffect(() => {
     if (searchParams.get('setup') === 'true') {
