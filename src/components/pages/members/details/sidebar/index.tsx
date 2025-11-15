@@ -107,7 +107,7 @@ export function Sidebar({
 
       <div
         ref={sidebarRef}
-        className={`fixed z-50 left-0 sm:max-w-[50%] md:max-w-[300px] lg:max-w-[336px] w-full md:max-h-[calc(100vh-80px)] md:sticky md:left-0 top-0 md:h-full pb-8 max-h-full bg-primary-blue-500 text-white overflow-y-auto scrollbar-thin border-r border-secondary-blue-500 transform transition-transform duration-300 ease-in-out md:translate-x-0 ${
+        className={`fixed z-40 left-0 sm:max-w-[50%] md:max-w-[300px] lg:max-w-[336px] w-full h-full md:sticky md:top-0 pb-8 bg-primary-blue-500 text-white overflow-y-auto scrollbar-thin border-r border-secondary-blue-500 transform transition-transform duration-300 ease-in-out md:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
