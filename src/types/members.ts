@@ -38,7 +38,17 @@ export type MemberDetails = {
   fullAddress: string;
   workoutPlan: number;
   profilePicture: string | File | null;
-  customSessionRate?: number; // For per-session billing members
+  customSessionRate?: number;
+  photoPath?: string;
+  idCopyPath?: string;
+  address?: string;
+  idType?: string;
+  idNumber?: string;
+  fitnessGoal?: string;
+  medicalHistory?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  emergencyContactRelation?: string;
 };
 
 export type WorkoutPlan = 'Weight loss' | 'Muscle gain' | 'General fitness';

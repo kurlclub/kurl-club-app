@@ -389,6 +389,25 @@ export const createMemberSchema = z.object({
       },
       { message: 'Number of sessions must be greater than 0' }
     ),
+  idType: z.string().optional(),
+  idNumber: z.string().optional(),
+  idCopyPath: z
+    .custom<File | null>((value) => value instanceof File || value === null, {
+      error: 'ID copy must be a file.',
+    })
+    .refine((file) => file === null || file.size <= 10 * 1024 * 1024, {
+      error: 'File size must be less than 10MB',
+    })
+    .optional(),
+  fitnessGoal: z.string().optional(),
+  medicalHistory: z.string().optional(),
+  emergencyContactName: z.string().optional(),
+  emergencyContactPhone: z
+    .string()
+    .regex(/^\+?[1-9]\d{1,14}$/, 'Phone number must be at least 10 digits')
+    .optional()
+    .or(z.literal('')),
+  emergencyContactRelation: z.string().optional(),
 });
 
 export const workoutPlanSchema = z.object({

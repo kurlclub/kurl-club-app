@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
@@ -26,6 +28,9 @@ export function PendingOnboardingTab() {
   const { gymBranch } = useGymBranch();
   const gymId = gymBranch?.gymId;
   const queryClient = useQueryClient();
+  const [selectedMemberId, setSelectedMemberId] = useState<
+    number | undefined
+  >();
 
   const { data: pendingMembers = [], isLoading } = usePendingOnboardingMembers(
     gymId!
@@ -47,7 +52,8 @@ export function PendingOnboardingTab() {
     searchItems
   );
 
-  const handleAccept = () => {
+  const handleAccept = (member: PendingMember) => {
+    setSelectedMemberId(member.id);
     openSheet();
   };
 
@@ -86,7 +92,15 @@ export function PendingOnboardingTab() {
           <DataTableToolbar table={table} onSearch={search} filters={[]} />
         )}
       />
-      <AddMember isOpen={isOpen} closeSheet={closeSheet} gymId={gymId} />
+      <AddMember
+        isOpen={isOpen}
+        closeSheet={() => {
+          closeSheet();
+          setSelectedMemberId(undefined);
+        }}
+        gymId={gymId}
+        onboardingId={selectedMemberId}
+      />
     </>
   );
 }

@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { FormProvider, UseFormReturn, useForm } from 'react-hook-form';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,6 +11,7 @@ import {
   KFormFieldType,
 } from '@/components/shared/form/k-formfield';
 import { KSheet } from '@/components/shared/form/k-sheet';
+import FileUploader from '@/components/shared/uploaders/file-uploader';
 import ProfilePictureUploader from '@/components/shared/uploaders/profile-uploader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,9 +21,12 @@ import {
   bloodGroupOptions,
   feeStatusOptions,
   genderOptions,
+  idTypeOptions,
+  purposeOptions,
+  relationOptions,
 } from '@/lib/constants';
 import { createMemberSchema } from '@/schemas/index';
-import { createMember } from '@/services/member';
+import { createMember, fetchPendingMemberDetails } from '@/services/member';
 
 type CreateMemberDetailsData = z.infer<typeof createMemberSchema>;
 
@@ -186,13 +191,19 @@ type CreateMemberDetailsProps = {
   closeSheet: () => void;
   isOpen: boolean;
   gymId?: number;
+  onboardingId?: number;
 };
 
 export const AddMember: React.FC<CreateMemberDetailsProps> = ({
   isOpen,
   closeSheet,
   gymId,
+  onboardingId,
 }) => {
+  const [existingPhotoUrl, setExistingPhotoUrl] = useState<string | null>(null);
+  const [existingIdCopyUrl, setExistingIdCopyUrl] = useState<string | null>(
+    null
+  );
   const form = useForm<CreateMemberDetailsData>({
     resolver: zodResolver(createMemberSchema),
     defaultValues: {
@@ -215,11 +226,66 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
       modeOfPayment: '',
       customSessionRate: '',
       numberOfSessions: '',
+      idType: '',
+      idNumber: '',
+      idCopyPath: null,
+      fitnessGoal: '',
+      medicalHistory: '',
+      emergencyContactName: '',
+      emergencyContactPhone: '',
+      emergencyContactRelation: '',
     },
   });
 
   // Fetch form options based on gymId
   const { formOptions } = useGymFormOptions(gymId);
+
+  // Fetch onboarding data if onboardingId is provided
+  useEffect(() => {
+    if (onboardingId && isOpen) {
+      fetchPendingMemberDetails(onboardingId)
+        .then((data) => {
+          setExistingPhotoUrl(data.photoPath || null);
+          setExistingIdCopyUrl(data.idCopyPath || null);
+          form.reset({
+            profilePicture: null,
+            name: data.name || '',
+            email: data.email || '',
+            phone: data.phone || '',
+            gender: data.gender || '',
+            dob: data.dob || '',
+            height: String(data.height || ''),
+            weight: String(data.weight || ''),
+            bloodGroup: data.bloodGroup || '',
+            address: data.address || '',
+            idType: data.idType || '',
+            idNumber: data.idNumber || '',
+            idCopyPath: null,
+            fitnessGoal: data.fitnessGoal || '',
+            medicalHistory: data.medicalHistory || '',
+            emergencyContactName: data.emergencyContactName || '',
+            emergencyContactPhone: data.emergencyContactPhone || '',
+            emergencyContactRelation: data.emergencyContactRelation || '',
+            doj: new Date().toISOString(),
+            membershipPlanId: '',
+            feeStatus: '',
+            personalTrainer: 0,
+            workoutPlanId: '',
+            amountPaid: '',
+            modeOfPayment: '',
+            customSessionRate: '',
+            numberOfSessions: '',
+          });
+        })
+        .catch((error) => {
+          console.error('Failed to fetch onboarding details:', error);
+          toast.error('Failed to load member details');
+        });
+    } else if (!isOpen) {
+      setExistingPhotoUrl(null);
+      setExistingIdCopyUrl(null);
+    }
+  }, [onboardingId, isOpen, form]);
 
   const queryClient = useQueryClient();
 
@@ -227,7 +293,10 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
     const formData = new FormData();
 
     Object.entries(data).forEach(([key, value]) => {
-      if (key === 'profilePicture' && value instanceof File) {
+      if (
+        (key === 'profilePicture' || key === 'idCopyPath') &&
+        value instanceof File
+      ) {
         return formData.append(key, value);
       }
 
@@ -235,7 +304,10 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
         return formData.append(key, value === '' ? '0' : String(value));
       }
 
-      if (key === 'numberOfSessions' && value === '') {
+      if (
+        (key === 'numberOfSessions' || key === 'idCopyPath') &&
+        value === ''
+      ) {
         return;
       }
 
@@ -288,7 +360,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
 
   return (
     <KSheet
-      className="w-[450px]"
+      className="w-[536px]"
       isOpen={isOpen}
       onClose={closeSheet}
       title="Add Member"
@@ -310,6 +382,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                   <ProfilePictureUploader
                     files={field.value as File | null}
                     onChange={(file) => field.onChange(file)}
+                    existingImageUrl={existingPhotoUrl}
                   />
                 </FormControl>
               )}
@@ -456,6 +529,85 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
               <PaymentSection form={form} selectedPlan={selectedPlan} />
             ) : null;
           })()}
+
+          <h5 className="text-white text-base font-normal leading-normal mt-8!">
+            Health & Fitness Goals
+          </h5>
+          <KFormField
+            fieldType={KFormFieldType.SELECT}
+            control={form.control}
+            name="fitnessGoal"
+            label="What brings you here?"
+            options={purposeOptions}
+          />
+          <KFormField
+            fieldType={KFormFieldType.TEXTAREA}
+            control={form.control}
+            name="medicalHistory"
+            label="Medical History or Notes"
+          />
+
+          <h5 className="text-white text-base font-normal leading-normal mt-8!">
+            Identity Verification
+          </h5>
+          <p className="text-gray-400 text-sm -mt-2 mb-2">
+            Please provide a government-issued ID for verification
+          </p>
+          <KFormField
+            fieldType={KFormFieldType.SELECT}
+            control={form.control}
+            name="idType"
+            label="ID Type"
+            options={idTypeOptions}
+          />
+          <KFormField
+            fieldType={KFormFieldType.INPUT}
+            control={form.control}
+            name="idNumber"
+            label="ID Number"
+          />
+          <KFormField
+            fieldType={KFormFieldType.SKELETON}
+            control={form.control}
+            name="idCopyPath"
+            renderSkeleton={(field) => (
+              <FormControl>
+                <FileUploader
+                  file={field.value as File | null}
+                  onChange={(file) => field.onChange(file)}
+                  label="Upload ID Document"
+                  existingFileUrl={existingIdCopyUrl}
+                />
+              </FormControl>
+            )}
+          />
+
+          <h5 className="text-white text-base font-normal leading-normal mt-8!">
+            Emergency Contact
+          </h5>
+          <p className="text-gray-400 text-sm -mt-2 mb-2">
+            Who should we contact in case of emergency?
+          </p>
+          <KFormField
+            fieldType={KFormFieldType.INPUT}
+            control={form.control}
+            name="emergencyContactName"
+            label="Emergency Contact Name"
+          />
+          <KFormField
+            fieldType={KFormFieldType.PHONE_INPUT}
+            control={form.control}
+            name="emergencyContactPhone"
+            label="Emergency Contact Phone"
+            placeholder="(555) 123-4567"
+          />
+          <KFormField
+            fieldType={KFormFieldType.SELECT}
+            control={form.control}
+            name="emergencyContactRelation"
+            label="Relation"
+            options={relationOptions}
+          />
 
           <h5 className="text-white text-base font-normal leading-normal mt-8!">
             Address Details
