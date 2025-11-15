@@ -1,9 +1,5 @@
-import { useEffect, useState } from 'react';
-import { FormProvider, UseFormReturn, useForm } from 'react-hook-form';
+import { FormProvider, UseFormReturn } from 'react-hook-form';
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
 import { z } from 'zod/v4';
 
 import {
@@ -17,16 +13,17 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { FormControl } from '@/components/ui/form';
 import { useGymFormOptions } from '@/hooks/use-gymform-options';
+import { useMemberForm } from '@/hooks/use-member-form';
 import {
   bloodGroupOptions,
   feeStatusOptions,
   genderOptions,
   idTypeOptions,
+  paymentModeOptions,
   purposeOptions,
   relationOptions,
 } from '@/lib/constants';
 import { createMemberSchema } from '@/schemas/index';
-import { createMember, fetchPendingMemberDetails } from '@/services/member';
 
 type CreateMemberDetailsData = z.infer<typeof createMemberSchema>;
 
@@ -37,10 +34,6 @@ type MembershipPlanSubset = {
   billingType?: 'Recurring' | 'PerSession';
 };
 
-// ============================================================================
-// HELPER COMPONENTS
-// ============================================================================
-
 const FieldRow = ({ children }: { children: React.ReactNode }) => (
   <div className="flex justify-between gap-3 flex-wrap sm:flex-nowrap">
     {children}
@@ -50,11 +43,6 @@ const FieldRow = ({ children }: { children: React.ReactNode }) => (
 const FieldColumn = ({ children }: { children: React.ReactNode }) => (
   <div className="w-full sm:w-1/2">{children}</div>
 );
-
-const PaymentModeOptions = [
-  { label: 'Cash', value: '0' },
-  { label: 'UPI', value: '1' },
-];
 
 const PerSessionPayment = ({
   form,
@@ -122,7 +110,7 @@ const PerSessionPayment = ({
         control={form.control}
         name="modeOfPayment"
         label="Mode of Payment"
-        options={PaymentModeOptions}
+        options={paymentModeOptions}
       />
     </div>
   );
@@ -162,7 +150,7 @@ const RecurringPayment = ({
       control={form.control}
       name="modeOfPayment"
       label="Mode of Payment"
-      options={PaymentModeOptions}
+      options={paymentModeOptions}
     />
   </div>
 );
@@ -200,136 +188,21 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
   gymId,
   onboardingId,
 }) => {
-  const [existingPhotoUrl, setExistingPhotoUrl] = useState<string | null>(null);
-  const [existingIdCopyUrl, setExistingIdCopyUrl] = useState<string | null>(
-    null
-  );
-  const form = useForm<CreateMemberDetailsData>({
-    resolver: zodResolver(createMemberSchema),
-    defaultValues: {
-      profilePicture: null,
-      name: '',
-      email: '',
-      phone: '',
-      amountPaid: '',
-      dob: '',
-      doj: new Date().toISOString(),
-      height: '',
-      weight: '',
-      address: '',
-      gender: '',
-      membershipPlanId: '',
-      feeStatus: '',
-      personalTrainer: 0,
-      bloodGroup: '',
-      workoutPlanId: '',
-      modeOfPayment: '',
-      customSessionRate: '',
-      numberOfSessions: '',
-      idType: '',
-      idNumber: '',
-      idCopyPath: null,
-      fitnessGoal: '',
-      medicalHistory: '',
-      emergencyContactName: '',
-      emergencyContactPhone: '',
-      emergencyContactRelation: '',
-    },
-  });
-
-  // Fetch form options based on gymId
   const { formOptions } = useGymFormOptions(gymId);
+  const {
+    form,
+    handleSubmit,
+    existingPhotoUrl,
+    existingIdCopyUrl,
+    setExistingPhotoUrl,
+    setExistingIdCopyUrl,
+  } = useMemberForm(gymId, onboardingId, isOpen);
 
-  // Fetch onboarding data if onboardingId is provided
-  useEffect(() => {
-    if (onboardingId && isOpen) {
-      fetchPendingMemberDetails(onboardingId)
-        .then((data) => {
-          setExistingPhotoUrl(data.photoPath || null);
-          setExistingIdCopyUrl(data.idCopyPath || null);
-          form.reset({
-            profilePicture: null,
-            name: data.name || '',
-            email: data.email || '',
-            phone: data.phone || '',
-            gender: data.gender || '',
-            dob: data.dob || '',
-            height: String(data.height || ''),
-            weight: String(data.weight || ''),
-            bloodGroup: data.bloodGroup || '',
-            address: data.address || '',
-            idType: data.idType || '',
-            idNumber: data.idNumber || '',
-            idCopyPath: null,
-            fitnessGoal: data.fitnessGoal || '',
-            medicalHistory: data.medicalHistory || '',
-            emergencyContactName: data.emergencyContactName || '',
-            emergencyContactPhone: data.emergencyContactPhone || '',
-            emergencyContactRelation: data.emergencyContactRelation || '',
-            doj: new Date().toISOString(),
-            membershipPlanId: '',
-            feeStatus: '',
-            personalTrainer: 0,
-            workoutPlanId: '',
-            amountPaid: '',
-            modeOfPayment: '',
-            customSessionRate: '',
-            numberOfSessions: '',
-          });
-        })
-        .catch((error) => {
-          console.error('Failed to fetch onboarding details:', error);
-          toast.error('Failed to load member details');
-        });
-    } else if (!isOpen) {
-      setExistingPhotoUrl(null);
-      setExistingIdCopyUrl(null);
-    }
-  }, [onboardingId, isOpen, form]);
-
-  const queryClient = useQueryClient();
-
-  const handleSubmit = async (data: CreateMemberDetailsData) => {
-    const formData = new FormData();
-
-    Object.entries(data).forEach(([key, value]) => {
-      if (
-        (key === 'profilePicture' || key === 'idCopyPath') &&
-        value instanceof File
-      ) {
-        return formData.append(key, value);
-      }
-
-      if (key === 'personalTrainer') {
-        return formData.append(key, value === '' ? '0' : String(value));
-      }
-
-      if (
-        (key === 'numberOfSessions' || key === 'idCopyPath') &&
-        value === ''
-      ) {
-        return;
-      }
-
-      formData.append(key, String(value));
-    });
-
-    if (gymId) {
-      formData.append('gymId', String(gymId));
-    }
-
-    const result = await createMember(formData);
-
-    if (result.success) {
-      toast.success(result.success);
-
-      // Invalidate and refetch fresh data
-      await queryClient.invalidateQueries({ queryKey: ['gymMembers', gymId] });
-
+  const onSubmit = async (data: CreateMemberDetailsData) => {
+    const success = await handleSubmit(data);
+    if (success) {
       closeSheet();
       form.reset();
-    } else {
-      toast.error(result.error);
     }
   };
 
@@ -370,7 +243,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
         <form
           id="add-member-form"
           className="space-y-4"
-          onSubmit={form.handleSubmit(handleSubmit)}
+          onSubmit={form.handleSubmit(onSubmit)}
         >
           <div className="items-start gap-2 mb-6 flex justify-between">
             <KFormField
@@ -381,7 +254,10 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                 <FormControl>
                   <ProfilePictureUploader
                     files={field.value as File | null}
-                    onChange={(file) => field.onChange(file)}
+                    onChange={(file) => {
+                      field.onChange(file);
+                      if (!file) setExistingPhotoUrl(null);
+                    }}
                     existingImageUrl={existingPhotoUrl}
                   />
                 </FormControl>
@@ -574,7 +450,10 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
               <FormControl>
                 <FileUploader
                   file={field.value as File | null}
-                  onChange={(file) => field.onChange(file)}
+                  onChange={(file) => {
+                    field.onChange(file);
+                    if (!file) setExistingIdCopyUrl(null);
+                  }}
                   label="Upload ID Document"
                   existingFileUrl={existingIdCopyUrl}
                 />

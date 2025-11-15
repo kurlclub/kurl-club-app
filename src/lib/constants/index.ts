@@ -26,6 +26,11 @@ export const paymentMethodOptions = [
   { label: 'UPI', value: 'upi' },
 ];
 
+export const paymentModeOptions = [
+  { label: 'Cash', value: '0' },
+  { label: 'UPI', value: '1' },
+];
+
 export const idTypeOptions = [
   { label: 'Aadhaar Card', value: 'aadhaar' },
   { label: 'Driving License', value: 'driving_license' },
