@@ -94,7 +94,7 @@ export function Sidebar({
     <>
       <Button
         onClick={() => setSidebarOpen(true)}
-        className="p-3 ml-2 mt-2 sticky top-[62px] md:hidden"
+        className="p-3 ml-2 mt-2 sticky top-0 md:hidden"
       >
         <PanelLeftOpen />
       </Button>
