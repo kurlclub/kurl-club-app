@@ -188,7 +188,10 @@ export const useMemberForm = (
 
     if (result.success) {
       toast.success(result.success);
-      await queryClient.invalidateQueries({ queryKey: ['gymMembers', gymId] });
+      await queryClient.invalidateQueries({
+        queryKey: ['gymMembers', gymId],
+        refetchType: 'all',
+      });
       if (onboardingId) {
         await queryClient.invalidateQueries({
           queryKey: ['pendingOnboardingMembers', gymId],

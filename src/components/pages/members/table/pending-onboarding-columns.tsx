@@ -6,7 +6,7 @@ import { Check, X } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
-import { getProfilePictureSrc } from '@/lib/utils';
+import { getProfilePictureSrc, safeFormatDate } from '@/lib/utils';
 
 export type PendingMember = {
   id: number;
@@ -68,7 +68,11 @@ export const createPendingOnboardingColumns = (
   {
     accessorKey: 'dob',
     header: 'DOB',
-    cell: ({ row }) => <div className="w-[100px]">{row.getValue('dob')}</div>,
+    cell: ({ row }) => (
+      <div className="w-[100px]">
+        {safeFormatDate(row.getValue<string>('dob'))}
+      </div>
+    ),
   },
   {
     accessorKey: 'phone',

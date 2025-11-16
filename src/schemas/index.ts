@@ -357,7 +357,9 @@ export const createMemberSchema = z.object({
   feeStatus: z.string().min(1, 'Fee status is required'),
   phone: z
     .string()
-    .regex(/^\+?[1-9]\d{1,14}$/, 'Phone number must be at least 10 digits'),
+    .min(10, 'Phone number must be at least 10 digits')
+    .max(15, 'Phone number must not exceed 15 digits')
+    .regex(/^\+?[1-9]\d{1,14}$/, 'Phone number must be valid'),
   email: z.email('Invalid email format'),
   height: z.string().min(1, 'Height is required'),
   weight: z.string().min(1, 'Weight is required'),
@@ -389,25 +391,30 @@ export const createMemberSchema = z.object({
       },
       { message: 'Number of sessions must be greater than 0' }
     ),
-  idType: z.string().optional(),
-  idNumber: z.string().optional(),
+  idType: z.string().min(1, 'ID type is required'),
+  idNumber: z
+    .string()
+    .min(1, 'ID number is required')
+    .max(20, 'ID number must not exceed 20 characters'),
   idCopyPath: z
     .custom<File | null>((value) => value instanceof File || value === null, {
       error: 'ID copy must be a file.',
     })
-    .refine((file) => file === null || file.size <= 10 * 1024 * 1024, {
-      error: 'File size must be less than 10MB',
+    .refine((file) => file !== null, {
+      error: 'ID document is required',
     })
-    .optional(),
+    .refine((file) => file === null || file.size <= 4 * 1024 * 1024, {
+      error: 'File size must be less than 4MB',
+    }),
   fitnessGoal: z.string().optional(),
   medicalHistory: z.string().optional(),
-  emergencyContactName: z.string().optional(),
+  emergencyContactName: z.string().min(1, 'Emergency contact name is required'),
   emergencyContactPhone: z
     .string()
-    .regex(/^\+?[1-9]\d{1,14}$/, 'Phone number must be at least 10 digits')
-    .optional()
-    .or(z.literal('')),
-  emergencyContactRelation: z.string().optional(),
+    .min(10, 'Phone number must be at least 10 digits')
+    .max(15, 'Phone number must not exceed 15 digits')
+    .regex(/^\+?[1-9]\d{1,14}$/, 'Phone number must be valid'),
+  emergencyContactRelation: z.string().min(1, 'Relation is required'),
 });
 
 export const workoutPlanSchema = z.object({

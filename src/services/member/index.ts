@@ -36,8 +36,7 @@ export const useGymMembers = (gymId: number | string) => {
     queryKey: ['gymMembers', gymId],
     queryFn: () => fetchGymMembers(gymId),
     enabled: !!gymId,
-    staleTime: 1000 * 60 * 3,
-    refetchOnMount: true,
+    staleTime: 1000 * 60,
     retry: 1,
   });
 };

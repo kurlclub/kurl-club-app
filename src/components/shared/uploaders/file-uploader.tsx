@@ -18,7 +18,7 @@ export default function FileUploader({
   file,
   onChange,
   accept = '.pdf,.jpg,.jpeg,.png',
-  maxSize = 10 * 1024 * 1024,
+  maxSize = 4 * 1024 * 1024,
   label = 'Upload Document',
   existingFileUrl,
 }: FileUploaderProps) {

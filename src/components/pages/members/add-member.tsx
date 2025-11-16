@@ -199,6 +199,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
     setExistingIdCopyUrl,
     isLoadingOnboarding,
   } = useMemberForm(gymId, onboardingId, isOpen);
+  const isSubmitting = form.formState.isSubmitting;
 
   const onSubmit = async (data: CreateMemberDetailsData) => {
     const success = await handleSubmit(data);
@@ -220,6 +221,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
         }}
         variant="secondary"
         className="h-[46px] min-w-[90px]"
+        disabled={isSubmitting}
       >
         Cancel
       </Button>
@@ -227,8 +229,9 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
         type="submit"
         form="add-member-form"
         className="h-[46px] min-w-[73px]"
+        disabled={isSubmitting}
       >
-        Add
+        {isSubmitting ? 'Saving...' : 'Add'}
       </Button>
     </div>
   );
