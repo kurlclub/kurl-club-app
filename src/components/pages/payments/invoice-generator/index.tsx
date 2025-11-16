@@ -15,7 +15,8 @@ import {
   useInvoiceManagement,
   usePaymentHistory,
 } from '@/hooks/use-payment-management';
-import { getAvatarColor } from '@/lib/avatar-utils';
+import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
+import { useMemberByID } from '@/services/member';
 import type { MemberPaymentDetails } from '@/types/payment';
 
 import { MobilePreviewPopup } from './mobile-preview-popup';
@@ -39,6 +40,7 @@ export function InvoiceGenerator({
   const { data: paymentHistory = [], isLoading } = usePaymentHistory(
     member?.memberId || 0
   );
+  const { data: memberDetails } = useMemberByID(member?.memberId || 0);
   const { exportInvoice, sendInvoiceEmail, isExporting, isSending } =
     useInvoiceManagement();
   const { showConfirm } = useAppDialog();
@@ -165,33 +167,41 @@ export function InvoiceGenerator({
             <div
               className={`space-y-3 ${selectedPayment ? 'md:w-[380px] md:flex-shrink-0' : 'md:w-full'}`}
             >
-              <div className="flex items-start gap-3 mb-5">
-                <div className="flex items-center gap-3">
-                  <Avatar className="size-[64px]">
-                    <AvatarImage
-                      // src={`data:image/png;base64,${details?.profilePicture}`}
-                      alt="Profile picture"
-                    />
-                    <AvatarFallback
-                      className="font-medium text-xl leading-normal"
-                      style={getAvatarColor('Prasoon')}
-                    >
-                      PM
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col gap-1">
-                    <span className="font-mediu text-[20px] ">
-                      Prasoon Mohan
+              <div className="flex items-center gap-3 mb-5">
+                <Avatar className="size-[64px] flex-shrink-0">
+                  <AvatarImage
+                    src={
+                      memberDetails?.photoPath ||
+                      (memberDetails?.profilePicture
+                        ? `data:image/png;base64,${memberDetails.profilePicture}`
+                        : undefined)
+                    }
+                    alt="Profile picture"
+                  />
+                  <AvatarFallback
+                    className="font-medium text-xl leading-normal"
+                    style={getAvatarColor(member.memberName)}
+                  >
+                    {getInitials(member.memberName)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col gap-1 flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-[20px]">
+                      {member.memberName}
                     </span>
-                    <span className="text-primary-blue-50 text-nowrap text-[13px]">
-                      Member since 13/03/2024
-                    </span>
+                    <Badge className="bg-neutral-ochre-500 flex items-center w-fit justify-center text-xs rounded-full h-6 px-2.5 border border-neutral-ochre-800 bg-opacity-10">
+                      ID:
+                      <span className="uppercase ml-1">
+                        {member.memberIdentifier ||
+                          `KC${member.memberId.toString().padStart(3, '0')}`}
+                      </span>
+                    </Badge>
                   </div>
+                  <span className="text-primary-blue-50 text-nowrap text-[13px]">
+                    Member since {memberDetails?.doj || 'N/A'}
+                  </span>
                 </div>
-                <Badge className="bg-neutral-ochre-500 flex items-center w-fit justify-center text-sm rounded-full h-[30px] py-[8.5px] px-4 border border-neutral-ochre-800 bg-opacity-10">
-                  Gym no:
-                  <span className="uppercase ml-1">#290897</span>
-                </Badge>
               </div>
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-white">

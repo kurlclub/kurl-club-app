@@ -49,7 +49,7 @@ function Header({ isEditing, handleSave, toggleEdit, memberId }: HeaderProps) {
   };
 
   return (
-    <div className="flex sticky pt-4 md:pt-[26px] pb-4 z-20 drop-shadow-xl top-[50px] w-full items-center bg-primary-blue-500 justify-between gap-3 flex-wrap">
+    <div className="flex sticky pt-4 md:pt-[26px] pb-4 z-20 drop-shadow-xl top-[-1px] w-full items-center bg-primary-blue-500 justify-between gap-3 flex-wrap">
       <MemberStatusBadge status="active" />
       <div className="flex items-center gap-2">
         {isEditing ? (

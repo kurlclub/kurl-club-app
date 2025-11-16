@@ -10,6 +10,7 @@ export type FormOptionsResponse = {
     details: string;
     fee: number;
     durationInDays: number;
+    billingType: 'Recurring' | 'PerSession';
   }[];
   trainers: { id: number; trainerName: string }[];
   certificatesOptions: { id: number; name: string }[];

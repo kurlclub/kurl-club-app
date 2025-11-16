@@ -55,7 +55,7 @@ export function ManagePaymentSheet({
 }: ManagePaymentSheetProps) {
   const [showHistory, setShowHistory] = useState(false);
   const [paymentType, setPaymentType] = useState<'partial' | 'full'>('partial');
-  const pending = member?.currentCycle.pendingAmount || 0;
+  const pending = member?.currentCycle?.pendingAmount || 0;
   const { gymBranch } = useGymBranch();
   const {
     recordPartialPayment,
@@ -182,13 +182,13 @@ export function ManagePaymentSheet({
           <div className="rounded-md border border-primary-blue-400 bg-secondary-blue-500 px-4 py-3">
             <div>
               <div className="flex items-center justify-between">
-                <div className="space-y-1 mb-2">
-                  <div className="text-xs font-medium text-primary-green-200 tracking-wide uppercase">
+                <div className="mb-2">
+                  <h1 className="text-base text-white">{member.memberName}</h1>
+                  <div className="text-[10px] font-medium text-primary-green-200 tracking-wide uppercase">
                     #
                     {member.memberIdentifier ||
                       `KC${member.memberId.toString().padStart(3, '0')}`}
                   </div>
-                  <h1 className="text-base text-white">{member.memberName}</h1>
                 </div>
                 <Badge className="bg-primary-blue-400 text-primary-blue-100">
                   Plan {member.membershipPlanId}
@@ -202,7 +202,7 @@ export function ManagePaymentSheet({
                       Total Fee
                     </div>
                     <div className="text-white">
-                      ₹{member.currentCycle.planFee}
+                      ₹{member.currentCycle?.planFee || 0}
                     </div>
                   </div>
                 </div>
@@ -218,7 +218,7 @@ export function ManagePaymentSheet({
                       Due Date
                     </div>
                     <div className="text-white">
-                      {member.currentCycle.dueDate
+                      {member.currentCycle?.dueDate
                         ? formatDateTime(member.currentCycle.dueDate, 'date')
                         : 'N/A'}
                     </div>

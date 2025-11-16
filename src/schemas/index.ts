@@ -357,7 +357,9 @@ export const createMemberSchema = z.object({
   feeStatus: z.string().min(1, 'Fee status is required'),
   phone: z
     .string()
-    .regex(/^\+?[1-9]\d{1,14}$/, 'Phone number must be at least 10 digits'),
+    .min(10, 'Phone number must be at least 10 digits')
+    .max(15, 'Phone number must not exceed 15 digits')
+    .regex(/^\+?[1-9]\d{1,14}$/, 'Phone number must be valid'),
   email: z.email('Invalid email format'),
   height: z.string().min(1, 'Height is required'),
   weight: z.string().min(1, 'Weight is required'),
@@ -369,6 +371,50 @@ export const createMemberSchema = z.object({
   amountPaid: z.string().min(0, 'Amount paid must be a positive number'),
   workoutPlanId: z.string().min(1, 'Workout plan selection is required'),
   modeOfPayment: z.string().min(1, 'Payment method is required'),
+  customSessionRate: z
+    .string()
+    .optional()
+    .refine(
+      (val) => {
+        if (!val || val === '') return true;
+        return Number(val) > 0;
+      },
+      { message: 'Session rate must be greater than 0' }
+    ),
+  numberOfSessions: z
+    .string()
+    .optional()
+    .refine(
+      (val) => {
+        if (!val || val === '') return true;
+        return Number(val) > 0;
+      },
+      { message: 'Number of sessions must be greater than 0' }
+    ),
+  idType: z.string().min(1, 'ID type is required'),
+  idNumber: z
+    .string()
+    .min(1, 'ID number is required')
+    .max(20, 'ID number must not exceed 20 characters'),
+  idCopyPath: z
+    .custom<File | null>((value) => value instanceof File || value === null, {
+      error: 'ID copy must be a file.',
+    })
+    .refine((file) => file !== null, {
+      error: 'ID document is required',
+    })
+    .refine((file) => file === null || file.size <= 4 * 1024 * 1024, {
+      error: 'File size must be less than 4MB',
+    }),
+  fitnessGoal: z.string().optional(),
+  medicalHistory: z.string().optional(),
+  emergencyContactName: z.string().min(1, 'Emergency contact name is required'),
+  emergencyContactPhone: z
+    .string()
+    .min(10, 'Phone number must be at least 10 digits')
+    .max(15, 'Phone number must not exceed 15 digits')
+    .regex(/^\+?[1-9]\d{1,14}$/, 'Phone number must be valid'),
+  emergencyContactRelation: z.string().min(1, 'Relation is required'),
 });
 
 export const workoutPlanSchema = z.object({
@@ -565,6 +611,9 @@ export const gymUpdateSchema = z.object({
 
 export const membershipPlanSchema = z.object({
   planName: z.string().min(1, 'Plan name is required'),
+  billingType: z.enum(['Recurring', 'PerSession'], {
+    error: 'Billing type is required',
+  }),
   fee: z.union([
     z.string().min(1, 'Fee is required'),
     z.number().min(1, 'Fee must be greater than 0'),
@@ -574,4 +623,15 @@ export const membershipPlanSchema = z.object({
     z.string().min(1, 'Duration is required'),
     z.number().min(1, 'Duration must be at least 1 day'),
   ]),
+  defaultSessionRate: z
+    .union([z.string(), z.number()])
+    .optional()
+    .refine(
+      (val) => {
+        if (val === undefined || val === '') return true;
+        const num = typeof val === 'string' ? Number(val) : val;
+        return num > 0;
+      },
+      { message: 'Session rate must be greater than 0' }
+    ),
 });

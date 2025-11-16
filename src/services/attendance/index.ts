@@ -85,6 +85,8 @@ export type AttendanceRecordResponse = {
     role: string;
   };
   mode: string;
+  profilePicture?: string;
+  photoPath?: string;
 };
 
 export type AttendanceApiResponse = {

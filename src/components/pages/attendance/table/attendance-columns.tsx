@@ -3,9 +3,10 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { Clock, LogOut } from 'lucide-react';
 
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
+import { getProfilePictureSrc } from '@/lib/utils';
 import type { AttendanceRecordResponse } from '@/services/attendance';
 
 const StatusBadge = ({ status }: { status: string }) => {
@@ -78,6 +79,13 @@ const baseColumns: ColumnDef<AttendanceRecordResponse>[] = [
       return (
         <div className="flex items-center gap-2 w-[180px]">
           <Avatar className="h-8 w-8">
+            <AvatarImage
+              src={getProfilePictureSrc(
+                row.original.profilePicture,
+                row.original.photoPath
+              )}
+              alt={name}
+            />
             <AvatarFallback className="font-medium" style={avatarStyle}>
               {initials}
             </AvatarFallback>

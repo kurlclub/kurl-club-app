@@ -33,7 +33,10 @@ export async function createMembershipPlan(membershipPlan: MembershipPlan) {
   try {
     const response = await api.post<ApiResponse<MembershipPlan>>(
       '/Gym/create-membership-plan',
-      membershipPlan
+      {
+        ...membershipPlan,
+        billingType: membershipPlan.billingType === 'PerSession' ? 1 : 0,
+      }
     );
     return response.data;
   } catch (error) {
@@ -50,7 +53,10 @@ export async function updateMembershipPlan(
   try {
     const response = await api.put<ApiResponse<MembershipPlan>>(
       `/Gym/update-membership-plan/${id}`,
-      membershipPlan
+      {
+        ...membershipPlan,
+        billingType: membershipPlan.billingType === 'PerSession' ? 1 : 0,
+      }
     );
     return response.data;
   } catch (error) {

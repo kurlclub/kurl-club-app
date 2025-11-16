@@ -29,7 +29,7 @@ export const TableView = ({ payments, columns, filters }: Props) => {
             member.memberIdentifier ||
               `KC${member.memberId.toString().padStart(3, '0')}`,
             member.memberStatus,
-            member.currentCycle.status,
+            member.currentCycle?.status || '',
           ];
         }
       ) as unknown as MemberPaymentDetails[]

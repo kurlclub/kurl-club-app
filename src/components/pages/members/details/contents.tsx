@@ -31,7 +31,7 @@ function Contents({
   formOptions?: FormOptionsResponse;
 }) {
   return (
-    <div className="md:px-8 pt-0 w-full max-w-[calc(100%-80px)] md:max-w-[calc(100%-300px)] xl:max-w-[calc(100%-336px)]">
+    <div className="px-4 md:px-8 py-4 md:py-8 pt-0! w-full">
       <Header
         memberId={memberId}
         isEditing={isEditing}
