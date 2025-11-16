@@ -53,7 +53,7 @@ export const columns: ColumnDef<Member>[] = [
             <AvatarImage
               src={getProfilePictureSrc(
                 row.original.profilePicture,
-                row.original.avatar
+                row.original.photoPath
               )}
               alt={name}
             />

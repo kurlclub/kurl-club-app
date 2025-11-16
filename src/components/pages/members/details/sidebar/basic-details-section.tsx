@@ -1,17 +1,18 @@
-import Image from 'next/image';
-import { Fragment } from 'react';
+import { Fragment, useState } from 'react';
 
-import { Input } from '@/components/ui/input';
+import { Eye } from 'lucide-react';
+
+import { EditableFormField } from '@/components/shared/form/editable-form-field';
+import { DocumentPreviewModal } from '@/components/shared/modals/document-preview-modal';
+import FileUploader from '@/components/shared/uploaders/file-uploader';
+import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { FormOptionsResponse } from '@/hooks/use-gymform-options';
-import { bloodGroupOptions } from '@/lib/constants';
+import {
+  bloodGroupOptions,
+  idTypeOptions,
+  purposeOptions,
+} from '@/lib/constants';
 import type { EditableSectionProps } from '@/types/members';
 
 export function BasicDetailsSection({
@@ -21,11 +22,13 @@ export function BasicDetailsSection({
   formOptions,
 }: EditableSectionProps & { formOptions?: FormOptionsResponse }) {
   const options = formOptions;
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   return (
     <Fragment>
       {/* HEIGHT  */}
-      <EditableField
+      <EditableFormField
+        type="input"
         label="Height"
         value={details?.height}
         isEditing={isEditing}
@@ -36,7 +39,8 @@ export function BasicDetailsSection({
       />
 
       {/* WEIGHT  */}
-      <EditableField
+      <EditableFormField
+        type="input"
         label="Weight"
         value={details?.weight}
         isEditing={isEditing}
@@ -47,7 +51,8 @@ export function BasicDetailsSection({
       />
 
       {/* PACKAGE  */}
-      <EditableSelect
+      <EditableFormField
+        type="select"
         label="Package"
         value={
           isEditing
@@ -69,7 +74,8 @@ export function BasicDetailsSection({
       />
 
       {/* WORKOUT_PLAN  */}
-      <EditableSelect
+      <EditableFormField
+        type="select"
         label="Workout plan"
         value={
           isEditing
@@ -90,7 +96,8 @@ export function BasicDetailsSection({
       />
 
       {/* TRAINER_ASSIGNED  */}
-      <EditableSelect
+      <EditableFormField
+        type="select"
         label="Assigned to"
         value={
           isEditing
@@ -112,131 +119,103 @@ export function BasicDetailsSection({
       />
 
       {/* BLOOD_GROUP  */}
-      <EditableSelect
+      <EditableFormField
+        type="select"
         label="Blood Group"
         value={details?.bloodGroup}
         isEditing={isEditing}
         onChange={(value) => onUpdate('bloodGroup', value)}
         options={bloodGroupOptions}
       />
-    </Fragment>
-  );
-}
 
-interface EditableFieldProps {
-  label?: string;
-  value?: string | number;
-  isEditing?: boolean;
-  onChange: (value: string) => void;
-  suffix?: string;
-  customInput?: React.ReactNode;
-}
+      {/* FITNESS_GOAL  */}
+      <EditableFormField
+        type="select"
+        label="Fitness Goal"
+        value={details?.fitnessGoal}
+        isEditing={isEditing}
+        onChange={(value) => onUpdate('fitnessGoal', value)}
+        options={purposeOptions}
+      />
 
-export function EditableField({
-  label,
-  value,
-  isEditing,
-  onChange,
-  suffix,
-  customInput,
-}: EditableFieldProps) {
-  const displayValue =
-    typeof value === 'number' && value === 0 ? '' : (value ?? '');
+      {/* MEDICAL_HISTORY  */}
+      <EditableFormField
+        type="input"
+        label="Medical History"
+        value={details?.medicalHistory}
+        isEditing={isEditing}
+        onChange={(value) => onUpdate('medicalHistory', value)}
+      />
 
-  return (
-    <div className="py-3 flex flex-col gap-2">
-      <Label className="text-primary-blue-100 font-normal text-sm leading-normal">
-        {label}
-      </Label>
+      {/* ID_TYPE  */}
+      <EditableFormField
+        type="select"
+        label="ID Type"
+        value={details?.idType}
+        isEditing={isEditing}
+        onChange={(value) => onUpdate('idType', value)}
+        options={idTypeOptions}
+      />
+
+      {/* ID_NUMBER  */}
+      <EditableFormField
+        type="input"
+        label="ID Number"
+        value={details?.idNumber}
+        isEditing={isEditing}
+        onChange={(value) => onUpdate('idNumber', value)}
+      />
+
+      {/* ID_COPY_PATH  */}
       {isEditing ? (
-        customInput ? (
-          customInput
-        ) : (
-          <div className="flex items-center pb-1.5 border-b gap-2 border-primary-blue-300 group focus-within:border-white hover:border-white k-transition">
-            <Input
-              maxLength={suffix ? 6 : undefined}
-              value={displayValue}
-              onChange={(e) => onChange(e.target.value)}
-              className="border-0 rounded-none h-auto p-0 text-[15px]! focus-visible:outline-0 focus-visible:ring-0"
-            />
-            {suffix && (
-              <span className="text-white text-[15px] leading-[140%] font-normal">
-                {suffix}
-              </span>
-            )}
-          </div>
-        )
-      ) : (
-        <div className="flex items-center gap-1">
-          <p className="text-white text-[15px] leading-[140%] font-normal">
-            {displayValue}
-          </p>
-          {suffix && (
-            <span className="block text-white text-[15px] leading-[140%] font-normal">
-              {suffix}
-            </span>
-          )}
+        <div className="py-3 flex flex-col gap-2">
+          <Label className="text-primary-blue-100 font-normal text-sm leading-normal">
+            ID Document
+          </Label>
+          <FileUploader
+            file={
+              details?.idCopyPath && details.idCopyPath instanceof File
+                ? details.idCopyPath
+                : null
+            }
+            onChange={(file) => onUpdate('idCopyPath', file || null)}
+            existingFileUrl={
+              details?.idCopyPath && typeof details.idCopyPath === 'string'
+                ? details.idCopyPath
+                : undefined
+            }
+            label="Upload ID Document"
+          />
         </div>
-      )}
-    </div>
-  );
-}
-
-interface EditableSelectProps<T extends string> {
-  label: string;
-  value?: T;
-  isEditing: boolean;
-  onChange: (value: T) => void;
-  options: Array<{ value: T; label: string; avatar?: string }>;
-}
-
-function EditableSelect<T extends string>({
-  label,
-  value,
-  isEditing,
-  onChange,
-  options,
-}: EditableSelectProps<T>) {
-  return (
-    <div className="py-3 flex flex-col gap-2">
-      <Label className="text-primary-blue-100 font-normal text-sm leading-normal">
-        {label}
-      </Label>
-      {isEditing ? (
-        <Select value={value} onValueChange={onChange}>
-          <SelectTrigger className="border-0 border-b rounded-none focus:outline-hidden focus:shadow-none focus:ring-0 p-0 h-auto text-[15px] text-white font-normal leading-normal pb-2 border-primary-blue-300 focus:border-white hover:border-white k-transition focus:outline-0">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="shad-select-content">
-            {options.map((option) => (
-              <SelectItem
-                className="shad-select-item"
-                key={option.value}
-                value={option.value}
-              >
-                <div className="flex items-center gap-2">
-                  {option.avatar && (
-                    <span className="w-6 h-6 flex items-center justify-center">
-                      <Image
-                        height={24}
-                        width={24}
-                        src={option.avatar}
-                        alt={option.label}
-                        className="rounded-full object-cover"
-                      />
-                    </span>
-                  )}
-                  {option.label}
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       ) : (
-        <p className="text-white text-[15px] leading-[140%] font-normal">
-          {value}
-        </p>
+        details?.idCopyPath && (
+          <>
+            <div className="py-3 flex flex-col gap-2">
+              <Label className="text-primary-blue-100 font-normal text-sm leading-normal">
+                ID Document
+              </Label>
+              <Button
+                type="button"
+                variant="link"
+                onClick={() => setPreviewOpen(true)}
+                className="text-primary-green-500 hover:text-primary-green-400 text-[15px] leading-[140%] font-normal underline inline-flex items-center gap-1 p-0 h-auto justify-start"
+              >
+                <Eye className="h-4 w-4" />
+                View Document
+              </Button>
+            </div>
+
+            <DocumentPreviewModal
+              open={previewOpen}
+              onOpenChange={setPreviewOpen}
+              documentUrl={
+                typeof details.idCopyPath === 'string' ? details.idCopyPath : ''
+              }
+              title="ID Document Preview"
+            />
+          </>
+        )
       )}
-    </div>
+    </Fragment>
   );
 }

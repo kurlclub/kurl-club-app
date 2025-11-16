@@ -250,24 +250,29 @@ export const getDifficultyColor = (level: string) => {
 /**
  * Returns a valid image source for a profile picture.
  * Handles Base64 strings, data URLs, File objects, and provides a fallback if null.
+ * Checks both profilePicture and photoPath fields.
  *
  * @param profilePicture - The profile picture as a Base64 string, data URL, File, or null.
- * @param fallback - A fallback image URL if the profile picture is null.
- * @returns A valid image source URL.
+ * @param photoPath - Alternative field for photo path (URL or Base64).
+ * @returns A valid image source URL or undefined.
  */
 export const getProfilePictureSrc = (
-  profilePicture: string | File | null,
-  fallback: string
+  profilePicture?: string | File | null,
+  photoPath?: string | null
 ) => {
-  if (!profilePicture) return fallback;
+  const source = profilePicture || photoPath;
+  if (!source) return undefined;
 
-  if (typeof profilePicture === 'string') {
-    return profilePicture.startsWith('data:image')
-      ? profilePicture
-      : `data:image/png;base64,${profilePicture}`;
+  if (typeof source === 'string') {
+    // If it's already a full URL or data URL, return as is
+    if (source.startsWith('http') || source.startsWith('data:image')) {
+      return source;
+    }
+    // Otherwise treat as Base64
+    return `data:image/png;base64,${source}`;
   }
 
-  return URL.createObjectURL(profilePicture);
+  return URL.createObjectURL(source);
 };
 
 /**

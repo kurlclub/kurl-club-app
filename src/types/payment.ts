@@ -36,6 +36,8 @@ export interface MemberPaymentDetails {
   memberName: string;
   membershipPlanId: number;
   billingType: 'Recurring' | 'PerSession';
+  profilePicture?: string;
+  photoPath?: string;
   // For Recurring billing
   currentCycle?: PaymentCycle;
   previousCycles?: PaymentCycle[];

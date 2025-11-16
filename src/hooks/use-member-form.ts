@@ -21,6 +21,7 @@ export const useMemberForm = (
   const [existingIdCopyUrl, setExistingIdCopyUrl] = useState<string | null>(
     null
   );
+  const [isLoadingOnboarding, setIsLoadingOnboarding] = useState(false);
 
   const form = useForm<CreateMemberDetailsData>({
     resolver: zodResolver(createMemberSchema),
@@ -60,10 +61,13 @@ export const useMemberForm = (
   // Fetch onboarding data if onboardingId is provided
   useEffect(() => {
     if (onboardingId && isOpen) {
+      setIsLoadingOnboarding(true);
       fetchPendingMemberDetails(onboardingId)
         .then((data) => {
           setExistingPhotoUrl(data.photoPath || null);
-          setExistingIdCopyUrl(data.idCopyPath || null);
+          setExistingIdCopyUrl(
+            typeof data.idCopyPath === 'string' ? data.idCopyPath : null
+          );
 
           form.reset({
             profilePicture: null,
@@ -98,10 +102,14 @@ export const useMemberForm = (
         .catch((error) => {
           console.error('Failed to fetch onboarding details:', error);
           toast.error('Failed to load member details');
+        })
+        .finally(() => {
+          setIsLoadingOnboarding(false);
         });
     } else if (!isOpen) {
       setExistingPhotoUrl(null);
       setExistingIdCopyUrl(null);
+      setIsLoadingOnboarding(false);
     }
   }, [onboardingId, isOpen, form]);
 
@@ -200,5 +208,6 @@ export const useMemberForm = (
     existingIdCopyUrl,
     setExistingPhotoUrl,
     setExistingIdCopyUrl,
+    isLoadingOnboarding,
   };
 };

@@ -31,12 +31,18 @@ export function MemberHeader({
                   onUpdate('profilePicture', null);
                 }
               }}
+              existingImageUrl={details?.photoPath || undefined}
               isSmall
             />
           ) : (
             <Avatar className="size-[64px]">
               <AvatarImage
-                src={`data:image/png;base64,${details?.profilePicture}`}
+                src={
+                  details?.photoPath ||
+                  (details?.profilePicture
+                    ? `data:image/png;base64,${details.profilePicture}`
+                    : undefined)
+                }
                 alt="Profile picture"
               />
               <AvatarFallback

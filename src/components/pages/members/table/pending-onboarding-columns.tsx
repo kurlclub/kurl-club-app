@@ -3,9 +3,10 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { Check, X } from 'lucide-react';
 
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
+import { getProfilePictureSrc } from '@/lib/utils';
 
 export type PendingMember = {
   id: number;
@@ -16,6 +17,8 @@ export type PendingMember = {
   weight: number;
   dob: string;
   bloodGroup: string;
+  profilePicture?: string | File | null;
+  photoPath?: string;
 };
 
 export const createPendingOnboardingColumns = (
@@ -44,6 +47,13 @@ export const createPendingOnboardingColumns = (
       return (
         <div className="flex items-center gap-2 w-[140px]">
           <Avatar className="h-8 w-8">
+            <AvatarImage
+              src={getProfilePictureSrc(
+                row.original.profilePicture,
+                row.original.photoPath
+              )}
+              alt={name}
+            />
             <AvatarFallback className="font-medium" style={avatarStyle}>
               {initials}
             </AvatarFallback>

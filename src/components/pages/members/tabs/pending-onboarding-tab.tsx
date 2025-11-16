@@ -45,6 +45,8 @@ export function PendingOnboardingTab() {
     weight: (member as { weight?: number }).weight || 0,
     dob: member.dob || 'N/A',
     bloodGroup: member.bloodGroup || 'N/A',
+    profilePicture: member.profilePicture,
+    photoPath: member.photoPath,
   }));
 
   const { items: filteredMembers, search } = useFilterableList<PendingMember>(

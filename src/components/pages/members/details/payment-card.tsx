@@ -119,19 +119,19 @@ function PaymentCard({ memberId, formOptions }: PaymentCardProps) {
           <div className="flex gap-2">
             <Button
               onClick={openInvoice}
-              className="text-white hover:bg-primary-blue-400"
-              variant="ghost"
+              className="bg-primary-blue-400 text-white hover:bg-primary-blue-500/80"
               size="sm"
             >
               <FileText className="h-4 w-4" />
+              <span>Invoice</span>
             </Button>
             <Button
               onClick={openSheet}
-              className="text-white hover:bg-primary-blue-400"
-              variant="ghost"
+              className="bg-primary-blue-400 text-white hover:bg-primary-blue-500"
               size="sm"
             >
               <Edit className="h-4 w-4" />
+              <span>Record Payment</span>
             </Button>
           </div>
         </div>

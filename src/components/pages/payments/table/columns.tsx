@@ -6,7 +6,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { Eye, FileText, MoreHorizontal, Receipt } from 'lucide-react';
 
 import { FeeStatusBadge } from '@/components/shared/badges/fee-status-badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -19,6 +19,7 @@ import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
 import {
   calculateDaysRemaining,
   getPaymentBadgeStatus,
+  getProfilePictureSrc,
   getUrgencyConfig,
 } from '@/lib/utils';
 import { MemberPaymentDetails } from '@/types/payment';
@@ -118,6 +119,13 @@ export const createPaymentColumns = (
       return (
         <div className="flex items-center gap-2 w-[160px]">
           <Avatar className="h-8 w-8">
+            <AvatarImage
+              src={getProfilePictureSrc(
+                row.original.profilePicture,
+                row.original.photoPath
+              )}
+              alt={name}
+            />
             <AvatarFallback className="font-medium" style={avatarStyle}>
               {initials}
             </AvatarFallback>

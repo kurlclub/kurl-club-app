@@ -2,13 +2,8 @@ import React, { useRef, useState } from 'react';
 
 import { Eye, FileText, Upload, X } from 'lucide-react';
 
+import { DocumentPreviewModal } from '@/components/shared/modals/document-preview-modal';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 
 interface FileUploaderProps {
   file: File | null;
@@ -121,24 +116,14 @@ export default function FileUploader({
             </div>
           </div>
 
-          <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-            <DialogContent className="max-w-4xl h-[90vh] bg-white dark:bg-secondary-blue-600">
-              <DialogHeader>
-                <DialogTitle className="text-gray-900 dark:text-white">
-                  Document Preview
-                </DialogTitle>
-              </DialogHeader>
-              <div className="flex-1 overflow-auto bg-gray-50 dark:bg-secondary-blue-700 rounded-lg p-2">
-                {existingFileUrl && (
-                  <iframe
-                    src={existingFileUrl}
-                    className="w-full h-[calc(90vh-120px)] border-0 rounded-lg bg-white"
-                    title="Document Preview"
-                  />
-                )}
-              </div>
-            </DialogContent>
-          </Dialog>
+          {existingFileUrl && (
+            <DocumentPreviewModal
+              open={previewOpen}
+              onOpenChange={setPreviewOpen}
+              documentUrl={existingFileUrl}
+              title="Document Preview"
+            />
+          )}
         </>
       )}
     </div>
