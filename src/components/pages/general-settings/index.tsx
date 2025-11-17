@@ -2,7 +2,6 @@
 
 import {
   BusinessProfileTab,
-  CommunicationTab,
   OperationsTab,
   SecurityAndPrivacyTab,
 } from '@/components/pages/general-settings/tabs';
@@ -12,7 +11,6 @@ import { useTabState } from '@/hooks/use-tab-state';
 
 const tabs: TabItem[] = [
   { id: 'business_profile', label: 'Business Profile' },
-  { id: 'communication', label: 'Communication' },
   { id: 'operations', label: 'Operations' },
   { id: 'security_and_privacy', label: 'Security & Privacy' },
 ];
@@ -29,7 +27,6 @@ export default function GeneralSettings() {
       maxContentWidth="wide"
     >
       {activeTab === 'business_profile' && <BusinessProfileTab />}
-      {activeTab === 'communication' && <CommunicationTab />}
       {activeTab === 'operations' && <OperationsTab />}
       {activeTab === 'security_and_privacy' && <SecurityAndPrivacyTab />}
     </StudioLayout>

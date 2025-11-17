@@ -524,61 +524,6 @@ export const dayBufferSchema = z.object({
   plan: z.string().min(1, 'plan selection is required'),
 });
 
-export const messagingTemplateSchema = z.object({
-  name: z.string().min(1, 'Template name is required'),
-  category: z.enum(['payment', 'reminder', 'notification', 'general']),
-  channel: z.literal('whatsapp'),
-  content: z.string().min(1, 'Message content is required'),
-});
-
-// Automation schemas
-export const automationTimingSchema = z.object({
-  id: z.string(),
-  direction: z.enum(['before', 'after']),
-  days: z.number().min(0),
-  sendAt: z
-    .string()
-    .regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format'),
-  channels: z
-    .array(z.enum(['chat', 'whatsapp', 'sms']))
-    .min(1, 'At least one channel is required'),
-  templateId: z.string().min(1, 'Template is required'),
-});
-
-export const automationSchema = z.object({
-  id: z.string(),
-  name: z.string().optional(),
-  description: z.string().optional(),
-  eventType: z.enum([
-    'payment_advance',
-    'payment_due',
-    'payment_grace',
-    'payment_failed',
-    'payment_received',
-    'class_reminder',
-    'birthday',
-    'anniversary',
-    'achievement',
-  ]),
-  enabled: z.boolean(),
-  timings: z
-    .array(automationTimingSchema)
-    .min(1, 'At least one timing is required'),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-});
-
-export const createAutomationSchema = automationSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const updateAutomationSchema = automationSchema.partial().omit({
-  id: true,
-  createdAt: true,
-});
-
 export const paymentFormSchema = z.object({
   amount: z.string().refine((val) => {
     const num = Number(val);
