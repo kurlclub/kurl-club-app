@@ -6,7 +6,6 @@ import { useTransition } from 'react';
 import { LogOut, User } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { GymRequiredGuard } from '@/components/shared/guards';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -127,17 +126,15 @@ export function NavUser() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-white/10 mx-2 my-2" />
               <div className="p-2 space-y-1">
-                <GymRequiredGuard>
-                  <DropdownMenuItem
-                    onClick={() =>
-                      router.push('/general-settings?tab=business_profile')
-                    }
-                    className="cursor-pointer text-white hover:bg-primary-green-500/20 hover:text-primary-green-100 rounded-xl px-4 py-3 transition-all duration-200 font-medium"
-                  >
-                    <User className="mr-3 h-4 w-4" />
-                    Gym Profile
-                  </DropdownMenuItem>
-                </GymRequiredGuard>
+                <DropdownMenuItem
+                  onClick={() =>
+                    router.push('/general-settings?tab=business_profile')
+                  }
+                  className="cursor-pointer text-white hover:bg-primary-green-500/20 hover:text-primary-green-100 rounded-xl px-4 py-3 transition-all duration-200 font-medium"
+                >
+                  <User className="mr-3 h-4 w-4" />
+                  Gym Profile
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={handleLogout}
                   disabled={isPending}
@@ -192,19 +189,17 @@ export function NavUser() {
 
             {/* Action Buttons */}
             <div className="flex gap-2">
-              <GymRequiredGuard>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    router.push('/general-settings?tab=business_profile')
-                  }
-                  className="flex-1 h-9 text-xs bg-white/5 border-white/10 text-white hover:bg-primary-green-500 hover:border-primary-green-500 hover:text-black transition-all duration-200"
-                >
-                  <User className="h-3 w-3 mr-1" />
-                  Profile
-                </Button>
-              </GymRequiredGuard>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  router.push('/general-settings?tab=business_profile')
+                }
+                className="flex-1 h-9 text-xs bg-white/5 border-white/10 text-white hover:bg-primary-green-500 hover:border-primary-green-500 hover:text-black transition-all duration-200"
+              >
+                <User className="h-3 w-3 mr-1" />
+                Profile
+              </Button>
               <Button
                 variant="destructive"
                 size="sm"
