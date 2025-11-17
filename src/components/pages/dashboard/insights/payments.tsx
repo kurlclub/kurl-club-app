@@ -3,38 +3,44 @@ import React from 'react';
 import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts';
 
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
+import { PAYMENT_CHART_COLORS, formatAmount } from '@/lib/utils';
+import { useGymBranch } from '@/providers/gym-branch-provider';
+import { useDashboardData } from '@/services/dashboard';
 
-const chartData = [
-  { name: 'Unpaid', value: 120000 },
-  { name: 'Paid', value: 25500 },
-];
-
-const COLORS = ['#F7FF93', '#96AF01'];
-
-const paymentSummary = [
-  {
-    label: 'Total unpaid members',
-    value: 100,
-    color: '#F7FF93',
-  },
-  {
-    label: 'Total outstanding',
-    value: '₹1,20,000',
-    color: '#F7FF93',
-  },
-  {
-    label: 'Total paid members',
-    value: 10,
-    color: '#96AF01',
-  },
-  {
-    label: 'Total paid',
-    value: '₹25,500',
-    color: '#96AF01',
-  },
-];
+const COLORS = [PAYMENT_CHART_COLORS.UNPAID, PAYMENT_CHART_COLORS.PAID];
 
 function Payments() {
+  const { gymBranch } = useGymBranch();
+  const { data: dashboardData } = useDashboardData(gymBranch?.gymId || 0);
+
+  const chartData = [
+    { name: 'Unpaid', value: dashboardData?.payments.totalOutstanding || 0 },
+    { name: 'Paid', value: dashboardData?.payments.totalPaid || 0 },
+  ];
+
+  const paymentSummary = [
+    {
+      label: 'Total unpaid members',
+      value: dashboardData?.payments.totalUnpaidMembers || 0,
+      color: PAYMENT_CHART_COLORS.UNPAID,
+    },
+    {
+      label: 'Total outstanding',
+      value: `₹${(dashboardData?.payments.totalOutstanding || 0).toLocaleString()}`,
+      color: PAYMENT_CHART_COLORS.UNPAID,
+    },
+    {
+      label: 'Total paid members',
+      value: dashboardData?.payments.totalPaidMembers || 0,
+      color: PAYMENT_CHART_COLORS.PAID,
+    },
+    {
+      label: 'Total paid',
+      value: `₹${(dashboardData?.payments.totalPaid || 0).toLocaleString()}`,
+      color: PAYMENT_CHART_COLORS.PAID,
+    },
+  ];
+
   return (
     <Card className="border-none bg-secondary-blue-500 rounded-lg w-full">
       <CardContent className="flex h-full flex-col xl:flex-row gap-3 p-5 justify-between">
@@ -67,7 +73,9 @@ function Payments() {
 
             {/* Center Label */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-center leading-normal">
-              <div className="text-[32px] font-medium">₹120K</div>
+              <div className="text-[32px] font-medium">
+                {formatAmount(dashboardData?.payments.totalOutstanding || 0)}
+              </div>
               <div className="text-[15px]">Unpaid</div>
             </div>
           </div>

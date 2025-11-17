@@ -480,3 +480,26 @@ export const getUrgencyConfig = (daysRemaining: number) => {
     };
   }
 };
+
+/**
+ * Formats currency amounts with K/L suffixes for large numbers.
+ *
+ * @param amount - The amount to format.
+ * @returns Formatted currency string.
+ */
+export const formatAmount = (amount: number): string => {
+  if (amount >= 100000) {
+    return `₹${(amount / 100000).toFixed(0)}L`;
+  } else if (amount >= 1000) {
+    return `₹${(amount / 1000).toFixed(0)}K`;
+  }
+  return `₹${amount}`;
+};
+
+/**
+ * Payment chart color constants.
+ */
+export const PAYMENT_CHART_COLORS = {
+  UNPAID: '#F7FF93',
+  PAID: '#96AF01',
+} as const;
