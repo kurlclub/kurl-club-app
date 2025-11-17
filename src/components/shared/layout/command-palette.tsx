@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 
 import { CreditCard, UserPlus, Users } from 'lucide-react';
 
+import { useSendOnboarding } from '@/components/shared/quick-actions';
 import { Button } from '@/components/ui/button';
 import {
   CommandDialog,
@@ -18,11 +19,11 @@ import { DialogTitle } from '@/components/ui/dialog';
 
 const commands = [
   {
-    id: 'add-member',
-    label: 'Add Member',
+    id: 'send-onboarding',
+    label: 'Send Onboarding',
     icon: UserPlus,
-    action: '/members?action=add',
-    keywords: ['member', 'add', 'new', 'register'],
+    action: 'modal',
+    keywords: ['onboarding', 'send', 'whatsapp', 'link'],
   },
   {
     id: 'record-payment',
@@ -43,6 +44,7 @@ const commands = [
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
+  const { openModal, SendOnboardingModal } = useSendOnboarding();
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -58,11 +60,16 @@ export function CommandPalette() {
 
   const runCommand = (action: string) => {
     setOpen(false);
-    router.push(action);
+    if (action === 'modal') {
+      openModal();
+    } else {
+      router.push(action);
+    }
   };
 
   return (
     <>
+      <SendOnboardingModal />
       <CommandDialog open={open} onOpenChange={setOpen} closable={false}>
         <DialogTitle className="sr-only">Commands</DialogTitle>
         <div className="shad-command-wrapper">
@@ -95,9 +102,11 @@ export function CommandPalette() {
 
 export function QuickActionsButton() {
   const [open, setOpen] = useState(false);
+  const { openModal, SendOnboardingModal } = useSendOnboarding();
 
   return (
     <>
+      <SendOnboardingModal />
       <Button
         onClick={() => setOpen(true)}
         variant="ghost"
@@ -134,7 +143,11 @@ export function QuickActionsButton() {
                 key={command.id}
                 onSelect={() => {
                   setOpen(false);
-                  window.location.href = command.action;
+                  if (command.action === 'modal') {
+                    openModal();
+                  } else {
+                    window.location.href = command.action;
+                  }
                 }}
                 className="shad-command-item"
               >
