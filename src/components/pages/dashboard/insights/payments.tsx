@@ -82,8 +82,8 @@ function Payments() {
         </div>
 
         {/* Summary Cards */}
-        <div className="flex flex-col py-3 justify-center gap-[6px] text-white w-full xl:max-w-[50%] max-w-full">
-          <div className="bg-primary-blue-400 rounded-xl h-full p-5 flex flex-col gap-[10px]">
+        <div className="flex flex-col sm:flex-row xl:flex-col xl:py-3 justify-center gap-[6px] text-white w-full xl:max-w-[50%] max-w-full">
+          <div className="bg-primary-blue-400 rounded-xl h-full p-5 flex flex-col gap-[10px] w-full">
             {paymentSummary.slice(0, 2).map((item, idx) => (
               <div className="flex items-start gap-[6px]" key={idx}>
                 <span
@@ -99,7 +99,7 @@ function Payments() {
               </div>
             ))}
           </div>
-          <div className="bg-primary-blue-400 rounded-xl h-full p-5 flex flex-col gap-[10px]">
+          <div className="bg-primary-blue-400 rounded-xl h-full p-5 flex flex-col gap-[10px] w-full">
             {paymentSummary.slice(2).map((item, idx) => (
               <div className="flex items-start gap-[6px]" key={idx}>
                 <span
