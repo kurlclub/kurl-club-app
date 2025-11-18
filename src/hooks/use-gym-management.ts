@@ -14,7 +14,8 @@ export function useGymDetails(gymId: number) {
     queryKey: ['gymDetails', gymId],
     queryFn: () => fetchGymById(gymId),
     enabled: !!gymId,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 15, // 15 minutes
+    gcTime: 1000 * 60 * 30, // 30 minutes
   });
 }
 
@@ -23,7 +24,8 @@ export function useGymProfilePicture(gymId: number) {
     queryKey: ['gymProfilePicture', gymId],
     queryFn: () => fetchGymProfilePicture(gymId),
     enabled: !!gymId,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 15, // 15 minutes
+    gcTime: 1000 * 60 * 30, // 30 minutes
   });
 }
 

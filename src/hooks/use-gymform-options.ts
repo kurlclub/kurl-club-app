@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { api } from '@/lib/api';
 
@@ -16,38 +16,48 @@ export type FormOptionsResponse = {
   certificatesOptions: { id: number; name: string }[];
 };
 
+const fetchFormOptions = async (
+  gymId: number
+): Promise<FormOptionsResponse> => {
+  const response = await api.get<{
+    success: boolean;
+    data: FormOptionsResponse;
+  }>(`/Gym/${gymId}/formData`);
+
+  if (!response.success) {
+    throw new Error('Failed to load form options');
+  }
+
+  return response.data;
+};
+
 export const useGymFormOptions = (gymId?: number) => {
-  const [formOptions, setFormOptions] = useState<FormOptionsResponse | null>(
-    null
-  );
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: formOptions,
+    isLoading: loading,
+    error,
+  } = useQuery({
+    queryKey: ['gymFormOptions', gymId],
+    queryFn: () => fetchFormOptions(gymId!),
+    enabled: !!gymId,
+    staleTime: 1000 * 60 * 15, // 15 minutes
+    gcTime: 1000 * 60 * 30, // 30 minutes
+  });
 
-  useEffect(() => {
-    const fetchFormOptions = async () => {
-      if (!gymId) return;
+  return {
+    formOptions: formOptions || null,
+    loading,
+    error: error?.message || null,
+  };
+};
 
-      try {
-        setLoading(true);
-        const response = await api.get<{
-          success: boolean;
-          data: FormOptionsResponse;
-        }>(`/Gym/${gymId}/formData`);
+// Utility hook for invalidating form options cache
+export const useInvalidateFormOptions = () => {
+  const queryClient = useQueryClient();
 
-        if (response.success) {
-          setFormOptions(response.data);
-        } else {
-          setError('Failed to load form options.');
-        }
-      } catch {
-        setError('An error occurred while fetching form options.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFormOptions();
-  }, [gymId]);
-
-  return { formOptions, loading, error };
+  return (gymId: number) => {
+    queryClient.invalidateQueries({
+      queryKey: ['gymFormOptions', gymId],
+    });
+  };
 };

@@ -31,10 +31,11 @@ import {
 import { FormControl } from '@/components/ui/form';
 import { useAppDialog } from '@/hooks/use-app-dialog';
 import {
+  useGymDetails,
   useGymManagement,
   useGymProfilePicture,
 } from '@/hooks/use-gym-management';
-import { useAuth } from '@/providers/auth-provider';
+import { useGymBranch } from '@/providers/gym-branch-provider';
 import { GymDataDetailsSchema } from '@/schemas';
 
 type BusinessProfile = z.infer<typeof GymDataDetailsSchema>;
@@ -85,11 +86,12 @@ const createFormData = (apiData: Record<string, unknown>) => {
 };
 
 export function BusinessProfileTab() {
-  const { gymDetails, fetchGymDetails } = useAuth();
+  const { gymBranch } = useGymBranch();
   const { showConfirm } = useAppDialog();
   const { updateGym, isUpdating } = useGymManagement();
+  const { data: gymDetails } = useGymDetails(gymBranch?.gymId || 0);
   const { data: profilePictureData } = useGymProfilePicture(
-    gymDetails?.id || 0
+    gymBranch?.gymId || 0
   );
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
   const [originalSocialLinks, setOriginalSocialLinks] = useState<string[]>([]);
@@ -180,7 +182,7 @@ export function BusinessProfileTab() {
       );
       const formData = createFormData(apiData);
       await updateGym({ gymId: gymDetails.id, data: formData });
-      await fetchGymDetails(gymDetails.id);
+      // Cache will be automatically invalidated by useGymManagement
       form.reset(data);
     } catch {
       // Error handled by hook
@@ -206,7 +208,7 @@ export function BusinessProfileTab() {
       );
       const formData = createFormData(apiData);
       await updateGym({ gymId: gymDetails.id, data: formData });
-      await fetchGymDetails(gymDetails.id);
+      // Cache will be automatically invalidated by useGymManagement
       setOriginalSocialLinks(
         currentData.socialLinks
           ?.filter((link) => link.url.trim())
@@ -248,7 +250,7 @@ export function BusinessProfileTab() {
           );
           const formData = createFormData(apiData);
           await updateGym({ gymId: gymDetails.id, data: formData });
-          await fetchGymDetails(gymDetails.id);
+          // Cache will be automatically invalidated by useGymManagement
         } catch {
           toast.error('Failed to remove social link');
         }

@@ -8,6 +8,7 @@ import {
   Calendar,
   CreditCard,
   Dumbbell,
+  type LucideIcon,
   Settings,
   UserCheck,
   Users,
@@ -23,16 +24,56 @@ import {
   SidebarHeader,
   SidebarSeparator,
 } from '@/components/ui/sidebar';
+import { useGymFormOptions } from '@/hooks/use-gymform-options';
+import { useGymBranch } from '@/providers/gym-branch-provider';
 
-// This is sample data.
-const data = {
-  user: {
-    name: 'Admin User',
-    email: 'admin@kurlclub.com',
-    avatar: '/avatars/admin.jpg',
-  },
+type NavItem = {
+  title: string;
+  url: string;
+  icon: LucideIcon;
+  items?: { title: string; url: string }[];
+};
 
-  navMain: [
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const pathname = usePathname();
+  const { gymBranch } = useGymBranch();
+  const { formOptions } = useGymFormOptions(gymBranch?.gymId);
+
+  // Check if any membership plan has PerSession billing type
+  const hasPerSessionPlans = formOptions?.membershipPlans?.some(
+    (plan) => plan.billingType === 'PerSession'
+  );
+
+  // Create navigation items based on billing types
+  const getPaymentsNavItem = () => {
+    if (hasPerSessionPlans) {
+      // Show tree structure when PerSession plans exist
+      return {
+        title: 'Payments',
+        url: '#',
+        icon: CreditCard,
+        items: [
+          {
+            title: 'Recurring Payments',
+            url: '/payments',
+          },
+          {
+            title: 'Per Session Payments',
+            url: '/payments/session-payments',
+          },
+        ],
+      };
+    } else {
+      // Show single payments tab for recurring only
+      return {
+        title: 'Payments',
+        url: '/payments',
+        icon: CreditCard,
+      };
+    }
+  };
+
+  const navMain: NavItem[] = [
     {
       title: 'Dashboard',
       url: '/dashboard',
@@ -43,11 +84,7 @@ const data = {
       url: '/members',
       icon: Users,
     },
-    {
-      title: 'Payments',
-      url: '/payments',
-      icon: CreditCard,
-    },
+    getPaymentsNavItem(),
     {
       title: 'Attendance',
       url: '/attendance',
@@ -68,17 +105,20 @@ const data = {
       url: '/general-settings',
       icon: Settings,
     },
-  ],
-};
+  ];
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const pathname = usePathname();
-
-  const navItems = data.navMain.map((item) => ({
+  const navItems = navMain.map((item) => ({
     ...item,
     isActive:
       pathname === item.url ||
-      (item.url !== '/' && pathname.startsWith(item.url)),
+      (item.url !== '/' && item.url !== '#' && pathname.startsWith(item.url)) ||
+      ('items' in item &&
+        item.items &&
+        item.items.some(
+          (subItem: { title: string; url: string }) =>
+            pathname === subItem.url ||
+            (subItem.url !== '/' && pathname.startsWith(subItem.url))
+        )),
   }));
 
   return (
