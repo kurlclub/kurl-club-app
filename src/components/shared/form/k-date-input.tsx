@@ -97,7 +97,11 @@ const KDateInput = forwardRef<HTMLInputElement, KDateInputProps>(
       }
 
       // Only allow numbers
-      if (e.keyCode < 48 || e.keyCode > 57) {
+      const isNumber =
+        (e.keyCode >= 48 && e.keyCode <= 57) || // top row
+        (e.keyCode >= 96 && e.keyCode <= 105); // numpad
+
+      if (!isNumber) {
         e.preventDefault();
       }
     };
