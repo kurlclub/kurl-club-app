@@ -225,7 +225,16 @@ export const createMemberSchema = z.object({
     .min(10, 'Phone number must be at least 10 digits')
     .max(15, 'Phone number must not exceed 15 digits')
     .regex(/^\+?[1-9]\d{1,14}$/, 'Phone number must be valid'),
-  email: z.email('Invalid email format'),
+  email: z
+    .string()
+    .optional()
+    .refine(
+      (val) => {
+        if (!val || val === '') return true;
+        return z.string().email().safeParse(val).success;
+      },
+      { message: 'Invalid email format' }
+    ),
   height: z.string().min(1, 'Height is required'),
   weight: z.string().min(1, 'Weight is required'),
   personalTrainer: z.union([z.string(), z.number()]),
@@ -269,9 +278,6 @@ export const createMemberSchema = z.object({
         error: 'ID copy must be a file.',
       }
     )
-    .refine((file) => file !== null, {
-      error: 'ID document is required',
-    })
     .refine(
       (file) =>
         file === null ||
@@ -280,7 +286,8 @@ export const createMemberSchema = z.object({
       {
         error: 'File size must be less than 4MB',
       }
-    ),
+    )
+    .optional(),
   fitnessGoal: z.string().optional(),
   medicalHistory: z.string().optional(),
   emergencyContactName: z.string().min(1, 'Emergency contact name is required'),

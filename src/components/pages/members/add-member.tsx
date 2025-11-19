@@ -1,3 +1,4 @@
+import React from 'react';
 import { FormProvider, UseFormReturn } from 'react-hook-form';
 
 import { z } from 'zod/v4';
@@ -7,6 +8,7 @@ import {
   KFormFieldType,
 } from '@/components/shared/form/k-formfield';
 import { KSheet } from '@/components/shared/form/k-sheet';
+import { InfoBanner } from '@/components/shared/info-banner';
 import { Spinner } from '@/components/shared/loader';
 import FileUploader from '@/components/shared/uploaders/file-uploader';
 import ProfilePictureUploader from '@/components/shared/uploaders/profile-uploader';
@@ -24,6 +26,10 @@ import {
   purposeOptions,
   relationOptions,
 } from '@/lib/constants';
+import {
+  calculateSessionTotal,
+  validatePaymentAmount,
+} from '@/lib/utils/payment-validation';
 import { createMemberSchema } from '@/schemas/index';
 
 type CreateMemberDetailsData = z.infer<typeof createMemberSchema>;
@@ -45,21 +51,73 @@ const FieldColumn = ({ children }: { children: React.ReactNode }) => (
   <div className="w-full sm:w-1/2">{children}</div>
 );
 
+const isPerSessionPlan = (plan: MembershipPlanSubset): boolean =>
+  plan.billingType === 'PerSession';
+
+const PaymentWarnings = ({
+  showPaidWarning,
+  showUnpaidWarning,
+  showOverpaymentError,
+  excessAmount,
+}: {
+  showPaidWarning: boolean;
+  showUnpaidWarning: boolean;
+  showOverpaymentError: boolean;
+  excessAmount: string;
+}) => (
+  <>
+    {showPaidWarning && (
+      <InfoBanner
+        variant="warning"
+        icon="⚠️"
+        message='Amount is less than total. Consider changing status to "Partial"'
+      />
+    )}
+    {showUnpaidWarning && (
+      <InfoBanner
+        variant="warning"
+        icon="⚠️"
+        message='Amount entered but status is "Unpaid". Consider changing to "Paid" or "Partial"'
+      />
+    )}
+    {showOverpaymentError && (
+      <InfoBanner
+        variant="error"
+        icon="🚫"
+        message={`Amount exceeds total by ₹${excessAmount}. Please verify the amount.`}
+      />
+    )}
+  </>
+);
+
 const PerSessionPayment = ({
   form,
   selectedPlan,
+  paymentSectionRef,
 }: {
   form: UseFormReturn<CreateMemberDetailsData>;
   selectedPlan: MembershipPlanSubset;
+  paymentSectionRef: React.RefObject<HTMLDivElement | null>;
 }) => {
   const customRate = form.watch('customSessionRate');
   const numberOfSessions = form.watch('numberOfSessions');
-  const sessionRate = customRate ? Number(customRate) : selectedPlan.fee;
-  const sessionsNum = numberOfSessions ? Number(numberOfSessions) : 0;
-  const totalAmount = sessionsNum > 0 ? sessionRate * sessionsNum : 0;
+  const amountPaid = form.watch('amountPaid');
+  const feeStatus = form.watch('feeStatus');
+
+  const totalAmount = calculateSessionTotal(
+    numberOfSessions,
+    customRate,
+    selectedPlan.fee
+  );
+  const { showPaidWarning, showUnpaidWarning, showOverpaymentError } =
+    validatePaymentAmount(amountPaid, feeStatus, totalAmount);
+  const paidAmount = amountPaid ? Number(amountPaid) : 0;
 
   return (
-    <div className="space-y-4 p-4 bg-secondary-blue-600/50 rounded-lg border border-secondary-blue-400">
+    <div
+      ref={paymentSectionRef}
+      className="space-y-4 p-4 bg-secondary-blue-600/50 rounded-lg border border-secondary-blue-400"
+    >
       <div>
         <KFormField
           fieldType={KFormFieldType.INPUT}
@@ -69,12 +127,12 @@ const PerSessionPayment = ({
           placeholder={`Default: ₹${selectedPlan.fee}`}
           type="number"
         />
-        <div className="mt-2 p-2 bg-primary-green-500/10 border border-primary-green-500/20 rounded-md">
-          <p className="text-xs text-gray-300">
-            💡 <strong>Per Session Billing:</strong> Leave empty to use
-            plan&apos;s default rate of ₹{selectedPlan.fee} per session
-          </p>
-        </div>
+        <InfoBanner
+          variant="info"
+          icon="💡"
+          title="Per Session Billing:"
+          message={`Leave empty to use plan's default rate of ₹${selectedPlan.fee} per session`}
+        />
       </div>
       <KFormField
         fieldType={KFormFieldType.INPUT}
@@ -106,6 +164,12 @@ const PerSessionPayment = ({
           />
         </FieldColumn>
       </FieldRow>
+      <PaymentWarnings
+        showPaidWarning={showPaidWarning}
+        showUnpaidWarning={showUnpaidWarning}
+        showOverpaymentError={showOverpaymentError}
+        excessAmount={(paidAmount - totalAmount).toLocaleString()}
+      />
       <KFormField
         fieldType={KFormFieldType.SELECT}
         control={form.control}
@@ -120,57 +184,83 @@ const PerSessionPayment = ({
 const RecurringPayment = ({
   form,
   selectedPlan,
+  paymentSectionRef,
 }: {
   form: UseFormReturn<CreateMemberDetailsData>;
   selectedPlan: MembershipPlanSubset;
-}) => (
-  <div className="space-y-4 p-4 bg-secondary-blue-600/50 rounded-lg border border-secondary-blue-400">
-    <FieldRow>
-      <FieldColumn>
-        <KFormField
-          fieldType={KFormFieldType.SELECT}
-          control={form.control}
-          name="feeStatus"
-          label="Fee Status"
-          options={feeStatusOptions}
-        />
-      </FieldColumn>
-      <FieldColumn>
-        <KFormField
-          suffix={`/ ${selectedPlan.fee.toLocaleString()}`}
-          fieldType={KFormFieldType.INPUT}
-          control={form.control}
-          name="amountPaid"
-          label="Amount Paid"
-          maxLength={10}
-        />
-      </FieldColumn>
-    </FieldRow>
-    <KFormField
-      fieldType={KFormFieldType.SELECT}
-      control={form.control}
-      name="modeOfPayment"
-      label="Mode of Payment"
-      options={paymentModeOptions}
-    />
-  </div>
-);
+  paymentSectionRef: React.RefObject<HTMLDivElement | null>;
+}) => {
+  const amountPaid = form.watch('amountPaid');
+  const feeStatus = form.watch('feeStatus');
+
+  const { showPaidWarning, showUnpaidWarning, showOverpaymentError } =
+    validatePaymentAmount(amountPaid, feeStatus, selectedPlan.fee);
+  const paidAmount = amountPaid ? Number(amountPaid) : 0;
+
+  return (
+    <div
+      ref={paymentSectionRef}
+      className="space-y-4 p-4 bg-secondary-blue-600/50 rounded-lg border border-secondary-blue-400"
+    >
+      <FieldRow>
+        <FieldColumn>
+          <KFormField
+            fieldType={KFormFieldType.SELECT}
+            control={form.control}
+            name="feeStatus"
+            label="Fee Status"
+            options={feeStatusOptions}
+          />
+        </FieldColumn>
+        <FieldColumn>
+          <KFormField
+            suffix={`/ ${selectedPlan.fee.toLocaleString()}`}
+            fieldType={KFormFieldType.INPUT}
+            control={form.control}
+            name="amountPaid"
+            label="Amount Paid"
+            maxLength={10}
+          />
+        </FieldColumn>
+      </FieldRow>
+      <PaymentWarnings
+        showPaidWarning={showPaidWarning}
+        showUnpaidWarning={showUnpaidWarning}
+        showOverpaymentError={showOverpaymentError}
+        excessAmount={(paidAmount - selectedPlan.fee).toLocaleString()}
+      />
+      <KFormField
+        fieldType={KFormFieldType.SELECT}
+        control={form.control}
+        name="modeOfPayment"
+        label="Mode of Payment"
+        options={paymentModeOptions}
+      />
+    </div>
+  );
+};
 
 const PaymentSection = ({
   form,
   selectedPlan,
+  paymentSectionRef,
 }: {
   form: UseFormReturn<CreateMemberDetailsData>;
   selectedPlan: MembershipPlanSubset;
+  paymentSectionRef: React.RefObject<HTMLDivElement | null>;
 }) => {
-  const isPerSession =
-    selectedPlan.billingType === 'PerSession' ||
-    selectedPlan.planName?.toLowerCase().includes('session');
-
-  return isPerSession ? (
-    <PerSessionPayment form={form} selectedPlan={selectedPlan} />
+  return isPerSessionPlan(selectedPlan) ? (
+    <PerSessionPayment
+      form={form}
+      selectedPlan={selectedPlan}
+      paymentSectionRef={paymentSectionRef}
+    />
   ) : (
-    <RecurringPayment form={form} selectedPlan={selectedPlan} />
+    <RecurringPayment
+      form={form}
+      selectedPlan={selectedPlan}
+      paymentSectionRef={paymentSectionRef}
+    />
   );
 };
 
@@ -191,6 +281,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
   onboardingId,
   memberForm: externalMemberForm,
 }) => {
+  const paymentSectionRef = React.useRef<HTMLDivElement>(null);
   const { formOptions } = useGymFormOptions(gymId);
   const internalMemberForm = useMemberForm(gymId, onboardingId);
   const {
@@ -204,15 +295,42 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
   } = externalMemberForm || internalMemberForm;
   const isSubmitting = form.formState.isSubmitting;
 
+  const selectedPlanId = form.watch('membershipPlanId');
+  const selectedPlan = formOptions?.membershipPlans.find(
+    (plan) => String(plan.membershipPlanId) === selectedPlanId
+  );
+
   const onSubmit = async (data: CreateMemberDetailsData) => {
+    if (selectedPlan) {
+      const totalFee = isPerSessionPlan(selectedPlan)
+        ? calculateSessionTotal(
+            data.numberOfSessions,
+            data.customSessionRate,
+            selectedPlan.fee
+          )
+        : selectedPlan.fee;
+
+      const { hasAnyWarning } = validatePaymentAmount(
+        data.amountPaid,
+        data.feeStatus,
+        totalFee
+      );
+
+      if (hasAnyWarning) {
+        paymentSectionRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
+        return;
+      }
+    }
+
     const success = await handleSubmit(data);
     if (success) {
       closeSheet();
       form.reset();
     }
   };
-
-  const memberDetails = { name: 'John Doe', gymNo: '38545' };
 
   const footer = (
     <div className="flex justify-end gap-3">
@@ -254,7 +372,12 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
           <form
             id="add-member-form"
             className="space-y-4"
-            onSubmit={form.handleSubmit(onSubmit)}
+            onSubmit={form.handleSubmit(onSubmit, (errors) => {
+              const firstError = Object.keys(
+                errors
+              )[0] as keyof CreateMemberDetailsData;
+              form.setFocus(firstError);
+            })}
           >
             <div className="items-start gap-2 mb-6 flex justify-between">
               <KFormField
@@ -275,7 +398,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                 )}
               />
               <Badge className="bg-secondary-blue-400 flex items-center w-fit justify-center text-sm text-white rounded-full h-[30px] py-2 px-2 border border-secondary-blue-300 bg-opacity-100">
-                Gym no: #{memberDetails.gymNo}
+                Gym no: #Pending
               </Badge>
             </div>
 
@@ -293,7 +416,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
               fieldType={KFormFieldType.INPUT}
               control={form.control}
               name="email"
-              label="Email"
+              label="Email (Optional)"
             />
             <KFormField
               fieldType={KFormFieldType.PHONE_INPUT}
@@ -406,16 +529,13 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
               }))}
             />
 
-            {(() => {
-              const selectedPlanId = form.watch('membershipPlanId');
-              const selectedPlan = formOptions?.membershipPlans.find(
-                (plan) => String(plan.membershipPlanId) === selectedPlanId
-              );
-
-              return selectedPlan ? (
-                <PaymentSection form={form} selectedPlan={selectedPlan} />
-              ) : null;
-            })()}
+            {selectedPlan && (
+              <PaymentSection
+                form={form}
+                selectedPlan={selectedPlan}
+                paymentSectionRef={paymentSectionRef}
+              />
+            )}
 
             <h5 className="text-white text-base font-normal leading-normal mt-8!">
               Health & Fitness Goals

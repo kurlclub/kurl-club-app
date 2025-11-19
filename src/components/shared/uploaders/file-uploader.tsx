@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 
-import { Eye, FileText, Upload, X } from 'lucide-react';
+import { Eye, FileText, Image as ImageIcon, Upload, X } from 'lucide-react';
 
 import { DocumentPreviewModal } from '@/components/shared/modals/document-preview-modal';
 import { Button } from '@/components/ui/button';
@@ -26,9 +26,36 @@ export default function FileUploader({
   const fileName = file
     ? file.name
     : existingFileUrl
-      ? existingFileUrl.split('/').pop()
+      ? existingFileUrl.split('/').pop() || 'ID Document'
       : '';
   const fileSize = file ? file.size : null;
+
+  const getFileExtension = () => {
+    if (file) return file.type.split('/')[1]?.toUpperCase() || 'FILE';
+    if (existingFileUrl) {
+      const ext = existingFileUrl.split('.').pop()?.toUpperCase();
+      return ext || 'FILE';
+    }
+    return 'FILE';
+  };
+
+  const isImage = () => {
+    const ext = getFileExtension().toLowerCase();
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
+  };
+
+  const getFileIcon = () => {
+    return isImage() ? (
+      <ImageIcon className="w-5 h-5 text-white" />
+    ) : (
+      <FileText className="w-5 h-5 text-white" />
+    );
+  };
+
+  const getIconBgColor = () => {
+    return isImage() ? 'bg-blue-500' : 'bg-alert-red-500';
+  };
+
   const inputRef = useRef<HTMLInputElement>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
 
@@ -78,20 +105,25 @@ export default function FileUploader({
         </label>
       ) : (
         <>
-          <div className="flex items-center justify-between p-3 bg-white dark:bg-secondary-blue-600 border border-gray-200 dark:border-secondary-blue-400 rounded-lg">
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <FileText className="w-5 h-5 text-gray-500 dark:text-gray-300 flex-shrink-0" />
+          <div className="flex items-center justify-between p-3 rounded-xl bg-primary-blue-400 border border-neutral-800">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <div
+                className={`w-10 h-10 ${getIconBgColor()} rounded-lg flex items-center justify-center flex-shrink-0`}
+              >
+                {getFileIcon()}
+              </div>
+
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-[200px]">
-                  {fileName}
+                <p className="text-sm font-medium text-white truncate max-w-[220px]">
+                  {fileName || 'ID Document.pdf'}
                 </p>
-                {fileSize && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {(fileSize / 1024).toFixed(2)} KB
-                  </p>
-                )}
+                <p className="text-xs text-gray-400">
+                  {getFileExtension()}
+                  {fileSize ? ` - ${(fileSize / 1024).toFixed(2)} KB` : ''}
+                </p>
               </div>
             </div>
+
             <div className="flex items-center gap-1">
               {existingFileUrl && (
                 <Button
@@ -104,6 +136,7 @@ export default function FileUploader({
                   <Eye className="h-4 w-4" />
                 </Button>
               )}
+
               <Button
                 type="button"
                 variant="ghost"
