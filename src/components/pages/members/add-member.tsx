@@ -181,6 +181,7 @@ type CreateMemberDetailsProps = {
   isOpen: boolean;
   gymId?: number;
   onboardingId?: number;
+  memberForm?: ReturnType<typeof useMemberForm>;
 };
 
 export const AddMember: React.FC<CreateMemberDetailsProps> = ({
@@ -188,8 +189,10 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
   closeSheet,
   gymId,
   onboardingId,
+  memberForm: externalMemberForm,
 }) => {
   const { formOptions } = useGymFormOptions(gymId);
+  const internalMemberForm = useMemberForm(gymId, onboardingId);
   const {
     form,
     handleSubmit,
@@ -198,7 +201,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
     setExistingPhotoUrl,
     setExistingIdCopyUrl,
     isLoadingOnboarding,
-  } = useMemberForm(gymId, onboardingId, isOpen);
+  } = externalMemberForm || internalMemberForm;
   const isSubmitting = form.formState.isSubmitting;
 
   const onSubmit = async (data: CreateMemberDetailsData) => {

@@ -12,11 +12,7 @@ import { createMember, fetchPendingMemberDetails } from '@/services/member';
 
 type CreateMemberDetailsData = z.infer<typeof createMemberSchema>;
 
-export const useMemberForm = (
-  gymId?: number,
-  onboardingId?: number,
-  isOpen?: boolean
-) => {
+export const useMemberForm = (gymId?: number, onboardingId?: number) => {
   const [existingPhotoUrl, setExistingPhotoUrl] = useState<string | null>(null);
   const [existingIdCopyUrl, setExistingIdCopyUrl] = useState<string | null>(
     null
@@ -60,7 +56,7 @@ export const useMemberForm = (
 
   // Fetch onboarding data if onboardingId is provided
   useEffect(() => {
-    if (onboardingId && isOpen) {
+    if (onboardingId) {
       setIsLoadingOnboarding(true);
       fetchPendingMemberDetails(onboardingId)
         .then((data) => {
@@ -82,7 +78,7 @@ export const useMemberForm = (
             address: data.address || '',
             idType: data.idType || '',
             idNumber: data.idNumber || '',
-            idCopyPath: null,
+            idCopyPath: data.idCopyPath ? 'existing' : null,
             fitnessGoal: data.fitnessGoal || '',
             medicalHistory: data.medicalHistory || '',
             emergencyContactName: data.emergencyContactName || '',
@@ -106,12 +102,8 @@ export const useMemberForm = (
         .finally(() => {
           setIsLoadingOnboarding(false);
         });
-    } else if (!isOpen) {
-      setExistingPhotoUrl(null);
-      setExistingIdCopyUrl(null);
-      setIsLoadingOnboarding(false);
     }
-  }, [onboardingId, isOpen, form]);
+  }, [onboardingId, form]);
 
   const handleSubmit = async (data: CreateMemberDetailsData) => {
     const formData = new FormData();
@@ -119,7 +111,6 @@ export const useMemberForm = (
     // Handle ProfilePicture vs PhotoPath
     if (data.profilePicture instanceof File) {
       formData.append('ProfilePicture', data.profilePicture);
-      formData.append('PhotoPath', '');
     } else if (existingPhotoUrl) {
       formData.append('PhotoPath', existingPhotoUrl);
     }
@@ -127,8 +118,7 @@ export const useMemberForm = (
     // Handle IdCopyFile vs IdCopyPath
     if (data.idCopyPath instanceof File) {
       formData.append('IdCopyFile', data.idCopyPath);
-      formData.append('IdCopyPath', '');
-    } else if (existingIdCopyUrl) {
+    } else if (existingIdCopyUrl && data.idCopyPath === 'existing') {
       formData.append('IdCopyPath', existingIdCopyUrl);
     }
 

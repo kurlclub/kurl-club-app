@@ -1,1 +1,4 @@
-export { SendOnboardingForm, useSendOnboarding } from './send-onboarding-form';
+export {
+  SendOnboardingForm,
+  SendOnboardingModal,
+} from './send-onboarding-form';

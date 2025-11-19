@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion } from 'framer-motion';
@@ -19,7 +19,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Form } from '@/components/ui/form';
 import { useMessaging } from '@/hooks/use-messaging';
 
 const onboardingSchema = z.object({
@@ -29,7 +28,6 @@ const onboardingSchema = z.object({
 
 type OnboardingFormData = z.infer<typeof onboardingSchema>;
 
-// Success State Component
 const SuccessState = () => (
   <motion.div
     initial={{ opacity: 0, scale: 0.8 }}
@@ -62,78 +60,70 @@ const SuccessState = () => (
   </motion.div>
 );
 
-// Form Component
-const OnboardingForm = ({
+const OnboardingFormContent = ({
+  sent,
   form,
   handleSend,
   isSending,
-  onCancel,
+  onClose,
 }: {
+  sent: boolean;
   form: ReturnType<typeof useForm<OnboardingFormData>>;
   handleSend: (data: OnboardingFormData) => Promise<void>;
   isSending: boolean;
-  onCancel: () => void;
+  onClose: () => void;
 }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="space-y-6"
-  >
-    <div className="text-center">
-      <p className="text-gray-300 text-sm leading-relaxed">
-        We&apos;ll send a WhatsApp message with a link to complete their
-        membership registration.
-      </p>
-    </div>
-
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSend)} className="space-y-4">
-        <KFormField
-          fieldType={KFormFieldType.INPUT}
-          control={form.control}
-          name="name"
-          label="Name"
-        />
-
-        <KFormField
-          fieldType={KFormFieldType.PHONE_INPUT}
-          control={form.control}
-          name="phone"
-          label="Phone"
-          placeholder="(555) 123-4567"
-        />
-
-        <div className="flex gap-3 pt-4">
-          <Button
-            variant="outline"
-            type="button"
-            onClick={onCancel}
-            disabled={isSending}
-            className="flex-1"
-          >
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isSending} className="flex-1">
-            {isSending ? (
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                className="mr-2"
-              >
-                <Send className="h-4 w-4" />
-              </motion.div>
-            ) : (
-              <Send className="h-4 w-4 mr-2" />
-            )}
-            {isSending ? 'Sending...' : 'Send Invitation'}
-          </Button>
+  <>
+    {sent ? (
+      <SuccessState />
+    ) : (
+      <div className="space-y-6">
+        <div className="text-center">
+          <p className="text-gray-300 text-sm leading-relaxed">
+            We&apos;ll send a WhatsApp message with a link to complete their
+            membership registration.
+          </p>
         </div>
-      </form>
-    </Form>
-  </motion.div>
+
+        <FormProvider {...form}>
+          <form onSubmit={form.handleSubmit(handleSend)} className="space-y-4">
+            <KFormField
+              fieldType={KFormFieldType.INPUT}
+              control={form.control}
+              name="name"
+              label="Name"
+            />
+
+            <KFormField
+              fieldType={KFormFieldType.PHONE_INPUT}
+              control={form.control}
+              name="phone"
+              label="Phone"
+              placeholder="(555) 123-4567"
+            />
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                variant="outline"
+                type="button"
+                onClick={onClose}
+                disabled={isSending}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSending} className="flex-1">
+                <Send className="h-4 w-4 mr-2" />
+                {isSending ? 'Sending...' : 'Send Invitation'}
+              </Button>
+            </div>
+          </form>
+        </FormProvider>
+      </div>
+    )}
+  </>
 );
 
-// Main Component
 export const SendOnboardingForm = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [sent, setSent] = useState(false);
@@ -176,26 +166,26 @@ export const SendOnboardingForm = () => {
               Invite New Member
             </DialogTitle>
           </DialogHeader>
-
-          {sent ? (
-            <SuccessState />
-          ) : (
-            <OnboardingForm
-              form={form}
-              handleSend={handleSend}
-              isSending={isSending}
-              onCancel={() => setIsOpen(false)}
-            />
-          )}
+          <OnboardingFormContent
+            sent={sent}
+            form={form}
+            handleSend={handleSend}
+            isSending={isSending}
+            onClose={() => setIsOpen(false)}
+          />
         </DialogContent>
       </Dialog>
     </>
   );
 };
 
-// Hook for external components
-export const useSendOnboarding = () => {
-  const [isOpen, setIsOpen] = useState(false);
+export const SendOnboardingModal = ({
+  isOpen,
+  onClose,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+}) => {
   const [sent, setSent] = useState(false);
   const { sendOnboardingForm, isSending } = useMessaging();
 
@@ -211,14 +201,14 @@ export const useSendOnboarding = () => {
   };
 
   const handleClose = (open: boolean) => {
-    setIsOpen(open);
     if (!open) {
       setSent(false);
       form.reset();
+      onClose();
     }
   };
 
-  const SendOnboardingModal = () => (
+  return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="bg-secondary-blue-700 border-primary-blue-400 max-w-md">
         <DialogHeader>
@@ -226,23 +216,14 @@ export const useSendOnboarding = () => {
             Invite New Member
           </DialogTitle>
         </DialogHeader>
-
-        {sent ? (
-          <SuccessState />
-        ) : (
-          <OnboardingForm
-            form={form}
-            handleSend={handleSend}
-            isSending={isSending}
-            onCancel={() => setIsOpen(false)}
-          />
-        )}
+        <OnboardingFormContent
+          sent={sent}
+          form={form}
+          handleSend={handleSend}
+          isSending={isSending}
+          onClose={onClose}
+        />
       </DialogContent>
     </Dialog>
   );
-
-  return {
-    openModal: () => setIsOpen(true),
-    SendOnboardingModal,
-  };
 };

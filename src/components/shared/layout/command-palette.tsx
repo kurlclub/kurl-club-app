@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 
 import { CreditCard, UserPlus, Users } from 'lucide-react';
 
-import { useSendOnboarding } from '@/components/shared/quick-actions';
+import { SendOnboardingModal } from '@/components/shared/quick-actions';
 import { Button } from '@/components/ui/button';
 import {
   CommandDialog,
@@ -43,8 +43,8 @@ const commands = [
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
   const router = useRouter();
-  const { openModal, SendOnboardingModal } = useSendOnboarding();
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -61,7 +61,7 @@ export function CommandPalette() {
   const runCommand = (action: string) => {
     setOpen(false);
     if (action === 'modal') {
-      openModal();
+      setOnboardingOpen(true);
     } else {
       router.push(action);
     }
@@ -69,7 +69,10 @@ export function CommandPalette() {
 
   return (
     <>
-      <SendOnboardingModal />
+      <SendOnboardingModal
+        isOpen={onboardingOpen}
+        onClose={() => setOnboardingOpen(false)}
+      />
       <CommandDialog open={open} onOpenChange={setOpen} closable={false}>
         <DialogTitle className="sr-only">Commands</DialogTitle>
         <div className="shad-command-wrapper">
@@ -102,11 +105,14 @@ export function CommandPalette() {
 
 export function QuickActionsButton() {
   const [open, setOpen] = useState(false);
-  const { openModal, SendOnboardingModal } = useSendOnboarding();
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
 
   return (
     <>
-      <SendOnboardingModal />
+      <SendOnboardingModal
+        isOpen={onboardingOpen}
+        onClose={() => setOnboardingOpen(false)}
+      />
       <Button
         onClick={() => setOpen(true)}
         variant="ghost"
@@ -144,7 +150,7 @@ export function QuickActionsButton() {
                 onSelect={() => {
                   setOpen(false);
                   if (command.action === 'modal') {
-                    openModal();
+                    setOnboardingOpen(true);
                   } else {
                     window.location.href = command.action;
                   }

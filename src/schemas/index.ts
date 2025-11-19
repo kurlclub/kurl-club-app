@@ -262,15 +262,25 @@ export const createMemberSchema = z.object({
     .min(1, 'ID number is required')
     .max(20, 'ID number must not exceed 20 characters'),
   idCopyPath: z
-    .custom<File | null>((value) => value instanceof File || value === null, {
-      error: 'ID copy must be a file.',
-    })
+    .custom<File | null | string>(
+      (value) =>
+        value instanceof File || value === null || value === 'existing',
+      {
+        error: 'ID copy must be a file.',
+      }
+    )
     .refine((file) => file !== null, {
       error: 'ID document is required',
     })
-    .refine((file) => file === null || file.size <= 4 * 1024 * 1024, {
-      error: 'File size must be less than 4MB',
-    }),
+    .refine(
+      (file) =>
+        file === null ||
+        file === 'existing' ||
+        (file instanceof File && file.size <= 4 * 1024 * 1024),
+      {
+        error: 'File size must be less than 4MB',
+      }
+    ),
   fitnessGoal: z.string().optional(),
   medicalHistory: z.string().optional(),
   emergencyContactName: z.string().min(1, 'Emergency contact name is required'),
