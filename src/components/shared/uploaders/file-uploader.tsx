@@ -23,38 +23,30 @@ export default function FileUploader({
   existingFileUrl,
 }: FileUploaderProps) {
   const hasFile = file || existingFileUrl;
-  const fileName = file
-    ? file.name
-    : existingFileUrl
-      ? existingFileUrl.split('/').pop() || 'ID Document'
-      : '';
-  const fileSize = file ? file.size : null;
 
-  const getFileExtension = () => {
-    if (file) return file.type.split('/')[1]?.toUpperCase() || 'FILE';
-    if (existingFileUrl) {
-      const ext = existingFileUrl.split('.').pop()?.toUpperCase();
-      return ext || 'FILE';
-    }
+  const fileName = React.useMemo(() => {
+    if (file) return file.name;
+    if (existingFileUrl)
+      return existingFileUrl.split('/').pop() || 'ID Document';
+    return '';
+  }, [file, existingFileUrl]);
+
+  const fileSize = file?.size || null;
+
+  const fileExtension = React.useMemo(() => {
+    if (file) return file.type?.split('/')[1]?.toUpperCase() || 'FILE';
+    if (existingFileUrl)
+      return existingFileUrl.split('.').pop()?.toUpperCase() || 'FILE';
     return 'FILE';
-  };
+  }, [file, existingFileUrl]);
 
-  const isImage = () => {
-    const ext = getFileExtension().toLowerCase();
+  const isImageFile = React.useMemo(() => {
+    const ext = fileExtension.toLowerCase();
     return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext);
-  };
+  }, [fileExtension]);
 
-  const getFileIcon = () => {
-    return isImage() ? (
-      <ImageIcon className="w-5 h-5 text-white" />
-    ) : (
-      <FileText className="w-5 h-5 text-white" />
-    );
-  };
-
-  const getIconBgColor = () => {
-    return isImage() ? 'bg-blue-500' : 'bg-alert-red-500';
-  };
+  const iconBgColor = isImageFile ? 'bg-blue-500' : 'bg-alert-red-500';
+  const FileIcon = isImageFile ? ImageIcon : FileText;
 
   const inputRef = useRef<HTMLInputElement>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -108,9 +100,9 @@ export default function FileUploader({
           <div className="flex items-center justify-between p-3 rounded-xl bg-primary-blue-400 border border-neutral-800">
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <div
-                className={`w-10 h-10 ${getIconBgColor()} rounded-lg flex items-center justify-center flex-shrink-0`}
+                className={`w-10 h-10 ${iconBgColor} rounded-lg flex items-center justify-center flex-shrink-0`}
               >
-                {getFileIcon()}
+                <FileIcon className="w-5 h-5 text-white" />
               </div>
 
               <div className="flex-1 min-w-0">
@@ -118,7 +110,7 @@ export default function FileUploader({
                   {fileName || 'ID Document.pdf'}
                 </p>
                 <p className="text-xs text-gray-400">
-                  {getFileExtension()}
+                  {fileExtension}
                   {fileSize ? ` - ${(fileSize / 1024).toFixed(2)} KB` : ''}
                 </p>
               </div>
