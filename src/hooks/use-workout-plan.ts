@@ -13,11 +13,13 @@ import {
 import type { WorkoutPlan } from '@/types/workoutplan';
 
 import { useAppDialog } from './use-app-dialog';
+import { useInvalidateFormOptions } from './use-gymform-options';
 
 export function useWorkoutPlans() {
   const queryClient = useQueryClient();
   const { showAlert } = useAppDialog();
   const { gymBranch } = useGymBranch();
+  const invalidateFormOptions = useInvalidateFormOptions();
 
   // Get all workout plans
   const {
@@ -51,6 +53,9 @@ export function useWorkoutPlans() {
       queryClient.invalidateQueries({
         queryKey: ['workoutPlans', gymBranch?.gymId],
       });
+      if (gymBranch?.gymId) {
+        invalidateFormOptions(gymBranch.gymId);
+      }
       toast.success('Workout plan created successfully');
       return true;
     },
@@ -80,6 +85,9 @@ export function useWorkoutPlans() {
       queryClient.invalidateQueries({
         queryKey: ['workoutPlans', gymBranch?.gymId],
       });
+      if (gymBranch?.gymId) {
+        invalidateFormOptions(gymBranch.gymId);
+      }
       toast.success('Workout plan updated successfully');
       return true;
     },
@@ -101,6 +109,9 @@ export function useWorkoutPlans() {
       queryClient.invalidateQueries({
         queryKey: ['workoutPlans', gymBranch?.gymId],
       });
+      if (gymBranch?.gymId) {
+        invalidateFormOptions(gymBranch.gymId);
+      }
       toast.success('Workout plan deleted successfully');
       return true;
     },

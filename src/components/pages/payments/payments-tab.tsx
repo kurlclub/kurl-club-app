@@ -13,7 +13,9 @@ import { useGymBranch } from '@/providers/gym-branch-provider';
 import { useFilteredPayments } from '@/services/payments';
 import type { MemberPaymentDetails } from '@/types/payment';
 
+import { InvoiceGenerator } from './invoice-generator';
 import { ManagePaymentSheet } from './manage-payment';
+import { ManageSessionPaymentSheet } from './manage-session-payment';
 import { createPaymentColumns } from './table/columns';
 import { TableView } from './table/table-view';
 
@@ -29,11 +31,11 @@ const getStatsConfig = (
   type: PaymentTabType
 ) => {
   const totalOutstanding = payments.reduce(
-    (sum, member) => sum + member.currentCycle.pendingAmount,
+    (sum, member) => sum + (member.currentCycle?.pendingAmount || 0),
     0
   );
   const totalRevenue = payments.reduce(
-    (sum, member) => sum + member.currentCycle.amountPaid,
+    (sum, member) => sum + (member.currentCycle?.amountPaid || 0),
     0
   );
 
@@ -110,7 +112,14 @@ const getStatsConfig = (
 export function PaymentsTab({ type, formOptions }: Props) {
   const [selectedPayment, setSelectedPayment] =
     useState<MemberPaymentDetails | null>(null);
+  const [selectedInvoiceMember, setSelectedInvoiceMember] =
+    useState<MemberPaymentDetails | null>(null);
   const { isOpen, openSheet, closeSheet } = useSheet();
+  const {
+    isOpen: isInvoiceOpen,
+    openSheet: openInvoice,
+    closeSheet: closeInvoice,
+  } = useSheet();
 
   const { gymBranch } = useGymBranch();
   const gymId = gymBranch?.gymId;
@@ -124,13 +133,80 @@ export function PaymentsTab({ type, formOptions }: Props) {
   } = useFilteredPayments(gymId!);
 
   const handleRecord = (member: MemberPaymentDetails) => {
+    // Add mock session data for testing
+    // const mockMember = {
+    //   ...member,
+    //   customSessionRate: 150,
+    //   unpaidSessions: 5,
+    //   totalSessionDebt: 750,
+    //   sessionPayments: [
+    //     {
+    //       sessionId: 1,
+    //       attendanceId: 101,
+    //       memberId: member.memberId,
+    //       sessionDate: '2025-01-20',
+    //       sessionRate: 150,
+    //       amountPaid: 0,
+    //       pendingAmount: 150,
+    //       status: 'Pending' as const,
+    //     },
+    //     {
+    //       sessionId: 2,
+    //       attendanceId: 102,
+    //       memberId: member.memberId,
+    //       sessionDate: '2025-01-18',
+    //       sessionRate: 150,
+    //       amountPaid: 0,
+    //       pendingAmount: 150,
+    //       status: 'Pending' as const,
+    //     },
+    //     {
+    //       sessionId: 3,
+    //       attendanceId: 103,
+    //       memberId: member.memberId,
+    //       sessionDate: '2025-01-16',
+    //       sessionRate: 150,
+    //       amountPaid: 0,
+    //       pendingAmount: 150,
+    //       status: 'Pending' as const,
+    //     },
+    //     {
+    //       sessionId: 4,
+    //       attendanceId: 104,
+    //       memberId: member.memberId,
+    //       sessionDate: '2025-01-14',
+    //       sessionRate: 150,
+    //       amountPaid: 0,
+    //       pendingAmount: 150,
+    //       status: 'Pending' as const,
+    //     },
+    //     {
+    //       sessionId: 5,
+    //       attendanceId: 105,
+    //       memberId: member.memberId,
+    //       sessionDate: '2025-01-12',
+    //       sessionRate: 150,
+    //       amountPaid: 0,
+    //       pendingAmount: 150,
+    //       status: 'Pending' as const,
+    //     },
+    //   ],
+    // };
     setSelectedPayment(member);
+    // setSelectedPayment(mockMember);
     openSheet();
+  };
+
+  const handleGenerateInvoice = (member: MemberPaymentDetails) => {
+    setSelectedInvoiceMember(member);
+    openInvoice();
   };
 
   const columns = createPaymentColumns(
     handleRecord,
-    formOptions?.membershipPlans || []
+    formOptions?.membershipPlans || [],
+    handleGenerateInvoice,
+    type === 'history'
   );
 
   const getPaymentsData = () => {
@@ -184,10 +260,23 @@ export function PaymentsTab({ type, formOptions }: Props) {
             columns={columns}
             filters={getFilters()}
           />
-          <ManagePaymentSheet
-            open={isOpen}
-            onOpenChange={closeSheet}
-            member={selectedPayment}
+          {selectedPayment?.billingType === 'PerSession' ? (
+            <ManageSessionPaymentSheet
+              open={isOpen}
+              onOpenChange={closeSheet}
+              member={selectedPayment}
+            />
+          ) : (
+            <ManagePaymentSheet
+              open={isOpen}
+              onOpenChange={closeSheet}
+              member={selectedPayment}
+            />
+          )}
+          <InvoiceGenerator
+            open={isInvoiceOpen}
+            onOpenChange={closeInvoice}
+            member={selectedInvoiceMember}
           />
         </>
       )}

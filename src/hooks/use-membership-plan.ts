@@ -13,11 +13,13 @@ import {
 import type { MembershipPlan } from '@/types/membership-plan';
 
 import { useAppDialog } from './use-app-dialog';
+import { useInvalidateFormOptions } from './use-gymform-options';
 
 export function useMembershipPlans() {
   const queryClient = useQueryClient();
   const { showAlert } = useAppDialog();
   const { gymBranch } = useGymBranch();
+  const invalidateFormOptions = useInvalidateFormOptions();
 
   // Get all membership plans
   const {
@@ -51,6 +53,9 @@ export function useMembershipPlans() {
       queryClient.invalidateQueries({
         queryKey: ['membershipPlans', gymBranch?.gymId],
       });
+      if (gymBranch?.gymId) {
+        invalidateFormOptions(gymBranch.gymId);
+      }
       toast.success('Membership plan created successfully');
       return true;
     },
@@ -80,6 +85,9 @@ export function useMembershipPlans() {
       queryClient.invalidateQueries({
         queryKey: ['membershipPlans', gymBranch?.gymId],
       });
+      if (gymBranch?.gymId) {
+        invalidateFormOptions(gymBranch.gymId);
+      }
       toast.success('Membership plan updated successfully');
       return true;
     },
@@ -101,6 +109,9 @@ export function useMembershipPlans() {
       queryClient.invalidateQueries({
         queryKey: ['membershipPlans', gymBranch?.gymId],
       });
+      if (gymBranch?.gymId) {
+        invalidateFormOptions(gymBranch.gymId);
+      }
       toast.success('Membership plan deleted successfully');
       return true;
     },

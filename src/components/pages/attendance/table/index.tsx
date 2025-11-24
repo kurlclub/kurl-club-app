@@ -1,21 +1,15 @@
 import { ColumnDef } from '@tanstack/react-table';
 
 import { FilterConfig } from '@/lib/filters';
-import type {
-  AttendanceRecord,
-  BiometricDevice,
-  Member,
-} from '@/types/attendance';
+import type { AttendanceRecordResponse } from '@/services/attendance';
+import type { BiometricDevice, MemberInsight } from '@/types/attendance';
 
 import { BaseTable } from './base-table';
 
-// Base reusable table component
-export { BaseTable } from './base-table';
-
 // Column definitions
-export { createAttendanceColumns } from './attendance-columns';
-export { createDeviceColumns } from './device-columns';
-export { createMemberColumns } from './member-columns';
+export { attendanceColumns, manualModeColumns } from './attendance-columns';
+export { deviceColumns } from './device-columns';
+export { memberInsightsColumns as insightsColumns } from './member-insights-columns';
 
 // Specific table implementations
 export const AttendanceTableView = ({
@@ -23,8 +17,8 @@ export const AttendanceTableView = ({
   columns,
   filters,
 }: {
-  records: AttendanceRecord[];
-  columns: ColumnDef<AttendanceRecord, unknown>[];
+  records: AttendanceRecordResponse[];
+  columns: ColumnDef<AttendanceRecordResponse, unknown>[];
   filters?: FilterConfig[];
 }) => <BaseTable data={records} columns={columns} filters={filters} />;
 
@@ -36,10 +30,13 @@ export const DeviceTableView = ({
   columns: ColumnDef<BiometricDevice, unknown>[];
 }) => <BaseTable data={devices} columns={columns} />;
 
-export const MemberTableView = ({
-  members,
+export const InsightsTableView = ({
+  insights,
   columns,
 }: {
-  members: Member[];
-  columns: ColumnDef<Member, unknown>[];
-}) => <BaseTable data={members} columns={columns} />;
+  insights: MemberInsight[];
+  columns: ColumnDef<MemberInsight, unknown>[];
+}) => <BaseTable data={insights} columns={columns} />;
+
+// Legacy export
+export const MemberInsightsTableView = InsightsTableView;

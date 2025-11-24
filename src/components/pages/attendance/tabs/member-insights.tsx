@@ -1,321 +1,307 @@
-'use client';
+import {
+  Award,
+  Calendar,
+  Percent,
+  TrendingDown,
+  TrendingUp,
+  UserCheck,
+  Users,
+} from 'lucide-react';
+import { motion } from 'motion/react';
 
-import { useState } from 'react';
-
-import { ColumnDef } from '@tanstack/react-table';
-import { Award, Calendar, TrendingDown } from 'lucide-react';
-
-import { DataTable } from '@/components/shared/table/data-table';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
+import InfoCard from '@/components/shared/cards/info-card';
+import { MedalIcon } from '@/components/shared/icons';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
+import { useGymBranch } from '@/providers/gym-branch-provider';
+import { useMemberAnalytics } from '@/services/attendance';
+import type { MemberInsight } from '@/types/attendance';
 
-type MemberInsight = {
-  id: string;
+import { MemberInsightsTableView, insightsColumns } from '../table';
+
+const MemberAvatar = ({
+  name,
+  ringClass = 'ring-white dark:ring-secondary-blue-500',
+}: {
   name: string;
-  membershipTier: string;
-  totalVisits: number;
-  visitsThisMonth: number;
-  currentStreak: number;
-  longestStreak: number;
-  averageDuration: number;
-  favoriteTime: string;
-  favoriteActivity: string;
-  lastVisit: string;
-  riskLevel: string;
-  attendanceRate: number;
-  profilePicture: string | null;
+  ringClass?: string;
+}) => {
+  const avatarStyle = getAvatarColor(name);
+  const initials = getInitials(name);
+  return (
+    <Avatar className={`h-7 w-7 ring-2 ${ringClass}`}>
+      <AvatarFallback className="text-[10px] font-semibold" style={avatarStyle}>
+        {initials}
+      </AvatarFallback>
+    </Avatar>
+  );
 };
 
-const mockMemberInsights: MemberInsight[] = [
-  {
-    id: 'M001',
-    name: 'Sarah Johnson',
-    membershipTier: 'premium',
-    totalVisits: 45,
-    visitsThisMonth: 12,
-    currentStreak: 7,
-    longestStreak: 14,
-    averageDuration: 85,
-    favoriteTime: '6:00 AM',
-    favoriteActivity: 'Group Classes',
-    lastVisit: '2024-01-15',
-    riskLevel: 'low',
-    attendanceRate: 92,
-    profilePicture: null,
-  },
-  {
-    id: 'M002',
-    name: 'Mike Chen',
-    membershipTier: 'basic',
-    totalVisits: 23,
-    visitsThisMonth: 4,
-    currentStreak: 0,
-    longestStreak: 8,
-    averageDuration: 65,
-    favoriteTime: '7:00 PM',
-    favoriteActivity: 'General Workout',
-    lastVisit: '2024-01-10',
-    riskLevel: 'high',
-    attendanceRate: 45,
-    profilePicture: null,
-  },
-  {
-    id: 'M003',
-    name: 'Emma Davis',
-    membershipTier: 'vip',
-    totalVisits: 67,
-    visitsThisMonth: 18,
-    currentStreak: 12,
-    longestStreak: 21,
-    averageDuration: 95,
-    favoriteTime: '12:00 PM',
-    favoriteActivity: 'Personal Training',
-    lastVisit: '2024-01-15',
-    riskLevel: 'low',
-    attendanceRate: 98,
-    profilePicture: null,
-  },
-];
-
-const mockTopPerformers = [
-  { name: 'Emma Davis', streak: 12, visits: 18 },
-  { name: 'Sarah Johnson', streak: 7, visits: 12 },
-  { name: 'John Wilson', streak: 5, visits: 15 },
-];
-
-const mockAtRiskMembers = [
-  { name: 'Mike Chen', lastVisit: '5 days ago', visits: 4 },
-  { name: 'Lisa Brown', lastVisit: '8 days ago', visits: 2 },
-  { name: 'Tom Anderson', lastVisit: '12 days ago', visits: 1 },
-];
-
-const memberColumns: ColumnDef<MemberInsight>[] = [
-  {
-    accessorKey: 'name',
-    header: 'Member',
-    cell: ({ row }) => {
-      const name = row.getValue<string>('name');
-      const avatarStyle = getAvatarColor(name);
-      const initials = getInitials(name);
-      const tier = row.original.membershipTier;
-      const risk = row.original.riskLevel;
-
-      const getTierColor = (tier: string) => {
-        switch (tier) {
-          case 'vip':
-            return 'bg-purple-500/10 border-purple-500 text-purple-400';
-          case 'premium':
-            return 'bg-primary-green-500/10 border-primary-green-500 text-primary-green-500';
-          case 'basic':
-            return 'bg-semantic-blue-500/10 border-semantic-blue-500 text-semantic-blue-500';
-          default:
-            return 'bg-gray-500/10 border-gray-500 text-gray-400';
-        }
-      };
-
-      const getRiskColor = (risk: string) => {
-        switch (risk) {
-          case 'low':
-            return 'bg-primary-green-500/10 border-primary-green-500 text-primary-green-500';
-          case 'medium':
-            return 'bg-secondary-yellow-150/10 border-secondary-yellow-150 text-secondary-yellow-150';
-          case 'high':
-            return 'bg-alert-red-500/10 border-alert-red-500 text-alert-red-400';
-          default:
-            return 'bg-gray-500/10 border-gray-500 text-gray-400';
-        }
-      };
-
-      return (
-        <div className="flex items-center gap-3 w-[250px]">
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="font-medium" style={avatarStyle}>
-              {initials}
-            </AvatarFallback>
-            <AvatarImage src={row.original.profilePicture || undefined} />
-          </Avatar>
-          <div>
-            <div className="text-white font-medium">{name}</div>
-            <div className="flex gap-1 mt-1">
-              <Badge
-                variant="outline"
-                className={`text-xs ${getTierColor(tier)}`}
-              >
-                {tier.toUpperCase()}
-              </Badge>
-              <Badge
-                variant="outline"
-                className={`text-xs ${getRiskColor(risk)}`}
-              >
-                {risk}
-              </Badge>
-            </div>
-          </div>
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: 'attendanceRate',
-    header: 'Attendance',
-    cell: ({ row }) => (
-      <div className="text-center">
-        <div className="text-white font-bold text-lg">
-          {row.getValue('attendanceRate')}%
-        </div>
-      </div>
-    ),
-  },
-  {
-    accessorKey: 'visitsThisMonth',
-    header: 'This Month',
-    cell: ({ row }) => (
-      <div className="text-center">
-        <div className="text-white font-medium">
-          {row.getValue('visitsThisMonth')}
-        </div>
-        <div className="text-gray-400 text-xs">
-          of {row.original.totalVisits} total
-        </div>
-      </div>
-    ),
-  },
-  {
-    accessorKey: 'currentStreak',
-    header: 'Streak',
-    cell: ({ row }) => (
-      <div className="text-center">
-        <div className="text-primary-green-500 font-bold">
-          {row.getValue('currentStreak')} days
-        </div>
-        <div className="text-gray-400 text-xs">
-          Best: {row.original.longestStreak}
-        </div>
-      </div>
-    ),
-  },
-  {
-    accessorKey: 'averageDuration',
-    header: 'Avg Duration',
-    cell: ({ row }) => (
-      <div className="text-center">
-        <div className="text-white font-medium">
-          {row.getValue('averageDuration')}m
-        </div>
-        <div className="text-gray-400 text-xs">{row.original.favoriteTime}</div>
-      </div>
-    ),
-  },
-  {
-    accessorKey: 'favoriteActivity',
-    header: 'Preference',
-    cell: ({ row }) => (
-      <div className="min-w-[120px]">
-        <div className="text-white text-sm">
-          {row.getValue('favoriteActivity')}
-        </div>
-        <div className="text-gray-400 text-xs">
-          Last: {row.original.lastVisit}
-        </div>
-      </div>
-    ),
-  },
-];
-
-export default function MemberInsights() {
-  const [memberInsights] = useState(mockMemberInsights);
-  const [topPerformers] = useState(mockTopPerformers);
-  const [atRiskMembers] = useState(mockAtRiskMembers);
+function TopPerformersCard({
+  topPerformers,
+}: {
+  topPerformers: Array<{ name: string; streak: number; visits: number }>;
+}) {
+  const getMedalVariant = (index: number): 'gold' | 'silver' | 'bronze' => {
+    if (index === 0) return 'gold';
+    if (index === 1) return 'silver';
+    return 'bronze';
+  };
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Compact Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 grid-rows-[minmax(200px,1fr)] gap-4">
-        <Card className="row-span-1 bg-secondary-blue-500 border-secondary-blue-600">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-white flex items-center gap-2 text-lg">
-              <Award size={18} />
-              Top Performers
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="h-[calc(100%-4rem)] overflow-hidden">
-            <div className="space-y-2 h-full overflow-y-auto">
-              {topPerformers.map((member, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between p-2 bg-secondary-blue-600 rounded"
-                >
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                        index === 0
-                          ? 'bg-yellow-500 text-black'
-                          : index === 1
-                            ? 'bg-gray-400 text-black'
-                            : 'bg-orange-500 text-black'
-                      }`}
-                    >
-                      {index + 1}
-                    </div>
-                    <span className="text-white text-sm truncate">
-                      {member.name}
-                    </span>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <div className="text-primary-green-500 text-sm font-bold">
-                      {member.streak}d
-                    </div>
-                    <div className="text-gray-400 text-xs">
-                      {member.visits}v
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+    <Card className="border-none bg-white dark:bg-secondary-blue-500 rounded-lg overflow-hidden">
+      <CardHeader className="p-5 pb-3">
+        <CardTitle className="text-gray-900 dark:text-white text-base font-normal leading-normal flex items-center gap-2">
+          <Award size={16} className="text-secondary-yellow-500" />
+          Top Performers
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-5 pt-0">
+        <div className="space-y-2">
+          {topPerformers.map((member, index) => {
+            const isFirst = index === 0;
 
-        <Card className="row-span-1 bg-secondary-blue-500 border-secondary-blue-600">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-white flex items-center gap-2 text-lg">
-              <TrendingDown size={18} />
-              At Risk Members
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="h-[calc(100%-4rem)] overflow-hidden">
-            <div className="space-y-2 h-full overflow-y-auto">
-              {atRiskMembers.map((member, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between p-2 bg-secondary-blue-600 rounded"
-                >
-                  <span className="text-white text-sm truncate">
-                    {member.name}
-                  </span>
-                  <div className="text-right flex-shrink-0">
-                    <div className="text-alert-red-400 text-sm font-bold">
-                      {member.lastVisit}
+            return (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1, duration: 0.3 }}
+                className={`group relative flex items-center gap-3 p-2.5 rounded-lg transition-all ${
+                  isFirst
+                    ? 'bg-gradient-to-r from-secondary-yellow-500/10 to-transparent border border-secondary-yellow-500/30'
+                    : 'glass-effect glass-effect-hover'
+                }`}
+              >
+                {isFirst && (
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-primary-green-500/5 to-transparent rounded-lg"
+                    animate={{ opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  />
+                )}
+
+                <div className="relative z-10 flex items-center gap-3 flex-1 min-w-0">
+                  <div className="relative flex-shrink-0">
+                    <motion.div
+                      whileHover={{ scale: 1.1 }}
+                      transition={{ type: 'spring', stiffness: 300 }}
+                    >
+                      <MemberAvatar
+                        name={member.name}
+                        ringClass={
+                          isFirst
+                            ? 'ring-primary-green-500/50'
+                            : 'ring-white dark:ring-secondary-blue-500'
+                        }
+                      />
+                    </motion.div>
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: index * 0.1 + 0.2, type: 'spring' }}
+                      className="absolute -bottom-1.5 -right-1.5"
+                    >
+                      <MedalIcon
+                        variant={getMedalVariant(index)}
+                        width={18}
+                        height={18}
+                      />
+                    </motion.div>
+                  </div>
+
+                  <div className="flex-1 min-w-0 pt-0.5">
+                    <div className="text-gray-900 dark:text-white text-sm font-medium truncate">
+                      {member.name}
                     </div>
-                    <div className="text-gray-400 text-xs">
+                    <div className="text-[11px] text-gray-500 dark:text-gray-400">
                       {member.visits} visits
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
-      {/* Member Details Table */}
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  className="relative z-10 flex-shrink-0 flex items-center gap-1 bg-primary-green-500/10 px-2 py-1 rounded-full"
+                >
+                  <span className="text-xs">🔥</span>
+                  <span className="text-xs font-bold text-primary-green-600 dark:text-primary-green-400">
+                    {member.streak}d
+                  </span>
+                </motion.div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function AtRiskMembersCard({
+  atRiskMembers,
+}: {
+  atRiskMembers: Array<{ name: string; lastVisit: string; visits: number }>;
+}) {
+  return (
+    <Card className="relative border-none bg-white dark:bg-secondary-blue-500 rounded-lg overflow-hidden">
+      <CardHeader className="p-5 pb-3">
+        <CardTitle className="text-gray-900 dark:text-white text-base font-normal leading-normal flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <TrendingDown size={16} className="text-alert-red-500" />
+            At Risk Members
+          </div>
+          <span className="text-[10px] font-medium text-alert-red-600 dark:text-alert-red-400 bg-alert-red-500/10 px-2 py-1 rounded-full">
+            {atRiskMembers.length} MEMBERS
+          </span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-5 pt-0">
+        <div className="relative max-h-[200px] overflow-y-auto pr-2">
+          <div className="space-y-2">
+            {atRiskMembers.map((member, index) => (
+              <div
+                key={index}
+                className="relative flex items-start justify-between gap-3 p-2.5 glass-effect glass-effect-hover rounded-lg transition-all"
+              >
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="relative z-10 flex-shrink-0">
+                    <MemberAvatar name={member.name} />
+                    <div className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white dark:border-secondary-blue-500 bg-alert-red-500" />
+                  </div>
+                  <div className="flex-1 min-w-0 pt-0.5">
+                    <div className="text-gray-900 dark:text-white text-sm font-medium truncate">
+                      {member.name}
+                    </div>
+                    <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                      {member.visits} visits this month
+                    </div>
+                  </div>
+                </div>
+                <div className="flex-shrink-0 text-right pt-0.5">
+                  <div className="text-xs font-semibold text-alert-red-500">
+                    {member.lastVisit.split(' ')[0]}
+                  </div>
+                  <div className="text-[10px] text-gray-500 dark:text-gray-400">
+                    {member.lastVisit.split(' ')[1]}{' '}
+                    {member.lastVisit.split(' ')[2]}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </CardContent>
+      <div className="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-white dark:from-secondary-blue-500 to-transparent pointer-events-none" />
+    </Card>
+  );
+}
+
+function SummaryStats({
+  summary,
+}: {
+  summary?: {
+    totalMembers: number;
+    activeMembers: number;
+    averageAttendanceRate: number;
+    topPerformerCount: number;
+    atRiskCount: number;
+  };
+}) {
+  const stats = [
+    {
+      id: 1,
+      icon: <Users size={20} strokeWidth={1.75} color="#151821" />,
+      color: 'semantic-blue-500',
+      title: 'Total Members',
+      count: summary?.totalMembers ?? 0,
+    },
+    {
+      id: 2,
+      icon: <UserCheck size={20} strokeWidth={1.75} color="#151821" />,
+      color: 'primary-green-500',
+      title: 'Active Members',
+      count: summary?.activeMembers ?? 0,
+    },
+    {
+      id: 3,
+      icon: <Percent size={20} strokeWidth={1.75} color="#151821" />,
+      color: 'secondary-yellow-150',
+      title: 'Avg Attendance',
+      count: `${summary?.averageAttendanceRate ?? 0}%`,
+    },
+    {
+      id: 4,
+      icon: <TrendingUp size={20} strokeWidth={1.75} color="#151821" />,
+      color: 'alert-red-400',
+      title: 'Top Performers',
+      count: summary?.topPerformerCount ?? 0,
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {stats.map((stat) => (
+        <InfoCard item={stat} key={stat.id} />
+      ))}
+    </div>
+  );
+}
+
+export default function MemberInsights() {
+  const { gymBranch } = useGymBranch();
+  const { data: analyticsData } = useMemberAnalytics(gymBranch?.gymId);
+
+  const topPerformers = (analyticsData?.topPerformers || []).map((member) => ({
+    name: member.name,
+    streak: member.streak,
+    visits: member.visits,
+  }));
+
+  const atRiskMembers = (analyticsData?.atRiskMembers || []).map((member) => ({
+    name: member.name,
+    lastVisit:
+      member.daysAgo === null
+        ? 'Never'
+        : member.daysAgo === 0
+          ? 'Today'
+          : `${member.daysAgo} days ago`,
+    visits: member.visits,
+  }));
+
+  const memberInsights: MemberInsight[] = (
+    analyticsData?.memberAnalytics || []
+  ).map((item) => ({
+    id: item.memberIdentifier,
+    memberIdentifier: item.memberIdentifier,
+    name: item.name,
+    totalVisits: item.totalVisits,
+    visitsThisMonth: item.visitsThisMonth,
+    currentStreak: item.currentStreak,
+    longestStreak: item.longestStreak,
+    averageDuration: Math.round(item.averageDuration),
+    favoriteTime: item.peakTime,
+    attendanceRate: item.attendanceRate,
+    profilePicture: item.profilePicture,
+  }));
+
+  return (
+    <div className="flex flex-col gap-4">
+      <SummaryStats summary={analyticsData?.summary} />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <TopPerformersCard topPerformers={topPerformers} />
+        <AtRiskMembersCard atRiskMembers={atRiskMembers} />
+      </div>
       <div>
-        <h3 className="text-white text-lg font-medium mb-4 flex items-center gap-2">
-          <Calendar size={20} />
+        <h3 className="text-gray-900 dark:text-white text-base font-normal mb-3 flex items-center gap-2">
+          <Calendar size={16} />
           Member Analytics
         </h3>
-        <DataTable columns={memberColumns} data={memberInsights} />
+        <MemberInsightsTableView
+          insights={memberInsights}
+          columns={insightsColumns}
+        />
       </div>
     </div>
   );

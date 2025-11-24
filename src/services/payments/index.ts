@@ -39,8 +39,11 @@ export const useFilteredPayments = (gymId: number | string) => {
 
   // Outstanding: Use memberStatus from API
   const outstandingPayments = data
-    .filter((member) => member.memberStatus === 'Outstanding')
+    .filter(
+      (member) => member.memberStatus === 'Outstanding' && member.currentCycle
+    )
     .sort((a, b) => {
+      if (!a.currentCycle || !b.currentCycle) return 0;
       // Sort by urgency: buffer end date or due date
       const aDate = a.currentCycle.bufferEndDate
         ? new Date(a.currentCycle.bufferEndDate)
@@ -55,9 +58,12 @@ export const useFilteredPayments = (gymId: number | string) => {
   const expiredPayments = data
     .filter(
       (member) =>
-        member.memberStatus === 'Expired' || member.memberStatus === 'Debts'
+        (member.memberStatus === 'Expired' ||
+          member.memberStatus === 'Debts') &&
+        member.currentCycle
     )
     .sort((a, b) => {
+      if (!a.currentCycle || !b.currentCycle) return 0;
       // Sort by most overdue first
       const aDate = a.currentCycle.bufferEndDate
         ? new Date(a.currentCycle.bufferEndDate)
@@ -70,19 +76,27 @@ export const useFilteredPayments = (gymId: number | string) => {
 
   // Completed: Use memberStatus from API
   const completedPayments = data
-    .filter((member) => member.memberStatus === 'Completed')
-    .sort(
-      (a, b) =>
+    .filter(
+      (member) => member.memberStatus === 'Completed' && member.currentCycle
+    )
+    .sort((a, b) => {
+      if (!a.currentCycle || !b.currentCycle) return 0;
+      return (
         new Date(b.currentCycle.lastAmountPaidDate).getTime() -
         new Date(a.currentCycle.lastAmountPaidDate).getTime()
-    );
+      );
+    });
 
   // History: All payments sorted by recent
-  const historyPayments = data.sort(
-    (a, b) =>
-      new Date(b.currentCycle.lastAmountPaidDate).getTime() -
-      new Date(a.currentCycle.lastAmountPaidDate).getTime()
-  );
+  const historyPayments = data
+    .filter((member) => member.currentCycle)
+    .sort((a, b) => {
+      if (!a.currentCycle || !b.currentCycle) return 0;
+      return (
+        new Date(b.currentCycle.lastAmountPaidDate).getTime() -
+        new Date(a.currentCycle.lastAmountPaidDate).getTime()
+      );
+    });
 
   return {
     isLoading,

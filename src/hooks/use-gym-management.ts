@@ -4,7 +4,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import {
-  createGym,
   fetchGymById,
   fetchGymProfilePicture,
   updateGym,
@@ -15,7 +14,8 @@ export function useGymDetails(gymId: number) {
     queryKey: ['gymDetails', gymId],
     queryFn: () => fetchGymById(gymId),
     enabled: !!gymId,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 15, // 15 minutes
+    gcTime: 1000 * 60 * 30, // 30 minutes
   });
 }
 
@@ -24,38 +24,13 @@ export function useGymProfilePicture(gymId: number) {
     queryKey: ['gymProfilePicture', gymId],
     queryFn: () => fetchGymProfilePicture(gymId),
     enabled: !!gymId,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 15, // 15 minutes
+    gcTime: 1000 * 60 * 30, // 30 minutes
   });
 }
 
 export function useGymManagement() {
   const queryClient = useQueryClient();
-
-  const createGymMutation = useMutation({
-    mutationFn: (data: {
-      GymName: string;
-      Location: string;
-      ContactNumber1: string;
-      ContactNumber2?: string;
-      Email: string;
-      SocialLinks?: string;
-      ProfilePicture?: File | null;
-      GymAdminId: string;
-      Status?: string;
-    }) => createGym(data),
-    onSuccess: (result) => {
-      if (result.success) {
-        toast.success(result.success);
-      } else if (result.error) {
-        toast.error(result.error);
-      }
-    },
-    onError: (error) => {
-      toast.error(
-        error instanceof Error ? error.message : 'Failed to create gym'
-      );
-    },
-  });
 
   const updateGymMutation = useMutation({
     mutationFn: ({ gymId, data }: { gymId: number; data: FormData }) =>
@@ -79,8 +54,6 @@ export function useGymManagement() {
   });
 
   return {
-    createGym: createGymMutation.mutateAsync,
-    isCreating: createGymMutation.isPending,
     updateGym: updateGymMutation.mutateAsync,
     isUpdating: updateGymMutation.isPending,
   };

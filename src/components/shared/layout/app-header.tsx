@@ -35,7 +35,6 @@ export function AppHeader() {
       </div>
       <div className="ml-auto flex items-center gap-2">
         <NotificationBell count={notificationCount} onClick={() => {}} />
-
         <Separator
           orientation="vertical"
           className="mx-2 data-[orientation=vertical]:h-4 bg-[#747578] hidden md:flex"

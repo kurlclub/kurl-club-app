@@ -615,3 +615,120 @@ export const MaintainWeightIcon: React.FC<SocialIconProps> = ({
     />
   </svg>
 );
+
+interface MedalIconProps extends SVGProps<SVGSVGElement> {
+  variant?: 'gold' | 'silver' | 'bronze';
+}
+
+export const MedalIcon: React.FC<MedalIconProps> = ({
+  variant = 'gold',
+  ...props
+}) => {
+  const colors = {
+    gold: {
+      ring1: '#A88300',
+      ring2: '#C28B37',
+      ring3: '#C09525',
+      gradient0: ['#FFC600', '#FFDE69'],
+      gradient1: ['#FFFCDD', '#FFE896'],
+    },
+    silver: {
+      ring1: '#d9d9d9',
+      ring2: '#d9d9d9',
+      ring3: '#ababab',
+      gradient0: ['#c2c2c2', '#c2c2c2'],
+      gradient1: ['#fafafa', '#C0C0C0'],
+    },
+    bronze: {
+      ring1: '#aa6d3c',
+      ring2: '#85552e',
+      ring3: '#7f6115',
+      gradient0: ['#85552e', '#e2b998'],
+      gradient1: ['#975620', '#ffb375'],
+    },
+  };
+
+  const c = colors[variant];
+  const id = `medal_${variant}`;
+
+  return (
+    <svg
+      viewBox="-3.5 0 32 32"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <path
+        d="M9.73795 18.8436L12.9511 20.6987L6.42625 32L4.55349 27.8233L9.73795 18.8436Z"
+        fill="#CE4444"
+      />
+      <path
+        d="M9.73795 18.8436L6.52483 16.9885L0 28.2898L4.55349 27.8233L9.73795 18.8436Z"
+        fill="#983535"
+      />
+      <path
+        d="M14.322 18.8436L11.1088 20.6987L17.6337 32L19.5064 27.8233L14.322 18.8436Z"
+        fill="#983535"
+      />
+      <path
+        d="M14.322 18.8436L17.5351 16.9885L24.0599 28.2898L19.5064 27.8233L14.322 18.8436Z"
+        fill="#CE4444"
+      />
+      <path
+        d="M22.9936 11.0622C22.9936 17.1716 18.0409 22.1243 11.9314 22.1243C5.82194 22.1243 0.869249 17.1716 0.869249 11.0622C0.869249 4.9527 5.82194 0 11.9314 0C18.0409 0 22.9936 4.9527 22.9936 11.0622Z"
+        fill={`url(#${id}_0)`}
+      />
+      <path
+        d="M20.5665 11.0621C20.5665 15.8311 16.7004 19.6972 11.9315 19.6972C7.16247 19.6972 3.29645 15.8311 3.29645 11.0621C3.29645 6.29315 7.16247 2.42713 11.9315 2.42713C16.7004 2.42713 20.5665 6.29315 20.5665 11.0621Z"
+        fill={c.ring1}
+      />
+      <path
+        d="M21.0477 11.984C21.0477 16.7641 17.1727 20.6391 12.3926 20.6391C7.61251 20.6391 3.73748 16.7641 3.73748 11.984C3.73748 7.20389 7.61251 3.32887 12.3926 3.32887C17.1727 3.32887 21.0477 7.20389 21.0477 11.984Z"
+        fill={c.ring2}
+      />
+      <path
+        d="M20.5868 11.0621C20.5868 15.8422 16.7118 19.7172 11.9317 19.7172C7.15159 19.7172 3.27656 15.8422 3.27656 11.0621C3.27656 6.28205 7.15159 2.40702 11.9317 2.40702C16.7118 2.40702 20.5868 6.28205 20.5868 11.0621Z"
+        fill={c.ring3}
+      />
+      <path
+        d="M11.9781 5.04096L13.8451 8.77502L17.5792 9.24178L15.0151 12.117L15.7122 16.2431L11.9781 14.3761L8.24404 16.2431L8.94729 12.117L6.37701 9.24178L10.1111 8.77502L11.9781 5.04096Z"
+        fill={`url(#${id}_1)`}
+      />
+      <defs>
+        <linearGradient
+          id={`${id}_0`}
+          x1="11.1804"
+          y1="4.03192"
+          x2="12.6813"
+          y2="31.965"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop stopColor={c.gradient0[0]} />
+          <stop offset="1" stopColor={c.gradient0[1]} />
+        </linearGradient>
+        <linearGradient
+          id={`${id}_1`}
+          x1="11.9783"
+          y1="5.04096"
+          x2="11.9783"
+          y2="16.2431"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop stopColor={c.gradient1[0]} />
+          <stop offset="1" stopColor={c.gradient1[1]} />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+};
+
+// Keep legacy exports for backward compatibility
+export const GoldMedalIcon: React.FC<SVGProps<SVGSVGElement>> = (props) => (
+  <MedalIcon variant="gold" {...props} />
+);
+export const SilverMedalIcon: React.FC<SVGProps<SVGSVGElement>> = (props) => (
+  <MedalIcon variant="silver" {...props} />
+);
+export const BronzeMedalIcon: React.FC<SVGProps<SVGSVGElement>> = (props) => (
+  <MedalIcon variant="bronze" {...props} />
+);

@@ -2,38 +2,44 @@ import React from 'react';
 
 import { IndianRupee, Users } from 'lucide-react';
 
+import { useGymBranch } from '@/providers/gym-branch-provider';
+import { useDashboardData } from '@/services/dashboard';
+
 import InfoCard from '../../shared/cards/info-card';
 import { KDumbbell, KSkipper } from '../../shared/icons/index';
 
 function CardList() {
+  const { gymBranch } = useGymBranch();
+  const { data: dashboardData } = useDashboardData(gymBranch?.gymId || 0);
+
   const cards = [
     {
       id: 1,
       icon: <Users size={20} strokeWidth={1.75} color="#151821" />,
       color: 'primary-green-500',
       title: 'Active members',
-      count: 190,
+      count: dashboardData?.totalMembers || 0,
     },
     {
       id: 2,
       icon: <IndianRupee size={20} strokeWidth={1.75} color="#151821" />,
       color: 'secondary-pink-500',
       title: 'Outstanding payments',
-      count: 30,
+      count: dashboardData?.outstandingPaymentsCount || 0,
     },
     {
       id: 3,
       icon: <KSkipper />,
       color: 'secondary-yellow-150',
       title: 'Skippers',
-      count: 12,
+      count: dashboardData?.skippersCount || 0,
     },
     {
       id: 4,
       icon: <KDumbbell />,
       color: 'semantic-blue-500',
       title: 'New Signups',
-      count: 0,
+      count: dashboardData?.newSignups || 0,
     },
   ];
 

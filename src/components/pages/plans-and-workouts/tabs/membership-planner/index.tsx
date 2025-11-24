@@ -97,7 +97,7 @@ export function PackageManager() {
           </p>
         </div>
         <Button onClick={handleCreatePlan}>
-          <Plus className="w-5 h-5 mr-2" />
+          <Plus className="w-5 h-5" />
           Create Plan
         </Button>
       </div>

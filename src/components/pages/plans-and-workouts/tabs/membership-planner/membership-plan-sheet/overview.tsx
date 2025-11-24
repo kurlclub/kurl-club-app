@@ -1,8 +1,13 @@
 'use client';
 
+import { Control, useWatch } from 'react-hook-form';
+
 import { Clock, PenLine, User2 } from 'lucide-react';
 
-import { KInput } from '@/components/shared/form/k-input';
+import {
+  KFormField,
+  KFormFieldType,
+} from '@/components/shared/form/k-formfield';
 import RichTextEditor from '@/components/shared/rich-text-editor';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -17,6 +22,15 @@ import { getInitials, getProfilePictureSrc } from '@/lib/utils';
 import { Member } from '@/types/members';
 import { MembershipPlan } from '@/types/membership-plan';
 
+interface MembershipPlanFormData {
+  planName: string;
+  billingType: 'Recurring' | 'PerSession';
+  fee: string | number;
+  details?: string;
+  durationInDays: string | number;
+  defaultSessionRate?: string | number;
+}
+
 interface OverviewProps {
   plan: MembershipPlan;
   planMembers?: Member[];
@@ -27,6 +41,7 @@ interface OverviewProps {
   onDelete: () => void;
   onEdit: () => void;
   onShowMembers: () => void;
+  control?: Control<MembershipPlanFormData>;
 }
 
 export function Overview({
@@ -38,7 +53,15 @@ export function Overview({
   onImmediateUpdate,
   onEdit,
   onShowMembers,
+  control,
 }: OverviewProps) {
+  const watchedBillingType = useWatch({
+    control: control!,
+    name: 'billingType',
+    defaultValue: plan.billingType,
+  });
+  const billingType = control ? watchedBillingType : plan.billingType;
+
   const handleDefaultChange = (checked: boolean) => {
     const updatedPlan = { ...plan, isActive: checked };
 
@@ -158,52 +181,78 @@ export function Overview({
       </div>
       {isEditMode ? (
         <div className="space-y-4">
-          <KInput
+          <KFormField
+            fieldType={KFormFieldType.INPUT}
+            control={control!}
+            name="planName"
             label="Membership Plan Name"
-            placeholder=" "
-            value={plan.planName}
-            onChange={(e) =>
-              onUpdatePlan({ ...plan, planName: e.target.value })
-            }
-            disabled={!isEditMode}
-            mandetory
-          />
-          <KInput
-            label="Amount in (INR)"
-            placeholder="Enter amount"
-            value={plan.fee}
-            onChange={(e) => {
-              const value = e.target.value;
-              onUpdatePlan({
-                ...plan,
-                fee: value === '' ? '' : Number(value) || '',
-              });
-            }}
-            disabled={!isEditMode}
+            placeholder="Enter plan name"
             mandetory
           />
 
-          <RichTextEditor
-            content={plan.details}
-            onUpdate={(value: string) =>
-              onUpdatePlan({ ...plan, details: value })
-            }
+          <div className="space-y-4 p-4 bg-secondary-blue-600/50 rounded-lg border border-secondary-blue-400">
+            <KFormField
+              fieldType={KFormFieldType.SELECT}
+              control={control!}
+              name="billingType"
+              label="Billing Type"
+              placeholder="Select billing type"
+              mandetory
+              options={[
+                { label: 'Recurring (Fixed cycle)', value: 'Recurring' },
+                { label: 'Per Session (Pay per visit)', value: 'PerSession' },
+              ]}
+            />
+
+            <KFormField
+              fieldType={KFormFieldType.INPUT}
+              control={control!}
+              name="fee"
+              label={
+                billingType === 'PerSession'
+                  ? 'Default Session Rate (INR)'
+                  : 'Amount in (INR)'
+              }
+              placeholder="Enter amount"
+              type="number"
+              mandetory
+            />
+
+            {billingType === 'PerSession' && (
+              <div className="p-3 bg-primary-green-500/10 border border-primary-green-500/20 rounded-md">
+                <p className="text-sm text-gray-300">
+                  💡 <strong>Per Session Billing:</strong> Members will be
+                  charged per attendance. You can set custom rates for
+                  individual members.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <KFormField
+            fieldType={KFormFieldType.SKELETON}
+            control={control!}
+            name="details"
+            renderSkeleton={(field) => (
+              <RichTextEditor
+                content={String(field.value || '')}
+                onUpdate={(value: string) => field.onChange(value)}
+              />
+            )}
           />
 
-          <div className="flex flex-col md:flex-row gap-4">
-            <KInput
-              label="Duration (days)"
+          <div className="flex flex-col w-1/2 md:flex-row gap-4">
+            <KFormField
+              fieldType={KFormFieldType.INPUT}
+              control={control!}
+              name="durationInDays"
+              label={
+                billingType === 'PerSession'
+                  ? 'Validity (days)'
+                  : 'Duration (days)'
+              }
               type="number"
               placeholder="Enter duration"
-              value={plan.durationInDays}
-              onChange={(e) => {
-                const value = e.target.value;
-                onUpdatePlan({
-                  ...plan,
-                  durationInDays: value === '' ? '' : Number(value) || '',
-                });
-              }}
-              disabled={!isEditMode}
               mandetory
             />
           </div>

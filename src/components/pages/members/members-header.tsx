@@ -5,6 +5,7 @@ import { Download, Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { useGymFormOptions } from '@/hooks/use-gymform-options';
+import { useMemberForm } from '@/hooks/use-member-form';
 
 import AddFrom from './add-member';
 import { SetupChecklistDialog } from './setup-checklist-dialog';
@@ -27,6 +28,7 @@ export const MembersHeader = ({
   const [showAddMemberForm, setShowAddMemberForm] = useState(false);
   const [cameFromSetup, setCameFromSetup] = useState(false);
   const { formOptions } = useGymFormOptions(gymId);
+  const memberForm = useMemberForm(gymId);
   const searchParams = useSearchParams();
 
   const hasPackages = (formOptions?.membershipPlans?.length ?? 0) > 0;
@@ -78,6 +80,7 @@ export const MembersHeader = ({
               setShowAddMemberForm(false);
             }}
             gymId={gymId}
+            memberForm={memberForm}
           />
         ) : (
           <SetupChecklistDialog

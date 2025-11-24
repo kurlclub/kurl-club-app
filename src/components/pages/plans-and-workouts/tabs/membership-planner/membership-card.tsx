@@ -7,34 +7,62 @@ interface WorkoutCardProps {
 }
 
 export function MembershipCard({ plan, onClick }: WorkoutCardProps) {
+  const isPerSession = plan.billingType === 'PerSession';
+
   return (
     <Card
-      className="group cursor-pointer transition-all duration-300 hover:shadow-md hover:shadow-primary-green-500/10 border border-white/5 hover:border-primary-green-500/30 bg-gradient-to-br from-secondary-blue-500 to-secondary-blue-600 overflow-hidden h-72 sm:h-80 backdrop-blur-sm flex flex-col"
+      className={`group cursor-pointer transition-all duration-300 hover:shadow-md border overflow-hidden h-72 sm:h-80 backdrop-blur-sm flex flex-col ${
+        isPerSession
+          ? 'hover:shadow-semantic-blue-500/10 border-semantic-blue-500/30 hover:border-semantic-blue-500/50 bg-gradient-to-br from-secondary-blue-500 to-secondary-blue-600'
+          : 'hover:shadow-primary-green-500/10 border-primary-green-500/30 hover:border-primary-green-500/50 bg-gradient-to-br from-secondary-blue-500 to-secondary-blue-600'
+      }`}
       onClick={onClick}
     >
       {/* Header */}
-      <div className="relative p-3 sm:p-4 bg-gradient-to-r from-primary-green-500/10 to-transparent border-b border-white/5 shrink-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary-green-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      <div
+        className={`relative p-3 sm:p-4 border-b border-white/5 shrink-0 ${
+          isPerSession
+            ? 'bg-gradient-to-r from-semantic-blue-500/10 to-transparent'
+            : 'bg-gradient-to-r from-primary-green-500/10 to-transparent'
+        }`}
+      >
+        <div
+          className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${
+            isPerSession
+              ? 'bg-gradient-to-br from-semantic-blue-500/5 to-transparent'
+              : 'bg-gradient-to-br from-primary-green-500/5 to-transparent'
+          }`}
+        />
         <div className="relative z-10 space-y-2">
           <div className="flex items-start justify-between gap-2">
-            <h3 className="text-white font-semibold text-base sm:text-lg leading-tight group-hover:text-primary-green-200 transition-colors duration-300 flex-1">
+            <h3
+              className={`text-white font-semibold text-base sm:text-lg leading-tight transition-colors duration-300 flex-1 ${
+                isPerSession
+                  ? 'group-hover:text-semantic-blue-200'
+                  : 'group-hover:text-primary-green-200'
+              }`}
+            >
               {plan.planName}
             </h3>
-            <span className="text-primary-green-100 text-xs bg-primary-green-500/20 px-2 py-1 rounded-full shrink-0">
+            <span
+              className={`text-xs px-2 py-1 rounded-full shrink-0 ${
+                isPerSession
+                  ? 'text-semantic-blue-100 bg-semantic-blue-500/20'
+                  : 'text-primary-green-100 bg-primary-green-500/20'
+              }`}
+            >
               {plan.durationInDays} days
             </span>
           </div>
           <div className="flex items-baseline gap-1">
-            <span className="text-primary-green-200 font-bold text-xl sm:text-2xl tracking-tight">
+            <span
+              className={`font-bold text-xl sm:text-2xl tracking-tight ${
+                isPerSession
+                  ? 'text-semantic-blue-200'
+                  : 'text-primary-green-200'
+              }`}
+            >
               ₹{new Intl.NumberFormat('en-IN').format(Number(plan.fee))}
-            </span>
-            <span className="text-white/60 text-xs font-medium">
-              /
-              {Number(plan.durationInDays) <= 7
-                ? 'week'
-                : Number(plan.durationInDays) <= 31
-                  ? 'month'
-                  : 'period'}
             </span>
           </div>
         </div>
@@ -62,7 +90,13 @@ export function MembershipCard({ plan, onClick }: WorkoutCardProps) {
       </div>
 
       <CardFooter className="p-2 sm:p-3 mt-auto shrink-0 border-t border-white/5">
-        <span className="text-white/40 text-xs group-hover:text-primary-green-200/60 transition-colors duration-300 mx-auto font-medium">
+        <span
+          className={`text-white/40 text-xs transition-colors duration-300 mx-auto font-medium ${
+            isPerSession
+              ? 'group-hover:text-semantic-blue-200/60'
+              : 'group-hover:text-primary-green-200/60'
+          }`}
+        >
           Click to edit
         </span>
       </CardFooter>

@@ -95,6 +95,7 @@ export const columns: ColumnDef<Staff>[] = [
   },
   {
     id: 'actions',
+    header: 'Actions',
     cell: ({ row }) => <ActionsCell user={row.original} />,
   },
 ];

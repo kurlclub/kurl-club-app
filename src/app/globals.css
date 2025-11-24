@@ -290,6 +290,14 @@
   @apply cursor-pointer text-sm font-normal text-white peer-disabled:cursor-not-allowed peer-disabled:opacity-70 md:leading-none;
 }
 
+@utility glass-effect {
+  @apply bg-white/60 dark:bg-white/5 backdrop-blur-sm border border-gray-200/50 dark:border-white/10;
+}
+
+@utility glass-effect-hover {
+  @apply hover:bg-white/80 dark:hover:bg-white/10;
+}
+
 @utility no-scrollbar {
   &::-webkit-scrollbar {
     display: none;

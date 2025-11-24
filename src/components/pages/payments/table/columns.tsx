@@ -3,10 +3,10 @@
 import Link from 'next/link';
 
 import { ColumnDef } from '@tanstack/react-table';
-import { Eye, MoreHorizontal, Receipt } from 'lucide-react';
+import { Eye, FileText, MoreHorizontal, Receipt } from 'lucide-react';
 
 import { FeeStatusBadge } from '@/components/shared/badges/fee-status-badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -19,6 +19,7 @@ import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
 import {
   calculateDaysRemaining,
   getPaymentBadgeStatus,
+  getProfilePictureSrc,
   getUrgencyConfig,
 } from '@/lib/utils';
 import { MemberPaymentDetails } from '@/types/payment';
@@ -41,7 +42,9 @@ const UrgencyIndicator = ({
 const ActionsCell: React.FC<{
   user: MemberPaymentDetails;
   onRecord?: (member: MemberPaymentDetails) => void;
-}> = ({ user, onRecord }) => {
+  onGenerateInvoice?: (member: MemberPaymentDetails) => void;
+  showInvoice?: boolean;
+}> = ({ user, onRecord, onGenerateInvoice, showInvoice = false }) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -68,6 +71,15 @@ const ActionsCell: React.FC<{
           <Receipt className="h-4 w-4 mr-2" />
           Record payment
         </DropdownMenuItem>
+        {showInvoice && (
+          <DropdownMenuItem
+            className="shad-select-item"
+            onClick={() => onGenerateInvoice?.(user)}
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            Generate Invoice
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -75,7 +87,9 @@ const ActionsCell: React.FC<{
 
 export const createPaymentColumns = (
   onRecord?: (member: MemberPaymentDetails) => void,
-  membershipPlans: Array<{ membershipPlanId: number; planName: string }> = []
+  membershipPlans: Array<{ membershipPlanId: number; planName: string }> = [],
+  onGenerateInvoice?: (member: MemberPaymentDetails) => void,
+  showInvoice: boolean = false
 ): ColumnDef<MemberPaymentDetails>[] => [
   {
     accessorKey: 'memberIdentifier',
@@ -105,6 +119,13 @@ export const createPaymentColumns = (
       return (
         <div className="flex items-center gap-2 w-[160px]">
           <Avatar className="h-8 w-8">
+            <AvatarImage
+              src={getProfilePictureSrc(
+                row.original.profilePicture,
+                row.original.photoPath
+              )}
+              alt={name}
+            />
             <AvatarFallback className="font-medium" style={avatarStyle}>
               {initials}
             </AvatarFallback>
@@ -121,6 +142,7 @@ export const createPaymentColumns = (
     header: 'Due Date',
     cell: ({ row }) => {
       const { currentCycle } = row.original;
+      if (!currentCycle) return <div className="min-w-24">-</div>;
       const { dueDate, bufferEndDate } = currentCycle;
       if (!dueDate) return <div className="min-w-24">-</div>;
 
@@ -134,17 +156,17 @@ export const createPaymentColumns = (
       let statusText = '';
 
       if (daysDiff < 0) {
-        statusColor = 'text-red-400';
+        statusColor = 'text-alert-red-400';
         if (bufferEndDate) {
           statusText = 'On buffer period';
         } else {
           statusText = `${Math.abs(daysDiff)} days overdue`;
         }
       } else if (daysDiff === 0) {
-        statusColor = 'text-orange-400';
+        statusColor = 'text-neutral-ochre-400';
         statusText = 'Due today';
       } else if (daysDiff <= 3) {
-        statusColor = 'text-yellow-400';
+        statusColor = 'text-secondary-yellow-150';
         statusText = `${daysDiff} days left`;
       } else {
         statusText = `${daysDiff} days left`;
@@ -164,6 +186,7 @@ export const createPaymentColumns = (
     header: 'Buffer',
     cell: ({ row }) => {
       const { currentCycle } = row.original;
+      if (!currentCycle) return <div className="min-w-24">-</div>;
       const { bufferEndDate, pendingAmount } = currentCycle;
 
       // Shows when there's no buffer OR payment is completed
@@ -200,6 +223,7 @@ export const createPaymentColumns = (
     sortingFn: (rowA, rowB) => {
       const aData = rowA.original.currentCycle;
       const bData = rowB.original.currentCycle;
+      if (!aData || !bData) return 0;
 
       // Completed payments go to bottom
       if (aData.pendingAmount === 0 && bData.pendingAmount > 0) return 1;
@@ -234,6 +258,7 @@ export const createPaymentColumns = (
     },
     filterFn: (row, id, value: string[]) => {
       const { currentCycle } = row.original;
+      if (!currentCycle) return false;
       const { bufferEndDate, dueDate } = currentCycle;
 
       // Use buffer end date if exists, otherwise use due date
@@ -265,6 +290,7 @@ export const createPaymentColumns = (
     header: 'Payment Summary',
     cell: ({ row }) => {
       const { currentCycle } = row.original;
+      if (!currentCycle) return <div className="min-w-[180px]">-</div>;
       const { pendingAmount, amountPaid, planFee } = currentCycle;
       const progress = planFee > 0 ? (amountPaid / planFee) * 100 : 0;
 
@@ -281,7 +307,9 @@ export const createPaymentColumns = (
             />
           </div>
           {pendingAmount > 0 && (
-            <div className="text-xs text-red-300">₹{pendingAmount} pending</div>
+            <div className="text-xs text-alert-red-300">
+              ₹{pendingAmount} pending
+            </div>
           )}
         </div>
       );
@@ -289,10 +317,11 @@ export const createPaymentColumns = (
   },
   {
     id: 'currentCycle.status',
-    accessorFn: (row) => row.currentCycle.status,
+    accessorFn: (row) => row.currentCycle?.status,
     header: 'Status',
     cell: ({ row }) => {
       const { currentCycle } = row.original;
+      if (!currentCycle) return <div className="min-w-24">-</div>;
       const status = currentCycle.status;
       const pendingAmount = currentCycle.pendingAmount;
 
@@ -305,7 +334,9 @@ export const createPaymentColumns = (
       );
     },
     filterFn: (row, id, value: string[]) => {
-      return value.includes(row.original.currentCycle.status);
+      return row.original.currentCycle
+        ? value.includes(row.original.currentCycle.status)
+        : false;
     },
   },
   {
@@ -313,6 +344,7 @@ export const createPaymentColumns = (
     header: 'Package',
     cell: ({ row }) => {
       const { currentCycle, membershipPlanId } = row.original;
+      if (!currentCycle) return <div className="min-w-[120px]">-</div>;
       const { planFee } = currentCycle;
       const planName = membershipPlans.find(
         (p) => p.membershipPlanId === membershipPlanId
@@ -341,6 +373,14 @@ export const createPaymentColumns = (
   },
   {
     id: 'actions',
-    cell: ({ row }) => <ActionsCell user={row.original} onRecord={onRecord} />,
+    header: 'Actions',
+    cell: ({ row }) => (
+      <ActionsCell
+        user={row.original}
+        onRecord={onRecord}
+        onGenerateInvoice={onGenerateInvoice}
+        showInvoice={showInvoice}
+      />
+    ),
   },
 ];

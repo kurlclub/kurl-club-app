@@ -1,5 +1,6 @@
 'use client';
 
+import { forwardRef } from 'react';
 import {
   Control,
   ControllerRenderProps,
@@ -33,6 +34,27 @@ import {
   InputOTPSlot,
 } from '@/components/ui/input-otp';
 import { safeParseDate } from '@/lib/utils';
+
+const CustomPhoneInput = forwardRef<
+  HTMLInputElement,
+  React.InputHTMLAttributes<HTMLInputElement>
+>((props, ref) => (
+  <input
+    {...props}
+    ref={ref}
+    onFocus={(e) => {
+      props.onFocus?.(e);
+      requestAnimationFrame(() => {
+        e.target.setSelectionRange(
+          e.target.value.length,
+          e.target.value.length
+        );
+      });
+    }}
+  />
+));
+
+CustomPhoneInput.displayName = 'CustomPhoneInput';
 
 export enum KFormFieldType {
   INPUT = 'input',
@@ -176,6 +198,9 @@ const RenderField = <T extends FieldValues>({
             value={field.value as E164Number | undefined}
             onChange={field.onChange}
             className={`peer ${className ? className : 'input-phone'}`}
+            countrySelectProps={{ tabIndex: -1 }}
+            smartCaret={false}
+            inputComponent={CustomPhoneInput}
           />
         </FormControl>
       );

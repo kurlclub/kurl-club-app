@@ -40,15 +40,7 @@ const StatusIndicator = ({ status }: { status: 'online' | 'offline' }) => (
   </div>
 );
 
-const ActionsCell = ({
-  device,
-  onEdit,
-  onDelete,
-}: {
-  device: BiometricDevice;
-  onEdit?: (device: BiometricDevice) => void;
-  onDelete?: (deviceId: string) => void;
-}) => (
+const ActionsCell = () => (
   <DropdownMenu>
     <DropdownMenuTrigger asChild>
       <Button variant="ghost" className="h-8 w-8 p-0">
@@ -60,17 +52,11 @@ const ActionsCell = ({
         <Settings className="h-4 w-4 mr-2" />
         Configure
       </DropdownMenuItem>
-      <DropdownMenuItem
-        className="shad-select-item"
-        onClick={() => onEdit?.(device)}
-      >
+      <DropdownMenuItem className="shad-select-item">
         <Edit className="h-4 w-4 mr-2" />
         Edit Device
       </DropdownMenuItem>
-      <DropdownMenuItem
-        className="shad-select-item text-red-400"
-        onClick={() => onDelete?.(device.id)}
-      >
+      <DropdownMenuItem className="shad-select-item text-red-400">
         <Trash2 className="h-4 w-4 mr-2" />
         Delete
       </DropdownMenuItem>
@@ -78,17 +64,16 @@ const ActionsCell = ({
   </DropdownMenu>
 );
 
-export const createDeviceColumns = (
-  onEdit?: (device: BiometricDevice) => void,
-  onDelete?: (deviceId: string) => void
-): ColumnDef<BiometricDevice>[] => [
+export const deviceColumns: ColumnDef<BiometricDevice>[] = [
   {
     accessorKey: 'name',
     header: 'Device Name',
     cell: ({ row }) => (
       <div className="w-[150px]">
-        <div className="text-white font-medium">{row.getValue('name')}</div>
-        <div className="text-xs text-primary-blue-200">
+        <div className="text-gray-900 dark:text-white font-medium">
+          {row.getValue('name')}
+        </div>
+        <div className="text-xs text-gray-600 dark:text-primary-blue-200">
           {row.original.location}
         </div>
       </div>
@@ -101,7 +86,7 @@ export const createDeviceColumns = (
     header: 'IP Address',
     cell: ({ row }) => (
       <div className="min-w-[120px]">
-        <span className="text-primary-blue-200 font-mono text-sm">
+        <span className="text-gray-600 dark:text-primary-blue-200 font-mono text-sm">
           {row.getValue('ipAddress')}
         </span>
       </div>
@@ -112,7 +97,9 @@ export const createDeviceColumns = (
     header: 'Port',
     cell: ({ row }) => (
       <div className="min-w-[80px]">
-        <span className="text-white">{row.getValue('port')}</span>
+        <span className="text-gray-900 dark:text-white">
+          {row.getValue('port')}
+        </span>
       </div>
     ),
   },
@@ -137,10 +124,10 @@ export const createDeviceColumns = (
 
       return (
         <div className="min-w-[120px]">
-          <div className="text-white text-sm">
+          <div className="text-gray-900 dark:text-white text-sm">
             {lastSeen.toLocaleTimeString()}
           </div>
-          <div className="text-xs text-gray-400">
+          <div className="text-xs text-gray-600 dark:text-gray-400">
             {diffMinutes < 1 ? 'Just now' : `${diffMinutes}m ago`}
           </div>
         </div>
@@ -149,8 +136,6 @@ export const createDeviceColumns = (
   },
   {
     id: 'actions',
-    cell: ({ row }) => (
-      <ActionsCell device={row.original} onEdit={onEdit} onDelete={onDelete} />
-    ),
+    cell: () => <ActionsCell />,
   },
 ];

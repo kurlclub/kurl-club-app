@@ -250,24 +250,29 @@ export const getDifficultyColor = (level: string) => {
 /**
  * Returns a valid image source for a profile picture.
  * Handles Base64 strings, data URLs, File objects, and provides a fallback if null.
+ * Checks both profilePicture and photoPath fields.
  *
  * @param profilePicture - The profile picture as a Base64 string, data URL, File, or null.
- * @param fallback - A fallback image URL if the profile picture is null.
- * @returns A valid image source URL.
+ * @param photoPath - Alternative field for photo path (URL or Base64).
+ * @returns A valid image source URL or undefined.
  */
 export const getProfilePictureSrc = (
-  profilePicture: string | File | null,
-  fallback: string
+  profilePicture?: string | File | null,
+  photoPath?: string | null
 ) => {
-  if (!profilePicture) return fallback;
+  const source = profilePicture || photoPath;
+  if (!source) return undefined;
 
-  if (typeof profilePicture === 'string') {
-    return profilePicture.startsWith('data:image')
-      ? profilePicture
-      : `data:image/png;base64,${profilePicture}`;
+  if (typeof source === 'string') {
+    // If it's already a full URL or data URL, return as is
+    if (source.startsWith('http') || source.startsWith('data:image')) {
+      return source;
+    }
+    // Otherwise treat as Base64
+    return `data:image/png;base64,${source}`;
   }
 
-  return URL.createObjectURL(profilePicture);
+  return URL.createObjectURL(source);
 };
 
 /**
@@ -475,3 +480,26 @@ export const getUrgencyConfig = (daysRemaining: number) => {
     };
   }
 };
+
+/**
+ * Formats currency amounts with K/L suffixes for large numbers.
+ *
+ * @param amount - The amount to format.
+ * @returns Formatted currency string.
+ */
+export const formatAmount = (amount: number): string => {
+  if (amount >= 100000) {
+    return `₹${(amount / 100000).toFixed(0)}L`;
+  } else if (amount >= 1000) {
+    return `₹${(amount / 1000).toFixed(0)}K`;
+  }
+  return `₹${amount}`;
+};
+
+/**
+ * Payment chart color constants.
+ */
+export const PAYMENT_CHART_COLORS = {
+  UNPAID: '#F7FF93',
+  PAID: '#96AF01',
+} as const;

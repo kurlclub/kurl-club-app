@@ -54,6 +54,10 @@ export function DataTable<TData extends object, TValue>({
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
+  const lastColumn = columns[columns.length - 1];
+  const isActionsColumn =
+    lastColumn && 'id' in lastColumn && lastColumn.id === 'actions';
+
   return (
     <div className="space-y-4">
       {toolbar && toolbar(table)}
@@ -65,7 +69,7 @@ export function DataTable<TData extends object, TValue>({
               <TableHeader className="bg-primary-blue-400 [&_tr]:border-b-0">
                 <TableRow>
                   {/* Fixed Columns */}
-                  <TableHead className="sticky left-0 z-20 bg-primary-blue-400">
+                  <TableHead className="sm:sticky left-0 z-20 bg-primary-blue-400">
                     {flexRender(
                       columns[0].header,
                       table
@@ -73,7 +77,7 @@ export function DataTable<TData extends object, TValue>({
                         .headers[0].getContext() as HeaderContext<TData, TValue>
                     )}
                   </TableHead>
-                  <TableHead className="sticky left-[96px] z-20 bg-primary-blue-400">
+                  <TableHead className="sm:sticky left-[96px] z-20 bg-primary-blue-400">
                     {flexRender(
                       columns[1].header,
                       table
@@ -95,9 +99,22 @@ export function DataTable<TData extends object, TValue>({
                             )}
                       </TableHead>
                     ))}
-                  {/* Action Column */}
-                  <TableHead className="sticky right-0 z-20 bg-primary-blue-400">
-                    Actions
+                  {/* Last Column */}
+                  <TableHead
+                    className={
+                      isActionsColumn
+                        ? 'sm:sticky right-0 z-20 bg-primary-blue-400'
+                        : ''
+                    }
+                  >
+                    {flexRender(
+                      table.getHeaderGroups()[0].headers.slice(-1)[0].column
+                        .columnDef.header,
+                      table
+                        .getHeaderGroups()[0]
+                        .headers.slice(-1)[0]
+                        .getContext()
+                    )}
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -112,13 +129,13 @@ export function DataTable<TData extends object, TValue>({
                       className="relative"
                     >
                       {/* Fixed Columns */}
-                      <TableCell className="sticky left-0 z-10 bg-secondary-blue-500">
+                      <TableCell className="sm:sticky left-0 z-10 bg-secondary-blue-500">
                         {flexRender(
                           row.getVisibleCells()[0].column.columnDef.cell,
                           row.getVisibleCells()[0].getContext()
                         )}
                       </TableCell>
-                      <TableCell className="sticky left-[96px] z-10 bg-secondary-blue-500">
+                      <TableCell className="sm:sticky left-[96px] z-10 bg-secondary-blue-500">
                         {flexRender(
                           row.getVisibleCells()[1].column.columnDef.cell,
                           row.getVisibleCells()[1].getContext()
@@ -136,9 +153,21 @@ export function DataTable<TData extends object, TValue>({
                             )}
                           </TableCell>
                         ))}
-                      {/* Action Column */}
-                      <TableCell className="sticky right-0 z-10 bg-secondary-blue-500 p-0">
-                        <div className="flex h-full items-center justify-center">
+                      {/* Last Column */}
+                      <TableCell
+                        className={
+                          isActionsColumn
+                            ? 'sm:sticky right-0 z-10 bg-secondary-blue-500 p-0'
+                            : ''
+                        }
+                      >
+                        <div
+                          className={
+                            isActionsColumn
+                              ? 'flex h-full items-center justify-center'
+                              : ''
+                          }
+                        >
                           {flexRender(
                             row.getVisibleCells().slice(-1)[0].column.columnDef
                               .cell,

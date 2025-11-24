@@ -34,7 +34,7 @@ export default function MemberDetailsPage({ params }: MemberDetailsPageProps) {
   if (error) return <p>Error: {error}</p>;
 
   return (
-    <main className="p-0 flex flex-auto gap-4 md:gap-0 bg-background-dark h-full">
+    <main className="flex gap-4 md:gap-0 bg-background-dark h-[calc(100vh-80px)] overflow-hidden">
       <Sidebar
         memberId={userId || ''}
         isEditing={isEditing}
@@ -44,15 +44,17 @@ export default function MemberDetailsPage({ params }: MemberDetailsPageProps) {
         toggleEdit={toggleEdit}
         formOptions={formOptions || undefined}
       />
-      <Contents
-        memberId={userId || ''}
-        isEditing={isEditing}
-        handleSave={handleSave}
-        toggleEdit={toggleEdit}
-        details={details}
-        originalDetails={originalDetails}
-        formOptions={formOptions || undefined}
-      />
+      <div className="flex-1 overflow-y-auto">
+        <Contents
+          memberId={userId || ''}
+          isEditing={isEditing}
+          handleSave={handleSave}
+          toggleEdit={toggleEdit}
+          details={details}
+          originalDetails={originalDetails}
+          formOptions={formOptions || undefined}
+        />
+      </div>
     </main>
   );
 }

@@ -1,7 +1,5 @@
 'use client';
 
-import { DateRange } from 'react-day-picker';
-
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,56 +9,25 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-
-// Function to calculate the current week's date range starting from Sunday
-const getCurrentWeekRange = (): DateRange => {
-  const today = new Date();
-  const dayOfWeek = today.getDay();
-  const diffToSunday = dayOfWeek === 0 ? 0 : -dayOfWeek;
-  const sunday = new Date(today);
-  sunday.setDate(today.getDate() + diffToSunday);
-  const saturday = new Date(sunday);
-  saturday.setDate(sunday.getDate() + 6);
-  return { from: sunday, to: saturday };
-};
-
-// Function to generate dummy data based on the selected date range
-const generateDummyData = (range: DateRange) => {
-  if (!range?.from || !range?.to) return [];
-
-  const startDate = new Date(range.from);
-  const endDate = new Date(range.to);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // Normalize today's time to midnight
-  const diffInDays =
-    Math.ceil(
-      (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
-    ) + 1;
-
-  const days = Array.from({ length: diffInDays }, (_, i) => {
-    const date = new Date(startDate);
-    date.setDate(startDate.getDate() + i);
-    const isFuture = date > today;
-    return {
-      day: date.toLocaleDateString('en-US', { weekday: 'short' }),
-      hours: isFuture ? 0 : parseFloat((Math.random() * 2.5).toFixed(2)), // Future dates have 0 hours
-    };
-  });
-
-  return days;
-};
+import { useGymBranch } from '@/providers/gym-branch-provider';
+import { useDashboardData } from '@/services/dashboard';
 
 const chartConfig = {
-  hours: {
-    label: 'Hours',
+  count: {
+    label: 'Count',
     color: 'hsl(69, 93%, 76%)',
   },
 } satisfies ChartConfig;
 
 export function AttendanceChats() {
-  const currentWeekRange = getCurrentWeekRange();
+  const { gymBranch } = useGymBranch();
+  const { data: dashboardData } = useDashboardData(gymBranch?.gymId || 0);
 
-  const chartData = generateDummyData(currentWeekRange);
+  const chartData =
+    dashboardData?.attendanceStats?.map((stat) => ({
+      day: stat.day.slice(0, 3),
+      count: stat.count,
+    })) || [];
 
   return (
     <Card className="border-none bg-secondary-blue-500 rounded-lg w-full">
@@ -92,8 +59,6 @@ export function AttendanceChats() {
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              ticks={[0, 500, 1000, 1500, 2000, 2500]}
-              domain={[0, 2.5]}
               tick={(props) => {
                 const { x, y, payload } = props;
                 return (
@@ -114,12 +79,7 @@ export function AttendanceChats() {
               cursor={false}
               content={<ChartTooltipContent hideLabel />}
             />
-            <Bar
-              className="hello"
-              dataKey="hours"
-              fill="#EBFB8B"
-              radius={[6, 6, 0, 0]}
-            />
+            <Bar dataKey="count" fill="#EBFB8B" radius={[6, 6, 0, 0]} />
           </BarChart>
         </ChartContainer>
       </CardContent>

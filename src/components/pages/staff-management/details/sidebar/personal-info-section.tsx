@@ -4,14 +4,13 @@ import 'react-phone-number-input/style.css';
 
 import { Calendar } from 'lucide-react';
 
+import { EditableFormField } from '@/components/shared/form/editable-form-field';
 import { KDatePicker } from '@/components/shared/form/k-datepicker';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { bloodGroupOptions } from '@/lib/constants';
 import { safeDateFormat, safeParseDate } from '@/lib/utils';
 import type { EditableSectionProps } from '@/types/staff';
-
-import { EditableField, EditableSelect } from './basic-details-section';
 
 export function PersonalInfoSection({
   isEditing,
@@ -21,7 +20,8 @@ export function PersonalInfoSection({
   return (
     <Fragment>
       {/* EMAIL  */}
-      <EditableField
+      <EditableFormField
+        type="input"
         label="Email"
         value={details?.email}
         isEditing={isEditing}
@@ -29,7 +29,8 @@ export function PersonalInfoSection({
       />
 
       {/* PHONE_NUMBER  */}
-      <EditableField
+      <EditableFormField
+        type="input"
         label="Mobile"
         value={details?.phone}
         isEditing={isEditing}
@@ -112,7 +113,8 @@ export function PersonalInfoSection({
       </div>
 
       {/* BLOOD_GROUP  */}
-      <EditableSelect
+      <EditableFormField
+        type="select"
         label="Blood Group"
         value={details?.bloodGroup}
         isEditing={isEditing}

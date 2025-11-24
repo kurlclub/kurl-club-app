@@ -38,34 +38,16 @@ export type BiometricDevice = {
   location?: string;
 };
 
-export type Member = {
+export type MemberInsight = {
   id: string;
-  name: string;
   memberIdentifier: string;
-  biometricId: string;
-  department?: string;
-  status: MemberStatus;
-  profilePicture?: string;
-};
-
-// Statistics and Analytics Types
-export type AttendanceStats = {
-  totalMembers: number;
-  presentToday: number;
-  absentToday: number;
-  lateToday: number;
-  onLeave: number;
-  checkedIn: number;
-  averageAttendance: number;
-};
-
-// Base types for reusability
-export type BaseEntity = {
-  id: string;
   name: string;
-};
-
-export type TimestampedEntity = {
-  timestamp: string;
-  lastSeen?: string;
+  totalVisits: number;
+  visitsThisMonth: number;
+  currentStreak: number;
+  longestStreak: number;
+  averageDuration: number;
+  favoriteTime: string;
+  attendanceRate: number;
+  profilePicture: string | null;
 };

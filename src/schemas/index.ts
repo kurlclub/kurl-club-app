@@ -1,12 +1,5 @@
 import { z } from 'zod/v4';
 
-const isPhoneNumberValid = (phone: string): boolean => {
-  // Example validation logic using regex:
-  // This regex checks for a valid international phone number format with country code
-  const phoneRegex = /^\+?[1-9]\d{1,14}$/; // E.164 format
-  return phoneRegex.test(phone);
-};
-
 // Register Schema
 export const RegisterSchema = z
   .object({
@@ -115,134 +108,6 @@ export const UpdatePasswordSchema = z
     path: ['confirmPassword'],
     error: 'Passwords do not match',
   });
-
-// Onboarding Form Schema
-// Phone Verify Schema
-export const PhoneVerifySchema = z.object({
-  phone: z.string().refine((val) => isPhoneNumberValid(val), {
-    error:
-      'Invalid phone number. Please provide a valid number with the country code.',
-  }),
-});
-
-// OTP Schema
-export const OTPSchema = z.object({
-  otp: z
-    .string()
-    .length(6, 'OTP must be exactly 6 digits')
-    .regex(/^\d{6}$/, 'OTP must contain only numbers')
-    .refine((val) => val !== '', {
-      error: 'OTP cannot be empty',
-    }),
-});
-
-// GYM Details Schema
-export const GymDetailsSchema = z.object({
-  gymName: z
-    .string()
-    .min(1, 'Gym name is required')
-    .max(100, 'Gym name should not exceed 100 characters')
-    .trim(),
-
-  profilePicture: z
-    .custom<File | null>((value) => value instanceof File || value === null, {
-      error: 'Profile picture must be a file.',
-    })
-    .optional(),
-
-  buildingName: z
-    .string()
-    .min(1, 'Address Line 1 is required')
-    .max(200, 'Address Line 1 should not exceed 200 characters')
-    .trim(),
-
-  // Address Line 2 is optional, apply max before optional
-  city: z
-    .string()
-    .max(200, 'Address Line 2 should not exceed 200 characters')
-    .optional(),
-
-  primaryPhone: z
-    .string()
-    .regex(
-      /^\+?[1-9]\d{1,14}$/,
-      'Enter a valid primary phone number with country code'
-    )
-    .min(1, 'Primary phone number is required'),
-
-  email: z
-    .email('Enter a valid email address')
-    .min(1, 'Email address is required')
-    .max(150, 'Email address should not exceed 150 characters'),
-
-  websiteLink: z
-    .url('Enter a valid website URL')
-    .max(255, 'Website URL cannot exceed 255 characters')
-    .optional(),
-
-  facebookPageLink: z
-    .url('Enter a valid Facebook page URL')
-    .max(255, 'Facebook page URL cannot exceed 255 characters')
-    .optional(),
-
-  instagramLink: z
-    .url('Enter a valid Instagram URL')
-    .max(255, 'Instagram URL cannot exceed 255 characters')
-    .optional(),
-});
-
-// Create GYM Schema
-export const CreateGymSchema = z.object({
-  GymName: z
-    .string()
-    .min(1, 'Gym name is required.')
-    .max(100, 'Gym name must not exceed 100 characters.'),
-  Location: z
-    .string()
-    .min(1, 'Address is required.')
-    .max(250, 'Address must not exceed 250 characters.'),
-  ContactNumber1: z
-    .string()
-    .regex(
-      /^\+?[1-9]\d{1,14}$/,
-      'Primary phone number must be a valid phone number.'
-    ),
-  ContactNumber2: z
-    .string()
-    .regex(
-      /^\+?[1-9]\d{1,14}$/,
-      'Secondary phone number must be a valid phone number.'
-    )
-    .optional()
-    .or(z.literal('')),
-  Email: z.email('Gym email must be a valid email address.'),
-  ProfilePicture: z
-    .custom<File | null>((value) => value instanceof File || value === null, {
-      error: 'Profile picture must be a file.',
-    })
-    .refine((file) => file === null || file.size <= 5 * 1024 * 1024, {
-      error: 'File size must be less than 5MB',
-    })
-    .optional(),
-  socialLinks: z
-    .array(
-      z.object({
-        url: z.string().optional(),
-      })
-    )
-    .optional(),
-});
-
-// Trainer Form Schema
-export const TrainerFormSchema = z.object({
-  trainers: z
-    .array(
-      z.object({
-        email: z.email('Enter a valid email'),
-      })
-    )
-    .optional(),
-});
 
 export const DatePickerSchema = z.object({
   dateOfBirth: z.date({
@@ -357,8 +222,19 @@ export const createMemberSchema = z.object({
   feeStatus: z.string().min(1, 'Fee status is required'),
   phone: z
     .string()
-    .regex(/^\+?[1-9]\d{1,14}$/, 'Phone number must be at least 10 digits'),
-  email: z.email('Invalid email format'),
+    .min(10, 'Phone number must be at least 10 digits')
+    .max(15, 'Phone number must not exceed 15 digits')
+    .regex(/^\+?[1-9]\d{1,14}$/, 'Phone number must be valid'),
+  email: z
+    .string()
+    .optional()
+    .refine(
+      (val) => {
+        if (!val || val === '') return true;
+        return z.string().email().safeParse(val).success;
+      },
+      { message: 'Invalid email format' }
+    ),
   height: z.string().min(1, 'Height is required'),
   weight: z.string().min(1, 'Weight is required'),
   personalTrainer: z.union([z.string(), z.number()]),
@@ -369,6 +245,58 @@ export const createMemberSchema = z.object({
   amountPaid: z.string().min(0, 'Amount paid must be a positive number'),
   workoutPlanId: z.string().min(1, 'Workout plan selection is required'),
   modeOfPayment: z.string().min(1, 'Payment method is required'),
+  customSessionRate: z
+    .string()
+    .optional()
+    .refine(
+      (val) => {
+        if (!val || val === '') return true;
+        return Number(val) > 0;
+      },
+      { message: 'Session rate must be greater than 0' }
+    ),
+  numberOfSessions: z
+    .string()
+    .optional()
+    .refine(
+      (val) => {
+        if (!val || val === '') return true;
+        return Number(val) > 0;
+      },
+      { message: 'Number of sessions must be greater than 0' }
+    ),
+  idType: z.string().min(1, 'ID type is required'),
+  idNumber: z
+    .string()
+    .min(1, 'ID number is required')
+    .max(20, 'ID number must not exceed 20 characters'),
+  idCopyPath: z
+    .custom<File | null | string>(
+      (value) =>
+        value instanceof File || value === null || value === 'existing',
+      {
+        error: 'ID copy must be a file.',
+      }
+    )
+    .refine(
+      (file) =>
+        file === null ||
+        file === 'existing' ||
+        (file instanceof File && file.size <= 4 * 1024 * 1024),
+      {
+        error: 'File size must be less than 4MB',
+      }
+    )
+    .optional(),
+  fitnessGoal: z.string().optional(),
+  medicalHistory: z.string().optional(),
+  emergencyContactName: z.string().min(1, 'Emergency contact name is required'),
+  emergencyContactPhone: z
+    .string()
+    .min(10, 'Phone number must be at least 10 digits')
+    .max(15, 'Phone number must not exceed 15 digits')
+    .regex(/^\+?[1-9]\d{1,14}$/, 'Phone number must be valid'),
+  emergencyContactRelation: z.string().min(1, 'Relation is required'),
 });
 
 export const workoutPlanSchema = z.object({
@@ -478,61 +406,6 @@ export const dayBufferSchema = z.object({
   plan: z.string().min(1, 'plan selection is required'),
 });
 
-export const messagingTemplateSchema = z.object({
-  name: z.string().min(1, 'Template name is required'),
-  category: z.enum(['payment', 'reminder', 'notification', 'general']),
-  channel: z.literal('whatsapp'),
-  content: z.string().min(1, 'Message content is required'),
-});
-
-// Automation schemas
-export const automationTimingSchema = z.object({
-  id: z.string(),
-  direction: z.enum(['before', 'after']),
-  days: z.number().min(0),
-  sendAt: z
-    .string()
-    .regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format'),
-  channels: z
-    .array(z.enum(['chat', 'whatsapp', 'sms']))
-    .min(1, 'At least one channel is required'),
-  templateId: z.string().min(1, 'Template is required'),
-});
-
-export const automationSchema = z.object({
-  id: z.string(),
-  name: z.string().optional(),
-  description: z.string().optional(),
-  eventType: z.enum([
-    'payment_advance',
-    'payment_due',
-    'payment_grace',
-    'payment_failed',
-    'payment_received',
-    'class_reminder',
-    'birthday',
-    'anniversary',
-    'achievement',
-  ]),
-  enabled: z.boolean(),
-  timings: z
-    .array(automationTimingSchema)
-    .min(1, 'At least one timing is required'),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-});
-
-export const createAutomationSchema = automationSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export const updateAutomationSchema = automationSchema.partial().omit({
-  id: true,
-  createdAt: true,
-});
-
 export const paymentFormSchema = z.object({
   amount: z.string().refine((val) => {
     const num = Number(val);
@@ -561,4 +434,31 @@ export const gymUpdateSchema = z.object({
   SocialLinks: z.string().optional(),
   ProfilePicture: z.instanceof(File).optional().nullable(),
   Status: z.string().optional(),
+});
+
+export const membershipPlanSchema = z.object({
+  planName: z.string().min(1, 'Plan name is required'),
+  billingType: z.enum(['Recurring', 'PerSession'], {
+    error: 'Billing type is required',
+  }),
+  fee: z.union([
+    z.string().min(1, 'Fee is required'),
+    z.number().min(1, 'Fee must be greater than 0'),
+  ]),
+  details: z.string().optional(),
+  durationInDays: z.union([
+    z.string().min(1, 'Duration is required'),
+    z.number().min(1, 'Duration must be at least 1 day'),
+  ]),
+  defaultSessionRate: z
+    .union([z.string(), z.number()])
+    .optional()
+    .refine(
+      (val) => {
+        if (val === undefined || val === '') return true;
+        const num = typeof val === 'string' ? Number(val) : val;
+        return num > 0;
+      },
+      { message: 'Session rate must be greater than 0' }
+    ),
 });

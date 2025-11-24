@@ -16,7 +16,7 @@ export default function AuthLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <main className="grid w-full h-screen grid-cols-1 gap-8 p-6 md:grid-cols-2 md:p-8">
+    <main className="grid w-full bg-background-dark h-screen grid-cols-1 gap-8 p-6 md:grid-cols-2 md:p-8">
       <span className="h-[calc(100vh-64px)] w-full hidden md:block">
         <Image
           src="/assets/png/login-banner.png"

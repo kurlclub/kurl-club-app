@@ -3,8 +3,6 @@ export { default as AppLayout } from './app-layout';
 export { Breadcrumb } from './breadcrumbs';
 export { CollapsibleSection } from './collapsible-section';
 export { CommandPalette, QuickActionsButton } from './command-palette';
-export { default as Navbar } from './navbar';
 export { NotificationBell } from './notification-bell';
 export { ThemeModeToggle } from './theme-toggler';
-export { UserNav } from './user-nav';
 export { StudioLayout } from './studio-layout';

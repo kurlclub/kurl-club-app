@@ -1,117 +1,96 @@
 'use client';
 
 import { ColumnDef } from '@tanstack/react-table';
-import { Clock, Edit, Eye, MoreHorizontal } from 'lucide-react';
+import { Clock, LogOut } from 'lucide-react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
 import { getProfilePictureSrc } from '@/lib/utils';
-import type { AttendanceRecord } from '@/types/attendance';
+import type { AttendanceRecordResponse } from '@/services/attendance';
 
 const StatusBadge = ({ status }: { status: string }) => {
-  const variants = {
-    present:
-      'bg-neutral-green-500/10 border-neutral-green-500 text-neutral-green-500',
-    'checked-in':
-      'bg-primary-green-500/10 border-primary-green-500 text-primary-green-500',
-    'checked-out':
-      'bg-semantic-blue-500/10 border-semantic-blue-500 text-semantic-blue-500',
-    late: 'bg-neutral-ochre-600/10 border-neutral-ochre-500 text-neutral-ochre-500',
-    absent: 'bg-alert-red-500/10 border-alert-red-500 text-alert-red-500',
+  const normalizedStatus = status.replace(/_/g, '-');
+  const statusConfig = {
+    present: {
+      text: 'text-neutral-green-500',
+      dot: 'bg-neutral-green-500',
+    },
+    'checked-in': {
+      text: 'text-primary-green-500',
+      dot: 'bg-primary-green-500',
+    },
+    'checked-out': {
+      text: 'text-semantic-blue-500',
+      dot: 'bg-semantic-blue-500',
+    },
+    late: {
+      text: 'text-neutral-ochre-500',
+      dot: 'bg-neutral-ochre-500',
+    },
+    absent: {
+      text: 'text-alert-red-500',
+      dot: 'bg-alert-red-500',
+    },
   };
 
+  const config =
+    statusConfig[normalizedStatus as keyof typeof statusConfig] ||
+    statusConfig.present;
+
   return (
-    <Badge
-      variant="outline"
-      className={`rounded-[35px] h-[30px] ${variants[status as keyof typeof variants] || variants.present}`}
-    >
-      {status.replace('-', ' ')}
-    </Badge>
+    <div className={`flex items-center gap-2 ${config.text}`}>
+      <span className="relative flex justify-center items-center size-3">
+        <span
+          className={`absolute inline-flex h-full w-full animate-pulse rounded-full ${config.dot} opacity-45`}
+        />
+        <span
+          className={`relative inline-flex size-2 rounded-full ${config.dot}`}
+        />
+      </span>
+      <span className="text-sm font-medium capitalize">
+        {status.replace(/_/g, ' ').replace(/-/g, ' ')}
+      </span>
+    </div>
   );
 };
 
-const ActionsCell = ({
-  record,
-  onEdit,
-}: {
-  record: AttendanceRecord;
-  onEdit?: (record: AttendanceRecord) => void;
-}) => (
-  <DropdownMenu>
-    <DropdownMenuTrigger asChild>
-      <Button variant="ghost" className="h-8 w-8 p-0">
-        <MoreHorizontal className="h-4 w-4" />
-      </Button>
-    </DropdownMenuTrigger>
-    <DropdownMenuContent align="end" className="shad-select-content">
-      <DropdownMenuItem
-        className="shad-select-item"
-        onClick={() => onEdit?.(record)}
-      >
-        <Edit className="h-4 w-4 mr-2" />
-        Edit Record
-      </DropdownMenuItem>
-      <DropdownMenuItem className="shad-select-item">
-        <Eye className="h-4 w-4 mr-2" />
-        View Details
-      </DropdownMenuItem>
-    </DropdownMenuContent>
-  </DropdownMenu>
-);
-
-export const createAttendanceColumns = (
-  onEdit?: (record: AttendanceRecord) => void
-): ColumnDef<AttendanceRecord>[] => [
+const baseColumns: ColumnDef<AttendanceRecordResponse>[] = [
   {
-    accessorKey: 'memberIdentifier',
+    accessorKey: 'memberId',
     header: 'Member ID',
     cell: ({ row }) => (
       <div className="w-[100px] uppercase">
         <span className="text-primary-blue-300 font-bold mr-0.5">#</span>
-        {row.getValue('memberIdentifier')}
+        {row.getValue('memberId')}
       </div>
     ),
     enableSorting: false,
     enableHiding: false,
   },
   {
-    accessorKey: 'memberName',
+    accessorKey: 'member',
     header: 'Member',
     cell: ({ row }) => {
-      const name = row.getValue<string>('memberName') || 'Unknown';
+      const name = row.getValue<string>('member') || 'Unknown';
       const avatarStyle = getAvatarColor(name);
       const initials = getInitials(name);
 
       return (
         <div className="flex items-center gap-2 w-[180px]">
           <Avatar className="h-8 w-8">
-            <AvatarFallback className="font-medium" style={avatarStyle}>
-              {initials}
-            </AvatarFallback>
             <AvatarImage
               src={getProfilePictureSrc(
-                row.original.profilePicture ?? null,
-                initials
+                row.original.profilePicture,
+                row.original.photoPath
               )}
               alt={name}
             />
+            <AvatarFallback className="font-medium" style={avatarStyle}>
+              {initials}
+            </AvatarFallback>
           </Avatar>
-          <div>
-            <span className="text-white">{name}</span>
-            {row.original.biometricId && (
-              <div className="text-xs text-primary-blue-200">
-                Bio: {row.original.biometricId}
-              </div>
-            )}
-          </div>
+          <span className="text-gray-900 dark:text-white">{name}</span>
         </div>
       );
     },
@@ -122,35 +101,41 @@ export const createAttendanceColumns = (
     id: 'date',
     accessorKey: 'date',
     header: 'Date',
-    cell: ({ row }) => {
-      const date = new Date(row.original.date);
-      return (
-        <div className="min-w-[100px]">
-          <div className="text-white text-sm">
-            {date.toLocaleDateString('en-GB')}
-          </div>
-          <div className="text-xs text-primary-blue-100">
-            {date.toLocaleDateString('en-GB', { weekday: 'short' })}
-          </div>
+    cell: ({ row }) => (
+      <div className="min-w-[100px]">
+        <div className="text-gray-900 dark:text-white text-sm">
+          {row.original.date}
         </div>
-      );
-    },
+      </div>
+    ),
   },
   {
     id: 'checkInTime',
     accessorKey: 'checkInTime',
     header: 'Check In',
     cell: ({ row }) => {
-      const checkIn = row.original.checkInTime;
+      const checkInTime = row.original.checkInTime;
+      const time = checkInTime
+        ? new Date(checkInTime).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+        : '--';
+      const isManual = row.original.mode === 'manual';
+      const recordedBy = row.original.recordedBy;
+
       return (
         <div className="min-w-[80px]">
-          {checkIn ? (
-            <div className="flex items-center gap-1">
-              <Clock size={12} className="text-primary-green-500" />
-              <span className="text-white text-sm">{checkIn}</span>
+          <div className="flex items-center gap-1">
+            <Clock size={12} className="text-primary-green-500" />
+            <span className="text-gray-900 dark:text-white text-sm">
+              {time}
+            </span>
+          </div>
+          {isManual && recordedBy && (
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              by {recordedBy.role}
             </div>
-          ) : (
-            <span className="text-gray-400 text-sm">--</span>
           )}
         </div>
       );
@@ -161,16 +146,37 @@ export const createAttendanceColumns = (
     accessorKey: 'checkOutTime',
     header: 'Check Out',
     cell: ({ row }) => {
-      const checkOut = row.original.checkOutTime;
+      const checkOutTime = row.original.checkOutTime;
+      const isActive = !checkOutTime;
+      const time = checkOutTime
+        ? new Date(checkOutTime).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+        : null;
+      const isManual = row.original.mode === 'manual';
+      const recordedBy = row.original.recordedBy;
+
       return (
         <div className="min-w-[80px]">
-          {checkOut ? (
-            <div className="flex items-center gap-1">
-              <Clock size={12} className="text-semantic-blue-500" />
-              <span className="text-white text-sm">{checkOut}</span>
-            </div>
+          {isActive ? (
+            <span className="text-primary-green-600 dark:text-primary-green-400 text-sm font-medium">
+              Active
+            </span>
           ) : (
-            <span className="text-gray-400 text-sm">Active</span>
+            <>
+              <div className="flex items-center gap-1">
+                <Clock size={12} className="text-semantic-blue-500" />
+                <span className="text-gray-900 dark:text-white text-sm">
+                  {time}
+                </span>
+              </div>
+              {isManual && recordedBy && (
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  by {recordedBy.role}
+                </div>
+              )}
+            </>
           )}
         </div>
       );
@@ -182,15 +188,14 @@ export const createAttendanceColumns = (
     header: 'Duration',
     cell: ({ row }) => {
       const duration = row.original.duration;
+      const displayDuration = duration
+        ? `${Math.floor(duration / 60)}h ${duration % 60}m`
+        : '--';
       return (
         <div className="min-w-[80px]">
-          {duration ? (
-            <span className="text-white text-sm">
-              {Math.floor(duration / 60)}h {duration % 60}m
-            </span>
-          ) : (
-            <span className="text-gray-400 text-sm">--</span>
-          )}
+          <span className="text-gray-900 dark:text-white text-sm">
+            {displayDuration}
+          </span>
         </div>
       );
     },
@@ -205,25 +210,38 @@ export const createAttendanceColumns = (
       </div>
     ),
   },
+];
+
+export const attendanceColumns = baseColumns;
+
+export const manualModeColumns = (
+  onCheckOut: (memberId: string) => void
+): ColumnDef<AttendanceRecordResponse>[] => [
+  ...baseColumns,
   {
-    id: 'deviceId',
-    accessorKey: 'deviceId',
-    header: 'Device',
+    id: 'manualActions',
+    header: 'Actions',
     cell: ({ row }) => {
-      const deviceId = row.original.deviceId;
+      const isActive = !row.original.checkOutTime;
       return (
         <div className="min-w-[100px]">
-          {deviceId ? (
-            <span className="text-primary-blue-200 text-sm">{deviceId}</span>
+          {isActive ? (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 gap-1 border-semantic-blue-500 text-semantic-blue-500 hover:bg-semantic-blue-500/10"
+              onClick={() => onCheckOut(row.original.memberId)}
+            >
+              <LogOut size={14} />
+              Check Out
+            </Button>
           ) : (
-            <span className="text-gray-400 text-sm">Manual</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              Completed
+            </span>
           )}
         </div>
       );
     },
-  },
-  {
-    id: 'actions',
-    cell: ({ row }) => <ActionsCell record={row.original} onEdit={onEdit} />,
   },
 ];

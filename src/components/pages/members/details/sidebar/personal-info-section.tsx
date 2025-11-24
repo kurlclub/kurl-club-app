@@ -4,13 +4,13 @@ import 'react-phone-number-input/style.css';
 
 import { Calendar } from 'lucide-react';
 
+import { EditableFormField } from '@/components/shared/form/editable-form-field';
 import { KDatePicker } from '@/components/shared/form/k-datepicker';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { relationOptions } from '@/lib/constants';
 import { safeDateFormat, safeParseDate } from '@/lib/utils';
 import type { EditableSectionProps } from '@/types/members';
-
-import { EditableField } from './basic-details-section';
 
 export function PersonalInfoSection({
   isEditing,
@@ -43,7 +43,8 @@ export function PersonalInfoSection({
       </div>
 
       {/* EMAIL  */}
-      <EditableField
+      <EditableFormField
+        type="input"
         label="Email"
         value={details?.email}
         isEditing={isEditing}
@@ -51,7 +52,8 @@ export function PersonalInfoSection({
       />
 
       {/* PHONE_NUMBER  */}
-      <EditableField
+      <EditableFormField
+        type="input"
         label="Mobile"
         value={details?.phone}
         isEditing={isEditing}
@@ -85,6 +87,45 @@ export function PersonalInfoSection({
           </p>
         )}
       </div>
+
+      {/* EMERGENCY_CONTACT_NAME  */}
+      <EditableFormField
+        type="input"
+        label="Emergency Contact Name"
+        value={details?.emergencyContactName}
+        isEditing={isEditing}
+        onChange={(value) => onUpdate('emergencyContactName', value)}
+      />
+
+      {/* EMERGENCY_CONTACT_PHONE  */}
+      <EditableFormField
+        type="input"
+        label="Emergency Contact Phone"
+        value={details?.emergencyContactPhone}
+        isEditing={isEditing}
+        onChange={(value) => onUpdate('emergencyContactPhone', value)}
+        customInput={
+          <PhoneInput
+            defaultCountry="IN"
+            international
+            countryCallingCodeEditable={false}
+            value={details?.emergencyContactPhone}
+            onChange={(value) => onUpdate('emergencyContactPhone', value || '')}
+            disabled={!isEditing}
+            className="peer bg-transparent pb-1.5 border-b border-primary-blue-300 hover:border-white k-transition"
+          />
+        }
+      />
+
+      {/* EMERGENCY_CONTACT_RELATION  */}
+      <EditableFormField
+        type="select"
+        label="Emergency Contact Relation"
+        value={details?.emergencyContactRelation}
+        isEditing={isEditing}
+        onChange={(value) => onUpdate('emergencyContactRelation', value)}
+        options={relationOptions}
+      />
     </Fragment>
   );
 }
