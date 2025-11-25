@@ -7,17 +7,8 @@ export const fetchGymById = async (gymId: number): Promise<GymDetails> => {
 };
 
 export const updateGym = async (gymId: number, data: FormData) => {
-  try {
-    await api.put(`/Gym/${gymId}`, data);
-    return { success: 'Gym updated successfully!' };
-  } catch (error) {
-    console.error('Error updating gym:', error);
-    const errorMessage =
-      error instanceof Error
-        ? error.message
-        : 'An unexpected error occurred during gym update.';
-    return { error: errorMessage };
-  }
+  await api.put(`/Gym/${gymId}`, data);
+  return { success: 'Gym updated successfully!' };
 };
 
 export const fetchGymProfilePicture = async (gymId: number) => {

@@ -35,16 +35,14 @@ export function useGymManagement() {
   const updateGymMutation = useMutation({
     mutationFn: ({ gymId, data }: { gymId: number; data: FormData }) =>
       updateGym(gymId, data),
-    onSuccess: (result, { gymId }) => {
-      if (result.success) {
-        queryClient.invalidateQueries({ queryKey: ['gymDetails', gymId] });
-        queryClient.invalidateQueries({
-          queryKey: ['gymProfilePicture', gymId],
-        });
-        toast.success(result.success);
-      } else if (result.error) {
-        toast.error(result.error);
-      }
+    onSuccess: async (result, { gymId }) => {
+      await queryClient.invalidateQueries({ queryKey: ['gymDetails', gymId] });
+      await queryClient.invalidateQueries({
+        queryKey: ['gymProfilePicture', gymId],
+      });
+      // Trigger a refetch to update all components
+      await queryClient.refetchQueries({ queryKey: ['gymDetails', gymId] });
+      toast.success(result.success);
     },
     onError: (error) => {
       toast.error(

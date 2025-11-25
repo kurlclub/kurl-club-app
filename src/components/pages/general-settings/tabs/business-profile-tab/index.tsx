@@ -182,7 +182,6 @@ export function BusinessProfileTab() {
       );
       const formData = createFormData(apiData);
       await updateGym({ gymId: gymDetails.id, data: formData });
-      // Cache will be automatically invalidated by useGymManagement
       form.reset(data);
     } catch {
       // Error handled by hook

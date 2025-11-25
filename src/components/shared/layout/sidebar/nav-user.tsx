@@ -23,12 +23,16 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { useAppDialog } from '@/hooks/use-app-dialog';
+import { useGymDetails } from '@/hooks/use-gym-management';
 import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
 import { useAuth } from '@/providers/auth-provider';
+import { useGymBranch } from '@/providers/gym-branch-provider';
 
 export function NavUser() {
   const router = useRouter();
-  const { logout, appUser, gymDetails } = useAuth();
+  const { logout } = useAuth();
+  const { gymBranch } = useGymBranch();
+  const { data: gymDetails } = useGymDetails(gymBranch?.gymId || 0);
   const [isPending, startTransition] = useTransition();
   const { showConfirm } = useAppDialog();
   const { state } = useSidebar();
@@ -56,17 +60,14 @@ export function NavUser() {
     });
   };
 
-  const gymList = appUser?.gyms || [];
-  const currentGym =
-    gymDetails ||
-    (gymList.length > 0
-      ? {
-          gymName: gymList[0].gymName,
-          id: gymList[0].gymId,
-          location: gymList[0].gymLocation,
-          gymIdentifier: gymList[0].gymIdentifier,
-        }
-      : null);
+  const currentGym = gymDetails
+    ? {
+        gymName: gymDetails.gymName,
+        id: gymDetails.id,
+        location: gymDetails.location,
+        gymIdentifier: gymDetails.gymIdentifier,
+      }
+    : null;
 
   const avatarStyle = getAvatarColor(currentGym?.gymName || 'KC');
 
