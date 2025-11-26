@@ -5,7 +5,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Define the regex pattern for branch names
-branch_regex='^(feature|bugfix|docs|chore)/[0-9]+-[a-z0-9-]+$'
+branch_regex='^KC-[0-9]+$'
 
 # Get the current branch name
 current_branch=$(git symbolic-ref --short HEAD)
@@ -15,10 +15,10 @@ echo -e "${BLUE}🔍 Validating branch name format...${NC}"
 # Check if the branch name matches the pattern
 if ! echo "$current_branch" | grep -Eq "$branch_regex"; then
   echo -e "${RED}❌ Branch name format is incorrect.${NC}"
-  echo -e "Please use the following format: ${BLUE}<type>/<issue-number>-<short-description>${NC}"
+  echo -e "Please use the format: ${BLUE}KC-<number>${NC}"
   echo -e "Examples:"
-  echo -e "  ${BLUE}feature/456-user-profile-page${NC}"
-  echo -e "  ${BLUE}bugfix/123-payment-timeout-issue${NC}"
+  echo -e "  ${BLUE}KC-11${NC}"
+  echo -e "  ${BLUE}KC-23${NC}"
   echo "Please rename your branch and try again."
   exit 1
 fi

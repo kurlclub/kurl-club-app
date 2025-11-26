@@ -15,6 +15,7 @@
 
 # next.js
 /.next/
+/.amazonq/rules/
 /out/
 
 # production
@@ -38,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# todo
+todo
+
+
+certificates

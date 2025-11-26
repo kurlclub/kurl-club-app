@@ -8,5 +8,14 @@
   "bracketSpacing": true,
   "endOfLine": "lf",
   "quoteProps": "as-needed",
-  "htmlWhitespaceSensitivity": "css"
+  "htmlWhitespaceSensitivity": "css",
+  "plugins": ["@trivago/prettier-plugin-sort-imports"],
+  "importOrder": [
+    "^(react|next)(.*)$",
+    "<THIRD_PARTY_MODULES>",
+    "^@/(.*)$",
+    "^[./]"
+  ],
+  "importOrderSeparation": true,
+  "importOrderSortSpecifiers": true
 }

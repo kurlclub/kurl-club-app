@@ -1,11 +1,12 @@
-import LoginUpForm from '@/components/auth/login-form';
+import type { Metadata } from 'next';
 
-const LoginPage = () => {
-  return (
-    <main className="flex justify-center items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <LoginUpForm />
-    </main>
-  );
+import { LoginForm } from '@/components/auth/login-form';
+
+export const metadata: Metadata = {
+  title: 'Login',
+  description: 'Login to your KurlClub Admin account to manage your gym',
 };
 
-export default LoginPage;
+export default function LoginPage() {
+  return <LoginForm />;
+}

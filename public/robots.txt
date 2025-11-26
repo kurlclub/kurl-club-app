@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /
+
+# This is an admin application - not for public indexing
+Sitemap: /sitemap.xml
