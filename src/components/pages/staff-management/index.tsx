@@ -4,11 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
 
 import { StudioLayout } from '@/components/shared/layout';
-import {
-  DataTable,
-  DataTableToolbar,
-  TableSkeleton,
-} from '@/components/shared/table';
+import { DataTable, DataTableToolbar } from '@/components/shared/table';
 import { useFilterableList } from '@/hooks/use-filterable-list';
 import { useSheet } from '@/hooks/use-sheet';
 import { staffFilters } from '@/lib/dummy/fiters';
@@ -54,21 +50,18 @@ export default function StaffManagement() {
         />
       }
     >
-      {isLoading ? (
-        <TableSkeleton rows={8} columns={6} showToolbar />
-      ) : (
-        <DataTable
-          columns={columns}
-          data={staffs}
-          toolbar={(table) => (
-            <DataTableToolbar
-              table={table}
-              onSearch={search}
-              filters={staffFilters}
-            />
-          )}
-        />
-      )}
+      <DataTable
+        columns={columns}
+        data={staffs}
+        isLoading={isLoading}
+        toolbar={(table) => (
+          <DataTableToolbar
+            table={table}
+            onSearch={search}
+            filters={staffFilters}
+          />
+        )}
+      />
     </StudioLayout>
   );
 }

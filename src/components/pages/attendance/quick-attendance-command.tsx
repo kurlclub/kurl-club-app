@@ -22,7 +22,7 @@ import {
 import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
 import { useGymBranch } from '@/providers/gym-branch-provider';
 import { useAttendanceRecords } from '@/services/attendance';
-import { useGymMembers } from '@/services/member';
+import { useAllGymMembers } from '@/services/member';
 import type { Member } from '@/types/members';
 
 type Props = {
@@ -36,7 +36,7 @@ type Props = {
 
 export function QuickAttendanceCommand({ onCheckIn, onCheckOut }: Props) {
   const { gymBranch } = useGymBranch();
-  const { data: members = [] } = useGymMembers(gymBranch?.gymId || 0);
+  const { data: members = [] } = useAllGymMembers(gymBranch?.gymId || 0);
   const { data: attendanceResponse } = useAttendanceRecords(gymBranch?.gymId);
   const attendanceRecords = attendanceResponse?.data || [];
   const [open, setOpen] = React.useState(false);
@@ -95,11 +95,11 @@ export function QuickAttendanceCommand({ onCheckIn, onCheckOut }: Props) {
                   <CommandItem
                     key={member.id}
                     value={`${member.name} ${member.memberIdentifier || ''}`}
-                    className="shad-command-item px-3 py-2.5 !cursor-default"
+                    className="shad-command-item px-3 py-2.5 cursor-default!"
                   >
                     <div className="flex items-center justify-between w-full gap-3">
                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="relative flex-shrink-0">
+                        <div className="relative shrink-0">
                           <Avatar className="h-10 w-10 border-2 border-secondary-blue-400">
                             <AvatarFallback
                               className="text-xs font-semibold"

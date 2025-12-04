@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { MessageSquareText, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import MemberStatusBadge from '@/components/shared/badges/member-status-badge';
@@ -49,7 +49,7 @@ function Header({ isEditing, handleSave, toggleEdit, memberId }: HeaderProps) {
   };
 
   return (
-    <div className="flex sticky pt-4 md:pt-[26px] pb-4 z-20 drop-shadow-xl top-[-1px] w-full items-center bg-primary-blue-500 justify-between gap-3 flex-wrap">
+    <div className="flex sticky pt-4 md:pt-[26px] pb-4 z-20 drop-shadow-xl -top-px w-full items-center bg-primary-blue-500 justify-between gap-3 flex-wrap">
       <MemberStatusBadge status="active" />
       <div className="flex items-center gap-2">
         {isEditing ? (
@@ -61,9 +61,10 @@ function Header({ isEditing, handleSave, toggleEdit, memberId }: HeaderProps) {
           </>
         ) : (
           <>
-            <Button className="h-10 w-10" variant="outline">
+            {/* TODO: Re-enable message button when the feature is ready */}
+            {/* <Button className="h-10 w-10" variant="outline">
               <MessageSquareText className="text-primary-green-500 h-5! w-5!" />
-            </Button>
+            </Button> */}
             <Button className="h-10" variant="outline" onClick={toggleEdit}>
               <KEdit className="h-5! w-5!" />
               Edit

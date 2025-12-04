@@ -11,15 +11,18 @@ import { MemberDetails } from '@/types/members';
 import { Chart } from './chart';
 import Header from './header';
 import PaymentCard from './payment-card';
-import PlannerSection from './planner-section';
+
+//TODO: Re-enable planner section when the feature is ready
+
+// import PlannerSection from './planner-section';
 
 function Contents({
   memberId,
   isEditing,
   handleSave,
   toggleEdit,
-  details,
-  originalDetails,
+  // details,
+  // originalDetails,
   formOptions,
 }: {
   memberId: string;
@@ -52,7 +55,7 @@ function Contents({
         <Chart />
         <PaymentCard memberId={memberId} formOptions={formOptions} />
       </div>
-      <PlannerSection memberDetails={originalDetails || details} />
+      {/* <PlannerSection memberDetails={originalDetails || details} /> */}
     </div>
   );
 }

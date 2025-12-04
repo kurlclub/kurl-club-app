@@ -1,16 +1,12 @@
 'use client';
 
 import { columns } from '@/components/pages/members/table/all-members-columns';
-import {
-  DataTable,
-  DataTableToolbar,
-  TableSkeleton,
-} from '@/components/shared/table';
+import { DataTable, DataTableToolbar } from '@/components/shared/table';
 import { useFilterableList } from '@/hooks/use-filterable-list';
 import { filters } from '@/lib/dummy/fiters';
 import { searchItems } from '@/lib/utils';
 import { useGymBranch } from '@/providers/gym-branch-provider';
-import { useGymMembers } from '@/services/member';
+import { useAllGymMembers } from '@/services/member';
 import { Member } from '@/types/members';
 
 interface AssignedMembersTableProps {
@@ -23,7 +19,7 @@ export default function AssignedMembersTable({
   const { gymBranch } = useGymBranch();
   const gymId = gymBranch?.gymId;
 
-  const { data: gymMembers = [], isLoading } = useGymMembers(gymId!);
+  const { data: gymMembers = [], isLoading } = useAllGymMembers(gymId!);
 
   // Filter members assigned to this trainer
   const assignedMembers = gymMembers.filter(
@@ -35,14 +31,11 @@ export default function AssignedMembersTable({
     searchItems
   );
 
-  if (isLoading) {
-    return <TableSkeleton rows={8} columns={6} showToolbar />;
-  }
-
   return (
     <DataTable
       columns={columns}
       data={filteredMembers}
+      isLoading={isLoading}
       toolbar={(table) => (
         <DataTableToolbar table={table} onSearch={search} filters={filters} />
       )}

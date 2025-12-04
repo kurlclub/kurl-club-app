@@ -8,7 +8,7 @@ import { KSheet } from '@/components/shared/form/k-sheet';
 import { Button } from '@/components/ui/button';
 import { useAppDialog } from '@/hooks/use-app-dialog';
 import { useGymBranch } from '@/providers/gym-branch-provider';
-import { useGymMembers } from '@/services/member';
+import { useAllGymMembers } from '@/services/member';
 import type { Exercise, WorkoutPlan } from '@/types/workoutplan';
 
 import { AddExercise } from './add-exercise';
@@ -57,7 +57,7 @@ export function WorkoutPlanSheet({
 
   const { gymBranch } = useGymBranch();
   // Only fetch members if sheet is open and a plan exists and gymId is present
-  const { data: members = [] } = useGymMembers(
+  const { data: members = [] } = useAllGymMembers(
     isOpen && plan && gymBranch?.gymId ? gymBranch.gymId : 0
   );
 

@@ -9,6 +9,8 @@ import {
 export interface FilterOption {
   label: string;
   value: string;
+  count?: number;
+  icon?: React.ComponentType<{ className?: string }>;
 }
 
 export interface FilterConfig {

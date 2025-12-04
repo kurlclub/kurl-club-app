@@ -1,6 +1,5 @@
 import * as React from 'react';
 
-import { Column } from '@tanstack/react-table';
 import { PlusCircle } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
@@ -21,31 +20,34 @@ import {
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 
-interface DataTableFacetedFilterProps<TData, TValue> {
-  column?: Column<TData, TValue>;
+interface DataTableFacetedFilterProps {
   title?: string;
   options: {
     label: string;
     value: string;
     icon?: React.ComponentType<{ className?: string }>;
+    count?: number;
   }[];
+  selectedValues?: string[];
+  onFilterChange?: (values: string[] | undefined) => void;
 }
 
-export function DataTableFacetedFilter<TData, TValue>({
-  column,
+export function DataTableFacetedFilter({
   title,
   options,
-}: DataTableFacetedFilterProps<TData, TValue>) {
-  const facets = column?.getFacetedUniqueValues();
-  const selectedValues = new Set(column?.getFilterValue() as string[]);
+  selectedValues = [],
+  onFilterChange,
+}: DataTableFacetedFilterProps) {
+  const [open, setOpen] = React.useState(false);
+  const selectedSet = new Set(selectedValues);
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="outline" size="sm" className="h-8 border-dashed">
           <PlusCircle />
           {title}
-          {selectedValues?.size > 0 && (
+          {selectedSet.size > 0 && (
             <>
               <Separator
                 orientation="vertical"
@@ -55,19 +57,19 @@ export function DataTableFacetedFilter<TData, TValue>({
                 variant="secondary"
                 className="rounded-xs px-1 font-normal lg:hidden"
               >
-                {selectedValues.size}
+                {selectedSet.size}
               </Badge>
               <div className="hidden space-x-1 lg:flex">
-                {selectedValues.size > 2 ? (
+                {selectedSet.size > 2 ? (
                   <Badge
                     variant="secondary"
                     className="rounded-xs px-1 font-normal"
                   >
-                    {selectedValues.size} selected
+                    {selectedSet.size} selected
                   </Badge>
                 ) : (
                   options
-                    .filter((option) => selectedValues.has(option.value))
+                    .filter((option) => selectedSet.has(option.value))
                     .map((option) => (
                       <Badge
                         variant="secondary"
@@ -87,24 +89,25 @@ export function DataTableFacetedFilter<TData, TValue>({
         className="w-[200px] p-0 shad-select-content"
         align="start"
       >
-        <Command>
+        <Command shouldFilter={false}>
           <CommandList>
             <CommandEmpty>No results found.</CommandEmpty>
             <CommandGroup>
               {options.map((option) => {
-                const isSelected = selectedValues.has(option.value);
+                const isSelected = selectedSet.has(option.value);
                 return (
                   <CommandItem
                     className="shad-select-item"
                     key={option.value}
                     onSelect={() => {
+                      const newSet = new Set(selectedSet);
                       if (isSelected) {
-                        selectedValues.delete(option.value);
+                        newSet.delete(option.value);
                       } else {
-                        selectedValues.add(option.value);
+                        newSet.add(option.value);
                       }
-                      const filterValues = Array.from(selectedValues);
-                      column?.setFilterValue(
+                      const filterValues = Array.from(newSet);
+                      onFilterChange?.(
                         filterValues.length ? filterValues : undefined
                       );
                     }}
@@ -113,17 +116,6 @@ export function DataTableFacetedFilter<TData, TValue>({
                       <Checkbox
                         id={option.value}
                         checked={isSelected}
-                        onChange={() => {
-                          if (isSelected) {
-                            selectedValues.delete(option.value);
-                          } else {
-                            selectedValues.add(option.value);
-                          }
-                          const filterValues = Array.from(selectedValues);
-                          column?.setFilterValue(
-                            filterValues.length ? filterValues : undefined
-                          );
-                        }}
                         className="h-4 w-4"
                       />
                     </div>
@@ -131,21 +123,24 @@ export function DataTableFacetedFilter<TData, TValue>({
                       <option.icon className="mr-2 h-4 w-4 text-muted-foreground" />
                     )}
                     <span>{option.label}</span>
-                    {facets?.get(option.value) !== undefined && (
-                      <span className="ml-auto flex h-4 w-4 items-center justify-center font-mono text-xs">
-                        {facets.get(option.value)}
+                    {option.count !== undefined && (
+                      <span className="ml-auto flex items-center justify-center px-1.5 py-0.5 rounded-md bg-secondary-blue-400 text-primary-green-200 font-mono text-xs">
+                        {option.count}
                       </span>
                     )}
                   </CommandItem>
                 );
               })}
             </CommandGroup>
-            {selectedValues.size > 0 && (
+            {selectedSet.size > 0 && (
               <>
                 <CommandSeparator className="bg-primary-blue-400" />
                 <CommandGroup>
                   <CommandItem
-                    onSelect={() => column?.setFilterValue(undefined)}
+                    onSelect={() => {
+                      onFilterChange?.(undefined);
+                      setOpen(false);
+                    }}
                     className="justify-center text-center cursor-pointer"
                   >
                     Clear filters

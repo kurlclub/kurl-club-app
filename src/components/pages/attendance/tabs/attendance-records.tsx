@@ -13,7 +13,7 @@ import {
   useCheckInMember,
   useCheckOutMember,
 } from '@/services/attendance';
-import { useGymMembers } from '@/services/member';
+import { useAllGymMembers } from '@/services/member';
 
 import { AttendanceSuccessModal } from '../attendance-success-modal';
 import { QuickAttendanceCommand } from '../quick-attendance-command';
@@ -26,7 +26,7 @@ import {
 export default function AttendanceRecords() {
   const { appUser } = useAuth();
   const { gymBranch } = useGymBranch();
-  const { data: members = [] } = useGymMembers(gymBranch?.gymId || 0);
+  const { data: members = [] } = useAllGymMembers(gymBranch?.gymId || 0);
   const { data: attendanceResponse } = useAttendanceRecords(gymBranch?.gymId);
   const attendanceRecords = attendanceResponse?.data || [];
   const checkInMutation = useCheckInMember();

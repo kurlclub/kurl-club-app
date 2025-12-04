@@ -593,7 +593,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
             />
 
             <h5 className="text-white text-base font-normal leading-normal mt-8!">
-              Emergency Contact
+              Emergency Details
             </h5>
             <p className="text-gray-400 text-sm -mt-2 mb-2">
               Who should we contact in case of emergency?
