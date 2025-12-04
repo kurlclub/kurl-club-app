@@ -8,9 +8,11 @@ const baseFetch: typeof fetch = async (url, options = {}) => {
     responseType?: 'json' | 'blob';
   };
 
+  const isFormData = restOptions.body instanceof FormData;
+
   const response = await fetch(`${API_BASE_URL}${url}`, {
     headers: {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...(restOptions.headers || {}),
     },
     ...restOptions,
@@ -74,16 +76,10 @@ export const api = {
     data?: Record<string, unknown> | object | FormData,
     options?: RequestInit
   ) => {
-    const isFormData = data instanceof FormData;
-
     return baseFetch(url, {
       ...options,
       method: 'POST',
-      body: isFormData ? data : JSON.stringify(data),
-      headers: {
-        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
-        ...(options?.headers || {}),
-      },
+      body: data instanceof FormData ? data : JSON.stringify(data),
     }) as Promise<TResponse>;
   },
   put: async <TResponse>(
@@ -91,16 +87,10 @@ export const api = {
     data?: Record<string, unknown> | object | FormData,
     options?: RequestInit
   ) => {
-    const isFormData = data instanceof FormData;
-
     return baseFetch(url, {
       ...options,
       method: 'PUT',
-      body: isFormData ? data : JSON.stringify(data),
-      headers: {
-        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
-        ...(options?.headers || {}),
-      },
+      body: data instanceof FormData ? data : JSON.stringify(data),
     }) as Promise<TResponse>;
   },
   patch: async <TResponse>(

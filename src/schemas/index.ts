@@ -394,7 +394,14 @@ export const GymDataDetailsSchema = z.object({
   socialLinks: z
     .array(
       z.object({
-        url: z.url(),
+        url: z
+          .string()
+          .refine(
+            (val) => val === '' || z.string().url().safeParse(val).success,
+            {
+              message: 'Please enter a valid URL',
+            }
+          ),
       })
     )
     .optional(),
