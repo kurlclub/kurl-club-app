@@ -14,15 +14,25 @@ import { FilterConfig } from '@/lib/filters';
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
   onSearch: (term: string) => void;
+  searchValue?: string;
   filters: FilterConfig[];
+  onFilterChange?: (columnId: string, values: string[] | undefined) => void;
+  onResetFilters?: () => void;
+  selectedFilters?: Record<string, string[] | undefined>;
 }
 
 export function DataTableToolbar<TData>({
   table,
   onSearch,
+  searchValue,
   filters,
+  onFilterChange,
+  onResetFilters,
+  selectedFilters = {},
 }: DataTableToolbarProps<TData>) {
-  const isFiltered = table.getState().columnFilters.length > 0;
+  const isFiltered = Object.values(selectedFilters).some(
+    (values) => values && values.length > 0
+  );
 
   return (
     <div className="flex flex-col gap-3 w-full md:flex-row md:items-center md:justify-between">
@@ -30,31 +40,30 @@ export function DataTableToolbar<TData>({
         {/* Search Bar */}
         <Search
           onSearch={onSearch}
+          value={searchValue}
           wrapperClass="min-w-[140px] flex-1 md:flex-initial md:min-w-[200px] md:max-w-[300px]"
         />
 
         {/* Dynamic Filters */}
         <div className="flex items-center flex-wrap gap-2 min-w-0">
-          {filters.map((filter) => {
-            const column = table.getColumn(filter.columnId);
-            return (
-              column && (
-                <DataTableFacetedFilter
-                  key={filter.columnId}
-                  column={column}
-                  title={filter.title}
-                  options={filter.options}
-                />
-              )
-            );
-          })}
+          {filters.map((filter) => (
+            <DataTableFacetedFilter
+              key={filter.columnId}
+              title={filter.title}
+              options={filter.options}
+              selectedValues={selectedFilters[filter.columnId]}
+              onFilterChange={(values) =>
+                onFilterChange?.(filter.columnId, values)
+              }
+            />
+          ))}
         </div>
 
         {/* Reset Button */}
         {isFiltered && (
           <Button
             variant="ghost"
-            onClick={() => table.resetColumnFilters()}
+            onClick={onResetFilters}
             className="h-8 px-2 text-xs md:px-3 md:text-sm shrink-0"
           >
             Reset

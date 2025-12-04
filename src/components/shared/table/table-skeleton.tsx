@@ -11,28 +11,12 @@ import {
 interface TableSkeletonProps {
   rows?: number;
   columns?: number;
-  showToolbar?: boolean;
 }
 
-export function TableSkeleton({
-  rows = 10,
-  columns = 7,
-  showToolbar = true,
-}: TableSkeletonProps) {
+export function TableSkeleton({ rows = 10, columns = 7 }: TableSkeletonProps) {
   return (
     <div className="space-y-4 animate-pulse">
-      {/* Sleek Toolbar Skeleton */}
-      {showToolbar && (
-        <div className="flex justify-between items-center gap-y-3 flex-wrap">
-          <div className="flex items-center gap-3 flex-wrap">
-            <Skeleton className="h-10 w-50 md:w-72" />
-            <Skeleton className="h-10 w-36" />
-          </div>
-          <Skeleton className="h-10 w-15" />
-        </div>
-      )}
-
-      {/* Sleek DataTable Skeleton */}
+      {/* DataTable Skeleton */}
       <div className="rounded-xl border border-primary-blue-300/50 overflow-hidden bg-gradient-to-br from-secondary-blue-500 to-secondary-blue-600 shadow-lg">
         <div className="relative">
           <div className="overflow-x-auto">

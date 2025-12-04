@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { useAppDialog } from '@/hooks/use-app-dialog';
 import { useGymBranch } from '@/providers/gym-branch-provider';
 import { membershipPlanSchema } from '@/schemas';
-import { useGymMembers } from '@/services/member';
+import { useAllGymMembers } from '@/services/member';
 import { MembershipPlan } from '@/types/membership-plan';
 
 import { MemberList } from './member-list';
@@ -72,7 +72,7 @@ export function MembershipPlanSheet({
 
   const { gymBranch } = useGymBranch();
   // Only fetch members if sheet is open and a plan exists and gymId is present
-  const { data: members = [] } = useGymMembers(
+  const { data: members = [] } = useAllGymMembers(
     isOpen && plan && gymBranch?.gymId ? gymBranch.gymId : 0
   );
 

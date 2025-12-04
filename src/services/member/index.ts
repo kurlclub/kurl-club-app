@@ -22,19 +22,82 @@ export const createMember = async (data: FormData) => {
   }
 };
 
-export const fetchGymMembers = async (gymId: number | string) => {
-  const response = await api.get<ApiResponse<Member[]>>(`/Member/gym/${gymId}`);
-
-  const memberData = response.data || [];
-  return memberData.sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
+export type MemberFilters = {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  feeStatus?: string;
+  package?: string;
+  gender?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 };
 
-export const useGymMembers = (gymId: number | string) => {
+export type PaginatedMembers = {
+  data: Member[];
+  pagination: {
+    totalCount: number;
+    currentPage: number;
+    pageSize: number;
+    totalPages: number;
+  };
+  availableFilters?: {
+    feeStatuses: { value: string; count: number }[];
+    packages: { value: string; label: string; count: number }[];
+    genders: { value: string; count: number }[];
+  };
+};
+
+export const fetchGymMembers = async (
+  gymId: number | string,
+  filters?: MemberFilters
+) => {
+  const params = new URLSearchParams();
+  if (filters?.page) params.append('page', filters.page.toString());
+  if (filters?.pageSize) params.append('pageSize', filters.pageSize.toString());
+  if (filters?.search) params.append('search', filters.search);
+  if (filters?.feeStatus) params.append('feeStatus', filters.feeStatus);
+  if (filters?.package) params.append('package', filters.package);
+  if (filters?.gender) params.append('gender', filters.gender);
+  if (filters?.sortBy) params.append('sortBy', filters.sortBy);
+  if (filters?.sortOrder) params.append('sortOrder', filters.sortOrder);
+
+  const url = `/Member/gym/${gymId}${params.toString() ? `?${params.toString()}` : ''}`;
+  const response = await api.get<{
+    status: string;
+    data: Member[];
+    pagination: PaginatedMembers['pagination'];
+    availableFilters?: PaginatedMembers['availableFilters'];
+  }>(url);
+  return {
+    data: response.data,
+    pagination: response.pagination,
+    availableFilters: response.availableFilters,
+  };
+};
+
+export const useGymMembers = (
+  gymId: number | string,
+  filters?: MemberFilters
+) => {
   return useQuery({
-    queryKey: ['gymMembers', gymId],
-    queryFn: () => fetchGymMembers(gymId),
+    queryKey: ['gymMembers', gymId, filters],
+    queryFn: () => fetchGymMembers(gymId, filters),
+    enabled: !!gymId,
+    staleTime: 1000 * 60,
+    retry: 1,
+    placeholderData: (previousData) => previousData,
+  });
+};
+
+// For components that need all members (frontend filtering)
+export const useAllGymMembers = (gymId: number | string) => {
+  return useQuery({
+    queryKey: ['allGymMembers', gymId],
+    queryFn: async () => {
+      const response = await fetchGymMembers(gymId, { pageSize: 9999 });
+      return response.data;
+    },
     enabled: !!gymId,
     staleTime: 1000 * 60,
     retry: 1,

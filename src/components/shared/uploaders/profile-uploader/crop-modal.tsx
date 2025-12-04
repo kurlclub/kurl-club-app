@@ -116,27 +116,30 @@ export default function CropModal({
   return (
     <KDialog
       footer={<Button onClick={handleCropComplete}>Crop & Upload</Button>}
-      className="w-[500px]"
+      className="w-[90vw] max-w-[500px]"
       open={isOpen}
       onOpenChange={onClose}
       title="Crop Image"
     >
       {src && (
-        <ReactCrop
-          crop={crop}
-          onChange={(c) => setCrop(c)}
-          onComplete={(c) => setCompletedCrop(c)}
-          aspect={ASPECT_RATIO}
-        >
-          <Image
-            src={src}
-            onLoad={(e) => onImageLoad(e.currentTarget)}
-            alt="Crop me"
-            layout="responsive"
-            width={100}
-            height={100}
-          />
-        </ReactCrop>
+        <div className="max-h-[60vh] overflow-hidden flex items-center justify-center">
+          <ReactCrop
+            crop={crop}
+            onChange={(c) => setCrop(c)}
+            onComplete={(c) => setCompletedCrop(c)}
+            aspect={ASPECT_RATIO}
+          >
+            <Image
+              src={src}
+              onLoad={(e) => onImageLoad(e.currentTarget)}
+              alt="Crop me"
+              layout="responsive"
+              width={100}
+              height={100}
+              style={{ maxHeight: '60vh', width: 'auto', height: 'auto' }}
+            />
+          </ReactCrop>
+        </div>
       )}
     </KDialog>
   );
