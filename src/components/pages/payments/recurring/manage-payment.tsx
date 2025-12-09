@@ -36,16 +36,16 @@ import { paymentMethodOptions } from '@/lib/constants';
 import { formatDateTime } from '@/lib/utils';
 import { useGymBranch } from '@/providers/gym-branch-provider';
 import { paymentFormSchema } from '@/schemas';
-import type { MemberPaymentDetails } from '@/types/payment';
+import type { RecurringPaymentMember } from '@/types/payment';
 
-import { PaymentHistory } from './payment-history';
+import { PaymentHistory } from '../shared/payment-history';
 
 type PaymentFormData = z.infer<typeof paymentFormSchema>;
 
 type ManagePaymentSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  member: MemberPaymentDetails | null;
+  member: RecurringPaymentMember | null;
 };
 
 export function ManagePaymentSheet({
