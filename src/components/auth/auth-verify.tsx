@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { applyActionCode } from 'firebase/auth';
 import { toast } from 'sonner';
@@ -15,35 +15,35 @@ export const AuthVerify = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const handleVerification = useCallback(async () => {
-    const mode = searchParams.get('mode');
-    const oobCode = searchParams.get('oobCode');
-
-    if (mode !== 'verifyEmail' || !oobCode) {
-      const errorMessage = 'Invalid or missing verification code!';
-      setStatus('error');
-      toast.error(errorMessage);
-      return;
-    }
-
-    try {
-      await applyActionCode(auth, oobCode);
-      setStatus('success');
-      toast.success('Email verified successfully! Redirecting to login...');
-      setTimeout(() => router.push('/auth/login'), 3000);
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : 'An error occurred during email verification!';
-      setStatus('error');
-      toast.error(errorMessage);
-    }
-  }, [searchParams, router]);
-
   useEffect(() => {
+    const handleVerification = async () => {
+      const mode = searchParams.get('mode');
+      const oobCode = searchParams.get('oobCode');
+
+      if (mode !== 'verifyEmail' || !oobCode) {
+        const errorMessage = 'Invalid or missing verification code!';
+        setStatus('error');
+        toast.error(errorMessage);
+        return;
+      }
+
+      try {
+        await applyActionCode(auth, oobCode);
+        setStatus('success');
+        toast.success('Email verified successfully! Redirecting to login...');
+        setTimeout(() => router.push('/auth/login'), 3000);
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : 'An error occurred during email verification!';
+        setStatus('error');
+        toast.error(errorMessage);
+      }
+    };
+
     handleVerification();
-  }, [handleVerification]);
+  }, [searchParams, router]);
 
   return (
     <div className="flex flex-col gap-7 text-center">

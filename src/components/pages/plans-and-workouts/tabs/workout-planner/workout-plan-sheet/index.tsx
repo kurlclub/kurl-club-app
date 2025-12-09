@@ -66,13 +66,13 @@ export function WorkoutPlanSheet({
   );
 
   useEffect(() => {
-    if (isOpen) {
-      setEditedPlan(plan || DEFAULT_PLAN);
-      setIsEditMode(!plan);
-      setSelectedDay(null);
-      setIsMemberListVisible(false);
-      setShowSchedule(!!plan);
-    }
+    if (!isOpen) return;
+
+    setEditedPlan(plan || DEFAULT_PLAN);
+    setIsEditMode(!plan);
+    setSelectedDay(null);
+    setIsMemberListVisible(false);
+    setShowSchedule(!!plan);
   }, [plan, isOpen]);
 
   const handleSavePlan = () => {

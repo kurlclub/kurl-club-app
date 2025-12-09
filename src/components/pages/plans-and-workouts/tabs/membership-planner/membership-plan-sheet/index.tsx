@@ -81,22 +81,22 @@ export function MembershipPlanSheet({
   );
 
   useEffect(() => {
-    if (isOpen) {
-      const planData = plan || DEFAULT_PLAN;
-      setEditedPlan(planData);
-      setIsEditMode(!plan);
-      setSelectedDay(null);
-      setIsMemberListVisible(false);
+    if (!isOpen) return;
 
-      form.reset({
-        planName: planData.planName,
-        billingType: planData.billingType || 'Recurring',
-        fee: planData.fee,
-        details: planData.details,
-        durationInDays: planData.durationInDays,
-        defaultSessionRate: planData.defaultSessionRate,
-      });
-    }
+    const planData = plan || DEFAULT_PLAN;
+    setEditedPlan(planData);
+    setIsEditMode(!plan);
+    setSelectedDay(null);
+    setIsMemberListVisible(false);
+
+    form.reset({
+      planName: planData.planName,
+      billingType: planData.billingType || 'Recurring',
+      fee: planData.fee,
+      details: planData.details,
+      durationInDays: planData.durationInDays,
+      defaultSessionRate: planData.defaultSessionRate,
+    });
   }, [plan, isOpen, form]);
 
   const handleSavePlan = async (data: MembershipPlanFormData) => {

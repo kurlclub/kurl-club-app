@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
 import { KTabs, TabItem } from '@/components/shared/form/k-tabs';
 import { StaffType } from '@/types/staff';
@@ -22,14 +22,7 @@ export default function Contents({
   handleSave: () => Promise<boolean>;
   toggleEdit: () => void;
 }) {
-  const [activeTab, setActiveTab] = useState<string>(
-    staffRole === 'trainer' ? 'members' : 'roles'
-  );
-
-  // Reset active tab when staff role changes
-  useEffect(() => {
-    setActiveTab(staffRole === 'trainer' ? 'members' : 'roles');
-  }, [staffRole]);
+  const activeTab = staffRole === 'trainer' ? 'members' : 'roles';
 
   const tabs: TabItem[] =
     staffRole === 'trainer'
@@ -50,7 +43,7 @@ export default function Contents({
           items={tabs}
           variant="underline"
           value={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={() => {}}
           className="border-secondary-blue-500"
         />
         <div className="py-4">

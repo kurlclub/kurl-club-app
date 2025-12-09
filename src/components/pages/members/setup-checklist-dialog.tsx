@@ -16,6 +16,124 @@ interface SetupChecklistDialogProps {
   onProceed: () => void;
 }
 
+const ChecklistItem = ({
+  completed,
+  title,
+  description,
+  href,
+  icon: Icon,
+  delay = 0,
+  onClose,
+}: {
+  completed: boolean;
+  title: string;
+  description: string;
+  href: string;
+  icon: React.ElementType;
+  delay?: number;
+  onClose: () => void;
+}) => (
+  <motion.div
+    initial={{ opacity: 0, x: -20 }}
+    animate={{ opacity: 1, x: 0 }}
+    transition={{ duration: 0.3, delay }}
+    className={`group relative overflow-hidden rounded-lg border transition-all duration-200 hover:scale-[1.02] ${
+      completed
+        ? 'border-primary-green-500/30 bg-primary-green-500/5'
+        : 'border-secondary-blue-400 bg-secondary-blue-600 hover:border-neutral-ochre-500/50'
+    }`}
+  >
+    <div className="flex items-start gap-4 p-4">
+      <div className="relative">
+        <motion.div
+          className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
+            completed ? 'bg-primary-green-600' : 'bg-secondary-blue-500'
+          }`}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+          animate={completed ? { rotate: 360 } : { rotate: 0 }}
+          transition={{ duration: 0.6, ease: 'easeInOut' }}
+        >
+          <AnimatePresence mode="wait">
+            {completed ? (
+              <motion.div
+                key="check"
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                exit={{ scale: 0, rotate: 180 }}
+                transition={{ type: 'spring', stiffness: 200, damping: 10 }}
+              >
+                <Check
+                  className="h-5 w-5 text-black font-bold"
+                  strokeWidth={3}
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="icon"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0 }}
+              >
+                <Icon className="h-5 w-5 text-primary-blue-100" />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+        {completed && (
+          <motion.div
+            className="absolute -inset-1 rounded-full bg-primary-green-500/20"
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          />
+        )}
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <motion.h4
+          className={`font-semibold transition-colors ${
+            completed
+              ? 'text-primary-green-700'
+              : 'text-white group-hover:text-neutral-ochre-400'
+          }`}
+          layout
+        >
+          {title}
+        </motion.h4>
+        <p className="text-sm text-primary-blue-100 mt-1 leading-relaxed">
+          {description}
+        </p>
+
+        {!completed && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: delay + 0.1 }}
+            className="relative z-10"
+          >
+            <Link
+              href={
+                href.includes('?')
+                  ? `${href}&return=/members&setup=true`
+                  : `${href}?return=/members&setup=true`
+              }
+              onClick={onClose}
+              className="relative inline-flex items-center gap-2 text-sm text-neutral-ochre-500 hover:text-neutral-ochre-400 transition-colors mt-3 group/link cursor-pointer z-20"
+            >
+              <span>Set up now</span>
+              <ExternalLink className="h-3 w-3 transition-transform group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5" />
+            </Link>
+          </motion.div>
+        )}
+      </div>
+    </div>
+
+    {/* Hover effect overlay */}
+    <div className="absolute inset-0 bg-gradient-to-r from-neutral-ochre-500/0 via-neutral-ochre-500/5 to-neutral-ochre-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+  </motion.div>
+);
+
 export const SetupChecklistDialog = ({
   isOpen,
   onClose,
@@ -30,122 +148,6 @@ export const SetupChecklistDialog = ({
     Boolean
   ).length;
   const allComplete = hasPackages && hasTrainers && hasWorkoutPlans;
-
-  const ChecklistItem = ({
-    completed,
-    title,
-    description,
-    href,
-    icon: Icon,
-    delay = 0,
-  }: {
-    completed: boolean;
-    title: string;
-    description: string;
-    href: string;
-    icon: React.ElementType;
-    delay?: number;
-  }) => (
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.3, delay }}
-      className={`group relative overflow-hidden rounded-lg border transition-all duration-200 hover:scale-[1.02] ${
-        completed
-          ? 'border-primary-green-500/30 bg-primary-green-500/5'
-          : 'border-secondary-blue-400 bg-secondary-blue-600 hover:border-neutral-ochre-500/50'
-      }`}
-    >
-      <div className="flex items-start gap-4 p-4">
-        <div className="relative">
-          <motion.div
-            className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
-              completed ? 'bg-primary-green-600' : 'bg-secondary-blue-500'
-            }`}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-            animate={completed ? { rotate: 360 } : { rotate: 0 }}
-            transition={{ duration: 0.6, ease: 'easeInOut' }}
-          >
-            <AnimatePresence mode="wait">
-              {completed ? (
-                <motion.div
-                  key="check"
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  exit={{ scale: 0, rotate: 180 }}
-                  transition={{ type: 'spring', stiffness: 200, damping: 10 }}
-                >
-                  <Check
-                    className="h-5 w-5 text-black font-bold"
-                    strokeWidth={3}
-                  />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="icon"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  exit={{ scale: 0 }}
-                >
-                  <Icon className="h-5 w-5 text-primary-blue-100" />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-          {completed && (
-            <motion.div
-              className="absolute -inset-1 rounded-full bg-primary-green-500/20"
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-            />
-          )}
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <motion.h4
-            className={`font-semibold transition-colors ${
-              completed
-                ? 'text-primary-green-700'
-                : 'text-white group-hover:text-neutral-ochre-400'
-            }`}
-            layout
-          >
-            {title}
-          </motion.h4>
-          <p className="text-sm text-primary-blue-100 mt-1 leading-relaxed">
-            {description}
-          </p>
-
-          {!completed && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: delay + 0.1 }}
-              className="relative z-10"
-            >
-              <Link
-                href={
-                  href.includes('?')
-                    ? `${href}&return=/members&setup=true`
-                    : `${href}?return=/members&setup=true`
-                }
-                onClick={onClose}
-                className="relative inline-flex items-center gap-2 text-sm text-neutral-ochre-500 hover:text-neutral-ochre-400 transition-colors mt-3 group/link cursor-pointer z-20"
-              >
-                <span>Set up now</span>
-                <ExternalLink className="h-3 w-3 transition-transform group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5" />
-              </Link>
-            </motion.div>
-          )}
-        </div>
-      </div>
-
-      {/* Hover effect overlay */}
-      <div className="absolute inset-0 bg-gradient-to-r from-neutral-ochre-500/0 via-neutral-ochre-500/5 to-neutral-ochre-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-    </motion.div>
-  );
 
   const footer = allComplete ? null : (
     <div className="flex justify-end gap-3">
@@ -248,6 +250,7 @@ export const SetupChecklistDialog = ({
                 href="/plans-and-workouts?tab=membership-plans"
                 icon={Package}
                 delay={0}
+                onClose={onClose}
               />
 
               <ChecklistItem
@@ -257,6 +260,7 @@ export const SetupChecklistDialog = ({
                 href="/staff-management"
                 icon={Users}
                 delay={0.1}
+                onClose={onClose}
               />
 
               <ChecklistItem
@@ -266,6 +270,7 @@ export const SetupChecklistDialog = ({
                 href="/plans-and-workouts?tab=workout-plans"
                 icon={Dumbbell}
                 delay={0.2}
+                onClose={onClose}
               />
             </div>
           </>

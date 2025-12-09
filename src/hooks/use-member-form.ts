@@ -56,53 +56,53 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
 
   // Fetch onboarding data if onboardingId is provided
   useEffect(() => {
-    if (onboardingId) {
-      setIsLoadingOnboarding(true);
-      fetchPendingMemberDetails(onboardingId)
-        .then((data) => {
-          setExistingPhotoUrl(data.photoPath || null);
-          setExistingIdCopyUrl(
-            typeof data.idCopyPath === 'string' ? data.idCopyPath : null
-          );
+    if (!onboardingId) return;
 
-          form.reset({
-            profilePicture: null,
-            name: data.name || '',
-            email: data.email || '',
-            phone: data.phone || '',
-            gender: data.gender || '',
-            dob: safeParseDate(data.dob)?.toISOString() || '',
-            height: String(data.height || ''),
-            weight: String(data.weight || ''),
-            bloodGroup: data.bloodGroup || '',
-            address: data.address || '',
-            idType: data.idType || '',
-            idNumber: data.idNumber || '',
-            idCopyPath: data.idCopyPath ? 'existing' : null,
-            fitnessGoal: data.fitnessGoal || '',
-            medicalHistory: data.medicalHistory || '',
-            emergencyContactName: data.emergencyContactName || '',
-            emergencyContactPhone: data.emergencyContactPhone || '',
-            emergencyContactRelation: data.emergencyContactRelation || '',
-            doj: new Date().toISOString(),
-            membershipPlanId: '',
-            feeStatus: '',
-            personalTrainer: 0,
-            workoutPlanId: '',
-            amountPaid: '',
-            modeOfPayment: '',
-            customSessionRate: '',
-            numberOfSessions: '',
-          });
-        })
-        .catch((error) => {
-          console.error('Failed to fetch onboarding details:', error);
-          toast.error('Failed to load member details');
-        })
-        .finally(() => {
-          setIsLoadingOnboarding(false);
+    setIsLoadingOnboarding(true);
+    fetchPendingMemberDetails(onboardingId)
+      .then((data) => {
+        setExistingPhotoUrl(data.photoPath || null);
+        setExistingIdCopyUrl(
+          typeof data.idCopyPath === 'string' ? data.idCopyPath : null
+        );
+
+        form.reset({
+          profilePicture: null,
+          name: data.name || '',
+          email: data.email || '',
+          phone: data.phone || '',
+          gender: data.gender || '',
+          dob: safeParseDate(data.dob)?.toISOString() || '',
+          height: String(data.height || ''),
+          weight: String(data.weight || ''),
+          bloodGroup: data.bloodGroup || '',
+          address: data.address || '',
+          idType: data.idType || '',
+          idNumber: data.idNumber || '',
+          idCopyPath: data.idCopyPath ? 'existing' : null,
+          fitnessGoal: data.fitnessGoal || '',
+          medicalHistory: data.medicalHistory || '',
+          emergencyContactName: data.emergencyContactName || '',
+          emergencyContactPhone: data.emergencyContactPhone || '',
+          emergencyContactRelation: data.emergencyContactRelation || '',
+          doj: new Date().toISOString(),
+          membershipPlanId: '',
+          feeStatus: '',
+          personalTrainer: 0,
+          workoutPlanId: '',
+          amountPaid: '',
+          modeOfPayment: '',
+          customSessionRate: '',
+          numberOfSessions: '',
         });
-    }
+      })
+      .catch((error) => {
+        console.error('Failed to fetch onboarding details:', error);
+        toast.error('Failed to load member details');
+      })
+      .finally(() => {
+        setIsLoadingOnboarding(false);
+      });
   }, [onboardingId, form]);
 
   const handleSubmit = async (data: CreateMemberDetailsData) => {
