@@ -28,8 +28,10 @@ export const TableView = ({ payments, columns, filters }: Props) => {
             member.memberId.toString(),
             member.memberIdentifier ||
               `KC${member.memberId.toString().padStart(3, '0')}`,
-            member.memberStatus,
-            member.currentCycle?.status || '',
+            member.billingType === 'Recurring' ? member.paymentStatus : '',
+            member.billingType === 'Recurring'
+              ? member.currentCycle?.cyclePaymentStatus || ''
+              : '',
           ];
         }
       ) as unknown as MemberPaymentDetails[]

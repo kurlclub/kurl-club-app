@@ -428,14 +428,12 @@ export const getPaymentBadgeStatus = (
   pendingAmount?: number
 ): 'paid' | 'partially_paid' | 'pending' | 'overdue' => {
   switch (paymentStatus) {
-    case 'Completed':
+    case 'paid':
       return 'paid';
-    case 'Partial':
-      return 'partially_paid';
-    case 'Pending':
+    case 'unpaid':
       return 'pending';
-    case 'Arrears':
-      return 'overdue';
+    case 'partially_paid':
+      return 'partially_paid';
     default:
       return (pendingAmount ?? 0) > 0 ? 'pending' : 'paid';
   }

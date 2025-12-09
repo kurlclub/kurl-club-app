@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 
+import { ColumnDef } from '@tanstack/react-table';
 import { IndianRupee, Users } from 'lucide-react';
 
 import InfoCard from '@/components/shared/cards/info-card';
@@ -11,15 +12,17 @@ import { useSheet } from '@/hooks/use-sheet';
 import { getCompletedPaymentFilters, getPaymentFilters } from '@/lib/filters';
 import { useGymBranch } from '@/providers/gym-branch-provider';
 import { useFilteredPayments } from '@/services/payments';
-import type { MemberPaymentDetails } from '@/types/payment';
+import type {
+  MemberPaymentDetails,
+  RecurringPaymentMember,
+} from '@/types/payment';
 
-import { InvoiceGenerator } from './invoice-generator';
+import { InvoiceGenerator } from '../shared';
+import { createPaymentColumns } from './columns';
 import { ManagePaymentSheet } from './manage-payment';
-import { ManageSessionPaymentSheet } from './manage-session-payment';
-import { createPaymentColumns } from './table/columns';
-import { TableView } from './table/table-view';
+import { TableView } from './table-view';
 
-type PaymentTabType = 'outstanding' | 'expired' | 'completed' | 'history';
+type PaymentTabType = 'current-due' | 'overdue' | 'completed' | 'history';
 
 type Props = {
   type: PaymentTabType;
@@ -27,20 +30,25 @@ type Props = {
 };
 
 const getStatsConfig = (
-  payments: MemberPaymentDetails[],
+  payments: RecurringPaymentMember[],
   type: PaymentTabType
 ) => {
-  const totalOutstanding = payments.reduce(
-    (sum, member) => sum + (member.currentCycle?.pendingAmount || 0),
-    0
-  );
-  const totalRevenue = payments.reduce(
-    (sum, member) => sum + (member.currentCycle?.amountPaid || 0),
-    0
-  );
+  const totalOutstanding = payments.reduce((sum, member) => {
+    if (member.billingType === 'Recurring' && member.currentCycle) {
+      return sum + member.currentCycle.pendingAmount;
+    }
+    return sum;
+  }, 0);
+
+  const totalRevenue = payments.reduce((sum, member) => {
+    if (member.billingType === 'Recurring' && member.currentCycle) {
+      return sum + member.currentCycle.amountPaid;
+    }
+    return sum;
+  }, 0);
 
   const configs = {
-    outstanding: [
+    'current-due': [
       {
         id: 1,
         icon: <Users size={20} strokeWidth={1.75} color="#151821" />,
@@ -52,11 +60,11 @@ const getStatsConfig = (
         id: 2,
         icon: <IndianRupee size={20} strokeWidth={1.75} color="#151821" />,
         color: 'secondary-pink-500',
-        title: 'Total outstanding',
+        title: 'Total due',
         count: totalOutstanding,
       },
     ],
-    expired: [
+    overdue: [
       {
         id: 1,
         icon: <Users size={20} strokeWidth={1.75} color="#151821" />,
@@ -111,9 +119,9 @@ const getStatsConfig = (
 
 export function PaymentsTab({ type, formOptions }: Props) {
   const [selectedPayment, setSelectedPayment] =
-    useState<MemberPaymentDetails | null>(null);
+    useState<RecurringPaymentMember | null>(null);
   const [selectedInvoiceMember, setSelectedInvoiceMember] =
-    useState<MemberPaymentDetails | null>(null);
+    useState<RecurringPaymentMember | null>(null);
   const { isOpen, openSheet, closeSheet } = useSheet();
   const {
     isOpen: isInvoiceOpen,
@@ -124,82 +132,21 @@ export function PaymentsTab({ type, formOptions }: Props) {
   const { gymBranch } = useGymBranch();
   const gymId = gymBranch?.gymId;
 
-  const {
-    outstandingPayments,
-    expiredPayments,
-    completedPayments,
-    historyPayments,
-    isLoading,
-  } = useFilteredPayments(gymId!);
+  const { currentDuePayments, overduePayments, completedPayments, isLoading } =
+    useFilteredPayments(gymId!);
 
   const handleRecord = (member: MemberPaymentDetails) => {
-    // Add mock session data for testing
-    // const mockMember = {
-    //   ...member,
-    //   customSessionRate: 150,
-    //   unpaidSessions: 5,
-    //   totalSessionDebt: 750,
-    //   sessionPayments: [
-    //     {
-    //       sessionId: 1,
-    //       attendanceId: 101,
-    //       memberId: member.memberId,
-    //       sessionDate: '2025-01-20',
-    //       sessionRate: 150,
-    //       amountPaid: 0,
-    //       pendingAmount: 150,
-    //       status: 'Pending' as const,
-    //     },
-    //     {
-    //       sessionId: 2,
-    //       attendanceId: 102,
-    //       memberId: member.memberId,
-    //       sessionDate: '2025-01-18',
-    //       sessionRate: 150,
-    //       amountPaid: 0,
-    //       pendingAmount: 150,
-    //       status: 'Pending' as const,
-    //     },
-    //     {
-    //       sessionId: 3,
-    //       attendanceId: 103,
-    //       memberId: member.memberId,
-    //       sessionDate: '2025-01-16',
-    //       sessionRate: 150,
-    //       amountPaid: 0,
-    //       pendingAmount: 150,
-    //       status: 'Pending' as const,
-    //     },
-    //     {
-    //       sessionId: 4,
-    //       attendanceId: 104,
-    //       memberId: member.memberId,
-    //       sessionDate: '2025-01-14',
-    //       sessionRate: 150,
-    //       amountPaid: 0,
-    //       pendingAmount: 150,
-    //       status: 'Pending' as const,
-    //     },
-    //     {
-    //       sessionId: 5,
-    //       attendanceId: 105,
-    //       memberId: member.memberId,
-    //       sessionDate: '2025-01-12',
-    //       sessionRate: 150,
-    //       amountPaid: 0,
-    //       pendingAmount: 150,
-    //       status: 'Pending' as const,
-    //     },
-    //   ],
-    // };
-    setSelectedPayment(member);
-    // setSelectedPayment(mockMember);
-    openSheet();
+    if (member.billingType === 'Recurring') {
+      setSelectedPayment(member);
+      openSheet();
+    }
   };
 
   const handleGenerateInvoice = (member: MemberPaymentDetails) => {
-    setSelectedInvoiceMember(member);
-    openInvoice();
+    if (member.billingType === 'Recurring') {
+      setSelectedInvoiceMember(member);
+      openInvoice();
+    }
   };
 
   const columns = createPaymentColumns(
@@ -207,31 +154,34 @@ export function PaymentsTab({ type, formOptions }: Props) {
     formOptions?.membershipPlans || [],
     handleGenerateInvoice,
     type === 'history'
-  );
+  ) as ColumnDef<MemberPaymentDetails>[];
 
   const getPaymentsData = () => {
     switch (type) {
-      case 'outstanding':
-        return outstandingPayments;
-      case 'expired':
-        return expiredPayments;
+      case 'current-due':
+        return currentDuePayments || [];
+      case 'overdue':
+        return overduePayments || [];
       case 'completed':
-        return completedPayments;
+        return completedPayments || [];
       case 'history':
-        return historyPayments;
+        return [];
       default:
         return [];
     }
   };
 
-  const stats = getStatsConfig(getPaymentsData(), type);
+  const stats = getStatsConfig(
+    getPaymentsData() as RecurringPaymentMember[],
+    type
+  );
 
   const getFilters = () => {
     const membershipPlans = formOptions?.membershipPlans || [];
 
     switch (type) {
-      case 'outstanding':
-      case 'expired':
+      case 'current-due':
+      case 'overdue':
       case 'history':
         return getPaymentFilters(membershipPlans);
       case 'completed':
@@ -260,19 +210,11 @@ export function PaymentsTab({ type, formOptions }: Props) {
             columns={columns}
             filters={getFilters()}
           />
-          {selectedPayment?.billingType === 'PerSession' ? (
-            <ManageSessionPaymentSheet
-              open={isOpen}
-              onOpenChange={closeSheet}
-              member={selectedPayment}
-            />
-          ) : (
-            <ManagePaymentSheet
-              open={isOpen}
-              onOpenChange={closeSheet}
-              member={selectedPayment}
-            />
-          )}
+          <ManagePaymentSheet
+            open={isOpen}
+            onOpenChange={closeSheet}
+            member={selectedPayment}
+          />
           <InvoiceGenerator
             open={isInvoiceOpen}
             onOpenChange={closeInvoice}

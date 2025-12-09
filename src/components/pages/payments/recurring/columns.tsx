@@ -22,7 +22,10 @@ import {
   getProfilePictureSrc,
   getUrgencyConfig,
 } from '@/lib/utils';
-import { MemberPaymentDetails } from '@/types/payment';
+import type {
+  MemberPaymentDetails,
+  RecurringPaymentMember,
+} from '@/types/payment';
 
 const UrgencyIndicator = ({
   color,
@@ -40,7 +43,7 @@ const UrgencyIndicator = ({
 );
 
 const ActionsCell: React.FC<{
-  user: MemberPaymentDetails;
+  user: RecurringPaymentMember;
   onRecord?: (member: MemberPaymentDetails) => void;
   onGenerateInvoice?: (member: MemberPaymentDetails) => void;
   showInvoice?: boolean;
@@ -90,7 +93,7 @@ export const createPaymentColumns = (
   membershipPlans: Array<{ membershipPlanId: number; planName: string }> = [],
   onGenerateInvoice?: (member: MemberPaymentDetails) => void,
   showInvoice: boolean = false
-): ColumnDef<MemberPaymentDetails>[] => [
+): ColumnDef<RecurringPaymentMember>[] => [
   {
     accessorKey: 'memberIdentifier',
     header: 'Member ID',
@@ -117,7 +120,7 @@ export const createPaymentColumns = (
       const initials = getInitials(name);
 
       return (
-        <div className="flex items-center gap-2 w-[160px]">
+        <div className="flex items-center gap-2 w-40">
           <Avatar className="h-8 w-8">
             <AvatarImage
               src={getProfilePictureSrc(
@@ -208,6 +211,14 @@ export const createPaymentColumns = (
         text: urgencyText,
       } = getUrgencyConfig(daysRemaining);
 
+      const formattedDate = new Date(bufferEndDate).toLocaleDateString(
+        'en-GB',
+        {
+          day: 'numeric',
+          month: 'short',
+        }
+      );
+
       return (
         <div className="min-w-24">
           <div
@@ -216,7 +227,11 @@ export const createPaymentColumns = (
             <UrgencyIndicator color={color} />
             <span className="font-medium">{urgencyText}</span>
           </div>
-          <div className="text-xs text-primary-blue-100">Buffer period</div>
+          <div className="text-xs text-primary-blue-100">
+            {daysRemaining < 0
+              ? `Expired on ${formattedDate}`
+              : 'Buffer period'}
+          </div>
         </div>
       );
     },
@@ -317,12 +332,12 @@ export const createPaymentColumns = (
   },
   {
     id: 'currentCycle.status',
-    accessorFn: (row) => row.currentCycle?.status,
+    accessorFn: (row) => row.currentCycle?.cyclePaymentStatus,
     header: 'Status',
     cell: ({ row }) => {
       const { currentCycle } = row.original;
       if (!currentCycle) return <div className="min-w-24">-</div>;
-      const status = currentCycle.status;
+      const status = currentCycle.cyclePaymentStatus;
       const pendingAmount = currentCycle.pendingAmount;
 
       const badgeStatus = getPaymentBadgeStatus(status, pendingAmount);
@@ -335,7 +350,7 @@ export const createPaymentColumns = (
     },
     filterFn: (row, id, value: string[]) => {
       return row.original.currentCycle
-        ? value.includes(row.original.currentCycle.status)
+        ? value.includes(row.original.currentCycle.cyclePaymentStatus)
         : false;
     },
   },

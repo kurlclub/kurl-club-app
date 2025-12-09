@@ -9,13 +9,7 @@ export const fetchGymPayments = async (gymId: number | string) => {
   );
 
   if (response.status === 'Success' && response.data) {
-    // Add memberIdentifier for backward compatibility
-    return response.data.map((member) => ({
-      ...member,
-      memberIdentifier:
-        member.memberIdentifier ||
-        `KC${member.memberId.toString().padStart(3, '0')}`,
-    }));
+    return response.data;
   }
 
   return [];
@@ -34,37 +28,26 @@ export const useGymPayments = (gymId: number | string) => {
 export const useFilteredPayments = (gymId: number | string) => {
   const { data = [], isLoading, error } = useGymPayments(gymId);
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  // Filter recurring payments only
+  const recurringPayments = data.filter(
+    (member) => member.billingType === 'Recurring' && member.currentCycle
+  );
 
-  // Outstanding: Use memberStatus from API
-  const outstandingPayments = data
-    .filter(
-      (member) => member.memberStatus === 'Outstanding' && member.currentCycle
-    )
-    .sort((a, b) => {
-      if (!a.currentCycle || !b.currentCycle) return 0;
-      // Sort by urgency: buffer end date or due date
-      const aDate = a.currentCycle.bufferEndDate
-        ? new Date(a.currentCycle.bufferEndDate)
-        : new Date(a.currentCycle.dueDate);
-      const bDate = b.currentCycle.bufferEndDate
-        ? new Date(b.currentCycle.bufferEndDate)
-        : new Date(b.currentCycle.dueDate);
-      return aDate.getTime() - bDate.getTime();
-    });
-
-  // Expired: Use memberStatus from API (includes Expired and Debts)
-  const expiredPayments = data
+  // Current Due: Pending amount within grace period
+  const currentDuePayments = recurringPayments
     .filter(
       (member) =>
-        (member.memberStatus === 'Expired' ||
-          member.memberStatus === 'Debts') &&
-        member.currentCycle
+        member.billingType === 'Recurring' &&
+        member.paymentStatus === 'CurrentDue'
     )
     .sort((a, b) => {
-      if (!a.currentCycle || !b.currentCycle) return 0;
-      // Sort by most overdue first
+      if (
+        a.billingType !== 'Recurring' ||
+        b.billingType !== 'Recurring' ||
+        !a.currentCycle ||
+        !b.currentCycle
+      )
+        return 0;
       const aDate = a.currentCycle.bufferEndDate
         ? new Date(a.currentCycle.bufferEndDate)
         : new Date(a.currentCycle.dueDate);
@@ -74,24 +57,44 @@ export const useFilteredPayments = (gymId: number | string) => {
       return aDate.getTime() - bDate.getTime();
     });
 
-  // Completed: Use memberStatus from API
-  const completedPayments = data
+  // Overdue: Past grace period or has debt cycles
+  const overduePayments = recurringPayments
     .filter(
-      (member) => member.memberStatus === 'Completed' && member.currentCycle
+      (member) =>
+        member.billingType === 'Recurring' && member.paymentStatus === 'Overdue'
     )
     .sort((a, b) => {
-      if (!a.currentCycle || !b.currentCycle) return 0;
-      return (
-        new Date(b.currentCycle.lastAmountPaidDate).getTime() -
-        new Date(a.currentCycle.lastAmountPaidDate).getTime()
-      );
+      if (
+        a.billingType !== 'Recurring' ||
+        b.billingType !== 'Recurring' ||
+        !a.currentCycle ||
+        !b.currentCycle
+      )
+        return 0;
+      const aDate = a.currentCycle.bufferEndDate
+        ? new Date(a.currentCycle.bufferEndDate)
+        : new Date(a.currentCycle.dueDate);
+      const bDate = b.currentCycle.bufferEndDate
+        ? new Date(b.currentCycle.bufferEndDate)
+        : new Date(b.currentCycle.dueDate);
+      return aDate.getTime() - bDate.getTime();
     });
 
-  // History: All payments sorted by recent
-  const historyPayments = data
-    .filter((member) => member.currentCycle)
+  // Completed: Fully paid
+  const completedPayments = recurringPayments
+    .filter(
+      (member) =>
+        member.billingType === 'Recurring' &&
+        member.paymentStatus === 'Completed'
+    )
     .sort((a, b) => {
-      if (!a.currentCycle || !b.currentCycle) return 0;
+      if (
+        a.billingType !== 'Recurring' ||
+        b.billingType !== 'Recurring' ||
+        !a.currentCycle ||
+        !b.currentCycle
+      )
+        return 0;
       return (
         new Date(b.currentCycle.lastAmountPaidDate).getTime() -
         new Date(a.currentCycle.lastAmountPaidDate).getTime()
@@ -101,9 +104,74 @@ export const useFilteredPayments = (gymId: number | string) => {
   return {
     isLoading,
     error,
-    outstandingPayments,
-    expiredPayments,
+    currentDuePayments,
+    overduePayments,
     completedPayments,
-    historyPayments,
   };
+};
+
+export const fetchPaymentHistory = async (
+  gymId: number | string,
+  filters?: {
+    search?: string;
+    paymentMethod?: string;
+    status?: string;
+  }
+) => {
+  const params = new URLSearchParams();
+  if (filters?.search) params.append('search', filters.search);
+  if (filters?.paymentMethod)
+    params.append('paymentMethod', filters.paymentMethod);
+  if (filters?.status) params.append('status', filters.status);
+
+  const queryString = params.toString();
+  const url = `/Payment/gym/${gymId}/history${queryString ? `?${queryString}` : ''}`;
+
+  const response = await api.get<{
+    status: string;
+    data: Array<{
+      paymentId: number;
+      memberId: number;
+      memberName: string;
+      memberIdentifier: string;
+      photoPath: string;
+      amount: number;
+      paymentDate: string;
+      paymentMethod: string;
+      status: string;
+      paymentCycleId: number;
+      cycleStartDate: string;
+      cycleEndDate: string;
+      cycleStatus: string;
+    }>;
+    summary: {
+      totalPayments: number;
+      totalRevenue: number;
+      fromDate: string | null;
+      toDate: string | null;
+    };
+    availableFilters?: {
+      paymentMethods: Array<{ value: string; count: number }>;
+      statuses: Array<{ value: string; count: number }>;
+    };
+  }>(url);
+
+  return response;
+};
+
+export const usePaymentHistory = (
+  gymId: number | string,
+  filters?: {
+    search?: string;
+    paymentMethod?: string;
+    status?: string;
+  }
+) => {
+  return useQuery({
+    queryKey: ['payment-history', gymId, filters],
+    queryFn: () => fetchPaymentHistory(gymId, filters),
+    enabled: !!gymId,
+    refetchOnMount: true,
+    retry: 1,
+  });
 };
