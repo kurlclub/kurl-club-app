@@ -4,8 +4,7 @@ import React, { forwardRef, useEffect, useRef, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
-interface KTextareaProps
-  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+interface KTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label: string;
 }
 
