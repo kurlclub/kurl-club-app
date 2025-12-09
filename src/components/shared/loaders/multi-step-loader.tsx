@@ -80,7 +80,10 @@ export const MultiStepLoader = ({
   const [showLoader, setShowLoader] = useState(false);
 
   useEffect(() => {
-    if (!loading) return;
+    if (!loading) {
+      setShowLoader(false);
+      return;
+    }
 
     setShowLoader(true);
     setCurrentState(0);

@@ -1,19 +1,14 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment } from 'react';
 
 import { AuthWrapper } from '@/components/auth/auth-wrapper';
 import { UpdatePasswordForm } from '@/components/auth/update-pw-form';
 
 const ActivateScreen = () => {
-  const [action, setAction] = useState<string | null>(null);
   const searchParams = useSearchParams();
-
-  useEffect(() => {
-    const mode = searchParams.get('mode');
-    setAction(mode as string);
-  }, [searchParams]);
+  const action = searchParams.get('mode');
 
   if (!action) return <div>Loading...</div>;
 

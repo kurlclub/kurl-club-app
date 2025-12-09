@@ -23,10 +23,10 @@ export function useStaffDetails(userId: string | number, role?: string) {
   const { data, isLoading: loading } = useStaffByID(userId, role as StaffType);
 
   useEffect(() => {
-    if (data) {
-      setDetails(data);
-      setOriginalDetails(data);
-    }
+    if (!data) return;
+
+    setDetails(data);
+    setOriginalDetails(data);
   }, [data]);
 
   const updateStaffDetail = useCallback(

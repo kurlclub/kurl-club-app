@@ -1,6 +1,6 @@
 //TODO: Re-enable import functionality when ready
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import {
   // Download,
@@ -30,7 +30,6 @@ export const MembersHeader = ({
   gymId,
 }: MembersHeaderProps) => {
   const [showAddMemberForm, setShowAddMemberForm] = useState(false);
-  const [cameFromSetup, setCameFromSetup] = useState(false);
   const { formOptions } = useGymFormOptions(gymId);
   const memberForm = useMemberForm(gymId);
   const searchParams = useSearchParams();
@@ -39,20 +38,7 @@ export const MembersHeader = ({
   const hasTrainers = (formOptions?.trainers?.length ?? 0) > 0;
   const hasWorkoutPlans = (formOptions?.workoutPlans?.length ?? 0) > 0;
   const allSetupComplete = hasPackages && hasTrainers && hasWorkoutPlans;
-
-  // Detect if user came from setup pages
-  useEffect(() => {
-    if (searchParams.get('setup') === 'true') {
-      setCameFromSetup(true);
-    }
-  }, [searchParams]);
-
-  // Reset flag when dialog closes
-  useEffect(() => {
-    if (!isOpen && cameFromSetup) {
-      setCameFromSetup(false);
-    }
-  }, [isOpen, cameFromSetup]);
+  const cameFromSetup = searchParams.get('setup') === 'true';
 
   const handleAddNewClick = () => {
     // If all setup is complete and not coming from setup, go directly to add member
@@ -102,7 +88,6 @@ export const MembersHeader = ({
                 (formOptions?.workoutPlans?.length ?? 0) > 0;
               if (currentlyComplete) {
                 setShowAddMemberForm(true);
-                setCameFromSetup(false); // Reset flag when user manually proceeds
               }
             }}
           />

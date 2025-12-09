@@ -26,8 +26,9 @@ interface EditableInputFieldProps extends BaseEditableFieldProps {
 }
 
 // Select Field
-interface EditableSelectFieldProps<T extends string = string>
-  extends BaseEditableFieldProps {
+interface EditableSelectFieldProps<
+  T extends string = string,
+> extends BaseEditableFieldProps {
   type: 'select';
   value?: T;
   onChange: (value: T) => void;

@@ -67,7 +67,10 @@ export const GymBranchProvider: React.FC<{ children: React.ReactNode }> = ({
       };
       setGymBranch(gymData);
       localStorage.setItem('gymBranch', JSON.stringify(gymData));
-    } else if (appUser === null) {
+      return;
+    }
+
+    if (appUser === null) {
       setGymBranch(null);
       localStorage.removeItem('gymBranch');
     }
@@ -76,12 +79,12 @@ export const GymBranchProvider: React.FC<{ children: React.ReactNode }> = ({
   // Initial load from localStorage
   useEffect(() => {
     const storedGymBranch = localStorage.getItem('gymBranch');
-    if (storedGymBranch) {
-      try {
-        setGymBranch(JSON.parse(storedGymBranch));
-      } catch {
-        localStorage.removeItem('gymBranch');
-      }
+    if (!storedGymBranch) return;
+
+    try {
+      setGymBranch(JSON.parse(storedGymBranch));
+    } catch {
+      localStorage.removeItem('gymBranch');
     }
   }, []);
 

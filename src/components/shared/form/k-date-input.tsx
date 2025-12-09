@@ -4,8 +4,10 @@ import React, { forwardRef, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
-interface KDateInputProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
+interface KDateInputProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  'size'
+> {
   label: string;
   className?: string;
   size?: 'sm' | 'default';

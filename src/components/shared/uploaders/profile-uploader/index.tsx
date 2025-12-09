@@ -32,13 +32,15 @@ export default function ProfilePictureUploader({
 
   // Update the image state when `files` or `existingImageUrl` changes
   useEffect(() => {
+    let newImage: string | null = null;
+
     if (files) {
-      setImage(URL.createObjectURL(files));
+      newImage = URL.createObjectURL(files);
     } else if (existingImageUrl) {
-      setImage(existingImageUrl);
-    } else {
-      setImage(null);
+      newImage = existingImageUrl;
     }
+
+    setImage(newImage);
   }, [files, existingImageUrl]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
