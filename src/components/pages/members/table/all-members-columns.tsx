@@ -68,7 +68,7 @@ export const columns: ColumnDef<Member>[] = [
   {
     accessorKey: 'package',
     header: 'Package',
-    cell: ({ row }) => <div className="w-20">{row.getValue('package')}</div>,
+    cell: ({ row }) => <div className="w-28">{row.getValue('package')}</div>,
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
     },

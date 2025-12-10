@@ -38,7 +38,7 @@ export const useFilteredPayments = (gymId: number | string) => {
     .filter(
       (member) =>
         member.billingType === 'Recurring' &&
-        member.paymentStatus === 'CurrentDue'
+        member.overallPaymentStatus === 'CurrentDue'
     )
     .sort((a, b) => {
       if (
@@ -61,7 +61,8 @@ export const useFilteredPayments = (gymId: number | string) => {
   const overduePayments = recurringPayments
     .filter(
       (member) =>
-        member.billingType === 'Recurring' && member.paymentStatus === 'Overdue'
+        member.billingType === 'Recurring' &&
+        member.overallPaymentStatus === 'Overdue'
     )
     .sort((a, b) => {
       if (
@@ -85,7 +86,7 @@ export const useFilteredPayments = (gymId: number | string) => {
     .filter(
       (member) =>
         member.billingType === 'Recurring' &&
-        member.paymentStatus === 'Completed'
+        member.overallPaymentStatus === 'Completed'
     )
     .sort((a, b) => {
       if (
