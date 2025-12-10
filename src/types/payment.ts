@@ -75,24 +75,22 @@ export interface RecurringPaymentMember extends BaseMember {
   previousCycles?: PaymentCycle[];
   totalDebtCycles: number;
   totalDebtAmount: number;
-  paymentStatus: 'CurrentDue' | 'Overdue' | 'Completed' | 'NoCycles';
+  overallPaymentStatus: 'CurrentDue' | 'Overdue' | 'Completed' | 'NoCycles';
 }
 
 // Per-session payment specific
 export interface SessionPayment {
   sessionId: number;
-  attendanceId: number;
-  memberId: number;
   sessionDate: string;
   sessionRate: number;
   amountPaid: number;
   pendingAmount: number;
   status: FeeStatus;
-  paymentDate?: string;
 }
 
 export interface SessionPaymentMember extends BaseMember {
   billingType: 'PerSession';
+  membershipPlanName: string;
   sessions: {
     used: number;
     total: number;

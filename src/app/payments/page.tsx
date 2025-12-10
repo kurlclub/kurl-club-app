@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 
 import Payments from '@/components/pages/payments';
+import { TableSkeleton } from '@/components/shared/table';
 
 export const metadata: Metadata = {
   title: 'Payments',
@@ -8,5 +10,9 @@ export const metadata: Metadata = {
 };
 
 export default function PaymentsPage() {
-  return <Payments />;
+  return (
+    <Suspense fallback={<TableSkeleton rows={10} columns={7} />}>
+      <Payments />
+    </Suspense>
+  );
 }
