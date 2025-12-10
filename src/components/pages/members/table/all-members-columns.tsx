@@ -28,7 +28,7 @@ export const columns: ColumnDef<Member>[] = [
     accessorKey: 'memberIdentifier',
     header: 'Member ID',
     cell: ({ row }) => (
-      <div className="w-[80px] uppercase">
+      <div className="w-20 uppercase">
         <span className="text-primary-blue-200/80 font-bold mr-0.5">#</span>
         {row.getValue('memberIdentifier')}
       </div>
@@ -68,9 +68,7 @@ export const columns: ColumnDef<Member>[] = [
   {
     accessorKey: 'package',
     header: 'Package',
-    cell: ({ row }) => (
-      <div className="w-[80px]">{row.getValue('package')}</div>
-    ),
+    cell: ({ row }) => <div className="w-20">{row.getValue('package')}</div>,
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
     },
@@ -109,7 +107,7 @@ export const columns: ColumnDef<Member>[] = [
     accessorKey: 'bloodGroup',
     header: 'Blood group',
     cell: ({ row }) => (
-      <div className="w-[80px] text-center">{row.getValue('bloodGroup')}</div>
+      <div className="w-20 text-center">{row.getValue('bloodGroup')}</div>
     ),
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));

@@ -1,8 +1,58 @@
-export interface PaymentResponse {
-  status: string;
-  data: MemberPaymentDetails[];
+// Universal fee status
+export type FeeStatus = 'paid' | 'unpaid' | 'partially_paid';
+
+// Session payment detail types
+export interface SessionDetail {
+  sessionPaymentId: number;
+  attendanceId: number | null;
+  sessionDate: string;
+  checkInTime: string | null;
+  checkOutTime: string | null;
+  sessionRate: number;
+  amountPaid: number;
+  paymentDate: string | null;
+  paymentMethod: string | null;
+  paymentStatus: 'paid' | 'unpaid' | 'partially_paid';
+  attendanceStatus: 'used' | 'unused';
+  daysOverdue: number | null;
 }
 
+export interface SessionPaymentDetail {
+  member: {
+    id: number;
+    name: string;
+    memberIdentifier: string;
+    sessionRate: number;
+    planName: string;
+  };
+  summary: {
+    totalSessions: number;
+    unusedPrepaidSessions: number;
+    usedSessions: number;
+    pendingPaymentSessions: number;
+    totalPaid: number;
+    totalPending: number;
+  };
+  sessions: SessionDetail[];
+}
+
+export interface SessionPaymentDetailResponse {
+  status: string;
+  data: SessionPaymentDetail;
+}
+
+// Base member fields shared across all payment types
+export interface BaseMember {
+  memberId: number;
+  memberName: string;
+  memberIdentifier?: string;
+  membershipPlanId: number;
+  billingType: 'Recurring' | 'PerSession';
+  profilePicture?: string;
+  photoPath?: string;
+}
+
+// Recurring payment specific
 export interface PaymentCycle {
   cycleId: number;
   startDate: string;
@@ -11,7 +61,7 @@ export interface PaymentCycle {
   planFee: number;
   amountPaid: number;
   pendingAmount: number;
-  status: 'Pending' | 'Completed' | 'Partial' | 'Debt';
+  cyclePaymentStatus: FeeStatus;
   bufferEndDate: string | null;
   totalBufferDays: number;
   bufferEligible: boolean;
@@ -19,6 +69,16 @@ export interface PaymentCycle {
   lastAmountPaidDate: string;
 }
 
+export interface RecurringPaymentMember extends BaseMember {
+  billingType: 'Recurring';
+  currentCycle?: PaymentCycle;
+  previousCycles?: PaymentCycle[];
+  totalDebtCycles: number;
+  totalDebtAmount: number;
+  paymentStatus: 'CurrentDue' | 'Overdue' | 'Completed' | 'NoCycles';
+}
+
+// Per-session payment specific
 export interface SessionPayment {
   sessionId: number;
   attendanceId: number;
@@ -27,28 +87,43 @@ export interface SessionPayment {
   sessionRate: number;
   amountPaid: number;
   pendingAmount: number;
-  status: 'Paid' | 'Pending' | 'Partial';
+  status: FeeStatus;
   paymentDate?: string;
 }
 
-export interface MemberPaymentDetails {
-  memberId: number;
-  memberName: string;
-  membershipPlanId: number;
-  billingType: 'Recurring' | 'PerSession';
-  profilePicture?: string;
-  photoPath?: string;
-  // For Recurring billing
-  currentCycle?: PaymentCycle;
-  previousCycles?: PaymentCycle[];
-  totalDebtCycles?: number;
-  totalDebtAmount?: number;
-  // For PerSession billing
-  sessionPayments?: SessionPayment[];
-  unpaidSessions?: number;
-  totalSessionDebt?: number;
-  customSessionRate?: number;
-  // Common fields
-  memberStatus: 'Outstanding' | 'Expired' | 'Completed' | 'Debts';
-  memberIdentifier?: string;
+export interface SessionPaymentMember extends BaseMember {
+  billingType: 'PerSession';
+  sessions: {
+    used: number;
+    total: number;
+  };
+  paymentSummary: {
+    paid: number;
+    total: number;
+    pending: number;
+  };
+  status: FeeStatus;
+  package: string;
+  sessionFee: number;
+  customSessionRate: number;
+  unpaidSessions: number;
+  totalSessionDebt: number;
+  sessionPayments: SessionPayment[];
+}
+
+// Union type for all payment members
+export type MemberPaymentDetails =
+  | RecurringPaymentMember
+  | SessionPaymentMember;
+
+// API Response types
+export interface PaymentResponse {
+  status: string;
+  data: MemberPaymentDetails[];
+}
+
+export interface SessionPaymentResponse {
+  status: string;
+  message: string;
+  data: SessionPaymentMember[];
 }

@@ -19,8 +19,8 @@ import {
 } from '@/lib/utils';
 import { useMemberPaymentDetails } from '@/services/member';
 
-import { InvoiceGenerator } from '../../payments/invoice-generator';
-import { ManagePaymentSheet } from '../../payments/manage-payment';
+import { ManagePaymentSheet } from '../../payments/recurring';
+import { InvoiceGenerator } from '../../payments/shared';
 
 interface PaymentCardProps {
   memberId: string | number;
@@ -57,7 +57,18 @@ function PaymentCard({ memberId, formOptions }: PaymentCardProps) {
     );
   }
 
-  const { currentCycle, memberStatus, membershipPlanId } = paymentData.data;
+  const member = paymentData.data;
+
+  // Type guard to check if it's a recurring payment member
+  if (member.billingType !== 'Recurring') {
+    return (
+      <div className="rounded-lg h-full bg-secondary-blue-500 p-5 pb-7 w-full">
+        <p className="text-white">This member is on per-session billing</p>
+      </div>
+    );
+  }
+
+  const { currentCycle, membershipPlanId } = member;
 
   if (!currentCycle) {
     return (
@@ -68,7 +79,7 @@ function PaymentCard({ memberId, formOptions }: PaymentCardProps) {
   }
 
   const status = getPaymentBadgeStatus(
-    currentCycle.status,
+    currentCycle.cyclePaymentStatus,
     currentCycle.pendingAmount
   );
   const bufferDaysRemaining = currentCycle.bufferEndDate
@@ -81,7 +92,7 @@ function PaymentCard({ memberId, formOptions }: PaymentCardProps) {
   const daysRemaining = hasBuffer
     ? calculateDaysRemaining(currentCycle.bufferEndDate!)
     : calculateDaysRemaining(currentCycle.dueDate);
-  const isPartialPayment = currentCycle.status === 'Partial';
+  const isPartialPayment = currentCycle.cyclePaymentStatus === 'partially_paid';
 
   // Progress calculation based on payment cycle
   const progressValue = (() => {
@@ -222,7 +233,7 @@ function PaymentCard({ memberId, formOptions }: PaymentCardProps) {
         <div className="px-5 py-2 border-t border-white/10 mt-auto">
           <div className="flex items-center justify-center gap-2 text-primary-blue-50 text-xs">
             <Clock className="h-3 w-3" />
-            <span>{memberStatus}</span>
+            <span>Cycle {currentCycle.cycleId}</span>
           </div>
         </div>
       </div>
@@ -230,12 +241,12 @@ function PaymentCard({ memberId, formOptions }: PaymentCardProps) {
       <ManagePaymentSheet
         open={isOpen}
         onOpenChange={handleCloseSheet}
-        member={paymentData.data}
+        member={member}
       />
       <InvoiceGenerator
         open={isInvoiceOpen}
         onOpenChange={closeInvoice}
-        member={paymentData.data}
+        member={member}
       />
     </>
   );
