@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { KBadgeCheck, KBadgeClose, KBadgeFlag, KBadgeMinus } from '../icons';
 
 interface FeeStatusBadgeProps {
-  status?: 'paid' | 'partially_paid' | 'unpaid' | 'pending' | 'overdue';
+  status?: 'paid' | 'partially_paid' | 'unpaid';
   days?: number;
   showIcon?: boolean;
   className?: string;
@@ -30,9 +30,6 @@ export const FeeStatusBadge = ({
         return 'bg-neutral-green-500/10 border-neutral-green-500';
       case 'partially_paid':
         return 'bg-neutral-ochre-600/10 border-neutral-ochre-500';
-      case 'pending':
-        return 'bg-semantic-blue-500/10 border-semantic-blue-500';
-      case 'overdue':
       case 'unpaid':
         return 'bg-alert-red-500/10 border-alert-red-500';
       default:
@@ -58,9 +55,6 @@ export const FeeStatusBadge = ({
         return <KBadgeCheck />;
       case 'partially_paid':
         return <KBadgeMinus />;
-      case 'pending':
-        return <KBadgeFlag className="text-semantic-blue-400" />;
-      case 'overdue':
       case 'unpaid':
         return <KBadgeClose />;
       default:
@@ -72,7 +66,7 @@ export const FeeStatusBadge = ({
     <Badge
       variant="outline"
       className={cn(
-        'rounded-[35px] text-xs h-[28px] gap-2',
+        'rounded-[35px] text-xs h-7 gap-2',
         getBadgeStyles(),
         className
       )}
