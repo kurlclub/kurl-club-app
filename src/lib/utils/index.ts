@@ -426,16 +426,16 @@ export const calculateDaysRemaining = (targetDate: string): number => {
 export const getPaymentBadgeStatus = (
   paymentStatus: string,
   pendingAmount?: number
-): 'paid' | 'partially_paid' | 'pending' | 'overdue' => {
+): 'paid' | 'partially_paid' | 'unpaid' => {
   switch (paymentStatus) {
     case 'paid':
       return 'paid';
     case 'unpaid':
-      return 'pending';
+      return 'unpaid';
     case 'partially_paid':
       return 'partially_paid';
     default:
-      return (pendingAmount ?? 0) > 0 ? 'pending' : 'paid';
+      return (pendingAmount ?? 0) > 0 ? 'unpaid' : 'paid';
   }
 };
 
