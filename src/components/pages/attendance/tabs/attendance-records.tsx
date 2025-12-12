@@ -50,7 +50,7 @@ export default function AttendanceRecords() {
   };
 
   const handleCheckIn = async (member: {
-    id: string;
+    id: number;
     name: string;
     identifier: string;
   }) => {
@@ -58,7 +58,7 @@ export default function AttendanceRecords() {
 
     try {
       await checkInMutation.mutateAsync({
-        memberId: parseInt(member.id),
+        memberId: member.id,
         gymId: gymBranch.gymId,
         recordedBy: appUser.userId,
       });
@@ -76,7 +76,7 @@ export default function AttendanceRecords() {
   };
 
   const handleCheckOut = async (member: {
-    id: string;
+    id: number;
     name: string;
     identifier: string;
   }) => {
@@ -84,7 +84,7 @@ export default function AttendanceRecords() {
 
     try {
       await checkOutMutation.mutateAsync({
-        memberId: parseInt(member.id),
+        memberId: member.id,
         gymId: gymBranch.gymId,
         recordedBy: appUser.userId,
       });
@@ -114,7 +114,7 @@ export default function AttendanceRecords() {
 
     try {
       await checkOutMutation.mutateAsync({
-        memberId: parseInt(member.id),
+        memberId: member.id,
         gymId: gymBranch.gymId,
         recordedBy: appUser.userId,
       });
@@ -122,7 +122,7 @@ export default function AttendanceRecords() {
       setConfirmDialog({
         open: true,
         member: {
-          name: attendanceRecord.member,
+          name: attendanceRecord.memberName,
           identifier: attendanceRecord.memberId,
         },
         action: 'checkout',

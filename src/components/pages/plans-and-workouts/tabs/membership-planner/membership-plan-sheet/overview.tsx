@@ -19,7 +19,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { getInitials, getProfilePictureSrc } from '@/lib/utils';
-import { Member } from '@/types/members';
+import { MemberListItem } from '@/types/member.types';
 import { MembershipPlan } from '@/types/membership-plan';
 
 interface MembershipPlanFormData {
@@ -33,7 +33,7 @@ interface MembershipPlanFormData {
 
 interface OverviewProps {
   plan: MembershipPlan;
-  planMembers?: Member[];
+  planMembers?: MemberListItem[];
   isEditMode: boolean;
   isNewPlan?: boolean;
   onUpdatePlan: (updatedPlan: MembershipPlan) => void;

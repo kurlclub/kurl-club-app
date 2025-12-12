@@ -23,15 +23,14 @@ import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
 import { useGymBranch } from '@/providers/gym-branch-provider';
 import { useAttendanceRecords } from '@/services/attendance';
 import { useAllGymMembers } from '@/services/member';
-import type { Member } from '@/types/members';
 
 type Props = {
-  onCheckIn: (
-    member: Pick<Member, 'id' | 'name'> & { identifier: string }
-  ) => void;
-  onCheckOut: (
-    member: Pick<Member, 'id' | 'name'> & { identifier: string }
-  ) => void;
+  onCheckIn: (member: { id: number; name: string; identifier: string }) => void;
+  onCheckOut: (member: {
+    id: number;
+    name: string;
+    identifier: string;
+  }) => void;
 };
 
 export function QuickAttendanceCommand({ onCheckIn, onCheckOut }: Props) {
@@ -41,9 +40,11 @@ export function QuickAttendanceCommand({ onCheckIn, onCheckOut }: Props) {
   const attendanceRecords = attendanceResponse?.data || [];
   const [open, setOpen] = React.useState(false);
 
-  const handleAction = (
-    member: Pick<Member, 'id' | 'name'> & { identifier: string }
-  ) => {
+  const handleAction = (member: {
+    id: number;
+    name: string;
+    identifier: string;
+  }) => {
     const attendanceRecord = attendanceRecords.find(
       (r) => r.memberId === member.identifier
     );

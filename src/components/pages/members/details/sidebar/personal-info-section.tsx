@@ -10,7 +10,16 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { relationOptions } from '@/lib/constants';
 import { safeDateFormat, safeParseDate } from '@/lib/utils';
-import type { EditableSectionProps } from '@/types/members';
+import type { EmergencyRelation, MemberDetails } from '@/types/member.types';
+
+export interface EditableSectionProps {
+  isEditing: boolean;
+  details: MemberDetails | null;
+  onUpdate: <K extends keyof MemberDetails>(
+    key: K,
+    value: MemberDetails[K]
+  ) => void;
+}
 
 export function PersonalInfoSection({
   isEditing,
@@ -46,7 +55,7 @@ export function PersonalInfoSection({
       <EditableFormField
         type="input"
         label="Email"
-        value={details?.email}
+        value={details?.email ?? undefined}
         isEditing={isEditing}
         onChange={(value) => onUpdate('email', value)}
       />
@@ -123,7 +132,9 @@ export function PersonalInfoSection({
         label="Emergency Contact Relation"
         value={details?.emergencyContactRelation}
         isEditing={isEditing}
-        onChange={(value) => onUpdate('emergencyContactRelation', value)}
+        onChange={(value) =>
+          onUpdate('emergencyContactRelation', value as EmergencyRelation)
+        }
         options={relationOptions}
       />
     </Fragment>

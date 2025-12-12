@@ -8,15 +8,15 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useSearch } from '@/hooks/use-search';
 import { getInitials, getProfilePictureSrc } from '@/lib/utils';
-import type { Member } from '@/types/members';
+import type { MemberListItem } from '@/types/member.types';
 
 interface MemberListProps {
-  members: Member[];
+  members: MemberListItem[];
 }
 
 export function MemberList({ members }: MemberListProps) {
   // Search function to filter members based on name or identifier
-  const searchFunction = (items: Member[], term: string) => {
+  const searchFunction = (items: MemberListItem[], term: string) => {
     return items.filter(
       (member) =>
         member.name.toLowerCase().includes(term.toLowerCase()) ||

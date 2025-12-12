@@ -46,7 +46,7 @@ export function PendingOnboardingTab() {
     dob: member.dob || 'N/A',
     bloodGroup: member.bloodGroup || 'N/A',
     profilePicture: member.profilePicture,
-    photoPath: member.photoPath,
+    photoPath: member.photoPath ?? undefined,
   }));
 
   const { items: filteredMembers, search } = useFilterableList<PendingMember>(

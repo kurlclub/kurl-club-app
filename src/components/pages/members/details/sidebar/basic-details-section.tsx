@@ -13,7 +13,21 @@ import {
   idTypeOptions,
   purposeOptions,
 } from '@/lib/constants';
-import type { EditableSectionProps } from '@/types/members';
+import type {
+  BloodGroup,
+  FitnessGoal,
+  IdType,
+  MemberDetails,
+} from '@/types/member.types';
+
+export interface EditableSectionProps {
+  isEditing: boolean;
+  details: MemberDetails | null;
+  onUpdate: <K extends keyof MemberDetails>(
+    key: K,
+    value: MemberDetails[K]
+  ) => void;
+}
 
 export function BasicDetailsSection({
   isEditing,
@@ -124,7 +138,7 @@ export function BasicDetailsSection({
         label="Blood Group"
         value={details?.bloodGroup}
         isEditing={isEditing}
-        onChange={(value) => onUpdate('bloodGroup', value)}
+        onChange={(value) => onUpdate('bloodGroup', value as BloodGroup)}
         options={bloodGroupOptions}
       />
 
@@ -134,7 +148,7 @@ export function BasicDetailsSection({
         label="Fitness Goal"
         value={details?.fitnessGoal}
         isEditing={isEditing}
-        onChange={(value) => onUpdate('fitnessGoal', value)}
+        onChange={(value) => onUpdate('fitnessGoal', value as FitnessGoal)}
         options={purposeOptions}
       />
 
@@ -153,7 +167,7 @@ export function BasicDetailsSection({
         label="ID Type"
         value={details?.idType}
         isEditing={isEditing}
-        onChange={(value) => onUpdate('idType', value)}
+        onChange={(value) => onUpdate('idType', value as IdType)}
         options={idTypeOptions}
       />
 
@@ -174,8 +188,8 @@ export function BasicDetailsSection({
           </Label>
           <FileUploader
             file={
-              details?.idCopyPath && details.idCopyPath instanceof File
-                ? details.idCopyPath
+              details?.idCopyPath && typeof details.idCopyPath !== 'string'
+                ? (details.idCopyPath as File)
                 : null
             }
             onChange={(file) => onUpdate('idCopyPath', file || null)}

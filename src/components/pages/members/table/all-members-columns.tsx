@@ -10,9 +10,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
 import { getProfilePictureSrc, safeFormatDate } from '@/lib/utils';
-import { Member } from '@/types/members';
+import { MemberListItem } from '@/types/member.types';
 
-const ActionsCell: React.FC<{ user: Member }> = ({ user }) => {
+const ActionsCell: React.FC<{ user: MemberListItem }> = ({ user }) => {
   return (
     <Button variant="ghost" className="h-8 w-8 p-0">
       <span className="sr-only">View member profile</span>
@@ -23,7 +23,7 @@ const ActionsCell: React.FC<{ user: Member }> = ({ user }) => {
   );
 };
 
-export const columns: ColumnDef<Member>[] = [
+export const columns: ColumnDef<MemberListItem>[] = [
   {
     accessorKey: 'memberIdentifier',
     header: 'Member ID',

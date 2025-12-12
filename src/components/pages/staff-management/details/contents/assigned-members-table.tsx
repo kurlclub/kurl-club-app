@@ -4,10 +4,9 @@ import { columns } from '@/components/pages/members/table/all-members-columns';
 import { DataTable, DataTableToolbar } from '@/components/shared/table';
 import { useFilterableList } from '@/hooks/use-filterable-list';
 import { filters } from '@/lib/dummy/fiters';
-import { searchItems } from '@/lib/utils';
 import { useGymBranch } from '@/providers/gym-branch-provider';
 import { useAllGymMembers } from '@/services/member';
-import { Member } from '@/types/members';
+import { MemberListItem } from '@/types/member.types';
 
 interface AssignedMembersTableProps {
   trainerId: string;
@@ -23,12 +22,17 @@ export default function AssignedMembersTable({
 
   // Filter members assigned to this trainer
   const assignedMembers = gymMembers.filter(
-    (member: Member) => member.personalTrainer === parseInt(trainerId)
+    (member: MemberListItem) => member.personalTrainer === parseInt(trainerId)
   );
 
-  const { items: filteredMembers, search } = useFilterableList<Member>(
+  const { items: filteredMembers, search } = useFilterableList(
     assignedMembers,
-    searchItems
+    (items, term) =>
+      items.filter(
+        (member) =>
+          member.name.toLowerCase().includes(term.toLowerCase()) ||
+          member.memberIdentifier?.toLowerCase().includes(term.toLowerCase())
+      )
   );
 
   return (

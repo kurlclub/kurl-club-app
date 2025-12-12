@@ -4,7 +4,16 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
 import { base64ToFile } from '@/lib/utils';
-import { EditableSectionProps } from '@/types/members';
+import { MemberDetails } from '@/types/member.types';
+
+export interface EditableSectionProps {
+  isEditing: boolean;
+  details: MemberDetails | null;
+  onUpdate: <K extends keyof MemberDetails>(
+    key: K,
+    value: MemberDetails[K]
+  ) => void;
+}
 
 export function MemberHeader({
   isEditing,

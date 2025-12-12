@@ -6,7 +6,7 @@ import { Clock4 } from 'lucide-react';
 
 import InfoCard from '@/components/shared/cards/info-card';
 import { FormOptionsResponse } from '@/hooks/use-gymform-options';
-import { MemberDetails } from '@/types/members';
+import { MemberDetails } from '@/types/member.types';
 
 import { Chart } from './chart';
 import Header from './header';

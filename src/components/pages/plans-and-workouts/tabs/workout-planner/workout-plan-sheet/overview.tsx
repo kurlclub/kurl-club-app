@@ -15,12 +15,12 @@ import {
   getInitials,
   getProfilePictureSrc,
 } from '@/lib/utils';
-import { Member } from '@/types/members';
+import { MemberListItem } from '@/types/member.types';
 import type { WorkoutPlan } from '@/types/workoutplan';
 
 interface OverviewProps {
   plan: WorkoutPlan;
-  planMembers?: Member[];
+  planMembers?: MemberListItem[];
   isEditMode: boolean;
   isNewPlan?: boolean;
   onUpdatePlan: (updatedPlan: WorkoutPlan) => void;

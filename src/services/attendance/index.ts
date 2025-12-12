@@ -72,7 +72,7 @@ export type CheckOutRequest = {
 export type AttendanceRecordResponse = {
   id: number;
   memberId: string;
-  member: string;
+  memberName: string;
   date: string;
   checkInTime: string;
   checkOutTime: string | null;

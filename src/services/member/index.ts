@@ -1,8 +1,15 @@
 import { QueryClient, useQuery } from '@tanstack/react-query';
 
 import { api } from '@/lib/api';
-import { ApiResponse } from '@/types';
-import { Member, MemberDetails } from '@/types/members';
+import {
+  MemberDetailsResponse,
+  MemberListItem,
+  MemberListResponse,
+  MemberQueryFilters,
+  MemberUpdateResponse,
+  OnboardingMemberDetailsResponse,
+  OnboardingMemberListResponse,
+} from '@/types/member.types';
 import { MemberPaymentDetails } from '@/types/payment';
 
 export const createMember = async (data: FormData) => {
@@ -22,31 +29,12 @@ export const createMember = async (data: FormData) => {
   }
 };
 
-export type MemberFilters = {
-  page?: number;
-  pageSize?: number;
-  search?: string;
-  feeStatus?: string;
-  package?: string;
-  gender?: string;
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-};
+export type MemberFilters = MemberQueryFilters;
 
-export type PaginatedMembers = {
-  data: Member[];
-  pagination: {
-    totalCount: number;
-    currentPage: number;
-    pageSize: number;
-    totalPages: number;
-  };
-  availableFilters?: {
-    feeStatuses: { value: string; count: number }[];
-    packages: { value: string; label: string; count: number }[];
-    genders: { value: string; count: number }[];
-  };
-};
+export type PaginatedMembers = Omit<
+  MemberListResponse,
+  'status' | 'appliedFilters'
+>;
 
 export const fetchGymMembers = async (
   gymId: number | string,
@@ -63,12 +51,7 @@ export const fetchGymMembers = async (
   if (filters?.sortOrder) params.append('sortOrder', filters.sortOrder);
 
   const url = `/Member/gym/${gymId}${params.toString() ? `?${params.toString()}` : ''}`;
-  const response = await api.get<{
-    status: string;
-    data: Member[];
-    pagination: PaginatedMembers['pagination'];
-    availableFilters?: PaginatedMembers['availableFilters'];
-  }>(url);
+  const response = await api.get<MemberListResponse>(url);
   return {
     data: response.data,
     pagination: response.pagination,
@@ -105,10 +88,7 @@ export const useAllGymMembers = (gymId: number | string) => {
 };
 
 export const fetchMemberByID = async (id: string | number) => {
-  const response = await api.get<{ status: string; data: MemberDetails }>(
-    `/Member/${id}`
-  );
-
+  const response = await api.get<MemberDetailsResponse>(`/Member/${id}`);
   return response.data;
 };
 
@@ -123,8 +103,7 @@ export const useMemberByID = (id: string | number) => {
 
 export const updateMember = async (id: string | number, data: FormData) => {
   try {
-    const response = await api.put<ApiResponse>(`/Member/${id}`, data);
-
+    const response = await api.put<MemberUpdateResponse>(`/Member/${id}`, data);
     return response;
   } catch (error) {
     console.error('Error updating member:', error);
@@ -139,7 +118,6 @@ export const deleteMember = async (
   try {
     await api.delete(`/Member/${id}`);
 
-    // Invalidate all gym members queries
     if (queryClient) {
       await queryClient.invalidateQueries({ queryKey: ['gymMembers'] });
     }
@@ -157,7 +135,7 @@ export const deleteMember = async (
   }
 };
 
-export const bulkImportMembers = async (members: Member[]) => {
+export const bulkImportMembers = async (members: MemberListItem[]) => {
   try {
     const response = await api.post('/Gym/bulk-import-members', members);
     return { success: 'Members imported successfully!', data: response };
@@ -172,6 +150,55 @@ export const bulkImportMembers = async (members: Member[]) => {
 };
 
 export const fetchMemberPaymentDetails = async (memberId: number | string) => {
+  const memberResponse = await api.get<MemberDetailsResponse>(
+    `/Member/${memberId}`
+  );
+  const memberData = memberResponse.data;
+
+  // Transform to MemberPaymentDetails format
+  if (
+    memberData.membershipPlan?.billingType === 'PerSession' &&
+    memberData.sessionPaymentInfo
+  ) {
+    const sessionInfo = memberData.sessionPaymentInfo;
+    const transformedData: MemberPaymentDetails = {
+      memberId: memberData.id,
+      memberName: memberData.name,
+      memberIdentifier: memberData.memberIdentifier,
+      membershipPlanId: memberData.membershipPlanId,
+      billingType: 'PerSession',
+      membershipPlanName: memberData.membershipPlan.planName,
+      sessions: {
+        used: sessionInfo.paidSessions || 0,
+        total: sessionInfo.totalSessions || 0,
+      },
+      paymentSummary: {
+        paid: sessionInfo.totalPaid || 0,
+        total: (sessionInfo.totalPaid || 0) + (sessionInfo.totalPending || 0),
+        pending: sessionInfo.totalPending || 0,
+      },
+      status: memberData.feeStatus as 'paid' | 'unpaid' | 'partially_paid',
+      package: memberData.membershipPlan.planName,
+      sessionFee: sessionInfo.sessionRate || memberData.perSessionRate || 0,
+      customSessionRate:
+        sessionInfo.customRate || memberData.perSessionRate || 0,
+      unpaidSessions: sessionInfo.unpaidSessions || 0,
+      totalSessionDebt: sessionInfo.totalPending || 0,
+      sessionPayments: (sessionInfo.recentUnpaidSessions || []).map((s) => ({
+        sessionId: s.attendanceId || 0,
+        sessionDate: s.sessionDate,
+        sessionRate: s.sessionRate,
+        amountPaid: 0,
+        pendingAmount: s.sessionRate,
+        status: 'unpaid' as const,
+      })),
+      profilePicture: memberData.profilePicture as string,
+      photoPath: memberData.photoPath ?? undefined,
+    };
+    return { status: memberResponse.status, data: transformedData };
+  }
+
+  // Fallback to transaction API for recurring
   const response = await api.get<{
     status: string;
     data: MemberPaymentDetails;
@@ -188,7 +215,7 @@ export const useMemberPaymentDetails = (memberId: number | string) => {
 };
 
 export const fetchPendingOnboardingMembers = async (gymId: number | string) => {
-  const response = await api.get<ApiResponse<Member[]>>(
+  const response = await api.get<OnboardingMemberListResponse>(
     `/Member/onboarding/${gymId}`
   );
   return response.data || [];
@@ -206,7 +233,7 @@ export const usePendingOnboardingMembers = (gymId: number | string) => {
 };
 
 export const fetchPendingMemberDetails = async (id: string | number) => {
-  const response = await api.get<{ status: string; data: MemberDetails }>(
+  const response = await api.get<OnboardingMemberDetailsResponse>(
     `/Member/onboarding/details/${id}`
   );
   return response.data;
