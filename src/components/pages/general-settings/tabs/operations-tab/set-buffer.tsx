@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CheckCheck, Edit, Trash2 } from 'lucide-react';
+import { Calendar, CheckCheck, Edit, Plus, Trash2, Wallet } from 'lucide-react';
 import { z } from 'zod/v4';
 
 import {
@@ -10,6 +10,13 @@ import {
   KFormFieldType,
 } from '@/components/shared/form/k-formfield';
 import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAppDialog } from '@/hooks/use-app-dialog';
 import { useBufferConfigs } from '@/hooks/use-buffer-config';
@@ -27,6 +34,7 @@ export default function SetBuffer() {
   const { formOptions } = useGymFormOptions(gymBranch?.gymId);
   const { showConfirm } = useAppDialog();
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [isAdding, setIsAdding] = useState(false);
 
   const form = useForm<BufferFormData>({
     resolver: zodResolver(bufferSchema),
@@ -44,11 +52,8 @@ export default function SetBuffer() {
     })) || [];
 
   const handleSave = async (config?: BufferConfig) => {
-    // Validate form before proceeding
     const isValid = await form.trigger();
-    if (!isValid) {
-      return;
-    }
+    if (!isValid) return;
 
     const values = form.getValues();
     const data = {
@@ -57,7 +62,6 @@ export default function SetBuffer() {
       feeBufferDays: parseInt(values.feeBufferDays),
     };
 
-    // Check if values have changed for existing config
     if (config) {
       const hasChanged =
         config.feeBufferAmount !== data.feeBufferAmount ||
@@ -65,7 +69,6 @@ export default function SetBuffer() {
         config.membershipPlanId !== data.membershipPlanId;
 
       if (!hasChanged) {
-        // No changes, just exit edit mode
         form.reset();
         setEditingId(null);
         return;
@@ -80,6 +83,7 @@ export default function SetBuffer() {
       }
       form.reset();
       setEditingId(null);
+      setIsAdding(false);
     } catch (error) {
       console.error('Error saving buffer config:', error);
     }
@@ -87,12 +91,11 @@ export default function SetBuffer() {
 
   const handleEdit = (config: BufferConfig) => {
     if (editingId === config.id) {
-      // Toggle off edit mode
       setEditingId(null);
       form.reset();
     } else {
-      // Toggle on edit mode
       setEditingId(config.id);
+      setIsAdding(false);
       form.setValue('feeBufferAmount', config.feeBufferAmount.toString());
       form.setValue('feeBufferDays', config.feeBufferDays.toString());
       form.setValue('membershipPlanId', config.membershipPlanId.toString());
@@ -115,166 +118,211 @@ export default function SetBuffer() {
     });
   };
 
+  const handleAddNew = () => {
+    setIsAdding(true);
+    setEditingId(null);
+    form.reset();
+  };
+
+  const handleCancelAdd = () => {
+    setIsAdding(false);
+    form.reset();
+  };
+
   if (isLoading) {
-    return <Skeleton className="h-[390px]" />;
+    return <Skeleton className="h-[400px]" />;
   }
 
   return (
-    <div className="w-full bg-secondary-blue-500 rounded-lg border border-secondary-blue-400">
-      <div className="p-6">
-        <div className="flex flex-col gap-3 mb-6">
-          <h2 className="font-medium text-white text-xl leading-normal">
-            Set buffer
-          </h2>
-          <p className="font-normal text-white text-base leading-normal">
-            Set up buffer for fee & due time
-          </p>
+    <Card className="bg-secondary-blue-500/80 backdrop-blur-sm border-secondary-blue-400 relative overflow-hidden">
+      <div className="absolute inset-0 opacity-30 pointer-events-none" />
+      <CardHeader className="relative z-10">
+        <div className="flex items-start justify-between">
+          <div>
+            <CardTitle className="text-white">Buffer Configuration</CardTitle>
+            <CardDescription className="text-secondary-blue-200 mt-1">
+              Set minimum payment amount and grace period for partial payments
+            </CardDescription>
+          </div>
+          {!isAdding && (
+            <Button onClick={handleAddNew} size="sm">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Buffer
+            </Button>
+          )}
         </div>
-        <div className="border-t border-secondary-blue-400 pt-4">
-          <FormProvider {...form}>
-            <form
-              id="buffer-form"
-              className="flex flex-col gap-5 max-w-[630px]"
+      </CardHeader>
+      <CardContent className="space-y-4 relative z-10">
+        <FormProvider {...form}>
+          {configs.length === 0 && !isAdding && (
+            <div className="text-center py-12 border-2 border-dashed border-primary-blue-400 rounded-lg">
+              <Wallet className="h-12 w-12 mx-auto text-primary-blue-300 mb-3" />
+              <p className="text-gray-400 text-sm">
+                No buffer configurations yet
+              </p>
+              <p className="text-gray-500 text-xs mt-1">
+                Add your first buffer to get started
+              </p>
+            </div>
+          )}
+
+          {configs.map((config) => (
+            <div
+              key={config.id}
+              className="space-y-4 p-4 bg-secondary-blue-700 rounded-lg border border-secondary-blue-400"
             >
-              {/* Existing Buffer Configurations */}
-              <div>
-                <p className="text-sm text-white leading-normal mt-3">
-                  Enter the minimum payable amount to qualify for &quot;Partial
-                  payment&quot;.
-                </p>
-
-                {configs.map((config) => (
-                  <div key={config.id} className="flex gap-3 mt-4 items-end">
-                    {editingId === config.id ? (
-                      <>
-                        <KFormField
-                          fieldType={KFormFieldType.INPUT}
-                          control={form.control}
-                          name="feeBufferAmount"
-                          label="Amount"
-                          placeholder="Enter amount"
-                          className="bg-secondary-blue-400/60"
-                        />
-                        <div className="max-w-[88px]">
-                          <KFormField
-                            fieldType={KFormFieldType.INPUT}
-                            control={form.control}
-                            name="feeBufferDays"
-                            label="Days"
-                            placeholder="Days"
-                            className="bg-secondary-blue-400/60"
-                          />
-                        </div>
-                        <KFormField
-                          fieldType={KFormFieldType.SELECT}
-                          control={form.control}
-                          name="membershipPlanId"
-                          label="Plan"
-                          options={planOptions}
-                          className="bg-secondary-blue-400/60"
-                        />
-                        <Button
-                          type="button"
-                          size="icon"
-                          onClick={() => handleSave(config)}
-                        >
-                          <CheckCheck className="h-5 w-5" />
-                        </Button>
-                        <Button
-                          type="button"
-                          size="icon"
-                          onClick={() => handleEdit(config)}
-                          variant="destructive"
-                        >
-                          <Trash2 className="h-5 w-5" />
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <div className="flex-1">
-                          <label className="text-sm text-white/80">
-                            Amount
-                          </label>
-                          <div className="bg-secondary-blue-400/60 text-[14px] px-4 py-2 rounded text-white">
-                            ₹{config.feeBufferAmount}
-                          </div>
-                        </div>
-                        <div className="max-w-[88px]">
-                          <label className="text-sm text-white/80">Days</label>
-                          <div className="bg-secondary-blue-400/60 text-[14px] px-4 py-2 rounded text-white">
-                            {config.feeBufferDays}
-                          </div>
-                        </div>
-                        <div className="flex-1">
-                          <label className="text-sm text-white/80">Plan</label>
-                          <div className="bg-secondary-blue-400/60 text-[14px] px-4 py-2 rounded text-white">
-                            {formOptions?.membershipPlans.find(
-                              (p) =>
-                                p.membershipPlanId === config.membershipPlanId
-                            )?.planName || 'Unknown'}
-                          </div>
-                        </div>
-                        <Button
-                          type="button"
-                          size="icon"
-                          onClick={() => handleEdit(config)}
-                        >
-                          <Edit className="h-5 w-5" />
-                        </Button>
-                        <Button
-                          type="button"
-                          size="icon"
-                          onClick={() => handleDelete(config.id)}
-                          variant="destructive"
-                        >
-                          <Trash2 className="h-5 w-5" />
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                ))}
-
-                {/* Add New Buffer Form */}
-                {!editingId && (
-                  <div className="flex gap-3 mt-4 items-end">
+              {editingId === config.id ? (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <KFormField
                       fieldType={KFormFieldType.INPUT}
                       control={form.control}
                       name="feeBufferAmount"
-                      label="Amount"
-                      placeholder="Enter amount"
-                      className="bg-secondary-blue-400/60"
+                      label="Minimum Amount"
+                      placeholder="1000"
+                      suffix="₹"
                     />
                     <KFormField
                       fieldType={KFormFieldType.INPUT}
                       control={form.control}
                       name="feeBufferDays"
-                      label="Days"
-                      placeholder="Days"
-                      className="bg-secondary-blue-400/60"
+                      label="Grace Days"
+                      placeholder="3"
+                      suffix="days"
                     />
                     <KFormField
                       fieldType={KFormFieldType.SELECT}
                       control={form.control}
                       name="membershipPlanId"
-                      label="Plan"
+                      label="Membership Plan"
                       options={planOptions}
-                      className="bg-secondary-blue-400/60"
                     />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => handleSave(config)}
+                    >
+                      <CheckCheck className="h-4 w-4 mr-2" />
+                      Save
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEdit(config)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-2">
+                      <Wallet className="h-5 w-5 text-primary-green-500" />
+                      <div>
+                        <p className="text-xs text-gray-400">Minimum Amount</p>
+                        <p className="text-lg font-semibold text-white">
+                          ₹{config.feeBufferAmount}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-5 w-5 text-blue-400" />
+                      <div>
+                        <p className="text-xs text-gray-400">Grace Period</p>
+                        <p className="text-lg font-semibold text-white">
+                          {config.feeBufferDays} days
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400">Plan</p>
+                      <p className="text-sm font-medium text-white">
+                        {formOptions?.membershipPlans.find(
+                          (p) => p.membershipPlanId === config.membershipPlanId
+                        )?.planName || 'Unknown'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
                     <Button
                       type="button"
                       size="icon"
-                      onClick={() => handleSave()}
+                      variant="outline"
+                      onClick={() => handleEdit(config)}
                     >
-                      <CheckCheck className="h-5 w-5" />
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="destructive"
+                      onClick={() => handleDelete(config.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
-                )}
+                </div>
+              )}
+            </div>
+          ))}
+
+          {isAdding && (
+            <div className="space-y-4 p-4 bg-secondary-blue-600/50 rounded-lg border border-secondary-blue-400">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <KFormField
+                  fieldType={KFormFieldType.INPUT}
+                  control={form.control}
+                  name="feeBufferAmount"
+                  label="Minimum Amount"
+                  placeholder="1000"
+                  suffix="₹"
+                />
+                <KFormField
+                  fieldType={KFormFieldType.INPUT}
+                  control={form.control}
+                  name="feeBufferDays"
+                  label="Grace Days"
+                  placeholder="3"
+                  suffix="days"
+                />
+                <KFormField
+                  fieldType={KFormFieldType.SELECT}
+                  control={form.control}
+                  name="membershipPlanId"
+                  label="Membership Plan"
+                  options={planOptions}
+                />
               </div>
-            </form>
-          </FormProvider>
+              <div className="flex gap-2">
+                <Button type="button" size="sm" onClick={() => handleSave()}>
+                  <CheckCheck className="h-4 w-4 mr-2" />
+                  Save Buffer
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={handleCancelAdd}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+        </FormProvider>
+
+        <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-3 mt-4">
+          <p className="text-xs text-blue-300">
+            <strong>Note:</strong> Members who pay at least the minimum amount
+            will get {configs[0]?.feeBufferDays || 'X'} extra days to complete
+            their payment without being marked as expired.
+          </p>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
