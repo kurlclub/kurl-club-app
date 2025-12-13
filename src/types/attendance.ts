@@ -42,12 +42,13 @@ export type MemberInsight = {
   id: string;
   memberIdentifier: string;
   name: string;
+  memberName: string;
   totalVisits: number;
   visitsThisMonth: number;
   currentStreak: number;
   longestStreak: number;
   averageDuration: number;
-  favoriteTime: string;
+  peakTime: string;
   attendanceRate: number;
-  profilePicture: string | null;
+  photoPath: string | null;
 };

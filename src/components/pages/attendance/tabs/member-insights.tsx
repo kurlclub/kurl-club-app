@@ -11,7 +11,7 @@ import { motion } from 'motion/react';
 
 import InfoCard from '@/components/shared/cards/info-card';
 import { MedalIcon } from '@/components/shared/icons';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
 import { useGymBranch } from '@/providers/gym-branch-provider';
@@ -22,15 +22,18 @@ import { MemberInsightsTableView, insightsColumns } from '../table';
 
 const MemberAvatar = ({
   name,
+  src,
   ringClass = 'ring-white dark:ring-secondary-blue-500',
 }: {
   name: string;
+  src?: string | null;
   ringClass?: string;
 }) => {
   const avatarStyle = getAvatarColor(name);
   const initials = getInitials(name);
   return (
     <Avatar className={`h-7 w-7 ring-2 ${ringClass}`}>
+      <AvatarImage src={src || undefined} alt={name} />
       <AvatarFallback className="text-[10px] font-semibold" style={avatarStyle}>
         {initials}
       </AvatarFallback>
@@ -41,7 +44,12 @@ const MemberAvatar = ({
 function TopPerformersCard({
   topPerformers,
 }: {
-  topPerformers: Array<{ memberName: string; streak: number; visits: number }>;
+  topPerformers: Array<{
+    memberName: string;
+    photoPath: string | null;
+    streak: number;
+    visits: number;
+  }>;
 }) {
   const getMedalVariant = (index: number): 'gold' | 'silver' | 'bronze' => {
     if (index === 0) return 'gold';
@@ -70,26 +78,27 @@ function TopPerformersCard({
                 transition={{ delay: index * 0.1, duration: 0.3 }}
                 className={`group relative flex items-center gap-3 p-2.5 rounded-lg transition-all ${
                   isFirst
-                    ? 'bg-gradient-to-r from-secondary-yellow-500/10 to-transparent border border-secondary-yellow-500/30'
+                    ? 'bg-linear-to-r from-secondary-yellow-500/10 to-transparent border border-secondary-yellow-500/30'
                     : 'glass-effect glass-effect-hover'
                 }`}
               >
                 {isFirst && (
                   <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-primary-green-500/5 to-transparent rounded-lg"
+                    className="absolute inset-0 bg-linear-to-r from-primary-green-500/5 to-transparent rounded-lg"
                     animate={{ opacity: [0.5, 1, 0.5] }}
                     transition={{ duration: 2, repeat: Infinity }}
                   />
                 )}
 
                 <div className="relative z-10 flex items-center gap-3 flex-1 min-w-0">
-                  <div className="relative flex-shrink-0">
+                  <div className="relative shrink-0">
                     <motion.div
                       whileHover={{ scale: 1.1 }}
                       transition={{ type: 'spring', stiffness: 300 }}
                     >
                       <MemberAvatar
                         name={member.memberName}
+                        src={member.photoPath}
                         ringClass={
                           isFirst
                             ? 'ring-primary-green-500/50'
@@ -123,7 +132,7 @@ function TopPerformersCard({
 
                 <motion.div
                   whileHover={{ scale: 1.05 }}
-                  className="relative z-10 flex-shrink-0 flex items-center gap-1 bg-primary-green-500/10 px-2 py-1 rounded-full"
+                  className="relative z-10 shrink-0 flex items-center gap-1 bg-primary-green-500/10 px-2 py-1 rounded-full"
                 >
                   <span className="text-xs">🔥</span>
                   <span className="text-xs font-bold text-primary-green-600 dark:text-primary-green-400">
@@ -144,6 +153,7 @@ function AtRiskMembersCard({
 }: {
   atRiskMembers: Array<{
     memberName: string;
+    photoPath: string | null;
     lastVisit: string;
     visits: number;
   }>;
@@ -170,8 +180,11 @@ function AtRiskMembersCard({
                 className="relative flex items-start justify-between gap-3 p-2.5 glass-effect glass-effect-hover rounded-lg transition-all"
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="relative z-10 flex-shrink-0">
-                    <MemberAvatar name={member.memberName} />
+                  <div className="relative z-10 shrink-0">
+                    <MemberAvatar
+                      name={member.memberName}
+                      src={member.photoPath}
+                    />
                     <div className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white dark:border-secondary-blue-500 bg-alert-red-500" />
                   </div>
                   <div className="flex-1 min-w-0 pt-0.5">
@@ -183,7 +196,7 @@ function AtRiskMembersCard({
                     </div>
                   </div>
                 </div>
-                <div className="flex-shrink-0 text-right pt-0.5">
+                <div className="shrink-0 text-right pt-0.5">
                   <div className="text-xs font-semibold text-alert-red-500">
                     {member.lastVisit.split(' ')[0]}
                   </div>
@@ -197,7 +210,7 @@ function AtRiskMembersCard({
           </div>
         </div>
       </CardContent>
-      <div className="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-white dark:from-secondary-blue-500 to-transparent pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-full h-12 bg-linear-to-t from-white dark:from-secondary-blue-500 to-transparent pointer-events-none" />
     </Card>
   );
 }
@@ -258,13 +271,15 @@ export default function MemberInsights() {
   const { data: analyticsData } = useMemberAnalytics(gymBranch?.gymId);
 
   const topPerformers = (analyticsData?.topPerformers || []).map((member) => ({
-    memberName: member.memberName,
+    memberName: member.name,
+    photoPath: member.photoPath,
     streak: member.streak,
     visits: member.visits,
   }));
 
   const atRiskMembers = (analyticsData?.atRiskMembers || []).map((member) => ({
-    memberName: member.memberName,
+    memberName: member.name,
+    photoPath: member.photoPath,
     lastVisit:
       member.daysAgo === null
         ? 'Never'
@@ -280,14 +295,15 @@ export default function MemberInsights() {
     id: item.memberIdentifier,
     memberIdentifier: item.memberIdentifier,
     name: item.memberName,
+    memberName: item.memberName,
     totalVisits: item.totalVisits,
     visitsThisMonth: item.visitsThisMonth,
     currentStreak: item.currentStreak,
     longestStreak: item.longestStreak,
     averageDuration: Math.round(item.averageDuration),
-    favoriteTime: item.peakTime,
+    peakTime: item.peakTime,
     attendanceRate: item.attendanceRate,
-    profilePicture: item.profilePicture,
+    photoPath: item.photoPath,
   }));
 
   return (

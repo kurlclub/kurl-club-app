@@ -19,7 +19,7 @@ export type MemberAnalyticsItem = {
   memberId: number;
   memberIdentifier: string;
   memberName: string;
-  profilePicture: string | null;
+  photoPath: string | null;
   attendanceRate: number;
   visitsThisMonth: number;
   totalVisits: number;
@@ -33,16 +33,16 @@ export type MemberAnalyticsResponse = {
   topPerformers: Array<{
     memberId: number;
     memberIdentifier: string;
-    memberName: string;
-    profilePicture: string | null;
+    name: string;
+    photoPath: string | null;
     visits: number;
     streak: number;
   }>;
   atRiskMembers: Array<{
     memberId: number;
     memberIdentifier: string;
-    memberName: string;
-    profilePicture: string | null;
+    name: string;
+    photoPath: string | null;
     visits: number;
     lastVisitDate: string | null;
     daysAgo: number | null;
