@@ -25,6 +25,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
+declare module '@tanstack/react-table' {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface ColumnMeta<TData, TValue> {
+    defaultHidden?: boolean;
+  }
+}
+
 interface DataTableProps<TData extends object, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
@@ -52,6 +59,22 @@ export function DataTable<TData extends object, TValue>({
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>(initialSorting);
 
+  const initialColumnVisibility = React.useMemo(() => {
+    return columns.reduce(
+      (acc, col) => {
+        if ('accessorKey' in col && col.meta?.defaultHidden) {
+          acc[col.accessorKey as string] = false;
+        }
+        return acc;
+      },
+      {} as Record<string, boolean>
+    );
+  }, [columns]);
+
+  const [columnVisibility, setColumnVisibility] = React.useState(
+    initialColumnVisibility
+  );
+
   const isServerSide = totalCount !== undefined;
 
   const table = useReactTable<TData>({
@@ -59,6 +82,7 @@ export function DataTable<TData extends object, TValue>({
     columns,
     state: {
       sorting,
+      columnVisibility,
       ...(isServerSide && {
         pagination: {
           pageIndex: (currentPage || 1) - 1,
@@ -66,6 +90,7 @@ export function DataTable<TData extends object, TValue>({
         },
       }),
     },
+    onColumnVisibilityChange: setColumnVisibility,
     ...(isServerSide && {
       pageCount: Math.ceil((totalCount || 0) / (pageSize || 20)),
       manualPagination: true,
@@ -125,7 +150,7 @@ export function DataTable<TData extends object, TValue>({
                         >
                       )}
                     </TableHead>
-                    <TableHead className="sm:sticky left-[96px] z-20 bg-primary-blue-400">
+                    <TableHead className="sm:sticky left-24 z-20 bg-primary-blue-400">
                       {flexRender(
                         columns[1].header,
                         table
@@ -186,7 +211,7 @@ export function DataTable<TData extends object, TValue>({
                             row.getVisibleCells()[0].getContext()
                           )}
                         </TableCell>
-                        <TableCell className="sm:sticky left-[96px] z-10 bg-secondary-blue-500">
+                        <TableCell className="sm:sticky left-24 z-10 bg-secondary-blue-500">
                           {flexRender(
                             row.getVisibleCells()[1].column.columnDef.cell,
                             row.getVisibleCells()[1].getContext()

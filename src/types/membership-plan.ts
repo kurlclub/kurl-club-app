@@ -1,4 +1,4 @@
-export type BillingType = 'Recurring' | 'PerSession';
+import type { BillingType } from './payment';
 
 export interface MembershipPlan {
   membershipPlanId: number;

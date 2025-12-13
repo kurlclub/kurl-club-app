@@ -19,7 +19,7 @@ export function MemberList({ members }: MemberListProps) {
   const searchFunction = (items: MemberListItem[], term: string) => {
     return items.filter(
       (member) =>
-        member.name.toLowerCase().includes(term.toLowerCase()) ||
+        member.memberName.toLowerCase().includes(term.toLowerCase()) ||
         member.memberIdentifier?.toLowerCase().includes(term.toLowerCase())
     );
   };
@@ -39,25 +39,27 @@ export function MemberList({ members }: MemberListProps) {
         {filteredMembers.length > 0 ? (
           filteredMembers.map((member) => (
             <Link
-              href={`/members/${member.id}`}
-              key={member.id}
+              href={`/members/${member.memberId}`}
+              key={member.memberId}
               className="flex items-center justify-between py-3 border-b border-primary-blue-400 hover:bg-primary-blue-400/10 transition-colors"
             >
               <div className="flex items-center gap-3">
                 <Avatar className="h-[38px] w-[38px]">
                   <AvatarFallback className="bg-primary-blue-400/70">
-                    {getInitials(member.name)}
+                    {getInitials(member.memberName)}
                   </AvatarFallback>
                   <AvatarImage
                     src={getProfilePictureSrc(
                       member.profilePicture,
                       member.avatar
                     )}
-                    alt={member.name}
+                    alt={member.memberName}
                   />
                 </Avatar>
                 <div>
-                  <h3 className="font-medium text-white">{member.name}</h3>
+                  <h3 className="font-medium text-white">
+                    {member.memberName}
+                  </h3>
                   <p className="text-sm text-gray-400 uppercase">
                     #{member.memberIdentifier}
                   </p>

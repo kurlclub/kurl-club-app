@@ -9,22 +9,22 @@ import { Skippers } from '@/types';
 
 export const SkipperColumns: ColumnDef<Skippers>[] = [
   {
-    accessorKey: 'gymNo',
+    accessorKey: 'memberIdentifier',
     header: 'Member ID',
     cell: ({ row }) => (
       <div className="w-[80px] uppercase">
         <span className="text-primary-blue-200/80 font-bold mr-0.5">#</span>
-        {row.getValue('gymNo')}
+        {row.getValue('memberIdentifier')}
       </div>
     ),
     enableSorting: false,
     enableHiding: false,
   },
   {
-    accessorKey: 'name',
+    accessorKey: 'memberName',
     header: 'Name',
     cell: ({ row }) => {
-      const name = row.getValue<string>('name') || 'Unknown';
+      const name = row.getValue<string>('memberName') || 'Unknown';
       const avatarStyle = getAvatarColor(name);
       const initials = getInitials(name);
 
@@ -35,7 +35,7 @@ export const SkipperColumns: ColumnDef<Skippers>[] = [
               {initials}
             </AvatarFallback>
             <AvatarImage
-              src={getProfilePictureSrc(row.original.avatar)}
+              src={getProfilePictureSrc(row.original.photoPath)}
               alt={name}
             />
           </Avatar>
@@ -57,9 +57,11 @@ export const SkipperColumns: ColumnDef<Skippers>[] = [
     },
   },
   {
-    accessorKey: 'sinceLastCheckIn',
+    accessorKey: 'daysSinceLastCheckIn',
     header: 'Days since last check-in',
-    cell: ({ row }) => <div>{row.getValue('sinceLastCheckIn')}</div>,
+    cell: ({ row }) => (
+      <div>{Math.floor(row.getValue<number>('daysSinceLastCheckIn'))} days</div>
+    ),
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
     },

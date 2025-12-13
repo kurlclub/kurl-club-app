@@ -103,18 +103,18 @@ export function Overview({
                 <div className="flex -space-x-2">
                   {planMembers.slice(0, 3).map((member) => (
                     <Avatar
-                      key={member.id}
+                      key={member.memberId}
                       className="border border-neutral-300 w-5 h-5"
                     >
                       <AvatarFallback className="bg-primary-blue-400 text-[10px]">
-                        {getInitials(member.name)}
+                        {getInitials(member.memberName)}
                       </AvatarFallback>
                       <AvatarImage
                         src={getProfilePictureSrc(
                           member.profilePicture,
                           member.avatar
                         )}
-                        alt={member.name}
+                        alt={member.memberName}
                       />
                     </Avatar>
                   ))}

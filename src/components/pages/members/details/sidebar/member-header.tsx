@@ -56,9 +56,9 @@ export function MemberHeader({
               />
               <AvatarFallback
                 className="font-medium text-xl leading-normal"
-                style={getAvatarColor(details?.name || '')}
+                style={getAvatarColor(details?.memberName || '')}
               >
-                {getInitials(details?.name || '')}
+                {getInitials(details?.memberName || '')}
               </AvatarFallback>
             </Avatar>
           )}
@@ -67,13 +67,15 @@ export function MemberHeader({
           {isEditing ? (
             <div className="flex items-center pb-1.5 border-b gap-2 border-primary-blue-300 group focus-within:border-white hover:border-white k-transition">
               <Input
-                value={details?.name}
-                onChange={(e) => onUpdate('name', e.target.value)}
+                value={details?.memberName}
+                onChange={(e) => onUpdate('memberName', e.target.value)}
                 className="border-0 font-medium rounded-none h-auto p-0 text-[20px]! focus-visible:outline-0 focus-visible:ring-0"
               />
             </div>
           ) : (
-            <h6 className="text-xl font-medium text-white">{details?.name}</h6>
+            <h6 className="text-xl font-medium text-white">
+              {details?.memberName}
+            </h6>
           )}
           <p className="text-sm text-primary-blue-50 mt-1">
             Member since {details?.doj}

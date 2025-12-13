@@ -101,7 +101,7 @@ export default function AttendanceRecords() {
     }
   };
 
-  const handleQuickCheckOut = async (memberId: string) => {
+  const handleQuickCheckOut = async (memberId: number) => {
     if (!gymBranch?.gymId || !appUser?.userId) return;
 
     const attendanceRecord = attendanceRecords.find(
@@ -109,12 +109,12 @@ export default function AttendanceRecords() {
     );
     if (!attendanceRecord) return;
 
-    const member = members.find((m) => m.memberIdentifier === memberId);
+    const member = members.find((m) => m.memberId === memberId);
     if (!member) return;
 
     try {
       await checkOutMutation.mutateAsync({
-        memberId: member.id,
+        memberId: member.memberId,
         gymId: gymBranch.gymId,
         recordedBy: appUser.userId,
       });
@@ -123,7 +123,7 @@ export default function AttendanceRecords() {
         open: true,
         member: {
           name: attendanceRecord.memberName,
-          identifier: attendanceRecord.memberId,
+          identifier: attendanceRecord.memberIdentifier,
         },
         action: 'checkout',
         time: format(new Date(), 'h:mm a'),

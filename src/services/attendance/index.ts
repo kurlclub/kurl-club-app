@@ -18,7 +18,7 @@ export type DashboardData = {
 export type MemberAnalyticsItem = {
   memberId: number;
   memberIdentifier: string;
-  name: string;
+  memberName: string;
   profilePicture: string | null;
   attendanceRate: number;
   visitsThisMonth: number;
@@ -33,7 +33,7 @@ export type MemberAnalyticsResponse = {
   topPerformers: Array<{
     memberId: number;
     memberIdentifier: string;
-    name: string;
+    memberName: string;
     profilePicture: string | null;
     visits: number;
     streak: number;
@@ -41,7 +41,7 @@ export type MemberAnalyticsResponse = {
   atRiskMembers: Array<{
     memberId: number;
     memberIdentifier: string;
-    name: string;
+    memberName: string;
     profilePicture: string | null;
     visits: number;
     lastVisitDate: string | null;
@@ -71,7 +71,8 @@ export type CheckOutRequest = {
 
 export type AttendanceRecordResponse = {
   id: number;
-  memberId: string;
+  memberId: number;
+  memberIdentifier: string;
   memberName: string;
   date: string;
   checkInTime: string;
@@ -97,18 +98,20 @@ export type AttendanceApiResponse = {
 
 // API Functions
 export const fetchAttendanceDashboard = async (gymId: number) => {
-  return await api.get<DashboardData>(`/Attendance/dashboard/${gymId}`);
+  return await api.get<DashboardData>(`/Attendance/${gymId}/dashboard`);
 };
 
 export const fetchMemberAnalytics = async (gymId: number) => {
   const response = await api.get<{ data: MemberAnalyticsResponse }>(
-    `/Attendance/member-analytics/${gymId}`
+    `/Attendance/${gymId}/member-analytics`
   );
   return response.data;
 };
 
 export const fetchAttendanceRecords = async (gymId: number) => {
-  return await api.get<AttendanceApiResponse>(`/Attendance/gym/${gymId}`);
+  return await api.get<AttendanceApiResponse>(
+    `/Attendance/${gymId}/attendance`
+  );
 };
 
 export const checkInMember = async (data: CheckInRequest) => {

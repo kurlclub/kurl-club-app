@@ -1,9 +1,12 @@
 // ----------------------------------------------------------------------------
 // ENUMS & CONSTANTS
 // ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// BASE TYPES
+// ----------------------------------------------------------------------------
+import type { MembershipPlan as MembershipPlanBase } from './membership-plan';
+import type { BillingType, FeeStatus } from './payment';
 
-export type BillingType = 'Recurring' | 'PerSession';
-export type FeeStatus = 'paid' | 'unpaid' | 'partially_paid';
 export type Gender = 'male' | 'female' | 'other';
 export type BloodGroup =
   | 'A+'
@@ -35,17 +38,11 @@ export type MemberStatus =
   | 'Expired';
 export type OnboardingStatus = 'Pending' | 'Approved' | 'Rejected';
 
-// ----------------------------------------------------------------------------
-// BASE TYPES
-// ----------------------------------------------------------------------------
-
-export interface MembershipPlan {
+export interface MembershipPlan extends Omit<
+  MembershipPlanBase,
+  'membershipPlanId' | 'gymId' | 'isActive'
+> {
   planId: number;
-  planName: string;
-  billingType: BillingType;
-  fee: number;
-  durationInDays: number;
-  details?: string;
 }
 
 export interface PaymentCycleInfo {
@@ -80,9 +77,9 @@ export interface SessionPaymentInfo {
 // ----------------------------------------------------------------------------
 
 export interface MemberListItem {
-  id: number;
+  memberId: number;
   memberIdentifier: string;
-  name: string;
+  memberName: string;
   dob: string;
   bloodGroup: BloodGroup;
   gender: Gender;
@@ -141,9 +138,9 @@ export interface MemberListResponse {
 // ----------------------------------------------------------------------------
 
 export interface MemberDetails {
-  id: number;
+  memberId: number;
   memberIdentifier: string;
-  name: string;
+  memberName: string;
   dob: string;
   bloodGroup: BloodGroup;
   gender: Gender;
@@ -188,7 +185,7 @@ export interface MemberDetailsResponse {
 export interface MemberCreationPayload {
   // Profile
   ProfilePicture?: File;
-  Name: string;
+  MemberName: string;
   Dob: string;
   DOJ: string;
   BloodGroup: BloodGroup;
@@ -235,9 +232,9 @@ export interface MemberCreationResponse {
   status: string;
   message: string;
   data: {
-    id: number;
+    memberId: number;
     memberIdentifier: string;
-    name: string;
+    memberName: string;
     membershipPlanId: number;
     billingType: BillingType;
     perSessionRate: number | null;
@@ -265,14 +262,14 @@ export interface MemberCreationResponse {
 
 export interface MemberUpdatePayload {
   // Existing data
-  id: number;
+  memberId: number;
   memberIdentifier: string;
   PhotoPath?: string;
   IdCopyPath?: string;
 
   // Profile
   ProfilePicture?: File;
-  name: string;
+  memberName: string;
   dob: string;
   bloodGroup: BloodGroup;
   gender: Gender;
@@ -314,9 +311,9 @@ export interface MemberUpdateResponse {
   status: string;
   message: string;
   data: {
-    id: number;
+    memberId: number;
     memberIdentifier: string;
-    name: string;
+    memberName: string;
     membershipPlanId: number;
     membershipPlan: string;
     workoutPlanId: number | null;
@@ -344,8 +341,8 @@ export interface MemberDeleteResponse {
 // ----------------------------------------------------------------------------
 
 export interface OnboardingMember {
-  id: number;
-  name: string;
+  memberId: number;
+  memberName: string;
   email: string | null;
   phone: string;
   gender: Gender;
@@ -389,7 +386,7 @@ export interface OnboardingRejectResponse {
   message: string;
   data: {
     onboardId: number;
-    name: string;
+    memberName: string;
     phone: string;
     filesDeleted: string[];
     fileErrors: string | null;

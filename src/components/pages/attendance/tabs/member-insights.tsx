@@ -41,7 +41,7 @@ const MemberAvatar = ({
 function TopPerformersCard({
   topPerformers,
 }: {
-  topPerformers: Array<{ name: string; streak: number; visits: number }>;
+  topPerformers: Array<{ memberName: string; streak: number; visits: number }>;
 }) {
   const getMedalVariant = (index: number): 'gold' | 'silver' | 'bronze' => {
     if (index === 0) return 'gold';
@@ -89,7 +89,7 @@ function TopPerformersCard({
                       transition={{ type: 'spring', stiffness: 300 }}
                     >
                       <MemberAvatar
-                        name={member.name}
+                        name={member.memberName}
                         ringClass={
                           isFirst
                             ? 'ring-primary-green-500/50'
@@ -113,7 +113,7 @@ function TopPerformersCard({
 
                   <div className="flex-1 min-w-0 pt-0.5">
                     <div className="text-gray-900 dark:text-white text-sm font-medium truncate">
-                      {member.name}
+                      {member.memberName}
                     </div>
                     <div className="text-[11px] text-gray-500 dark:text-gray-400">
                       {member.visits} visits
@@ -142,7 +142,11 @@ function TopPerformersCard({
 function AtRiskMembersCard({
   atRiskMembers,
 }: {
-  atRiskMembers: Array<{ name: string; lastVisit: string; visits: number }>;
+  atRiskMembers: Array<{
+    memberName: string;
+    lastVisit: string;
+    visits: number;
+  }>;
 }) {
   return (
     <Card className="relative border-none bg-white dark:bg-secondary-blue-500 rounded-lg overflow-hidden">
@@ -167,12 +171,12 @@ function AtRiskMembersCard({
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <div className="relative z-10 flex-shrink-0">
-                    <MemberAvatar name={member.name} />
+                    <MemberAvatar name={member.memberName} />
                     <div className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white dark:border-secondary-blue-500 bg-alert-red-500" />
                   </div>
                   <div className="flex-1 min-w-0 pt-0.5">
                     <div className="text-gray-900 dark:text-white text-sm font-medium truncate">
-                      {member.name}
+                      {member.memberName}
                     </div>
                     <div className="text-[11px] text-gray-500 dark:text-gray-400">
                       {member.visits} visits this month
@@ -254,13 +258,13 @@ export default function MemberInsights() {
   const { data: analyticsData } = useMemberAnalytics(gymBranch?.gymId);
 
   const topPerformers = (analyticsData?.topPerformers || []).map((member) => ({
-    name: member.name,
+    memberName: member.memberName,
     streak: member.streak,
     visits: member.visits,
   }));
 
   const atRiskMembers = (analyticsData?.atRiskMembers || []).map((member) => ({
-    name: member.name,
+    memberName: member.memberName,
     lastVisit:
       member.daysAgo === null
         ? 'Never'
@@ -275,7 +279,7 @@ export default function MemberInsights() {
   ).map((item) => ({
     id: item.memberIdentifier,
     memberIdentifier: item.memberIdentifier,
-    name: item.name,
+    name: item.memberName,
     totalVisits: item.totalVisits,
     visitsThisMonth: item.visitsThisMonth,
     currentStreak: item.currentStreak,

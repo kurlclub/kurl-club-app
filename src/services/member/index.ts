@@ -50,7 +50,7 @@ export const fetchGymMembers = async (
   if (filters?.sortBy) params.append('sortBy', filters.sortBy);
   if (filters?.sortOrder) params.append('sortOrder', filters.sortOrder);
 
-  const url = `/Member/gym/${gymId}${params.toString() ? `?${params.toString()}` : ''}`;
+  const url = `/Member/${gymId}/gym-members${params.toString() ? `?${params.toString()}` : ''}`;
   const response = await api.get<MemberListResponse>(url);
   return {
     data: response.data,
@@ -162,8 +162,8 @@ export const fetchMemberPaymentDetails = async (memberId: number | string) => {
   ) {
     const sessionInfo = memberData.sessionPaymentInfo;
     const transformedData: MemberPaymentDetails = {
-      memberId: memberData.id,
-      memberName: memberData.name,
+      memberId: memberData.memberId,
+      memberName: memberData.memberName,
       memberIdentifier: memberData.memberIdentifier,
       membershipPlanId: memberData.membershipPlanId,
       billingType: 'PerSession',

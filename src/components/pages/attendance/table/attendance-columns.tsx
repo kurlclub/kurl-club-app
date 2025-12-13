@@ -215,7 +215,7 @@ const baseColumns: ColumnDef<AttendanceRecordResponse>[] = [
 export const attendanceColumns = baseColumns;
 
 export const manualModeColumns = (
-  onCheckOut: (memberId: string) => void
+  onCheckOut: (memberId: number) => void
 ): ColumnDef<AttendanceRecordResponse>[] => [
   ...baseColumns,
   {

@@ -37,8 +37,8 @@ export function PendingOnboardingTab() {
   );
 
   const mappedMembers: PendingMember[] = pendingMembers.map((member) => ({
-    id: Number(member.id),
-    name: member.name,
+    id: Number(member.memberId),
+    name: member.memberName,
     phone: member.phone,
     gender: member.gender || 'N/A',
     height: (member as { height?: number }).height || 0,

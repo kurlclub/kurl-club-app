@@ -30,7 +30,7 @@ export default function AssignedMembersTable({
     (items, term) =>
       items.filter(
         (member) =>
-          member.name.toLowerCase().includes(term.toLowerCase()) ||
+          member.memberName.toLowerCase().includes(term.toLowerCase()) ||
           member.memberIdentifier?.toLowerCase().includes(term.toLowerCase())
       )
   );
