@@ -68,7 +68,7 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
 
         form.reset({
           profilePicture: null,
-          name: data.name || '',
+          name: data.memberName || '',
           email: data.email || '',
           phone: data.phone || '',
           gender: data.gender || '',

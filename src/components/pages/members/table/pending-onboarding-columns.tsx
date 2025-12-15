@@ -18,7 +18,7 @@ export type PendingMember = {
   dob: string;
   bloodGroup: string;
   profilePicture?: string | File | null;
-  photoPath?: string;
+  photoPath?: string | null;
 };
 
 export const createPendingOnboardingColumns = (

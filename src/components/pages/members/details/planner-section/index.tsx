@@ -7,7 +7,7 @@ import { RefreshCw } from 'lucide-react';
 import { KTabs, TabItem } from '@/components/shared/form/k-tabs';
 import { Button } from '@/components/ui/button';
 import { calculateAge } from '@/lib/utils';
-import { MemberDetails } from '@/types/members';
+import { MemberDetails } from '@/types/member.types';
 
 import DietPlanner from './diet-planner';
 import { WorkoutPlans } from './workout-plans';

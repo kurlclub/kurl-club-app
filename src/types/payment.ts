@@ -1,4 +1,5 @@
-// Universal fee status
+// Universal types
+export type BillingType = 'Recurring' | 'PerSession';
 export type FeeStatus = 'paid' | 'unpaid' | 'partially_paid';
 
 // Session payment detail types
@@ -122,6 +123,5 @@ export interface PaymentResponse {
 
 export interface SessionPaymentResponse {
   status: string;
-  message: string;
   data: SessionPaymentMember[];
 }

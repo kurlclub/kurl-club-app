@@ -38,6 +38,8 @@ import {
 import { useGymBranch } from '@/providers/gym-branch-provider';
 import { GymDataDetailsSchema } from '@/schemas';
 
+import RegionalSettings from './regional-settings';
+
 type BusinessProfile = z.infer<typeof GymDataDetailsSchema>;
 
 const DEFAULT_PROFILE: BusinessProfile = {
@@ -274,14 +276,16 @@ export function BusinessProfileTab() {
 
   return (
     <FormProvider {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <div className="space-y-6">
         {/* Basic Details Card */}
-        <Card className="bg-secondary-blue-500 border-primary-blue-400 py-2">
+        <Card className="bg-white dark:bg-secondary-blue-500 border-gray-200 dark:border-secondary-blue-400 py-2">
           <CardHeader className="pb-4">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <CardTitle className="text-white">Basic details</CardTitle>
-                <CardDescription className="text-secondary-blue-200 text-[15px]">
+                <CardTitle className="text-gray-900 dark:text-white">
+                  Basic details
+                </CardTitle>
+                <CardDescription className="text-gray-600 dark:text-secondary-blue-200 text-[15px]">
                   Manage your gym&apos;s basic information and contact details
                 </CardDescription>
               </div>
@@ -298,7 +302,11 @@ export function BusinessProfileTab() {
                   >
                     Discard
                   </Button>
-                  <Button type="submit" disabled={isUpdating}>
+                  <Button
+                    type="button"
+                    onClick={form.handleSubmit(handleSubmit)}
+                    disabled={isUpdating}
+                  >
                     {isUpdating ? 'Saving...' : 'Save Changes'}
                   </Button>
                 </div>
@@ -361,13 +369,12 @@ export function BusinessProfileTab() {
           </CardContent>
         </Card>
 
-        {/* Subscription Card */}
-        <SubscriptionCard variant="premium" />
-
         {/* Social Links Card */}
-        <Card className="bg-secondary-blue-500 border-primary-blue-400 py-2">
+        <Card className="bg-white dark:bg-secondary-blue-500 border-gray-200 dark:border-secondary-blue-400 py-2">
           <CardHeader>
-            <CardTitle className="text-white">Social Links</CardTitle>
+            <CardTitle className="text-gray-900 dark:text-white">
+              Social Links
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {fields.map((field, index) => (
@@ -421,7 +428,13 @@ export function BusinessProfileTab() {
             </Button>
           </CardContent>
         </Card>
-      </form>
+
+        {/* Subscription Card */}
+        <SubscriptionCard variant="premium" />
+
+        {/* Regional Settings */}
+        <RegionalSettings />
+      </div>
     </FormProvider>
   );
 }

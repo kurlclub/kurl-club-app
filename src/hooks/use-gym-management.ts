@@ -24,8 +24,9 @@ export function useGymProfilePicture(gymId: number) {
     queryKey: ['gymProfilePicture', gymId],
     queryFn: () => fetchGymProfilePicture(gymId),
     enabled: !!gymId,
-    staleTime: 1000 * 60 * 15, // 15 minutes
+    staleTime: 1000 * 60 * 5, // 5 minutes - balance between performance and freshness
     gcTime: 1000 * 60 * 30, // 30 minutes
+    refetchOnWindowFocus: false, // Don't refetch on window focus
   });
 }
 
@@ -40,8 +41,11 @@ export function useGymManagement() {
       await queryClient.invalidateQueries({
         queryKey: ['gymProfilePicture', gymId],
       });
-      // Trigger a refetch to update all components
-      await queryClient.refetchQueries({ queryKey: ['gymDetails', gymId] });
+      // Trigger immediate refetch to update all components
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ['gymDetails', gymId] }),
+        queryClient.refetchQueries({ queryKey: ['gymProfilePicture', gymId] }),
+      ]);
       toast.success(result.success);
     },
     onError: (error) => {

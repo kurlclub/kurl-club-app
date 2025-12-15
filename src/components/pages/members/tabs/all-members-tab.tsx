@@ -11,7 +11,7 @@ import {
   bulkImportMembers,
   useGymMembers,
 } from '@/services/member';
-import { Member } from '@/types/members';
+import { MemberListItem } from '@/types/member.types';
 
 import { columns } from '../table/all-members-columns';
 
@@ -133,12 +133,12 @@ export function AllMembersTab({
     'gender',
   ];
 
-  const memberTransformations = (row: Partial<Member>): Partial<Member> => {
+  const memberTransformations = (
+    row: Partial<MemberListItem>
+  ): Partial<MemberListItem> => {
     const { ...memberData } = row;
     return {
       ...memberData,
-      gymId: gymId?.toString(),
-      avatar: row.avatar || '/placeholder.svg?height=32&width=32',
       package: row.package || 'Monthly',
       feeStatus: row.feeStatus
         ? ((['paid', 'unpaid', 'partially_paid'].includes(
@@ -176,7 +176,7 @@ export function AllMembersTab({
         )}
       />
 
-      <ImportCSVModal<Member>
+      <ImportCSVModal<MemberListItem>
         isOpen={isImportModalOpen}
         onClose={onCloseImportModal}
         onImport={async (items) => {

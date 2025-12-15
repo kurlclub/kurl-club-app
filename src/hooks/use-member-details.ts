@@ -6,7 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import { updateMember, useMemberByID } from '@/services/member';
-import { MemberDetails } from '@/types/members';
+import { MemberDetails } from '@/types/member.types';
 
 export function useMemberDetails(
   userId: string | number,

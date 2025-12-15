@@ -14,13 +14,13 @@ function SkipperStats() {
   const { data: dashboardData } = useDashboardData(gymBranch?.gymId || 0);
 
   const skipperData =
-    dashboardData?.skipperStats?.map((skipper, index) => ({
-      id: index.toString(),
-      gymNo: skipper.gymNo,
-      name: skipper.name,
-      avatar: '',
+    dashboardData?.skipperStats?.map((skipper) => ({
+      memberId: skipper.memberId,
+      memberIdentifier: skipper.memberIdentifier,
+      memberName: skipper.memberName,
+      photoPath: skipper.photoPath,
       lastCheckIn: skipper.lastCheckIn,
-      sinceLastCheckIn: `${Math.floor(skipper.daysSinceLastCheckIn)} days ago`,
+      daysSinceLastCheckIn: skipper.daysSinceLastCheckIn,
     })) || [];
 
   return (

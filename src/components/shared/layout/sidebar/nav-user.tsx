@@ -23,7 +23,10 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { useAppDialog } from '@/hooks/use-app-dialog';
-import { useGymDetails } from '@/hooks/use-gym-management';
+import {
+  useGymDetails,
+  useGymProfilePicture,
+} from '@/hooks/use-gym-management';
 import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
 import { useAuth } from '@/providers/auth-provider';
 import { useGymBranch } from '@/providers/gym-branch-provider';
@@ -33,6 +36,11 @@ export function NavUser() {
   const { logout } = useAuth();
   const { gymBranch } = useGymBranch();
   const { data: gymDetails } = useGymDetails(gymBranch?.gymId || 0);
+  const { data: profilePictureData } = useGymProfilePicture(
+    gymBranch?.gymId || 0
+  );
+
+  const profilePictureUrl = profilePictureData?.data || null;
   const [isPending, startTransition] = useTransition();
   const { showConfirm } = useAppDialog();
   const { state } = useSidebar();
@@ -83,9 +91,12 @@ export function NavUser() {
               >
                 <div className="relative">
                   <Avatar className="h-9 w-9 rounded-sm shadow-lg">
-                    <AvatarImage src="" alt={currentGym?.gymName || 'User'} />
+                    <AvatarImage
+                      src={profilePictureUrl || undefined}
+                      alt={currentGym?.gymName || 'User'}
+                    />
                     <AvatarFallback
-                      className="rounded-md font-bold text-sm bg-gradient-to-br from-primary-green-500/20 to-primary-green-600/10 text-primary-green-100"
+                      className="rounded-md font-bold text-sm bg-linear-to-br from-primary-green-500/20 to-primary-green-600/10 text-primary-green-100"
                       style={avatarStyle}
                     >
                       {currentGym ? getInitials(currentGym.gymName) : 'KC'}
@@ -105,9 +116,12 @@ export function NavUser() {
               <DropdownMenuLabel className="text-white p-4 pb-2">
                 <div className="flex items-center gap-4">
                   <Avatar className="h-12 w-12 rounded-xl border-2 border-primary-green-500/30 shadow-lg">
-                    <AvatarImage src="" alt={currentGym?.gymName || 'User'} />
+                    <AvatarImage
+                      src={profilePictureUrl || undefined}
+                      alt={currentGym?.gymName || 'User'}
+                    />
                     <AvatarFallback
-                      className="rounded-xl font-bold text-sm bg-gradient-to-br from-primary-green-500/20 to-primary-green-600/10 text-primary-green-100"
+                      className="rounded-xl font-bold text-sm bg-linear-to-br from-primary-green-500/20 to-primary-green-600/10 text-primary-green-100"
                       style={avatarStyle}
                     >
                       {currentGym ? getInitials(currentGym.gymName) : 'KC'}
@@ -155,15 +169,18 @@ export function NavUser() {
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-secondary-blue-200/10 via-secondary-blue-600/20 to-secondary-blue-600/5 border border-secondary-blue-200/20 backdrop-blur-sm shadow-md">
+        <div className="relative overflow-hidden rounded-xl bg-linear-to-br from-secondary-blue-200/10 via-secondary-blue-600/20 to-secondary-blue-600/5 border border-secondary-blue-200/20 backdrop-blur-sm shadow-md">
           <div className="flex flex-col gap-4 p-4">
             {/* User Info Section */}
             <div className="flex items-center gap-4">
               <div className="relative">
                 <Avatar className="h-12 w-12 rounded-md">
-                  <AvatarImage src="" alt={currentGym?.gymName || 'User'} />
+                  <AvatarImage
+                    src={profilePictureUrl || undefined}
+                    alt={currentGym?.gymName || 'User'}
+                  />
                   <AvatarFallback
-                    className="rounded-md font-bold text-sm bg-gradient-to-br from-primary-green-500/20 to-primary-green-600/10 text-primary-green-100"
+                    className="rounded-md font-bold text-sm bg-linear-to-br from-primary-green-500/20 to-primary-green-600/10 text-primary-green-100"
                     style={avatarStyle}
                   >
                     {currentGym ? getInitials(currentGym.gymName) : 'KC'}
@@ -215,8 +232,8 @@ export function NavUser() {
           </div>
 
           {/* Animated gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-primary-green-500/5 via-transparent to-primary-green-400/5 pointer-events-none opacity-50" />
-          <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-primary-blue-200/50 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-primary-green-500/5 via-transparent to-primary-green-400/5 pointer-events-none opacity-50" />
+          <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-primary-blue-200/50 to-transparent" />
         </div>
       </SidebarMenuItem>
     </SidebarMenu>

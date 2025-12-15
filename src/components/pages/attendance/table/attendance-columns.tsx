@@ -6,7 +6,6 @@ import { Clock, LogOut } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
-import { getProfilePictureSrc } from '@/lib/utils';
 import type { AttendanceRecordResponse } from '@/services/attendance';
 
 const StatusBadge = ({ status }: { status: string }) => {
@@ -57,35 +56,29 @@ const StatusBadge = ({ status }: { status: string }) => {
 
 const baseColumns: ColumnDef<AttendanceRecordResponse>[] = [
   {
-    accessorKey: 'memberId',
+    accessorKey: 'memberIdentifier',
     header: 'Member ID',
     cell: ({ row }) => (
       <div className="w-[100px] uppercase">
         <span className="text-primary-blue-300 font-bold mr-0.5">#</span>
-        {row.getValue('memberId')}
+        {row.getValue('memberIdentifier')}
       </div>
     ),
     enableSorting: false,
     enableHiding: false,
   },
   {
-    accessorKey: 'member',
+    accessorKey: 'memberName',
     header: 'Member',
     cell: ({ row }) => {
-      const name = row.getValue<string>('member') || 'Unknown';
+      const name = row.getValue<string>('memberName') || 'Unknown';
       const avatarStyle = getAvatarColor(name);
       const initials = getInitials(name);
 
       return (
         <div className="flex items-center gap-2 w-[180px]">
           <Avatar className="h-8 w-8">
-            <AvatarImage
-              src={getProfilePictureSrc(
-                row.original.profilePicture,
-                row.original.photoPath
-              )}
-              alt={name}
-            />
+            <AvatarImage src={row.original.photoPath || undefined} alt={name} />
             <AvatarFallback className="font-medium" style={avatarStyle}>
               {initials}
             </AvatarFallback>
@@ -125,7 +118,7 @@ const baseColumns: ColumnDef<AttendanceRecordResponse>[] = [
       const recordedBy = row.original.recordedBy;
 
       return (
-        <div className="min-w-[80px]">
+        <div className="min-w-20">
           <div className="flex items-center gap-1">
             <Clock size={12} className="text-primary-green-500" />
             <span className="text-gray-900 dark:text-white text-sm">
@@ -158,7 +151,7 @@ const baseColumns: ColumnDef<AttendanceRecordResponse>[] = [
       const recordedBy = row.original.recordedBy;
 
       return (
-        <div className="min-w-[80px]">
+        <div className="min-w-20">
           {isActive ? (
             <span className="text-primary-green-600 dark:text-primary-green-400 text-sm font-medium">
               Active
@@ -192,7 +185,7 @@ const baseColumns: ColumnDef<AttendanceRecordResponse>[] = [
         ? `${Math.floor(duration / 60)}h ${duration % 60}m`
         : '--';
       return (
-        <div className="min-w-[80px]">
+        <div className="min-w-20">
           <span className="text-gray-900 dark:text-white text-sm">
             {displayDuration}
           </span>
@@ -215,7 +208,7 @@ const baseColumns: ColumnDef<AttendanceRecordResponse>[] = [
 export const attendanceColumns = baseColumns;
 
 export const manualModeColumns = (
-  onCheckOut: (memberId: string) => void
+  onCheckOut: (memberId: number) => void
 ): ColumnDef<AttendanceRecordResponse>[] => [
   ...baseColumns,
   {
