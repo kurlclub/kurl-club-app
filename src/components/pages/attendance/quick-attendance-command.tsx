@@ -23,15 +23,14 @@ import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
 import { useGymBranch } from '@/providers/gym-branch-provider';
 import { useAttendanceRecords } from '@/services/attendance';
 import { useAllGymMembers } from '@/services/member';
-import type { Member } from '@/types/members';
 
 type Props = {
-  onCheckIn: (
-    member: Pick<Member, 'id' | 'name'> & { identifier: string }
-  ) => void;
-  onCheckOut: (
-    member: Pick<Member, 'id' | 'name'> & { identifier: string }
-  ) => void;
+  onCheckIn: (member: { id: number; name: string; identifier: string }) => void;
+  onCheckOut: (member: {
+    id: number;
+    name: string;
+    identifier: string;
+  }) => void;
 };
 
 export function QuickAttendanceCommand({ onCheckIn, onCheckOut }: Props) {
@@ -41,11 +40,13 @@ export function QuickAttendanceCommand({ onCheckIn, onCheckOut }: Props) {
   const attendanceRecords = attendanceResponse?.data || [];
   const [open, setOpen] = React.useState(false);
 
-  const handleAction = (
-    member: Pick<Member, 'id' | 'name'> & { identifier: string }
-  ) => {
+  const handleAction = (member: {
+    id: number;
+    name: string;
+    identifier: string;
+  }) => {
     const attendanceRecord = attendanceRecords.find(
-      (r) => r.memberId === member.identifier
+      (r) => r.memberIdentifier === member.identifier
     );
     const isCheckedIn = attendanceRecord && !attendanceRecord.checkOutTime;
 
@@ -84,17 +85,17 @@ export function QuickAttendanceCommand({ onCheckIn, onCheckOut }: Props) {
             <CommandGroup className="shad-command-group">
               {members.map((member) => {
                 const attendanceRecord = attendanceRecords.find(
-                  (r) => r.memberId === member.memberIdentifier
+                  (r) => r.memberIdentifier === member.memberIdentifier
                 );
                 const isCheckedIn =
                   attendanceRecord && !attendanceRecord.checkOutTime;
-                const avatarStyle = getAvatarColor(member.name);
-                const initials = getInitials(member.name);
+                const avatarStyle = getAvatarColor(member.memberName);
+                const initials = getInitials(member.memberName);
 
                 return (
                   <CommandItem
-                    key={member.id}
-                    value={`${member.name} ${member.memberIdentifier || ''}`}
+                    key={member.memberId}
+                    value={`${member.memberName} ${member.memberIdentifier || ''}`}
                     className="shad-command-item px-3 py-2.5 cursor-default!"
                   >
                     <div className="flex items-center justify-between w-full gap-3">
@@ -118,7 +119,7 @@ export function QuickAttendanceCommand({ onCheckIn, onCheckOut }: Props) {
                         <div className="flex-1 min-w-0">
                           <div className="flex flex-col gap-0 leading-none">
                             <span className="text-sm font-semibold dark:text-white truncate">
-                              {member.name}
+                              {member.memberName}
                             </span>
                             <span className="text-[9px] text-gray-400">
                               #{member.memberIdentifier || 'N/A'}
@@ -132,8 +133,8 @@ export function QuickAttendanceCommand({ onCheckIn, onCheckOut }: Props) {
                         onClick={(e) => {
                           e.stopPropagation();
                           handleAction({
-                            id: member.id,
-                            name: member.name,
+                            id: member.memberId,
+                            name: member.memberName,
                             identifier: member.memberIdentifier || '',
                           });
                         }}

@@ -15,8 +15,10 @@ export interface DashboardData {
     totalPaid: number;
   };
   skipperStats: Array<{
-    gymNo: string;
-    name: string;
+    memberId: number;
+    memberIdentifier: string;
+    memberName: string;
+    photoPath: string | null;
     lastCheckIn: string;
     daysSinceLastCheckIn: number;
   }>;
@@ -31,7 +33,7 @@ export const fetchDashboardData = async (
   gymId: number
 ): Promise<DashboardData> => {
   const response = await api.get<ApiResponse<DashboardData>>(
-    `/Dashboard/gymDashboard?gymId=${gymId}`
+    `/Dashboard/${gymId}/gymDashboard`
   );
   return response.data!;
 };

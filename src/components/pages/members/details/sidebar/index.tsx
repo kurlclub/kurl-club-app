@@ -7,7 +7,7 @@ import { PanelLeftOpen, PanelRightOpen } from 'lucide-react';
 import { Breadcrumb, CollapsibleSection } from '@/components/shared/layout';
 import { Button } from '@/components/ui/button';
 import { FormOptionsResponse } from '@/hooks/use-gymform-options';
-import { MemberDetails } from '@/types/members';
+import { MemberDetails } from '@/types/member.types';
 
 import { BasicDetailsSection } from './basic-details-section';
 import { MemberHeader } from './member-header';

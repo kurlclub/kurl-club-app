@@ -26,7 +26,7 @@ export const StudioLayout = ({
   const getContentConstraints = () => {
     switch (maxContentWidth) {
       case 'narrow':
-        return 'max-w-4xl mx-auto';
+        return 'max-w-4xl';
       case 'wide':
         return 'w-full';
       default:

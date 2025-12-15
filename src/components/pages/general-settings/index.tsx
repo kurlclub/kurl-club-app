@@ -21,10 +21,11 @@ export default function GeneralSettings() {
   return (
     <StudioLayout
       title="General Settings"
+      description="Configure your gym's business profile, operations, and preferences"
       tabs={tabs}
       activeTab={activeTab}
       onTabChange={handleTabChange}
-      maxContentWidth="wide"
+      maxContentWidth="narrow"
     >
       {activeTab === 'business_profile' && <BusinessProfileTab />}
       {activeTab === 'operations' && <OperationsTab />}

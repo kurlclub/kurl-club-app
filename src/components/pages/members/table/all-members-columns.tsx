@@ -10,20 +10,20 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
 import { getProfilePictureSrc, safeFormatDate } from '@/lib/utils';
-import { Member } from '@/types/members';
+import { MemberListItem } from '@/types/member.types';
 
-const ActionsCell: React.FC<{ user: Member }> = ({ user }) => {
+const ActionsCell: React.FC<{ user: MemberListItem }> = ({ user }) => {
   return (
     <Button variant="ghost" className="h-8 w-8 p-0">
       <span className="sr-only">View member profile</span>
-      <Link href={`/members/${user.id}`}>
+      <Link href={`/members/${user.memberId}`}>
         <Eye className="h-4 w-4 text-primary-green-600" />
       </Link>
     </Button>
   );
 };
 
-export const columns: ColumnDef<Member>[] = [
+export const columns: ColumnDef<MemberListItem>[] = [
   {
     accessorKey: 'memberIdentifier',
     header: 'Member ID',
@@ -37,10 +37,10 @@ export const columns: ColumnDef<Member>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: 'name',
+    accessorKey: 'memberName',
     header: 'Name',
     cell: ({ row }) => {
-      const name = row.getValue<string>('name') || 'Unknown';
+      const name = row.getValue<string>('memberName') || 'Unknown';
       const avatarStyle = getAvatarColor(name);
       const initials = getInitials(name);
 
@@ -97,6 +97,10 @@ export const columns: ColumnDef<Member>[] = [
     cell: ({ row }) => (
       <div className="w-[120px] truncate">{row.getValue('email')}</div>
     ),
+    enableHiding: true,
+    meta: {
+      defaultHidden: true,
+    },
   },
   {
     accessorKey: 'phone',

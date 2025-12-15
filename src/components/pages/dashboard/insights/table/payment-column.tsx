@@ -10,22 +10,22 @@ import { OutstandingPayments } from '@/types';
 
 export const paymentColumns: ColumnDef<OutstandingPayments>[] = [
   {
-    accessorKey: 'gymNo',
+    accessorKey: 'memberIdentifier',
     header: 'Member ID',
     cell: ({ row }) => (
       <div className="w-20 uppercase">
         <span className="text-primary-blue-200/80 font-bold mr-0.5">#</span>
-        {row.getValue<string>('gymNo').replace('#', '')}
+        {row.getValue<string>('memberIdentifier')}
       </div>
     ),
     enableSorting: false,
     enableHiding: false,
   },
   {
-    accessorKey: 'name',
+    accessorKey: 'memberName',
     header: 'Name',
     cell: ({ row }) => {
-      const name = row.getValue<string>('name') || 'Unknown';
+      const name = row.getValue<string>('memberName') || 'Unknown';
       const avatarStyle = getAvatarColor(name);
       const initials = getInitials(name);
 

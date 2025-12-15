@@ -31,6 +31,9 @@ export function SessionPaymentCard({
   const lastPayment = sessionPayments?.find((s) => s.status === 'paid');
   const lastSession = sessionPayments?.[sessionPayments.length - 1];
 
+  const totalPaid = paymentSummary?.paid || 0;
+  const totalPending = paymentSummary?.pending || 0;
+
   return (
     <div className="shadow-sm bg-secondary-blue-500 rounded-lg h-full flex flex-col">
       <div className="flex items-center justify-between px-5 pt-5 pb-2">
@@ -114,7 +117,7 @@ export function SessionPaymentCard({
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-2">
             <div className="text-center flex-1">
               <div className="text-lg font-bold text-green-400">
-                ₹{paymentSummary.paid.toLocaleString()}
+                ₹{totalPaid.toLocaleString()}
               </div>
               <div className="text-primary-blue-50 text-xs">Total Paid</div>
               {lastPayment && (
@@ -133,7 +136,7 @@ export function SessionPaymentCard({
               <div
                 className={`text-lg font-bold ${hasUnpaid ? 'text-red-400' : 'text-green-400'}`}
               >
-                ₹{paymentSummary.pending.toLocaleString()}
+                ₹{totalPending.toLocaleString()}
               </div>
               <div className="text-primary-blue-50 text-xs">Outstanding</div>
               {lastSession && (

@@ -28,10 +28,10 @@ export const memberInsightsColumns: ColumnDef<MemberInsight>[] = [
       return (
         <div className="flex items-center gap-3 w-[200px]">
           <Avatar className="h-8 w-8">
+            <AvatarImage src={row.original.photoPath || undefined} />
             <AvatarFallback className="font-medium" style={avatarStyle}>
               {initials}
             </AvatarFallback>
-            <AvatarImage src={row.original.profilePicture || undefined} />
           </Avatar>
           <div className="text-gray-900 dark:text-white font-medium">
             {name}
@@ -107,7 +107,7 @@ export const memberInsightsColumns: ColumnDef<MemberInsight>[] = [
     accessorKey: 'averageDuration',
     header: () => <div className="text-center">Avg Duration</div>,
     cell: ({ row }) => {
-      const peakTime = row.original.favoriteTime;
+      const peakTime = row.original.peakTime;
       const formatTime = (time: string) => {
         if (!time || time === '00:00:00') return 'N/A';
         const [hours, minutes] = time.split(':');
@@ -121,7 +121,7 @@ export const memberInsightsColumns: ColumnDef<MemberInsight>[] = [
         <div className="min-w-[130px]">
           <div className="flex flex-col items-center">
             <div className="text-gray-900 dark:text-white font-bold text-lg">
-              {row.getValue('averageDuration')}m
+              {Math.round(row.getValue<number>('averageDuration'))}m
             </div>
             <div className="text-gray-600 dark:text-gray-400 text-xs">
               Peak: {formatTime(peakTime)}

@@ -50,7 +50,7 @@ export default function AttendanceRecords() {
   };
 
   const handleCheckIn = async (member: {
-    id: string;
+    id: number;
     name: string;
     identifier: string;
   }) => {
@@ -58,7 +58,7 @@ export default function AttendanceRecords() {
 
     try {
       await checkInMutation.mutateAsync({
-        memberId: parseInt(member.id),
+        memberId: member.id,
         gymId: gymBranch.gymId,
         recordedBy: appUser.userId,
       });
@@ -76,7 +76,7 @@ export default function AttendanceRecords() {
   };
 
   const handleCheckOut = async (member: {
-    id: string;
+    id: number;
     name: string;
     identifier: string;
   }) => {
@@ -84,7 +84,7 @@ export default function AttendanceRecords() {
 
     try {
       await checkOutMutation.mutateAsync({
-        memberId: parseInt(member.id),
+        memberId: member.id,
         gymId: gymBranch.gymId,
         recordedBy: appUser.userId,
       });
@@ -101,7 +101,7 @@ export default function AttendanceRecords() {
     }
   };
 
-  const handleQuickCheckOut = async (memberId: string) => {
+  const handleQuickCheckOut = async (memberId: number) => {
     if (!gymBranch?.gymId || !appUser?.userId) return;
 
     const attendanceRecord = attendanceRecords.find(
@@ -109,12 +109,12 @@ export default function AttendanceRecords() {
     );
     if (!attendanceRecord) return;
 
-    const member = members.find((m) => m.memberIdentifier === memberId);
+    const member = members.find((m) => m.memberId === memberId);
     if (!member) return;
 
     try {
       await checkOutMutation.mutateAsync({
-        memberId: parseInt(member.id),
+        memberId: member.memberId,
         gymId: gymBranch.gymId,
         recordedBy: appUser.userId,
       });
@@ -122,8 +122,8 @@ export default function AttendanceRecords() {
       setConfirmDialog({
         open: true,
         member: {
-          name: attendanceRecord.member,
-          identifier: attendanceRecord.memberId,
+          name: attendanceRecord.memberName,
+          identifier: attendanceRecord.memberIdentifier,
         },
         action: 'checkout',
         time: format(new Date(), 'h:mm a'),
