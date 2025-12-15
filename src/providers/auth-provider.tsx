@@ -1,260 +1,268 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-import {
-  User as FirebaseUser,
-  GoogleAuthProvider,
-  createUserWithEmailAndPassword,
-  getIdToken,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  signInWithPopup,
-  signOut,
-} from 'firebase/auth';
-
-import { api } from '@/lib/api';
 import { decrypt, encrypt } from '@/lib/crypto';
-import { auth } from '@/lib/firebase';
-import { createSession, deleteSession } from '@/services/auth/session';
-import { fetchGymById } from '@/services/gym';
+import { getUserByUid, login, logout as logoutApi } from '@/services/auth/auth';
 import { GymDetails } from '@/types/gym';
-
-const AuthContext = createContext<
-  | {
-      firebaseUser: FirebaseUser | null;
-      appUser: AppUser | null;
-      gymDetails: GymDetails | null;
-      isAuthLoading: boolean;
-      isAppUserLoading: boolean;
-      signIn: (options: SignInOptions) => Promise<void>;
-      logout: () => Promise<void>;
-      fetchGymDetails: (gymId: number) => Promise<void>;
-      refreshAppUser: () => Promise<void>;
-    }
-  | undefined
->(undefined);
-
-type SignInOptions =
-  | { method: 'register'; email: string; password: string }
-  | { method: 'login'; email: string; password: string }
-  | { method: 'oauth'; provider: 'google' };
 
 interface AppUser {
   userId: number;
   userName: string;
   userEmail: string;
   userRole: string;
-  gyms: {
+  uid: string;
+  photoURL?: string;
+  gyms: Array<{
     gymId: number;
     gymName: string;
     gymLocation: string;
-    gymIdentifier: string;
-  }[];
+  }>;
 }
+
+interface AuthContextType {
+  user: AppUser | null;
+  appUser: AppUser | null;
+  gymDetails: GymDetails | null;
+  isLoading: boolean;
+  isAuthLoading: boolean;
+  isAppUserLoading: boolean;
+  login: (
+    userName: string,
+    password: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  logout: () => void;
+  refreshUser: () => Promise<void>;
+  refreshGymDetails: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
-  const [appUser, setAppUser] = useState<AppUser | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [gymDetails, setGymDetails] = useState<GymDetails | null>(null);
-  const [isAuthLoading, setIsAuthLoading] = useState(true);
-  const [isAppUserLoading, setIsAppUserLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
-  // Load cached data immediately
+  // Load cached user on mount
   useEffect(() => {
-    const encryptedUser = localStorage.getItem('appUser');
-    if (encryptedUser) {
+    const loadCachedUser = async () => {
       try {
-        const decryptedData = decrypt(encryptedUser);
-        if (decryptedData) {
-          const userData = JSON.parse(decryptedData) as AppUser;
-          setAppUser(userData);
-          if (userData.gyms.length > 0) {
-            localStorage.setItem('gymBranch', JSON.stringify(userData.gyms[0]));
-            fetchGymDetailsInternal(userData.gyms[0].gymId);
-          }
-        }
-      } catch (error) {
-        console.warn('Failed to load cached user:', error);
-      }
-    }
-  }, []);
-
-  // Fetch the appUser from the backend
-  const fetchAppUser = async (uid: string, forceRefresh = false) => {
-    setIsAppUserLoading(true);
-    try {
-      // Try to get cached user data first
-      if (!forceRefresh) {
+        const token = localStorage.getItem('accessToken');
         const encryptedUser = localStorage.getItem('appUser');
-        if (encryptedUser) {
+        const encryptedGymDetails = localStorage.getItem('gymDetails');
+
+        if (token && encryptedUser) {
           const decryptedData = decrypt(encryptedUser);
           if (decryptedData) {
             const userData = JSON.parse(decryptedData) as AppUser;
-            setAppUser(userData);
-            if (userData.gyms.length > 0) {
+            setUser(userData);
+
+            if (encryptedGymDetails) {
+              const decryptedGymDetails = decrypt(encryptedGymDetails);
+              if (decryptedGymDetails) {
+                setGymDetails(JSON.parse(decryptedGymDetails));
+              }
+            }
+
+            if (userData.gyms?.length > 0) {
               localStorage.setItem(
                 'gymBranch',
                 JSON.stringify(userData.gyms[0])
               );
-              // Fetch gym details in parallel, don't await
-              fetchGymDetailsInternal(userData.gyms[0].gymId);
             }
-            setIsAppUserLoading(false);
-            return;
           }
         }
-      }
-
-      // Fetch from API if not cached or force refresh
-      const response = await api.get<{
-        status: string;
-        message: string;
-        data: AppUser;
-      }>(`/User/GetUserById/${uid}`);
-
-      setAppUser(response.data);
-      localStorage.setItem('appUser', encrypt(JSON.stringify(response.data)));
-
-      if (response.data.gyms.length > 0) {
-        localStorage.setItem(
-          'gymBranch',
-          JSON.stringify(response.data.gyms[0])
-        );
-        // Fetch gym details in parallel, don't await
-        fetchGymDetailsInternal(response.data.gyms[0].gymId);
-      }
-    } catch (error) {
-      console.error('Failed to fetch app user:', error);
-      setAppUser(null);
-    } finally {
-      setIsAppUserLoading(false);
-    }
-  };
-
-  const fetchGymDetailsInternal = async (gymId: number) => {
-    try {
-      const details = await fetchGymById(gymId);
-      setGymDetails(details);
-    } catch (error) {
-      console.error('Failed to fetch gym details:', error);
-      setGymDetails(null);
-    }
-  };
-
-  // Watch Firebase user changes
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setFirebaseUser(firebaseUser);
-      setIsAuthLoading(false);
-
-      if (firebaseUser) {
+      } catch (error) {
+        console.warn('Failed to load cached user:', error);
         try {
-          const idToken = await getIdToken(firebaseUser);
-          await createSession(idToken);
-          await fetchAppUser(firebaseUser.uid);
-        } catch (error) {
-          console.error('Failed to handle Firebase user change:', error);
-          setIsAppUserLoading(false);
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('appUser');
+          localStorage.removeItem('gymBranch');
+        } catch (e) {
+          console.error('Failed to clear storage:', e);
         }
-      } else {
-        setAppUser(null);
-        setGymDetails(null);
-        setIsAppUserLoading(false);
+      } finally {
+        setIsLoading(false);
       }
-    });
+    };
 
-    return () => unsubscribe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    loadCachedUser();
   }, []);
 
-  const signIn = async (options: SignInOptions) => {
+  const fetchGymDetailsInternal = async () => {
+    if (!user?.uid) return;
+
     try {
-      switch (options.method) {
-        case 'register': {
-          const { email, password } = options;
-          const { user } = await createUserWithEmailAndPassword(
-            auth,
-            email,
-            password
-          );
-          const idToken = await getIdToken(user);
-          await createSession(idToken);
-          await fetchAppUser(user.uid, true);
-          break;
-        }
-        case 'login': {
-          const { email, password } = options;
-          const { user } = await signInWithEmailAndPassword(
-            auth,
-            email,
-            password
-          );
-          const idToken = await getIdToken(user);
-          await createSession(idToken);
-          await fetchAppUser(user.uid, true);
-          break;
-        }
-        case 'oauth': {
-          if (options.provider === 'google') {
-            const provider = new GoogleAuthProvider();
-            const { user } = await signInWithPopup(auth, provider);
-            const idToken = await getIdToken(user);
-            await createSession(idToken);
-            await fetchAppUser(user.uid, true);
-          }
-          break;
-        }
-        default:
-          throw new Error('Unsupported sign-in method');
+      const currentGymId = user.gyms?.[0]?.gymId;
+      const userResult = await getUserByUid(user.uid, currentGymId);
+      if (userResult.success && userResult.activeGymDetails) {
+        const gymDetails: GymDetails = {
+          id: userResult.activeGymDetails.gymId,
+          gymName: userResult.activeGymDetails.gymName,
+          location: userResult.activeGymDetails.location,
+          contactNumber1: userResult.activeGymDetails.contactNumber1,
+          contactNumber2: userResult.activeGymDetails.contactNumber2,
+          email: userResult.activeGymDetails.email,
+          socialLinks: userResult.activeGymDetails.socialLinks,
+          gymIdentifier: userResult.activeGymDetails.gymIdentifier,
+          gymAdminId: userResult.activeGymDetails.gymAdminId,
+          status: String(userResult.activeGymDetails.status),
+        };
+        setGymDetails(gymDetails);
+        localStorage.setItem('gymDetails', encrypt(JSON.stringify(gymDetails)));
       }
     } catch (error) {
-      console.error('Failed to sign in:', error);
-      throw error;
+      console.error('Failed to fetch gym details:', error);
     }
   };
 
-  const logout = async () => {
+  const handleLogin = async (userName: string, password: string) => {
     try {
-      // Clear states first to prevent re-renders
-      setAppUser(null);
-      setGymDetails(null);
+      const result = await login({ userName, password });
 
-      // Clear localStorage
-      localStorage.removeItem('gymBranch');
-      localStorage.removeItem('appUser');
+      if (!result.success || !result.data) {
+        return { success: false, error: result.error || 'Login failed' };
+      }
 
-      // Sign out from Firebase (this will trigger onAuthStateChanged)
-      await signOut(auth);
+      const { accessToken, refreshToken, user: loginUser } = result.data;
 
-      // Clear session
-      await deleteSession();
+      if (!accessToken || !refreshToken || !loginUser?.uid) {
+        return { success: false, error: 'Invalid login response' };
+      }
+
+      // Store tokens in both localStorage and cookies
+      try {
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+
+        // Set cookies for middleware
+        document.cookie = `accessToken=${accessToken}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Strict`;
+        document.cookie = `refreshToken=${refreshToken}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Strict`;
+      } catch (storageError) {
+        console.error('Failed to store tokens:', storageError);
+        return { success: false, error: 'Failed to save session' };
+      }
+
+      // Fetch full user details
+      const userResult = await getUserByUid(loginUser.uid);
+
+      if (!userResult.success || !userResult.data) {
+        return { success: false, error: 'Failed to fetch user details' };
+      }
+
+      const fullUser: AppUser = {
+        ...userResult.data,
+        uid: loginUser.uid,
+        photoURL: loginUser.photoURL,
+      };
+
+      setUser(fullUser);
+
+      try {
+        localStorage.setItem('appUser', encrypt(JSON.stringify(fullUser)));
+
+        if (fullUser.gyms?.length > 0) {
+          localStorage.setItem('gymBranch', JSON.stringify(fullUser.gyms[0]));
+        }
+
+        if (userResult.activeGymDetails) {
+          const gymDetails: GymDetails = {
+            id: userResult.activeGymDetails.gymId,
+            gymName: userResult.activeGymDetails.gymName,
+            location: userResult.activeGymDetails.location,
+            contactNumber1: userResult.activeGymDetails.contactNumber1,
+            contactNumber2: userResult.activeGymDetails.contactNumber2,
+            email: userResult.activeGymDetails.email,
+            socialLinks: userResult.activeGymDetails.socialLinks,
+            gymIdentifier: userResult.activeGymDetails.gymIdentifier,
+            gymAdminId: userResult.activeGymDetails.gymAdminId,
+            status: String(userResult.activeGymDetails.status),
+          };
+          setGymDetails(gymDetails);
+          localStorage.setItem(
+            'gymDetails',
+            encrypt(JSON.stringify(gymDetails))
+          );
+        }
+      } catch (storageError) {
+        console.error('Failed to store user data:', storageError);
+      }
+
+      return { success: true };
     } catch (error) {
-      console.error('Logout error:', error);
-      throw error;
+      console.error('Login error:', error);
+      return { success: false, error: 'An unexpected error occurred' };
     }
   };
 
-  const refreshAppUser = async () => {
-    if (firebaseUser) {
-      await fetchAppUser(firebaseUser.uid, true);
+  const handleLogout = () => {
+    logoutApi();
+
+    // Clear cookies
+    document.cookie = 'accessToken=; path=/; max-age=0';
+    document.cookie = 'refreshToken=; path=/; max-age=0';
+
+    localStorage.removeItem('gymDetails');
+
+    setUser(null);
+    setGymDetails(null);
+    router.push('/auth/login');
+  };
+
+  const refreshUser = async () => {
+    if (user?.uid) {
+      const currentGymId = user.gyms?.[0]?.gymId;
+      const result = await getUserByUid(user.uid, currentGymId);
+      if (result.success && result.data) {
+        const updatedUser: AppUser = {
+          ...result.data,
+          uid: user.uid,
+          photoURL: user.photoURL,
+        };
+        setUser(updatedUser);
+        localStorage.setItem('appUser', encrypt(JSON.stringify(updatedUser)));
+
+        if (result.activeGymDetails) {
+          const gymDetails: GymDetails = {
+            id: result.activeGymDetails.gymId,
+            gymName: result.activeGymDetails.gymName,
+            location: result.activeGymDetails.location,
+            contactNumber1: result.activeGymDetails.contactNumber1,
+            contactNumber2: result.activeGymDetails.contactNumber2,
+            email: result.activeGymDetails.email,
+            socialLinks: result.activeGymDetails.socialLinks,
+            gymIdentifier: result.activeGymDetails.gymIdentifier,
+            gymAdminId: result.activeGymDetails.gymAdminId,
+            status: String(result.activeGymDetails.status),
+          };
+          setGymDetails(gymDetails);
+          localStorage.setItem(
+            'gymDetails',
+            encrypt(JSON.stringify(gymDetails))
+          );
+        }
+      }
     }
   };
 
   return (
     <AuthContext.Provider
       value={{
-        firebaseUser,
-        appUser,
+        user,
+        appUser: user,
         gymDetails,
-        isAuthLoading,
-        isAppUserLoading,
-        signIn,
-        logout,
-        fetchGymDetails: fetchGymDetailsInternal,
-        refreshAppUser,
+        isLoading,
+        isAuthLoading: isLoading,
+        isAppUserLoading: isLoading,
+        login: handleLogin,
+        logout: handleLogout,
+        refreshUser,
+        refreshGymDetails: fetchGymDetailsInternal,
       }}
     >
       {children}
@@ -262,11 +270,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
-// Custom hook to use the AuthContext
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useAuth must be used within AuthProvider');
   }
   return context;
 };

@@ -91,7 +91,7 @@ export function BusinessProfileTab() {
   const { gymBranch } = useGymBranch();
   const { showConfirm } = useAppDialog();
   const { updateGym, isUpdating } = useGymManagement();
-  const { data: gymDetails } = useGymDetails(gymBranch?.gymId || 0);
+  const { data: gymDetails } = useGymDetails();
   const { data: profilePictureData } = useGymProfilePicture(
     gymBranch?.gymId || 0
   );

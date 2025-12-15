@@ -35,7 +35,7 @@ export function NavUser() {
   const router = useRouter();
   const { logout } = useAuth();
   const { gymBranch } = useGymBranch();
-  const { data: gymDetails } = useGymDetails(gymBranch?.gymId || 0);
+  const { data: gymDetails } = useGymDetails();
   const { data: profilePictureData } = useGymProfilePicture(
     gymBranch?.gymId || 0
   );
@@ -54,15 +54,9 @@ export function NavUser() {
       cancelLabel: 'Cancel',
       onConfirm: () => {
         startTransition(() => {
-          logout()
-            .then(() => {
-              router.push('/auth/login');
-              toast.success('Logged out successfully!');
-            })
-            .catch((error) => {
-              toast.error('Failed to log out. Please try again.');
-              console.error('Logout error:', error);
-            });
+          logout();
+          router.push('/auth/login');
+          toast.success('Logged out successfully!');
         });
       },
     });
