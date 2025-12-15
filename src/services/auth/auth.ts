@@ -46,6 +46,7 @@ interface UserDetailsResponse {
       gymAdminId: number;
       status: number;
       gymIdentifier: string;
+      photoPath: string | null;
     }>;
   };
 }
@@ -93,12 +94,26 @@ export const getUserByUid = async (uid: string, currentGymId?: number) => {
           : [],
       },
       activeGymDetails: activeGym,
+      allClubs: response.data.clubs,
     };
   } catch (error) {
     console.error('Get user error:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get user',
+    };
+  }
+};
+
+export const switchClub = async (uid: string, gymId: number) => {
+  try {
+    await api.post('/User/clubSwitcher', { uid, gymId });
+    return { success: true };
+  } catch (error) {
+    console.error('Switch club error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to switch club',
     };
   }
 };

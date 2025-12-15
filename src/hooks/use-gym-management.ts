@@ -25,7 +25,7 @@ export function useGymProfilePicture(gymId: number) {
 export function useGymManagement() {
   const queryClient = useQueryClient();
 
-  const { refreshUser } = useAuth();
+  const { refreshUser, switchClub: switchClubAuth } = useAuth();
 
   const updateGymMutation = useMutation({
     mutationFn: ({ gymId, data }: { gymId: number; data: FormData }) =>
@@ -47,8 +47,17 @@ export function useGymManagement() {
     },
   });
 
+  const handleSwitchClub = async (gymId: number) => {
+    const result = await switchClubAuth(gymId);
+    if (result.success) {
+      await queryClient.invalidateQueries();
+    }
+    return result;
+  };
+
   return {
     updateGym: updateGymMutation.mutateAsync,
     isUpdating: updateGymMutation.isPending,
+    switchClub: handleSwitchClub,
   };
 }

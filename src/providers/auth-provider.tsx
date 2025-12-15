@@ -4,7 +4,12 @@ import { useRouter } from 'next/navigation';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 import { decrypt, encrypt } from '@/lib/crypto';
-import { getUserByUid, login, logout as logoutApi } from '@/services/auth/auth';
+import {
+  getUserByUid,
+  login,
+  logout as logoutApi,
+  switchClub as switchClubApi,
+} from '@/services/auth/auth';
 import { GymDetails } from '@/types/gym';
 
 interface AppUser {
@@ -14,10 +19,19 @@ interface AppUser {
   userRole: string;
   uid: string;
   photoURL?: string;
+  isMultiClub: boolean;
   gyms: Array<{
     gymId: number;
     gymName: string;
     gymLocation: string;
+  }>;
+  clubs: Array<{
+    gymId: number;
+    gymName: string;
+    location: string;
+    status: number;
+    gymIdentifier: string;
+    photoPath: string | null;
   }>;
 }
 
@@ -35,6 +49,7 @@ interface AuthContextType {
   logout: () => void;
   refreshUser: () => Promise<void>;
   refreshGymDetails: () => Promise<void>;
+  switchClub: (gymId: number) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -112,6 +127,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           gymIdentifier: userResult.activeGymDetails.gymIdentifier,
           gymAdminId: userResult.activeGymDetails.gymAdminId,
           status: String(userResult.activeGymDetails.status),
+          photoPath: userResult.activeGymDetails.photoPath,
         };
         setGymDetails(gymDetails);
         localStorage.setItem('gymDetails', encrypt(JSON.stringify(gymDetails)));
@@ -159,6 +175,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         ...userResult.data,
         uid: loginUser.uid,
         photoURL: loginUser.photoURL,
+        clubs: userResult.allClubs || [],
       };
 
       setUser(fullUser);
@@ -182,6 +199,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             gymIdentifier: userResult.activeGymDetails.gymIdentifier,
             gymAdminId: userResult.activeGymDetails.gymAdminId,
             status: String(userResult.activeGymDetails.status),
+            photoPath: userResult.activeGymDetails.photoPath,
           };
           setGymDetails(gymDetails);
           localStorage.setItem(
@@ -214,6 +232,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     router.push('/auth/login');
   };
 
+  const handleSwitchClub = async (gymId: number) => {
+    if (!user?.uid) {
+      return { success: false, error: 'User not logged in' };
+    }
+
+    try {
+      const result = await switchClubApi(user.uid, gymId);
+      if (result.success) {
+        await refreshUser();
+        return { success: true };
+      }
+      return { success: false, error: result.error };
+    } catch (error) {
+      console.error('Switch club error:', error);
+      return { success: false, error: 'Failed to switch club' };
+    }
+  };
+
   const refreshUser = async () => {
     if (user?.uid) {
       const currentGymId = user.gyms?.[0]?.gymId;
@@ -223,6 +259,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           ...result.data,
           uid: user.uid,
           photoURL: user.photoURL,
+          clubs: result.allClubs || [],
         };
         setUser(updatedUser);
         localStorage.setItem('appUser', encrypt(JSON.stringify(updatedUser)));
@@ -239,6 +276,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             gymIdentifier: result.activeGymDetails.gymIdentifier,
             gymAdminId: result.activeGymDetails.gymAdminId,
             status: String(result.activeGymDetails.status),
+            photoPath: result.activeGymDetails.photoPath,
           };
           setGymDetails(gymDetails);
           localStorage.setItem(
@@ -263,6 +301,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         logout: handleLogout,
         refreshUser,
         refreshGymDetails: fetchGymDetailsInternal,
+        switchClub: handleSwitchClub,
       }}
     >
       {children}
