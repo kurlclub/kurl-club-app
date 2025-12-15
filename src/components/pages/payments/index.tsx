@@ -2,11 +2,14 @@
 
 import { TabItem } from '@/components/shared/form/k-tabs';
 import { StudioLayout } from '@/components/shared/layout';
-import { useGymFormOptions } from '@/hooks/use-gymform-options';
 import { useTabState } from '@/hooks/use-tab-state';
-import { useGymBranch } from '@/providers/gym-branch-provider';
 
-import { HistoryTab, PaymentsTab } from './recurring';
+import {
+  CompletedTab,
+  CurrentDueTab,
+  HistoryTab,
+  OverdueTab,
+} from './recurring';
 
 const TABS: TabItem[] = [
   { id: 'current-due', label: 'Current Due' },
@@ -16,8 +19,6 @@ const TABS: TabItem[] = [
 ];
 
 export default function Payments() {
-  const { gymBranch } = useGymBranch();
-  const { formOptions } = useGymFormOptions(gymBranch?.gymId);
   const { activeTab, handleTabChange } = useTabState(TABS, 'current-due');
 
   return (
@@ -27,15 +28,9 @@ export default function Payments() {
       activeTab={activeTab}
       onTabChange={handleTabChange}
     >
-      {activeTab === 'current-due' && (
-        <PaymentsTab type="current-due" formOptions={formOptions} />
-      )}
-      {activeTab === 'overdue' && (
-        <PaymentsTab type="overdue" formOptions={formOptions} />
-      )}
-      {activeTab === 'completed' && (
-        <PaymentsTab type="completed" formOptions={formOptions} />
-      )}
+      {activeTab === 'current-due' && <CurrentDueTab />}
+      {activeTab === 'overdue' && <OverdueTab />}
+      {activeTab === 'completed' && <CompletedTab />}
       {activeTab === 'history' && <HistoryTab />}
     </StudioLayout>
   );

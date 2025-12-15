@@ -12,6 +12,12 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
@@ -77,6 +83,39 @@ export function NavMain({
           );
 
           if (hasSubItems) {
+            if (state === 'collapsed') {
+              return (
+                <SidebarMenuItem key={item.title}>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <SidebarMenuButton
+                        isActive={isCurrentPage || hasActiveSubItem}
+                        tooltip={item.title}
+                      >
+                        {item.icon && <item.icon />}
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      side="right"
+                      align="start"
+                      className="bg-secondary-blue-700 border-secondary-blue-400 text-white"
+                    >
+                      {item.items?.map((subItem) => (
+                        <DropdownMenuItem
+                          key={subItem.title}
+                          asChild
+                          className="shad-drop-item"
+                        >
+                          <Link href={subItem.url}>{subItem.title}</Link>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </SidebarMenuItem>
+              );
+            }
+
             return (
               <Collapsible
                 key={item.title}
@@ -88,7 +127,6 @@ export function NavMain({
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton
                       isActive={isCurrentPage || hasActiveSubItem}
-                      tooltip={state === 'collapsed' ? item.title : undefined}
                     >
                       {item.icon && <item.icon />}
                       <span>{item.title}</span>

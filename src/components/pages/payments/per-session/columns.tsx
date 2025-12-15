@@ -126,8 +126,8 @@ export const createSessionPaymentColumns = (
       return (
         <div className="min-w-20">
           <div className="text-white text-sm">
-            <span className="font-bold">{sessions.used}</span>
-            <span className="font-medium">/{sessions.total}</span>
+            <span className="font-bold">{sessions.used || 0}</span>
+            <span className="font-medium">/{sessions.total || 0}</span>
           </div>
           <div className="text-xs text-primary-blue-100">Used / Total</div>
         </div>
@@ -149,9 +149,9 @@ export const createSessionPaymentColumns = (
       return (
         <div className="min-w-[180px] pr-4">
           <div className="flex justify-between text-sm mb-1">
-            <span className="text-white">₹{paymentSummary.paid}</span>
+            <span className="text-white">₹{paymentSummary.paid || 0}</span>
             <span className="text-primary-blue-200">
-              ₹{paymentSummary.total}
+              ₹{paymentSummary.total || 0}
             </span>
           </div>
           <div className="w-full bg-primary-blue-300/30 rounded-full h-1.5 mb-1">
@@ -162,7 +162,7 @@ export const createSessionPaymentColumns = (
           </div>
           {paymentSummary.pending > 0 && (
             <div className="text-xs text-alert-red-300">
-              ₹{paymentSummary.pending} pending
+              ₹{paymentSummary.pending || 0} pending
             </div>
           )}
         </div>
@@ -173,12 +173,7 @@ export const createSessionPaymentColumns = (
     accessorKey: 'status',
     header: 'Status',
     cell: ({ row }) => {
-      const rawStatus = row.getValue<string>('status');
-      const status: FeeStatus = (
-        ['paid', 'unpaid', 'partially_paid'].includes(rawStatus)
-          ? rawStatus
-          : 'unpaid'
-      ) as FeeStatus; // TODO: Handle legacy status values
+      const status = row.getValue<FeeStatus>('status');
       return (
         <div className="min-w-24">
           <FeeStatusBadge status={status} />
@@ -197,14 +192,15 @@ export const createSessionPaymentColumns = (
 
       return (
         <div className="min-w-[120px]">
-          <div className="text-white text-sm">{packageName}</div>
+          <div className="text-white text-sm">{packageName || '-'}</div>
           <div className="text-xs text-primary-blue-100">
-            Per session • ₹{sessionFee}
+            Per session • ₹{sessionFee || 0}
           </div>
         </div>
       );
     },
   },
+
   {
     id: 'actions',
     header: 'Actions',

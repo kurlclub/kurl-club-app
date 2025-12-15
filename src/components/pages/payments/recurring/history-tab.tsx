@@ -209,15 +209,20 @@ export function HistoryTab() {
     status?: string[];
   }>({});
 
+  // Fetch filtered data
   const { data, isLoading } = usePaymentHistory(gymId, {
     search: debouncedSearch || undefined,
     paymentMethod: selectedFilters.paymentMethod?.join(',') || undefined,
     status: selectedFilters.status?.join(',') || undefined,
   });
 
+  // Fetch unfiltered data for filter options
+  const { data: filtersData } = usePaymentHistory(gymId);
+
   const paymentHistory = data?.data || [];
   const summary = data?.summary;
-  const availableFilters = data?.availableFilters;
+  const availableFilters =
+    filtersData?.availableFilters || data?.availableFilters;
 
   const dynamicFilters: FilterConfig[] = [
     {
