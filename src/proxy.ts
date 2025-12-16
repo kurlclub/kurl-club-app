@@ -2,25 +2,22 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function proxy(request: NextRequest) {
-  const authToken = request.cookies.get('idToken')?.value;
+  const accessToken = request.cookies.get('accessToken')?.value;
 
   // List of public paths that don't require authentication
-  const publicPaths = [
-    '/auth/register',
-    '/auth/login',
-    '/auth/reset',
-    '/auth/activate',
-  ];
+  const publicPaths = ['/auth/login', '/auth/reset'];
 
-  const isPublicPath = publicPaths.includes(request.nextUrl.pathname);
+  const isPublicPath = publicPaths.some((path) =>
+    request.nextUrl.pathname.startsWith(path)
+  );
 
   // If there's no auth token and the path is not public, redirect to login
-  if (!authToken && !isPublicPath) {
+  if (!accessToken && !isPublicPath) {
     return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 
-  // If there is an auth token and the user is on a public path, redirect to home
-  if (authToken && isPublicPath) {
+  // If there is an auth token and the user is on a public path, redirect to dashboard
+  if (accessToken && isPublicPath) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 

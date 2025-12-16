@@ -1,207 +1,15 @@
 import { z } from 'zod/v4';
 
-// Register Schema
-export const RegisterSchema = z
-  .object({
-    email: z.email('Invalid email address'),
-    password: z
-      .string()
-      .min(8, {
-        error: 'Password must be at least 8 characters',
-      })
-      .max(20, {
-        error: 'Password must not exceed 15 characters',
-      })
-      .superRefine((value, ctx) => {
-        if (!/[A-Z]/.test(value)) {
-          ctx.addIssue({
-            code: 'custom',
-            message: 'Password should have at least one uppercase letter',
-          });
-        }
-        if (!/[a-z]/.test(value)) {
-          ctx.addIssue({
-            code: 'custom',
-            message: 'Password should have at least one lowercase letter',
-          });
-        }
-        if (!/[0-9]/.test(value)) {
-          ctx.addIssue({
-            code: 'custom',
-            message: 'Password should have at least one numeric digit',
-          });
-        }
-        if (!/[!@#$%^&*(),.?":{}|<>]/.test(value)) {
-          ctx.addIssue({
-            code: 'custom',
-            message: 'Password should have at least one special character',
-          });
-        }
-      }),
-    confirmPassword: z.string().min(1, {
-      error: 'Confirm password is required',
-    }),
-    privacyConsent: z.boolean().refine((val) => val === true, {
-      error: 'You must agree to the terms & conditions',
-    }),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    path: ['confirmPassword'],
-    error: 'Passwords do not match',
-  });
-
-// Login Schema
-export const LoginSchema = z.object({
-  email: z.email('Invalid email address').min(1, 'Email is required'),
-  password: z.string().min(1, {
-    error: 'Password is required',
-  }),
+export const loginSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(1, 'Password is required'),
 });
-
-// Reset Schema
-export const ResetSchema = z.object({
-  email: z.email('Invalid email address'),
-});
-
-// New Password Schema
-export const UpdatePasswordSchema = z
-  .object({
-    newPassword: z
-      .string()
-      .min(8, {
-        error: 'Password must be at least 8 characters long',
-      })
-      .max(20, {
-        error: 'Password must not exceed 20 characters',
-      })
-      .superRefine((value, ctx) => {
-        if (!/[A-Z]/.test(value)) {
-          ctx.addIssue({
-            code: 'custom',
-            message: 'Password should have at least one uppercase letter',
-          });
-        }
-        if (!/[a-z]/.test(value)) {
-          ctx.addIssue({
-            code: 'custom',
-            message: 'Password should have at least one lowercase letter',
-          });
-        }
-        if (!/[0-9]/.test(value)) {
-          ctx.addIssue({
-            code: 'custom',
-            message: 'Password should have at least one numeric digit',
-          });
-        }
-        if (!/[!@#$%^&*(),.?":{}|<>]/.test(value)) {
-          ctx.addIssue({
-            code: 'custom',
-            message: 'Password should have at least one special character',
-          });
-        }
-      }),
-    confirmPassword: z.string().min(1, {
-      error: 'Confirm password is required',
-    }),
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    path: ['confirmPassword'],
-    error: 'Passwords do not match',
-  });
 
 export const DatePickerSchema = z.object({
   dateOfBirth: z.date({
     error: (issue) =>
       issue.input === undefined ? undefined : 'Invalid date format',
   }),
-});
-
-export const AddForm = z.object({
-  memberName: z
-    .string()
-    .min(1, 'Member name is required')
-    .max(100, 'Member name should not exceed 50 characters')
-    .trim(),
-  profilePicture: z
-    .custom<File | null>((value) => value instanceof File || value === null, {
-      error: 'Profile picture must be a file.',
-    })
-    .optional(),
-  email: z
-    .email('Enter a valid email address')
-    .min(1, 'Email address is required')
-    .max(150, 'Email address should not exceed 150 characters'),
-  primaryPhone: z
-    .string()
-    .regex(
-      /^\+?[1-9]\d{1,14}$/,
-      'Enter a valid primary phone number with country code'
-    )
-    .min(1, 'Primary phone number is required'),
-  dob: z.string().min(1, 'DOB is required'),
-  gender: z.string().min(1, 'Gender is required'),
-  package: z.string().min(1, 'Package is required'),
-  height: z.string().min(1, 'Height is required'),
-  weight: z.string().min(1, 'Weight is required'),
-  feeStatus: z.string().min(1, 'FeeStatus is required'),
-  amountPaid: z.string().min(1, 'AmountPaid is required'),
-  doj: z.string().min(1, 'DOJ is required'),
-  workoutPlan: z.string().min(1, 'WorkoutPlan is required'),
-  personalTrainer: z.string().min(1, 'peronalTrainer is required'),
-  bloodgroup: z.string().min(1, 'BloodGroup is required'),
-  addressLine1: z
-    .string()
-    .min(1, 'Address Line 1 is required')
-    .max(200, 'Address Line 1 should not exceed 200 characters')
-    .trim(),
-  addressLine2: z
-    .string()
-    .max(200, 'Address Line 2 should not exceed 200 characters')
-    .optional(),
-});
-
-export const AddUserForm = z.object({
-  memberName: z
-    .string()
-    .min(1, 'Member name is required')
-    .max(100, 'Member name should not exceed 50 characters')
-    .trim(),
-  profilePicture: z
-    .custom<File | null>((value) => value instanceof File || value === null, {
-      error: 'Profile picture must be a file.',
-    })
-    .optional(),
-  email: z
-    .email('Enter a valid email address')
-    .min(1, 'Email address is required')
-    .max(150, 'Email address should not exceed 150 characters'),
-  primaryPhone: z
-    .string()
-    .regex(
-      /^\+?[1-9]\d{1,14}$/,
-      'Enter a valid primary phone number with country code'
-    )
-    .min(1, 'Primary phone number is required'),
-  designation: z.string().min(1, 'Designation is required'),
-  dob: z.string().min(1, 'DOB is required'),
-  gender: z.string().min(1, 'Gender is required'),
-  doj: z.string().min(1, 'DOJ is required'),
-  feeStatus: z.string().min(1, 'FeeStatus is required'),
-  amountPaid: z.string().min(1, 'AmountPaid is required'),
-  addressLine1: z
-    .string()
-    .min(1, 'Address Line 1 is required')
-    .max(200, 'Address Line 1 should not exceed 200 characters')
-    .trim(),
-  addressLine2: z
-    .string()
-    .max(200, 'Address Line 2 should not exceed 200 characters')
-    .optional(),
-});
-
-export const EditDetailsForm = z.object({
-  packageType: z.string().min(1, 'PackageType is required'),
-  paidAmount: z.string().min(1, 'AmountPaid is required'),
 });
 
 export const createMemberSchema = z.object({
@@ -469,3 +277,50 @@ export const membershipPlanSchema = z.object({
       { message: 'Session rate must be greater than 0' }
     ),
 });
+
+export const forgotPasswordEmailSchema = z.object({
+  email: z.string().min(1, 'Email is required').email('Invalid email address'),
+});
+
+export const verifyOtpSchema = z.object({
+  otp: z.string().min(6, 'OTP must be 6 digits').max(6, 'OTP must be 6 digits'),
+});
+
+export const resetPasswordSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8, 'Password must be at least 8 characters')
+      .max(20, 'Password must not exceed 20 characters')
+      .superRefine((value, ctx) => {
+        if (!/[A-Z]/.test(value)) {
+          ctx.addIssue({
+            code: 'custom',
+            message: 'Password must contain at least one uppercase letter',
+          });
+        }
+        if (!/[a-z]/.test(value)) {
+          ctx.addIssue({
+            code: 'custom',
+            message: 'Password must contain at least one lowercase letter',
+          });
+        }
+        if (!/[0-9]/.test(value)) {
+          ctx.addIssue({
+            code: 'custom',
+            message: 'Password must contain at least one number',
+          });
+        }
+        if (!/[!@#$%^&*(),.?":{}|<>]/.test(value)) {
+          ctx.addIssue({
+            code: 'custom',
+            message: 'Password must contain at least one special character',
+          });
+        }
+      }),
+    confirmPassword: z.string().min(1, 'Please confirm your password'),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  });

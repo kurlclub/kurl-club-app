@@ -7,10 +7,10 @@ import { CommandPalette, QuickActionsButton } from './command-palette';
 import { NotificationBell } from './notification-bell';
 
 export function AppHeader() {
-  const { appUser } = useAuth();
+  const { user } = useAuth();
   const { isMobile } = useSidebar();
 
-  const userName = appUser?.userName || appUser?.userEmail || 'User';
+  const userName = user?.userName || user?.userEmail || 'User';
 
   // TODO: Mock notification count - replace with actual data
   const notificationCount = 3;
