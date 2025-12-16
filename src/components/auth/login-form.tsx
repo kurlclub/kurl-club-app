@@ -17,11 +17,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { useAuth } from '@/providers/auth-provider';
-
-const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(1, 'Password is required'),
-});
+import { loginSchema } from '@/schemas';
 
 type LoginFormData = z.infer<typeof loginSchema>;
 

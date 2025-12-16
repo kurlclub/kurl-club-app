@@ -136,34 +136,33 @@ export const logout = () => {
   return { success: true };
 };
 
-// TODO: Implement when backend API is ready
 export const forgotPassword = async (email: string) => {
-  try {
-    // const response = await api.post('/Auth/forgot-password', { email }, { skipAuth: true });
-    // return { success: true, message: response.message };
-    return { success: true, message: 'Password reset email sent' };
-  } catch (error) {
-    console.error('Forgot password error:', error);
-    return {
-      success: false,
-      error:
-        error instanceof Error ? error.message : 'Failed to send reset email',
-    };
-  }
+  const response = await api.post(
+    '/Auth/forgot-password',
+    { email },
+    { skipAuth: true }
+  );
+  return response;
 };
 
-// TODO: Implement when backend API is ready
-export const resetPassword = async (token: string, newPassword: string) => {
-  try {
-    // const response = await api.post('/Auth/reset-password', { token, newPassword }, { skipAuth: true });
-    // return { success: true, message: response.message };
-    return { success: true, message: 'Password reset successful' };
-  } catch (error) {
-    console.error('Reset password error:', error);
-    return {
-      success: false,
-      error:
-        error instanceof Error ? error.message : 'Failed to reset password',
-    };
-  }
+export const verifyResetOtp = async (email: string, otp: string) => {
+  const response = await api.post(
+    '/Auth/verify-reset-otp',
+    { email, otp },
+    { skipAuth: true }
+  );
+  return response;
+};
+
+export const resetPassword = async (
+  email: string,
+  otp: string,
+  newPassword: string
+) => {
+  const response = await api.post(
+    '/Auth/reset-password',
+    { email, otp, newPassword },
+    { skipAuth: true }
+  );
+  return response;
 };
