@@ -37,11 +37,8 @@ interface AppUser {
 
 interface AuthContextType {
   user: AppUser | null;
-  appUser: AppUser | null;
   gymDetails: GymDetails | null;
   isLoading: boolean;
-  isAuthLoading: boolean;
-  isAppUserLoading: boolean;
   login: (
     userName: string,
     password: string
@@ -292,11 +289,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     <AuthContext.Provider
       value={{
         user,
-        appUser: user,
         gymDetails,
         isLoading,
-        isAuthLoading: isLoading,
-        isAppUserLoading: isLoading,
         login: handleLogin,
         logout: handleLogout,
         refreshUser,

@@ -288,7 +288,36 @@ export const verifyOtpSchema = z.object({
 
 export const resetPasswordSchema = z
   .object({
-    password: z.string().min(8, 'Password must be at least 8 characters'),
+    password: z
+      .string()
+      .min(8, 'Password must be at least 8 characters')
+      .max(20, 'Password must not exceed 20 characters')
+      .superRefine((value, ctx) => {
+        if (!/[A-Z]/.test(value)) {
+          ctx.addIssue({
+            code: 'custom',
+            message: 'Password must contain at least one uppercase letter',
+          });
+        }
+        if (!/[a-z]/.test(value)) {
+          ctx.addIssue({
+            code: 'custom',
+            message: 'Password must contain at least one lowercase letter',
+          });
+        }
+        if (!/[0-9]/.test(value)) {
+          ctx.addIssue({
+            code: 'custom',
+            message: 'Password must contain at least one number',
+          });
+        }
+        if (!/[!@#$%^&*(),.?":{}|<>]/.test(value)) {
+          ctx.addIssue({
+            code: 'custom',
+            message: 'Password must contain at least one special character',
+          });
+        }
+      }),
     confirmPassword: z.string().min(1, 'Please confirm your password'),
   })
   .refine((data) => data.password === data.confirmPassword, {

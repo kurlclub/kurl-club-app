@@ -10,8 +10,8 @@ import {
 export function useForgotPassword() {
   return useMutation({
     mutationFn: forgotPassword,
-    onError: () => {
-      toast.error('Failed to send OTP. Please try again.');
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to send OTP. Please try again.');
     },
   });
 }
@@ -20,8 +20,8 @@ export function useVerifyResetOtp() {
   return useMutation({
     mutationFn: ({ email, otp }: { email: string; otp: string }) =>
       verifyResetOtp(email, otp),
-    onError: () => {
-      toast.error('Invalid OTP. Please try again.');
+    onError: (error: Error) => {
+      toast.error(error.message || 'Invalid OTP. Please try again.');
     },
   });
 }
@@ -37,8 +37,10 @@ export function useResetPassword() {
       otp: string;
       newPassword: string;
     }) => resetPassword(email, otp, newPassword),
-    onError: () => {
-      toast.error('Failed to reset password. Please try again.');
+    onError: (error: Error) => {
+      toast.error(
+        error.message || 'Failed to reset password. Please try again.'
+      );
     },
   });
 }

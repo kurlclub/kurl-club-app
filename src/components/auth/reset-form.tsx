@@ -47,6 +47,7 @@ export function ResetForm() {
   const [step, setStep] = useState<Step>('email');
   const [savedEmail, setSavedEmail] = useState('');
   const [savedOtp, setSavedOtp] = useState('');
+  const [canResend, setCanResend] = useState(true);
 
   const emailForm = useForm<EmailFormData>({
     resolver: zodResolver(forgotPasswordEmailSchema),
@@ -73,6 +74,8 @@ export function ResetForm() {
       onSuccess: () => {
         toast.success('OTP sent to your email!');
         setStep('otp');
+        setCanResend(false);
+        setTimeout(() => setCanResend(true), 60000); // 60 seconds cooldown
       },
     });
   };
@@ -179,11 +182,25 @@ export function ResetForm() {
               <Button
                 type="button"
                 variant="link"
-                onClick={() => emailForm.handleSubmit(onEmailSubmit)()}
-                disabled={sendOtpMutation.isPending}
-                className="p-0 h-auto font-normal text-primary-green-100"
+                onClick={() => {
+                  if (savedEmail) {
+                    sendOtpMutation.mutate(savedEmail, {
+                      onSuccess: () => {
+                        toast.success('OTP resent!');
+                        setCanResend(false);
+                        setTimeout(() => setCanResend(true), 60000);
+                      },
+                    });
+                  }
+                }}
+                disabled={sendOtpMutation.isPending || !canResend}
+                className="p-0 h-auto font-normal text-primary-green-100 disabled:opacity-50"
               >
-                {sendOtpMutation.isPending ? 'Sending...' : 'Resend'}
+                {sendOtpMutation.isPending
+                  ? 'Sending...'
+                  : !canResend
+                    ? 'Wait 60s'
+                    : 'Resend'}
               </Button>
             </p>
           </form>
