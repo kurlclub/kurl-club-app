@@ -91,10 +91,6 @@ export function BusinessProfileTab() {
 
   const profilePictureUrl = gymDetails?.photoPath || null;
 
-  console.log('Business Profile - gymDetails:', gymDetails);
-  console.log('Business Profile - photoPath:', gymDetails?.photoPath);
-  console.log('Business Profile - profilePictureUrl:', profilePictureUrl);
-
   const form = useForm<BusinessProfile>({
     resolver: zodResolver(GymDataDetailsSchema),
     defaultValues: DEFAULT_PROFILE,

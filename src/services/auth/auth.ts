@@ -97,7 +97,6 @@ export const getUserByUid = async (uid: string, currentGymId?: number) => {
       allClubs: response.data.clubs,
     };
   } catch (error) {
-    console.error('Get user error:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get user',

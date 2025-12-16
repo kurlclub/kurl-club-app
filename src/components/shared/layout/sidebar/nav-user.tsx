@@ -34,8 +34,6 @@ export function NavUser() {
 
   const profilePictureUrl = gymDetails?.photoPath || null;
 
-  console.log('NavUser - gymDetails:', gymDetails);
-  console.log('NavUser - photoPath:', gymDetails?.photoPath);
   const [isPending, startTransition] = useTransition();
   const { showConfirm } = useAppDialog();
   const { state } = useSidebar();

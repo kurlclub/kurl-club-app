@@ -23,8 +23,9 @@ export interface DashboardData {
     daysSinceLastCheckIn: number;
   }>;
   attendanceStats: Array<{
+    date: string;
     day: string;
-    count: number;
+    count: number | null;
   }>;
   outstandingPayments: OutstandingPayments[];
 }
