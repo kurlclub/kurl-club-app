@@ -16,7 +16,7 @@ interface AppLayoutProps {
 
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const pathname = usePathname();
-  const { isAuthLoading, appUser } = useAuth();
+  const { isLoading, user } = useAuth();
 
   const hideNavbarRoutes = [
     '/auth/login',
@@ -27,8 +27,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   const isAuthRoute = hideNavbarRoutes.includes(pathname);
 
-  // Show loading only if we have no cached data and Firebase is still loading
-  if (isAuthLoading && !appUser && !isAuthRoute) {
+  // Show loading only if we have no cached data and still loading
+  if (isLoading && !user && !isAuthRoute) {
     return <Loading />;
   }
 

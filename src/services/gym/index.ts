@@ -1,10 +1,4 @@
 import { api } from '@/lib/api';
-import { GymDetails, GymResponse } from '@/types/gym';
-
-export const fetchGymById = async (gymId: number): Promise<GymDetails> => {
-  const response = await api.get<GymResponse>(`/Gym/${gymId}`);
-  return response.data;
-};
 
 export const updateGym = async (gymId: number, data: FormData) => {
   await api.put(`/Gym/${gymId}`, data);

@@ -24,7 +24,7 @@ import {
 } from '../table';
 
 export default function AttendanceRecords() {
-  const { appUser } = useAuth();
+  const { user } = useAuth();
   const { gymBranch } = useGymBranch();
   const { data: members = [] } = useAllGymMembers(gymBranch?.gymId || 0);
   const { data: attendanceResponse } = useAttendanceRecords(gymBranch?.gymId);
@@ -54,13 +54,13 @@ export default function AttendanceRecords() {
     name: string;
     identifier: string;
   }) => {
-    if (!gymBranch?.gymId || !appUser?.userId) return;
+    if (!gymBranch?.gymId || !user?.userId) return;
 
     try {
       await checkInMutation.mutateAsync({
         memberId: member.id,
         gymId: gymBranch.gymId,
-        recordedBy: appUser.userId,
+        recordedBy: user.userId,
       });
 
       setConfirmDialog({
@@ -80,13 +80,13 @@ export default function AttendanceRecords() {
     name: string;
     identifier: string;
   }) => {
-    if (!gymBranch?.gymId || !appUser?.userId) return;
+    if (!gymBranch?.gymId || !user?.userId) return;
 
     try {
       await checkOutMutation.mutateAsync({
         memberId: member.id,
         gymId: gymBranch.gymId,
-        recordedBy: appUser.userId,
+        recordedBy: user.userId,
       });
 
       setConfirmDialog({
@@ -102,7 +102,7 @@ export default function AttendanceRecords() {
   };
 
   const handleQuickCheckOut = async (memberId: number) => {
-    if (!gymBranch?.gymId || !appUser?.userId) return;
+    if (!gymBranch?.gymId || !user?.userId) return;
 
     const attendanceRecord = attendanceRecords.find(
       (r) => r.memberId === memberId
@@ -116,7 +116,7 @@ export default function AttendanceRecords() {
       await checkOutMutation.mutateAsync({
         memberId: member.memberId,
         gymId: gymBranch.gymId,
-        recordedBy: appUser.userId,
+        recordedBy: user.userId,
       });
 
       setConfirmDialog({

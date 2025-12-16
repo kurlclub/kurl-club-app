@@ -19,7 +19,7 @@ import { dashboardLoadingStates } from '../../shared/loaders';
 import { Form } from '../../ui/form';
 
 function Dashboard() {
-  const { isAppUserLoading } = useAuth();
+  const { isLoading } = useAuth();
 
   const form = useForm<z.infer<typeof DatePickerSchema>>({
     resolver: zodResolver(DatePickerSchema),
@@ -28,11 +28,11 @@ function Dashboard() {
     },
   });
 
-  if (isAppUserLoading) {
+  if (isLoading) {
     return (
       <MultiStepLoader
         loadingStates={dashboardLoadingStates}
-        loading={isAppUserLoading}
+        loading={isLoading}
         duration={2500}
         loop={false}
       />

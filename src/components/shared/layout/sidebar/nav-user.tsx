@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
 
-import { LogOut, User } from 'lucide-react';
+import { Check, LogOut, User } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -23,24 +23,19 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { useAppDialog } from '@/hooks/use-app-dialog';
-import {
-  useGymDetails,
-  useGymProfilePicture,
-} from '@/hooks/use-gym-management';
+import { useGymDetails } from '@/hooks/use-gym-management';
 import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
 import { useAuth } from '@/providers/auth-provider';
-import { useGymBranch } from '@/providers/gym-branch-provider';
 
 export function NavUser() {
   const router = useRouter();
-  const { logout } = useAuth();
-  const { gymBranch } = useGymBranch();
-  const { data: gymDetails } = useGymDetails(gymBranch?.gymId || 0);
-  const { data: profilePictureData } = useGymProfilePicture(
-    gymBranch?.gymId || 0
-  );
+  const { logout, user, switchClub } = useAuth();
+  const { data: gymDetails } = useGymDetails();
 
-  const profilePictureUrl = profilePictureData?.data || null;
+  const profilePictureUrl = gymDetails?.photoPath || null;
+
+  console.log('NavUser - gymDetails:', gymDetails);
+  console.log('NavUser - photoPath:', gymDetails?.photoPath);
   const [isPending, startTransition] = useTransition();
   const { showConfirm } = useAppDialog();
   const { state } = useSidebar();
@@ -54,15 +49,9 @@ export function NavUser() {
       cancelLabel: 'Cancel',
       onConfirm: () => {
         startTransition(() => {
-          logout()
-            .then(() => {
-              router.push('/auth/login');
-              toast.success('Logged out successfully!');
-            })
-            .catch((error) => {
-              toast.error('Failed to log out. Please try again.');
-              console.error('Logout error:', error);
-            });
+          logout();
+          router.push('/auth/login');
+          toast.success('Logged out successfully!');
         });
       },
     });
@@ -140,6 +129,62 @@ export function NavUser() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-white/10 mx-2 my-2" />
+              {user?.isMultiClub && user.clubs && user.clubs.length > 1 && (
+                <>
+                  <div className="px-2 py-2">
+                    <p className="text-xs text-primary-green-200/70 font-semibold mb-2 px-2">
+                      SWITCH CLUB
+                    </p>
+                    <div className="space-y-1">
+                      {user.clubs.map((club) => {
+                        const isActive = club.status === 1;
+                        const clubInitials = getInitials(club.gymName);
+                        const clubColor = getAvatarColor(club.gymName);
+
+                        return (
+                          <DropdownMenuItem
+                            key={club.gymId}
+                            onClick={() => !isActive && switchClub(club.gymId)}
+                            disabled={isActive}
+                            className={`cursor-pointer rounded-lg px-2 py-2.5 transition-all duration-200 ${
+                              isActive
+                                ? 'bg-primary-green-500/20 border border-primary-green-500/30'
+                                : 'hover:bg-white/5 border border-transparent'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3 w-full">
+                              <Avatar className="h-8 w-8 rounded-md">
+                                <AvatarImage
+                                  src={club.photoPath || undefined}
+                                  alt={club.gymName}
+                                />
+                                <AvatarFallback
+                                  className="rounded-md font-bold text-xs"
+                                  style={clubColor}
+                                >
+                                  {clubInitials}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-white truncate">
+                                  {club.gymName}
+                                </p>
+                                <p className="text-xs text-white/50 truncate">
+                                  {club.location}
+                                </p>
+                              </div>
+                              {isActive && (
+                                <Check className="h-4 w-4 text-primary-green-500 shrink-0" />
+                              )}
+                            </div>
+                          </DropdownMenuItem>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <DropdownMenuSeparator className="bg-white/10 mx-2 my-2" />
+                </>
+              )}
               <div className="p-2 space-y-1">
                 <DropdownMenuItem
                   onClick={() =>
@@ -171,39 +216,134 @@ export function NavUser() {
       <SidebarMenuItem>
         <div className="relative overflow-hidden rounded-xl bg-linear-to-br from-secondary-blue-200/10 via-secondary-blue-600/20 to-secondary-blue-600/5 border border-secondary-blue-200/20 backdrop-blur-sm shadow-md">
           <div className="flex flex-col gap-4 p-4">
-            {/* User Info Section */}
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <Avatar className="h-12 w-12 rounded-md">
-                  <AvatarImage
-                    src={profilePictureUrl || undefined}
-                    alt={currentGym?.gymName || 'User'}
-                  />
-                  <AvatarFallback
-                    className="rounded-md font-bold text-sm bg-linear-to-br from-primary-green-500/20 to-primary-green-600/10 text-primary-green-100"
-                    style={avatarStyle}
-                  >
-                    {currentGym ? getInitials(currentGym.gymName) : 'KC'}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-neutral-green-400 rounded-full border-2 border-secondary-blue-500 shadow-md" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="truncate font-bold text-sm text-white mb-1">
-                  {currentGym?.gymName || 'No Gym Selected'}
-                </div>
-                <div className="truncate text-xs text-primary-green-200 font-medium">
-                  {currentGym
-                    ? `ID: ${currentGym.gymIdentifier}`
-                    : 'Select a gym'}
-                </div>
-                {currentGym?.location && (
-                  <div className="truncate text-xs text-white/60 mt-0.5">
-                    {currentGym.location}
+            {/* User Info Section with Club Switcher */}
+            {user?.isMultiClub && user.clubs && user.clubs.length > 1 ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-4 w-full hover:bg-white/5 rounded-lg transition-all duration-200 group">
+                    <div className="relative shrink-0">
+                      <Avatar className="h-12 w-12 rounded-lg">
+                        <AvatarImage
+                          src={profilePictureUrl || undefined}
+                          alt={currentGym?.gymName || 'User'}
+                        />
+                        <AvatarFallback
+                          className="rounded-lg font-semibold text-sm"
+                          style={avatarStyle}
+                        >
+                          {currentGym ? getInitials(currentGym.gymName) : 'KC'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-secondary-blue-500" />
+                    </div>
+                    <div className="flex-1 min-w-0 text-left">
+                      <div className="truncate font-bold text-sm text-white mb-1 group-hover:text-primary-green-200 transition-colors">
+                        {currentGym?.gymName || 'No Gym Selected'}
+                      </div>
+                      <div className="truncate text-xs text-primary-green-50 font-medium">
+                        {currentGym
+                          ? `ID: ${currentGym.gymIdentifier}`
+                          : 'Select a gym'}
+                      </div>
+                      {currentGym?.location && (
+                        <div className="truncate text-xs text-white/60 mt-0.5">
+                          {currentGym.location}
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="start"
+                  className="w-[calc(100%-2rem)] bg-secondary-blue-500/95 backdrop-blur-xl border border-primary-green-500/20 shadow-2xl rounded-md p-2"
+                >
+                  <div className="px-2 py-1 mb-2">
+                    <p className="text-xs text-primary-green-200/70 font-semibold">
+                      SWITCH CLUB
+                    </p>
                   </div>
-                )}
+                  <div className="space-y-1">
+                    {user.clubs.map((club) => {
+                      const isActive = club.status === 1;
+                      const clubInitials = getInitials(club.gymName);
+                      const clubColor = getAvatarColor(club.gymName);
+
+                      return (
+                        <DropdownMenuItem
+                          key={club.gymId}
+                          onClick={() => !isActive && switchClub(club.gymId)}
+                          disabled={isActive}
+                          className={`cursor-pointer rounded-lg px-2 py-2.5 transition-all duration-200 ${
+                            isActive
+                              ? 'bg-primary-green-500/20 border border-primary-green-500/30'
+                              : 'hover:bg-white/5 border border-transparent'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3 w-full">
+                            <Avatar className="h-8 w-8 rounded-md">
+                              <AvatarImage
+                                src={club.photoPath || undefined}
+                                alt={club.gymName}
+                              />
+                              <AvatarFallback
+                                className="rounded-md font-bold text-xs"
+                                style={clubColor}
+                              >
+                                {clubInitials}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-white truncate">
+                                {club.gymName}
+                              </p>
+                              <p className="text-xs text-white/50 truncate">
+                                {club.location}
+                              </p>
+                            </div>
+                            {isActive ? (
+                              <Check className="h-4 w-4 text-primary-green-500 shrink-0" />
+                            ) : null}
+                          </div>
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <Avatar className="h-12 w-12 rounded-md">
+                    <AvatarImage
+                      src={profilePictureUrl || undefined}
+                      alt={currentGym?.gymName || 'User'}
+                    />
+                    <AvatarFallback
+                      className="rounded-md font-bold text-sm bg-linear-to-br from-primary-green-500/20 to-primary-green-600/10 text-primary-green-100"
+                      style={avatarStyle}
+                    >
+                      {currentGym ? getInitials(currentGym.gymName) : 'KC'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-neutral-green-400 rounded-full border-2 border-secondary-blue-500 shadow-md" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="truncate font-bold text-sm text-white mb-1">
+                    {currentGym?.gymName || 'No Gym Selected'}
+                  </div>
+                  <div className="truncate text-xs text-primary-green-200 font-medium">
+                    {currentGym
+                      ? `ID: ${currentGym.gymIdentifier}`
+                      : 'Select a gym'}
+                  </div>
+                  {currentGym?.location && (
+                    <div className="truncate text-xs text-white/60 mt-0.5">
+                      {currentGym.location}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Action Buttons */}
             <div className="flex gap-2">
