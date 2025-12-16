@@ -33,7 +33,7 @@ export const GymBranchProvider: React.FC<{ children: React.ReactNode }> = ({
     gymName: string;
     gymLocation: string;
   } | null>(null);
-  const { appUser } = useAuth();
+  const { user } = useAuth();
 
   const handleSetGymBranch = (gymBranch: {
     gymId: number;
@@ -59,22 +59,22 @@ export const GymBranchProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Sync with auth provider
   useEffect(() => {
-    if (appUser?.gyms && appUser.gyms.length > 0) {
+    if (user?.gyms && user.gyms.length > 0) {
       const gymData = {
-        gymId: appUser.gyms[0].gymId,
-        gymName: appUser.gyms[0].gymName,
-        gymLocation: appUser.gyms[0].gymLocation,
+        gymId: user.gyms[0].gymId,
+        gymName: user.gyms[0].gymName,
+        gymLocation: user.gyms[0].gymLocation,
       };
       setGymBranch(gymData);
       localStorage.setItem('gymBranch', JSON.stringify(gymData));
       return;
     }
 
-    if (appUser === null) {
+    if (user === null) {
       setGymBranch(null);
       localStorage.removeItem('gymBranch');
     }
-  }, [appUser]);
+  }, [user]);
 
   // Initial load from localStorage
   useEffect(() => {

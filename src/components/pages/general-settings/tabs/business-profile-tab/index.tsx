@@ -30,12 +30,7 @@ import {
 } from '@/components/ui/card';
 import { FormControl } from '@/components/ui/form';
 import { useAppDialog } from '@/hooks/use-app-dialog';
-import {
-  useGymDetails,
-  useGymManagement,
-  useGymProfilePicture,
-} from '@/hooks/use-gym-management';
-import { useGymBranch } from '@/providers/gym-branch-provider';
+import { useGymDetails, useGymManagement } from '@/hooks/use-gym-management';
 import { GymDataDetailsSchema } from '@/schemas';
 
 import RegionalSettings from './regional-settings';
@@ -88,22 +83,17 @@ const createFormData = (apiData: Record<string, unknown>) => {
 };
 
 export function BusinessProfileTab() {
-  const { gymBranch } = useGymBranch();
   const { showConfirm } = useAppDialog();
   const { updateGym, isUpdating } = useGymManagement();
-  const { data: gymDetails } = useGymDetails(gymBranch?.gymId || 0);
-  const { data: profilePictureData } = useGymProfilePicture(
-    gymBranch?.gymId || 0
-  );
+  const { data: gymDetails } = useGymDetails();
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
   const [originalSocialLinks, setOriginalSocialLinks] = useState<string[]>([]);
 
-  const profilePictureUrl =
-    profilePictureData &&
-    typeof profilePictureData === 'object' &&
-    'data' in profilePictureData
-      ? (profilePictureData as { data: string }).data
-      : null;
+  const profilePictureUrl = gymDetails?.photoPath || null;
+
+  console.log('Business Profile - gymDetails:', gymDetails);
+  console.log('Business Profile - photoPath:', gymDetails?.photoPath);
+  console.log('Business Profile - profilePictureUrl:', profilePictureUrl);
 
   const form = useForm<BusinessProfile>({
     resolver: zodResolver(GymDataDetailsSchema),
@@ -140,7 +130,7 @@ export function BusinessProfileTab() {
 
   // Initialize form data
   useEffect(() => {
-    if (!gymDetails || initialDataLoaded) return;
+    if (!gymDetails) return;
 
     const socialLinksArray = parseSocialLinks(gymDetails.socialLinks);
     const originalLinks = gymDetails.socialLinks
@@ -159,8 +149,9 @@ export function BusinessProfileTab() {
     };
 
     form.reset(formData, { keepDefaultValues: false });
+    setInitialDataLoaded(false);
     setTimeout(() => setInitialDataLoaded(true), 100);
-  }, [gymDetails, form, initialDataLoaded]);
+  }, [gymDetails, form]);
 
   // Ensure at least one social link field exists
   useEffect(() => {
@@ -177,14 +168,21 @@ export function BusinessProfileTab() {
     }
 
     try {
-      const apiData = transformToApiData(
-        data,
-        gymDetails.id,
-        originalSocialLinks.join(',')
-      );
+      const validSocialLinks =
+        data.socialLinks
+          ?.filter((link) => link.url.trim())
+          .map((link) => link.url)
+          .join(',') || '';
+
+      const apiData = transformToApiData(data, gymDetails.id, validSocialLinks);
       const formData = createFormData(apiData);
       await updateGym({ gymId: gymDetails.id, data: formData });
       form.reset(data);
+      setOriginalSocialLinks(
+        data.socialLinks
+          ?.filter((link) => link.url.trim())
+          .map((link) => link.url) || []
+      );
     } catch {
       // Error handled by hook
     }

@@ -3,20 +3,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-import {
-  fetchGymById,
-  fetchGymProfilePicture,
-  updateGym,
-} from '@/services/gym';
+import { useAuth } from '@/providers/auth-provider';
+import { fetchGymProfilePicture, updateGym } from '@/services/gym';
 
-export function useGymDetails(gymId: number) {
-  return useQuery({
-    queryKey: ['gymDetails', gymId],
-    queryFn: () => fetchGymById(gymId),
-    enabled: !!gymId,
-    staleTime: 1000 * 60 * 15, // 15 minutes
-    gcTime: 1000 * 60 * 30, // 30 minutes
-  });
+export function useGymDetails() {
+  const { gymDetails } = useAuth();
+  return { data: gymDetails, isLoading: false };
 }
 
 export function useGymProfilePicture(gymId: number) {
@@ -33,19 +25,19 @@ export function useGymProfilePicture(gymId: number) {
 export function useGymManagement() {
   const queryClient = useQueryClient();
 
+  const { refreshUser, switchClub: switchClubAuth } = useAuth();
+
   const updateGymMutation = useMutation({
     mutationFn: ({ gymId, data }: { gymId: number; data: FormData }) =>
       updateGym(gymId, data),
     onSuccess: async (result, { gymId }) => {
-      await queryClient.invalidateQueries({ queryKey: ['gymDetails', gymId] });
       await queryClient.invalidateQueries({
         queryKey: ['gymProfilePicture', gymId],
       });
-      // Trigger immediate refetch to update all components
-      await Promise.all([
-        queryClient.refetchQueries({ queryKey: ['gymDetails', gymId] }),
-        queryClient.refetchQueries({ queryKey: ['gymProfilePicture', gymId] }),
-      ]);
+      await queryClient.refetchQueries({
+        queryKey: ['gymProfilePicture', gymId],
+      });
+      await refreshUser();
       toast.success(result.success);
     },
     onError: (error) => {
@@ -55,8 +47,17 @@ export function useGymManagement() {
     },
   });
 
+  const handleSwitchClub = async (gymId: number) => {
+    const result = await switchClubAuth(gymId);
+    if (result.success) {
+      await queryClient.invalidateQueries();
+    }
+    return result;
+  };
+
   return {
     updateGym: updateGymMutation.mutateAsync,
     isUpdating: updateGymMutation.isPending,
+    switchClub: handleSwitchClub,
   };
 }

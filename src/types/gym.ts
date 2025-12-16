@@ -9,6 +9,7 @@ export interface GymDetails {
   gymAdminId: number;
   status: string;
   gymIdentifier: string;
+  photoPath?: string | null;
 }
 
 export interface GymResponse {
