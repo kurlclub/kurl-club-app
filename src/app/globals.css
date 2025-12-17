@@ -1,6 +1,5 @@
 @import 'tailwindcss';
 @import '@kurlclub/ui-components/styles';
-@import '@kurlclub/ui-components/dist/style.css';
 
 @custom-variant dark (&:is(.dark *));
 
