@@ -13,6 +13,7 @@ import { Check, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod/v4';
 
+import { useViewGymId } from '@/components/pages/account-settings/tabs/profile-and-gyms-tab';
 import { SubscriptionCard } from '@/components/shared/cards/subscription-card';
 import {
   KFormField,
@@ -31,6 +32,7 @@ import {
 import { FormControl } from '@/components/ui/form';
 import { useAppDialog } from '@/hooks/use-app-dialog';
 import { useGymDetails, useGymManagement } from '@/hooks/use-gym-management';
+import { useAuth } from '@/providers/auth-provider';
 import { GymDataDetailsSchema } from '@/schemas';
 
 import RegionalSettings from './regional-settings';
@@ -85,7 +87,40 @@ const createFormData = (apiData: Record<string, unknown>) => {
 export function BusinessProfileTab() {
   const { showConfirm } = useAppDialog();
   const { updateGym, isUpdating } = useGymManagement();
-  const { data: gymDetails } = useGymDetails();
+  const { user } = useAuth();
+
+  const viewGymId = useViewGymId();
+  const { data: globalGymDetails } = useGymDetails();
+
+  // Get gym details based on viewGymId or fallback to global
+  const gymDetails = useMemo(() => {
+    if (viewGymId && user?.clubs) {
+      const selectedClub = user.clubs.find((club) => club.gymId === viewGymId);
+      if (selectedClub && 'contactNumber1' in selectedClub) {
+        const club = selectedClub as typeof selectedClub & {
+          contactNumber1: string;
+          contactNumber2: string | null;
+          email: string;
+          socialLinks: string;
+          gymAdminId: number;
+        };
+        return {
+          id: club.gymId,
+          gymName: club.gymName,
+          location: club.location,
+          contactNumber1: club.contactNumber1,
+          contactNumber2: club.contactNumber2,
+          email: club.email,
+          socialLinks: club.socialLinks,
+          gymIdentifier: club.gymIdentifier,
+          gymAdminId: club.gymAdminId,
+          status: String(club.status),
+          photoPath: club.photoPath,
+        };
+      }
+    }
+    return globalGymDetails;
+  }, [viewGymId, user?.clubs, globalGymDetails]);
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
   const [originalSocialLinks, setOriginalSocialLinks] = useState<string[]>([]);
 
@@ -126,20 +161,20 @@ export function BusinessProfileTab() {
 
   // Initialize form data
   useEffect(() => {
-    if (!gymDetails) return;
+    if (!gymDetails?.id) return;
 
     const socialLinksArray = parseSocialLinks(gymDetails.socialLinks);
     const originalLinks = gymDetails.socialLinks
-      ? gymDetails.socialLinks.split(',').filter((link) => link.trim())
+      ? gymDetails.socialLinks.split(',').filter((link: string) => link.trim())
       : [];
 
     setOriginalSocialLinks(originalLinks);
 
-    const formData = {
+    const formData: BusinessProfile = {
       ProfilePicture: null,
       GymName: gymDetails.gymName,
-      Phone: gymDetails.contactNumber1,
-      Email: gymDetails.email,
+      Phone: gymDetails.contactNumber1 || '',
+      Email: gymDetails.email || '',
       Address: gymDetails.location,
       socialLinks: socialLinksArray,
     };
@@ -147,7 +182,8 @@ export function BusinessProfileTab() {
     form.reset(formData, { keepDefaultValues: false });
     setInitialDataLoaded(false);
     setTimeout(() => setInitialDataLoaded(true), 100);
-  }, [gymDetails, form]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gymDetails?.id, viewGymId, form]);
 
   // Ensure at least one social link field exists
   useEffect(() => {
@@ -166,8 +202,8 @@ export function BusinessProfileTab() {
     try {
       const validSocialLinks =
         data.socialLinks
-          ?.filter((link) => link.url.trim())
-          .map((link) => link.url)
+          ?.filter((link: { url: string }) => link.url.trim())
+          .map((link: { url: string }) => link.url)
           .join(',') || '';
 
       const apiData = transformToApiData(data, gymDetails.id, validSocialLinks);
@@ -176,8 +212,8 @@ export function BusinessProfileTab() {
       form.reset(data);
       setOriginalSocialLinks(
         data.socialLinks
-          ?.filter((link) => link.url.trim())
-          .map((link) => link.url) || []
+          ?.filter((link: { url: string }) => link.url.trim())
+          .map((link: { url: string }) => link.url) || []
       );
     } catch {
       // Error handled by hook
@@ -192,8 +228,8 @@ export function BusinessProfileTab() {
       const currentData = form.getValues();
       const validSocialLinks =
         currentData.socialLinks
-          ?.filter((link) => link.url.trim())
-          .map((link) => link.url)
+          ?.filter((link: { url: string }) => link.url.trim())
+          .map((link: { url: string }) => link.url)
           .join(',') || '';
 
       const apiData = transformToApiData(
@@ -206,8 +242,8 @@ export function BusinessProfileTab() {
       // Cache will be automatically invalidated by useGymManagement
       setOriginalSocialLinks(
         currentData.socialLinks
-          ?.filter((link) => link.url.trim())
-          .map((link) => link.url) || []
+          ?.filter((link: { url: string }) => link.url.trim())
+          .map((link: { url: string }) => link.url) || []
       );
     } catch {
       toast.error('Failed to update social links');
@@ -234,8 +270,8 @@ export function BusinessProfileTab() {
           const currentData = form.getValues();
           const validSocialLinks =
             currentData.socialLinks
-              ?.filter((link) => link.url.trim())
-              .map((link) => link.url)
+              ?.filter((link: { url: string }) => link.url.trim())
+              .map((link: { url: string }) => link.url)
               .join(',') || '';
 
           const apiData = transformToApiData(
@@ -257,11 +293,11 @@ export function BusinessProfileTab() {
     if (!gymDetails) return;
 
     const socialLinksArray = parseSocialLinks(gymDetails.socialLinks);
-    const formData = {
+    const formData: BusinessProfile = {
       ProfilePicture: null,
       GymName: gymDetails.gymName,
-      Phone: gymDetails.contactNumber1,
-      Email: gymDetails.email,
+      Phone: gymDetails.contactNumber1 || '',
+      Email: gymDetails.email || '',
       Address: gymDetails.location,
       socialLinks: socialLinksArray,
     };
@@ -270,14 +306,14 @@ export function BusinessProfileTab() {
 
   return (
     <FormProvider {...form}>
-      <div className="space-y-6">
+      <div className="space-y-6" key={gymDetails?.id}>
         {/* Basic Details Card */}
         <Card className="bg-white dark:bg-secondary-blue-500 border-gray-200 dark:border-secondary-blue-400 py-2">
           <CardHeader className="pb-4">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <CardTitle className="text-gray-900 dark:text-white">
-                  Basic details
+                  Basic details - {gymDetails?.gymName}
                 </CardTitle>
                 <CardDescription className="text-gray-600 dark:text-secondary-blue-200 text-[15px]">
                   Manage your gym&apos;s basic information and contact details
@@ -330,6 +366,7 @@ export function BusinessProfileTab() {
               label="Gym name"
               className="bg-primary-blue-400"
               mandetory
+              key={`gymname-${gymDetails?.id}`}
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
