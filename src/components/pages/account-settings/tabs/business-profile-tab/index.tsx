@@ -14,7 +14,6 @@ import { toast } from 'sonner';
 import { z } from 'zod/v4';
 
 import { useViewGymId } from '@/components/pages/account-settings/tabs/profile-and-gyms-tab';
-import { SubscriptionCard } from '@/components/shared/cards/subscription-card';
 import {
   KFormField,
   KFormFieldType,
@@ -459,9 +458,6 @@ export function BusinessProfileTab() {
             </Button>
           </CardContent>
         </Card>
-
-        {/* Subscription Card */}
-        <SubscriptionCard variant="premium" />
 
         {/* Regional Settings */}
         <RegionalSettings />

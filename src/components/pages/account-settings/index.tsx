@@ -4,9 +4,7 @@ import { TabItem } from '@/components/shared/form/k-tabs';
 import { StudioLayout } from '@/components/shared/layout';
 import { useTabState } from '@/hooks/use-tab-state';
 
-import { ProfileAndGymsTab } from './tabs/profile-and-gyms-tab';
-import { SecurityTab } from './tabs/security-tab';
-import { SubscriptionTab } from './tabs/subscription-tab';
+import { ProfileAndGymsTab, SecurityTab, SubscriptionTab } from './tabs';
 
 const tabs: TabItem[] = [
   { id: 'profile_gyms', label: 'Profile & Gyms' },
