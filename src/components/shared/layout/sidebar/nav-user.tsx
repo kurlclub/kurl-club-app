@@ -74,7 +74,7 @@ export function NavUser() {
             <DropdownMenuTrigger asChild>
               <SidebarMenuButton
                 size="lg"
-                className="cursor-pointer hover:bg-primary-green-500/10 transition-all duration-300 group relative justify-center rounded-md border border-white/5 hover:border-primary-green-500/30 overflow-visible"
+                className="cursor-pointer hover:bg-primary-green-500/10 transition-all duration-300 relative justify-center rounded-md border border-white/5 hover:border-primary-green-500/30 overflow-visible"
               >
                 <div className="relative">
                   <Avatar className="h-9 w-9 rounded-sm shadow-lg">
@@ -218,7 +218,15 @@ export function NavUser() {
             {user?.isMultiClub && user.clubs && user.clubs.length > 1 ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-4 w-full hover:bg-white/5 rounded-lg transition-all duration-200 group">
+                  <button
+                    className={`
+    flex items-center gap-4 w-full px-2 py-1
+    rounded-lg transition-all duration-200 group
+    outline-none!
+    hover:bg-white/5
+    ${user?.isMultiClub ? 'cursor-pointer hover:scale-[1.03] active:scale-[0.98]' : ''}
+  `}
+                  >
                     <div className="relative shrink-0">
                       <Avatar className="h-12 w-12 rounded-lg">
                         <AvatarImage

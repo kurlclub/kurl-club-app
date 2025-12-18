@@ -10,11 +10,11 @@ import {
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 
+import { KDatePicker } from '@kurlclub/ui-components';
 import { REGEXP_ONLY_DIGITS_AND_CHARS } from 'input-otp';
 import { E164Number } from 'libphonenumber-js/core';
 
 import { KDateInput } from '@/components/shared/form/k-date-input';
-import { KDatePicker } from '@/components/shared/form/k-datepicker';
 import { KInput } from '@/components/shared/form/k-input';
 import { KMultiSelect } from '@/components/shared/form/k-multi-select';
 import { KPassword } from '@/components/shared/form/k-password';
@@ -260,6 +260,7 @@ const RenderField = <T extends FieldValues>({
       return (
         <FormControl>
           <KDatePicker
+            captionLayout="dropdown"
             numberOfMonths={numberOfMonths}
             label={floating ? label : dateLabel}
             floating={floating}

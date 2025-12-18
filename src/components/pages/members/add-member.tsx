@@ -47,8 +47,14 @@ const FieldRow = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
-const FieldColumn = ({ children }: { children: React.ReactNode }) => (
-  <div className="w-full sm:w-1/2">{children}</div>
+const FieldColumn = ({
+  children,
+  auto = false,
+}: {
+  children: React.ReactNode;
+  auto?: boolean;
+}) => (
+  <div className={`w-full ${auto ? 'sm:w-full' : 'sm:w-1/2'}`}>{children}</div>
 );
 
 const isPerSessionPlan = (plan: MembershipPlanSubset): boolean =>
@@ -90,6 +96,74 @@ const PaymentWarnings = ({
   </>
 );
 
+const PaymentFields = ({
+  form,
+  totalAmount,
+  paymentSectionRef,
+}: {
+  form: UseFormReturn<CreateMemberDetailsData>;
+  totalAmount: number;
+  paymentSectionRef?: React.RefObject<HTMLDivElement | null>;
+}) => {
+  const amountPaid = form.watch('amountPaid');
+  const feeStatus = form.watch('feeStatus');
+
+  const { showPaidWarning, showUnpaidWarning, showOverpaymentError } =
+    validatePaymentAmount(amountPaid, feeStatus, totalAmount);
+
+  const paidAmount = amountPaid ? Number(amountPaid) : 0;
+
+  return (
+    <div
+      ref={paymentSectionRef}
+      className="space-y-4 p-4 bg-secondary-blue-600/50 rounded-lg border border-secondary-blue-400"
+    >
+      <FieldRow>
+        <FieldColumn auto>
+          <KFormField
+            fieldType={KFormFieldType.SELECT}
+            control={form.control}
+            name="feeStatus"
+            label="Fee Status"
+            options={feeStatusOptions}
+          />
+        </FieldColumn>
+        {feeStatus !== 'unpaid' && (
+          <FieldColumn>
+            <KFormField
+              fieldType={KFormFieldType.INPUT}
+              control={form.control}
+              name="amountPaid"
+              label="Amount Paid"
+              type="number"
+              maxLength={10}
+              suffix={
+                totalAmount > 0 ? `/ ${totalAmount.toLocaleString()}` : ''
+              }
+            />
+          </FieldColumn>
+        )}
+      </FieldRow>
+
+      <PaymentWarnings
+        showPaidWarning={showPaidWarning}
+        showUnpaidWarning={showUnpaidWarning}
+        showOverpaymentError={showOverpaymentError}
+        excessAmount={(paidAmount - totalAmount).toLocaleString()}
+      />
+      {feeStatus !== 'unpaid' && (
+        <KFormField
+          fieldType={KFormFieldType.SELECT}
+          control={form.control}
+          name="modeOfPayment"
+          label="Mode of Payment"
+          options={paymentModeOptions}
+        />
+      )}
+    </div>
+  );
+};
+
 const PerSessionPayment = ({
   form,
   selectedPlan,
@@ -101,17 +175,12 @@ const PerSessionPayment = ({
 }) => {
   const customRate = form.watch('customSessionRate');
   const numberOfSessions = form.watch('numberOfSessions');
-  const amountPaid = form.watch('amountPaid');
-  const feeStatus = form.watch('feeStatus');
 
   const totalAmount = calculateSessionTotal(
     numberOfSessions,
     customRate,
     selectedPlan.fee
   );
-  const { showPaidWarning, showUnpaidWarning, showOverpaymentError } =
-    validatePaymentAmount(amountPaid, feeStatus, totalAmount);
-  const paidAmount = amountPaid ? Number(amountPaid) : 0;
 
   return (
     <div
@@ -142,40 +211,10 @@ const PerSessionPayment = ({
         placeholder="Enter sessions"
         type="number"
       />
-      <FieldRow>
-        <FieldColumn>
-          <KFormField
-            fieldType={KFormFieldType.SELECT}
-            control={form.control}
-            name="feeStatus"
-            label="Fee Status"
-            options={feeStatusOptions}
-          />
-        </FieldColumn>
-        <FieldColumn>
-          <KFormField
-            suffix={totalAmount > 0 ? `/ ${totalAmount.toLocaleString()}` : ''}
-            fieldType={KFormFieldType.INPUT}
-            control={form.control}
-            name="amountPaid"
-            label="Amount Paid"
-            type="number"
-            maxLength={10}
-          />
-        </FieldColumn>
-      </FieldRow>
-      <PaymentWarnings
-        showPaidWarning={showPaidWarning}
-        showUnpaidWarning={showUnpaidWarning}
-        showOverpaymentError={showOverpaymentError}
-        excessAmount={(paidAmount - totalAmount).toLocaleString()}
-      />
-      <KFormField
-        fieldType={KFormFieldType.SELECT}
-        control={form.control}
-        name="modeOfPayment"
-        label="Mode of Payment"
-        options={paymentModeOptions}
+      <PaymentFields
+        form={form}
+        totalAmount={totalAmount}
+        paymentSectionRef={paymentSectionRef}
       />
     </div>
   );
@@ -190,53 +229,12 @@ const RecurringPayment = ({
   selectedPlan: MembershipPlanSubset;
   paymentSectionRef: React.RefObject<HTMLDivElement | null>;
 }) => {
-  const amountPaid = form.watch('amountPaid');
-  const feeStatus = form.watch('feeStatus');
-
-  const { showPaidWarning, showUnpaidWarning, showOverpaymentError } =
-    validatePaymentAmount(amountPaid, feeStatus, selectedPlan.fee);
-  const paidAmount = amountPaid ? Number(amountPaid) : 0;
-
   return (
-    <div
-      ref={paymentSectionRef}
-      className="space-y-4 p-4 bg-secondary-blue-600/50 rounded-lg border border-secondary-blue-400"
-    >
-      <FieldRow>
-        <FieldColumn>
-          <KFormField
-            fieldType={KFormFieldType.SELECT}
-            control={form.control}
-            name="feeStatus"
-            label="Fee Status"
-            options={feeStatusOptions}
-          />
-        </FieldColumn>
-        <FieldColumn>
-          <KFormField
-            suffix={`/ ${selectedPlan.fee.toLocaleString()}`}
-            fieldType={KFormFieldType.INPUT}
-            control={form.control}
-            name="amountPaid"
-            label="Amount Paid"
-            maxLength={10}
-          />
-        </FieldColumn>
-      </FieldRow>
-      <PaymentWarnings
-        showPaidWarning={showPaidWarning}
-        showUnpaidWarning={showUnpaidWarning}
-        showOverpaymentError={showOverpaymentError}
-        excessAmount={(paidAmount - selectedPlan.fee).toLocaleString()}
-      />
-      <KFormField
-        fieldType={KFormFieldType.SELECT}
-        control={form.control}
-        name="modeOfPayment"
-        label="Mode of Payment"
-        options={paymentModeOptions}
-      />
-    </div>
+    <PaymentFields
+      form={form}
+      totalAmount={selectedPlan.fee}
+      paymentSectionRef={paymentSectionRef}
+    />
   );
 };
 
@@ -453,7 +451,8 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                   fieldType={KFormFieldType.INPUT}
                   control={form.control}
                   name="height"
-                  label="Height (In Centimeters)"
+                  label="Height (CM)"
+                  maxLength={3}
                 />
               </FieldColumn>
               <FieldColumn>
@@ -461,7 +460,8 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                   fieldType={KFormFieldType.INPUT}
                   control={form.control}
                   name="weight"
-                  label="Weight (In Kilograms)"
+                  label="Weight (KG)"
+                  maxLength={3}
                 />
               </FieldColumn>
             </FieldRow>
@@ -482,7 +482,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                   fieldType={KFormFieldType.DATE_INPUT}
                   control={form.control}
                   name="dob"
-                  label="Date of birth"
+                  label="Date of birth (DD/MM/YYYY"
                 />
               </FieldColumn>
             </FieldRow>
