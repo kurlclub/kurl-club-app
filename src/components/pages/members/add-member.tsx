@@ -482,7 +482,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                   fieldType={KFormFieldType.DATE_INPUT}
                   control={form.control}
                   name="dob"
-                  label="Date of birth (DD/MM/YYYY"
+                  label="Date of birth (DD/MM/YYYY)"
                 />
               </FieldColumn>
             </FieldRow>

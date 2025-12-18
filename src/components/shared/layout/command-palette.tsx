@@ -116,17 +116,17 @@ export function QuickActionsButton() {
       <Button
         onClick={() => setOpen(true)}
         variant="ghost"
-        className="group hidden md:flex items-center gap-0 px-1 py-1 text-sm font-medium text-white bg-gradient-to-r from-secondary-blue-600 to-secondary-blue-500 hover:from-secondary-blue-500 hover:to-secondary-blue-400 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 ease-out border border-secondary-blue-400/30 backdrop-blur-sm"
+        className="group md:flex items-center gap-0 px-1 py-1 text-sm font-medium text-white bg-gradient-to-r from-secondary-blue-600 to-secondary-blue-500 hover:from-secondary-blue-500 hover:to-secondary-blue-400 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 ease-out border border-secondary-blue-400/30 backdrop-blur-sm"
       >
-        <span className="flex items-center gap-1.5 text-xs px-2 py-1 border-r border-secondary-blue-200/40">
+        <span className="flex items-center gap-1.5 text-xs px-2 py-1 md:border-r border-secondary-blue-200/40">
           <div className="w-2 h-2 bg-primary-green-500 rounded-full animate-pulse"></div>
           Quick Actions
         </span>
-        <kbd className="flex items-center gap-1 px-2 py-1 text-[10px] font-mono bg-transparent text-gray-300 transition-all duration-200">
+        <kbd className="hidden md:flex items-center gap-1 px-2 py-1 text-[10px] font-mono bg-transparent text-gray-300 transition-all duration-200">
           <span className="text-xs font-bold group-hover:text-primary-green-500 transition-colors duration-200">
             ⌘
           </span>
-          <span className="group-hover:text-primary-green-500 transition-colors duration-200">
+          <span className="group-hover:text-primary-green-500 block leading-1 text-[14px] capitalize transition-colors duration-200">
             K
           </span>
         </kbd>
