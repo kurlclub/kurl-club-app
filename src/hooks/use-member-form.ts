@@ -23,7 +23,7 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
     resolver: zodResolver(createMemberSchema),
     defaultValues: {
       profilePicture: null,
-      name: '',
+      memberName: '',
       email: '',
       phone: '',
       amountPaid: '',
@@ -68,7 +68,7 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
 
         form.reset({
           profilePicture: null,
-          name: data.memberName || '',
+          memberName: data.memberName || '',
           email: data.email || '',
           phone: data.phone || '',
           gender: data.gender || '',
@@ -137,7 +137,7 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
 
       // Map frontend field names to API field names
       const fieldMap: Record<string, string> = {
-        name: 'Name',
+        memberName: 'Name',
         dob: 'Dob',
         bloodGroup: 'BloodGroup',
         gender: 'Gender',

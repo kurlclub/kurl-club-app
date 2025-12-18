@@ -15,6 +15,7 @@ interface ProfilePictureUploaderProps {
   onChange: (file: File | null) => void;
   isSmall?: boolean;
   existingImageUrl?: string | null;
+  readonly?: boolean;
 }
 
 export default function ProfilePictureUploader({
@@ -145,6 +146,7 @@ export default function ProfilePictureUploader({
         src={image}
         onDelete={handleDelete}
         onReupload={handleReupload}
+        readonly
       />
     </div>
   );

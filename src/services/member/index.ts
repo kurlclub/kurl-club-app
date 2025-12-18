@@ -211,6 +211,7 @@ export const useMemberPaymentDetails = (memberId: number | string) => {
     queryKey: ['memberPaymentDetails', memberId],
     queryFn: () => fetchMemberPaymentDetails(memberId),
     enabled: !!memberId,
+    staleTime: 1000 * 60 * 2,
   });
 };
 

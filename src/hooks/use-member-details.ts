@@ -100,8 +100,7 @@ export function useMemberDetails(
         toast.success(response.message);
         setIsEditing(false);
 
-        // Invalidate queries to refresh data
-        await queryClient.invalidateQueries({ queryKey: ['gymMembers'] });
+        // Invalidate only necessary queries
         await queryClient.invalidateQueries({ queryKey: ['member', userId] });
 
         return true;

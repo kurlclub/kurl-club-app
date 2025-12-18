@@ -1,8 +1,6 @@
 import ProfilePictureUploader from '@/components/shared/uploaders/profile-uploader';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
 import { base64ToFile } from '@/lib/utils';
 import { MemberDetails } from '@/types/member.types';
 
@@ -24,44 +22,29 @@ export function MemberHeader({
     <>
       <div className="items-center mb-4">
         <div className="mb-3">
-          {isEditing ? (
-            <ProfilePictureUploader
-              files={
-                details?.profilePicture instanceof File
-                  ? details.profilePicture
-                  : details?.profilePicture
-                    ? base64ToFile(details.profilePicture, 'profile.png')
-                    : null
-              }
-              onChange={(file) => {
-                if (file) {
-                  onUpdate('profilePicture', file);
-                } else {
-                  onUpdate('profilePicture', null);
-                }
-              }}
-              existingImageUrl={details?.photoPath || undefined}
-              isSmall
-            />
-          ) : (
-            <Avatar className="size-[64px]">
-              <AvatarImage
-                src={
-                  details?.photoPath ||
-                  (details?.profilePicture
-                    ? `data:image/png;base64,${details.profilePicture}`
-                    : undefined)
-                }
-                alt="Profile picture"
-              />
-              <AvatarFallback
-                className="font-medium text-xl leading-normal"
-                style={getAvatarColor(details?.memberName || '')}
-              >
-                {getInitials(details?.memberName || '')}
-              </AvatarFallback>
-            </Avatar>
-          )}
+          <ProfilePictureUploader
+            files={
+              details?.profilePicture instanceof File
+                ? details.profilePicture
+                : details?.profilePicture
+                  ? base64ToFile(details.profilePicture, 'profile.png')
+                  : null
+            }
+            onChange={
+              isEditing
+                ? (file) => {
+                    if (file) {
+                      onUpdate('profilePicture', file);
+                    } else {
+                      onUpdate('profilePicture', null);
+                    }
+                  }
+                : () => {}
+            }
+            existingImageUrl={details?.photoPath || undefined}
+            isSmall
+            readonly={!isEditing}
+          />
         </div>
         <div>
           {isEditing ? (

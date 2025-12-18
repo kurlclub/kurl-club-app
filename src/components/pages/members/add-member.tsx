@@ -407,7 +407,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
             <KFormField
               fieldType={KFormFieldType.INPUT}
               control={form.control}
-              name="name"
+              name="memberName"
               label="Member Name"
             />
             <KFormField
