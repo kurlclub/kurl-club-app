@@ -1,4 +1,4 @@
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 import { KViewMore } from '@/components/shared/icons';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,6 @@ import { paymentColumns } from './table/payment-column';
 import { PaymentTable } from './table/payment-table';
 
 function OutstandingPayment() {
-  const router = useRouter();
   const { gymBranch } = useGymBranch();
   const { data: dashboardData } = useDashboardData(gymBranch?.gymId || 0);
 
@@ -23,11 +22,10 @@ function OutstandingPayment() {
         <CardTitle className="text-white text-base font-normal leading-normal">
           Outstanding payments
         </CardTitle>
-        <Button
-          className="bg-transparent! h-fit w-fit p-0"
-          onClick={() => router.push('/payments')}
-        >
-          <KViewMore className="w-8! h-8!" />
+        <Button className="bg-transparent! h-fit w-fit p-0" asChild>
+          <Link href="/payments">
+            <KViewMore className="w-8! h-8!" />
+          </Link>
         </Button>
       </CardHeader>
 

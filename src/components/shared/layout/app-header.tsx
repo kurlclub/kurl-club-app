@@ -4,7 +4,6 @@ import { getGreeting } from '@/lib/utils';
 import { useAuth } from '@/providers/auth-provider';
 
 import { CommandPalette, QuickActionsButton } from './command-palette';
-import { NotificationBell } from './notification-bell';
 
 export function AppHeader() {
   const { user } = useAuth();
@@ -13,7 +12,7 @@ export function AppHeader() {
   const userName = user?.userName || user?.userEmail || 'User';
 
   // TODO: Mock notification count - replace with actual data
-  const notificationCount = 3;
+  // const notificationCount = 3;
 
   return (
     <header
@@ -34,11 +33,11 @@ export function AppHeader() {
         </div>
       </div>
       <div className="ml-auto flex items-center gap-2">
-        <NotificationBell count={notificationCount} onClick={() => {}} />
-        <Separator
+        {/* <NotificationBell count={notificationCount} onClick={() => {}} /> */}
+        {/* <Separator
           orientation="vertical"
-          className="mx-2 data-[orientation=vertical]:h-4 bg-[#747578] hidden md:flex"
-        />
+          className="mx-2 data-[orientation=vertical]:h-4 bg-[#747578] md:flex"
+        /> */}
         <QuickActionsButton />
       </div>
     </header>

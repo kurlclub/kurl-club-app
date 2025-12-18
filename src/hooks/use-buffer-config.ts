@@ -12,27 +12,29 @@ import {
   updateBufferConfig,
 } from '@/services/buffer-config';
 
-export function useBufferConfigs() {
+export function useBufferConfigs(gymId?: number) {
   const queryClient = useQueryClient();
   const { gymBranch } = useGymBranch();
+  const effectiveGymId = gymId || gymBranch?.gymId;
 
   const {
     data: configs = [],
     isPending,
     error,
   } = useQuery({
-    queryKey: ['bufferConfigs', gymBranch?.gymId],
+    queryKey: ['bufferConfigs', effectiveGymId],
     queryFn: () => {
-      if (!gymBranch?.gymId) throw new Error('No gym selected');
-      return getBufferConfigsByGym(gymBranch.gymId);
+      if (!effectiveGymId) throw new Error('No gym selected');
+      return getBufferConfigsByGym(effectiveGymId);
     },
-    enabled: !!gymBranch?.gymId,
+    enabled: !!effectiveGymId,
+    retry: false,
   });
 
   const createConfigMutation = useMutation({
     mutationFn: (newConfig: Omit<CreateBufferConfigData, 'gymId'>) => {
-      if (!gymBranch?.gymId) throw new Error('No gym selected');
-      return createBufferConfig({ ...newConfig, gymId: gymBranch.gymId });
+      if (!effectiveGymId) throw new Error('No gym selected');
+      return createBufferConfig({ ...newConfig, gymId: effectiveGymId });
     },
     onSuccess: (result) => {
       if (result.success) {
@@ -61,8 +63,8 @@ export function useBufferConfigs() {
       id: number;
       config: Omit<CreateBufferConfigData, 'gymId'>;
     }) => {
-      if (!gymBranch?.gymId) throw new Error('No gym selected');
-      return updateBufferConfig(id, { ...config, gymId: gymBranch.gymId });
+      if (!effectiveGymId) throw new Error('No gym selected');
+      return updateBufferConfig(id, { ...config, gymId: effectiveGymId });
     },
     onSuccess: (result) => {
       if (result.success) {
