@@ -137,7 +137,7 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
 
       // Map frontend field names to API field names
       const fieldMap: Record<string, string> = {
-        memberName: 'Name',
+        memberName: 'MemberName',
         dob: 'Dob',
         bloodGroup: 'BloodGroup',
         gender: 'Gender',
