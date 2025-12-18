@@ -101,8 +101,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       icon: Dumbbell,
     },
     {
-      title: 'General Settings',
-      url: '/general-settings',
+      title: 'Settings',
+      url: '/account-settings',
       icon: Settings,
     },
   ];
@@ -124,7 +124,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar
       collapsible="icon"
-      className="[&_[data-slot='sidebar-inner']]:!border-r-0"
+      className="**:data-[slot='sidebar-inner']:border-r-0!"
       {...props}
     >
       <SidebarHeader>

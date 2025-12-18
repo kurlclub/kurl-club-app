@@ -151,7 +151,7 @@ const KDateInput = forwardRef<HTMLInputElement, KDateInputProps>(
         >
           {label}
         </label>
-        {!hasContent && !isFocused && (
+        {/* {!hasContent && !isFocused && (
           <div
             className={cn(
               'absolute text-primary-blue-300 pointer-events-none',
@@ -162,7 +162,7 @@ const KDateInput = forwardRef<HTMLInputElement, KDateInputProps>(
           >
             DD/MM/YYYY
           </div>
-        )}
+        )} */}
       </div>
     );
   }

@@ -54,7 +54,6 @@ export async function getSession(): Promise<string | null> {
   const token = cookieStore.get('idToken')?.value;
 
   if (!token) {
-    console.error('Failed to get idToken.');
     return null;
   }
 

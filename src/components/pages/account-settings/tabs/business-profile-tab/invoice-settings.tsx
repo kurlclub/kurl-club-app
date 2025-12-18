@@ -146,7 +146,7 @@ export default function InvoiceSettings() {
                         <Check className="h-3 w-3 text-white" />
                       </div>
                     )}
-                    <div className="aspect-[3/4] bg-gray-100 dark:bg-secondary-blue-400 rounded mb-2 flex items-center justify-center">
+                    <div className="aspect-3/4 bg-gray-100 dark:bg-secondary-blue-400 rounded mb-2 flex items-center justify-center">
                       <FileText className="h-8 w-8 text-gray-400" />
                     </div>
                     <p className="font-medium text-sm text-gray-900 dark:text-white">

@@ -1,4 +1,4 @@
-import React from 'react';
+import Link from 'next/link';
 
 import { KViewMore } from '@/components/shared/icons';
 import { Button } from '@/components/ui/button';
@@ -29,8 +29,10 @@ function SkipperStats() {
         <CardTitle className="text-white text-base font-normal leading-normal">
           Skipper stats
         </CardTitle>
-        <Button className="bg-transparent! h-fit w-fit p-0">
-          <KViewMore className="w-8! h-8!" />
+        <Button className="bg-transparent! h-fit w-fit p-0" asChild>
+          <Link href="/attendance">
+            <KViewMore className="w-8! h-8!" />
+          </Link>
         </Button>
       </CardHeader>
 

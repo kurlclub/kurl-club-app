@@ -57,14 +57,20 @@ export default function ProfilePictureUploader({
     }
   };
 
-  const handleCrop = (croppedImage: string) => {
+  const handleCrop = async (croppedImage: string) => {
     if (currentFile) {
-      const croppedFile = new File([currentFile], currentFile.name, {
+      // Convert base64 to blob
+      const response = await fetch(croppedImage);
+      const blob = await response.blob();
+
+      // Create File from blob with original filename
+      const croppedFile = new File([blob], currentFile.name, {
         type: currentFile.type,
       });
+
       setImage(croppedImage);
       setCropModalOpen(false);
-      onChange(croppedFile); // Pass the binary file to the parent
+      onChange(croppedFile); // Pass the cropped file to the parent
     }
   };
 
@@ -93,7 +99,7 @@ export default function ProfilePictureUploader({
     <div className="flex flex-col">
       {image ? (
         <Avatar
-          className={`${isSmall ? 'size-[64px]' : 'size-[92px]'} cursor-pointer`}
+          className={`${isSmall ? 'size-16' : 'size-[92px]'} cursor-pointer`}
           onClick={() => setPreviewModalOpen(true)}
         >
           <AvatarImage src={image} alt="Profile picture" />
@@ -105,7 +111,7 @@ export default function ProfilePictureUploader({
         <Button
           variant="outline"
           size="icon"
-          className={`${isSmall ? 'size-[64px]' : 'size-[92px]'} bg-secondary-blue-400 rounded-[60px] hover:bg-secondary-blue-500 relative`}
+          className={`${isSmall ? 'size-16' : 'size-[92px]'} bg-secondary-blue-400 rounded-[60px] hover:bg-secondary-blue-500 relative`}
           onClick={() => fileInputRef.current?.click()}
         >
           <CircleUser

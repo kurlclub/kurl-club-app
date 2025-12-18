@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod/v4';
 
 import CardList from '@/components/pages/dashboard/card-list';
-import { AttendanceChats } from '@/components/pages/dashboard/insights/attendance-chats';
+import { AttendanceStats } from '@/components/pages/dashboard/insights/attendance-stats';
 import OutstandingPayment from '@/components/pages/dashboard/insights/outstanding-payment';
 import Payments from '@/components/pages/dashboard/insights/payments';
 import SkipperStats from '@/components/pages/dashboard/insights/skipper-stats';
@@ -65,7 +65,7 @@ function Dashboard() {
           <Payments />
           <OutstandingPayment />
           <SkipperStats />
-          <AttendanceChats />
+          <AttendanceStats />
         </div>
       </div>
     </div>
