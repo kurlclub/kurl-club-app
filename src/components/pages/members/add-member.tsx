@@ -469,7 +469,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
             <FieldRow>
               <FieldColumn>
                 <KFormField
-                  fieldType={KFormFieldType.DATE_PICKER}
+                  fieldType={KFormFieldType.UI_DATE_PICKER}
                   control={form.control}
                   name="doj"
                   label="Date of joining"

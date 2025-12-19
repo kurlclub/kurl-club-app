@@ -96,7 +96,7 @@ export default function AdministratorForm({
         {/* Date of joining */}
         <div className="w-full sm:w-1/2">
           <KFormField
-            fieldType={KFormFieldType.DATE_PICKER}
+            fieldType={KFormFieldType.UI_DATE_PICKER}
             control={form.control}
             name="Doj"
             label="Date of joining"
