@@ -100,7 +100,7 @@ export default function ProfilePictureUploader({
     <div className="flex flex-col">
       {image ? (
         <Avatar
-          className={`${isSmall ? 'size-16' : 'size-[92px]'} cursor-pointer`}
+          className={`${isSmall ? 'size-16' : 'size-[92px]'} cursor-pointer rounded-lg`}
           onClick={() => setPreviewModalOpen(true)}
         >
           <AvatarImage src={image} alt="Profile picture" />
