@@ -2,6 +2,7 @@
 
 import { useFormContext } from 'react-hook-form';
 
+import { FieldColumn, FieldRow } from '@/components/shared/form/field-layout';
 import {
   KFormField,
   KFormFieldType,
@@ -67,9 +68,8 @@ export default function AdministratorForm({
         label="Phone Number"
         disabled={isSubmitting}
       />
-      <div className="flex justify-between gap-3 flex-wrap sm:flex-nowrap">
-        {/* Gender */}
-        <div className="w-full sm:w-1/2">
+      <FieldRow>
+        <FieldColumn>
           <KFormField
             fieldType={KFormFieldType.SELECT}
             control={form.control}
@@ -78,10 +78,8 @@ export default function AdministratorForm({
             options={genderOptions}
             disabled={isSubmitting}
           />
-        </div>
-
-        {/* Blood Group */}
-        <div className="w-full sm:w-1/2">
+        </FieldColumn>
+        <FieldColumn>
           <KFormField
             fieldType={KFormFieldType.SELECT}
             control={form.control}
@@ -90,11 +88,10 @@ export default function AdministratorForm({
             options={bloodGroupOptions}
             disabled={isSubmitting}
           />
-        </div>
-      </div>
-      <div className="flex justify-between gap-3 flex-wrap sm:flex-nowrap">
-        {/* Date of joining */}
-        <div className="w-full sm:w-1/2">
+        </FieldColumn>
+      </FieldRow>
+      <FieldRow>
+        <FieldColumn>
           <KFormField
             fieldType={KFormFieldType.UI_DATE_PICKER}
             control={form.control}
@@ -104,9 +101,8 @@ export default function AdministratorForm({
             floating
             disabled={isSubmitting}
           />
-        </div>
-        {/* Date of birth */}
-        <div className="w-full sm:w-1/2">
+        </FieldColumn>
+        <FieldColumn>
           <KFormField
             fieldType={KFormFieldType.DATE_INPUT}
             control={form.control}
@@ -114,8 +110,8 @@ export default function AdministratorForm({
             label="Date of birth"
             disabled={isSubmitting}
           />
-        </div>
-      </div>
+        </FieldColumn>
+      </FieldRow>
 
       {/* Address Details */}
       <h5 className="text-white text-base font-normal leading-normal mt-8!">

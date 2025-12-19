@@ -95,6 +95,7 @@ export interface MemberListItem {
   photoPath: string | null;
   profilePicture?: string | File | null;
   personalTrainer?: number;
+  assignedTrainer: number;
   workoutPlan?: string;
   avatar?: string;
 }

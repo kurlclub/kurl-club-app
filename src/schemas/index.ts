@@ -147,6 +147,11 @@ export const trainerFormSchema = z.object({
     .min(1, 'Address is required.')
     .max(250, 'Address must not exceed 250 characters.'),
   BloodGroup: z.string().min(1, 'Blood group selection is required'),
+  Username: z.string().email('Please enter a valid email address'),
+  Password: z
+    .string()
+    .min(1, 'Password is required')
+    .min(6, 'Password must be at least 6 characters'),
 });
 
 export const adminstratorFormSchema = z.object({

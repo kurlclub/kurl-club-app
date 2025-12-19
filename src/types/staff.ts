@@ -29,6 +29,8 @@ export type StaffDetails = {
   status: string;
   profilePicture: string | File | null;
   hasProfilePicture?: boolean;
+  photoPath?: string; // Profile picture URL
+  username?: string; // Login username
   // Trainer specific
   certification?: string;
   gymId?: number;

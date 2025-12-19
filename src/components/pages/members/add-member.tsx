@@ -3,6 +3,7 @@ import { FormProvider, UseFormReturn } from 'react-hook-form';
 
 import { z } from 'zod/v4';
 
+import { FieldColumn, FieldRow } from '@/components/shared/form/field-layout';
 import {
   KFormField,
   KFormFieldType,
@@ -40,22 +41,6 @@ type MembershipPlanSubset = {
   fee: number;
   billingType?: 'Recurring' | 'PerSession';
 };
-
-const FieldRow = ({ children }: { children: React.ReactNode }) => (
-  <div className="flex justify-between gap-3 flex-wrap sm:flex-nowrap">
-    {children}
-  </div>
-);
-
-const FieldColumn = ({
-  children,
-  auto = false,
-}: {
-  children: React.ReactNode;
-  auto?: boolean;
-}) => (
-  <div className={`w-full ${auto ? 'sm:w-full' : 'sm:w-1/2'}`}>{children}</div>
-);
 
 const isPerSessionPlan = (plan: MembershipPlanSubset): boolean =>
   plan.billingType === 'PerSession';
