@@ -256,6 +256,10 @@
   @apply w-full! rounded-md! h-[52px]! py-[17px]! px-4! text-base! text-white! bg-secondary-blue-500! border-0! appearance-none! focus:outline-hidden! focus:ring-0!;
 }
 
+@utility country-select {
+  @apply bg-secondary-blue-500 text-white border-none! outline-none;
+}
+
 @utility input-phone-primary {
   /* =====  REACT PHONE NUMBER INPUT OVERRIDES WITH PRIMARY BLUE BACKGROUND */
   @apply w-full! rounded-md! h-[52px]! py-[17px]! px-4! text-base! text-white! bg-primary-blue-400! border-0! appearance-none! focus:outline-hidden! focus:ring-0!;
