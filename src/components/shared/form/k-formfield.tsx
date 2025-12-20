@@ -172,6 +172,7 @@ const RenderField = <T extends FieldValues>({
             placeholder=" "
             {...field}
             disabled={props.disabled}
+            maxLength={maxLength}
           />
         </FormControl>
       );
