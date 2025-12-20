@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState, useTransition } from 'react';
+import { useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,7 +21,7 @@ import { loginSchema } from '@/schemas';
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
-function AdminLoginForm() {
+export function LoginForm() {
   const [isPending, startTransition] = useTransition();
   const { login } = useAuth();
   const router = useRouter();
@@ -48,129 +48,47 @@ function AdminLoginForm() {
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col">
-        <div className="flex flex-col gap-6 sm:gap-8">
-          <KFormField
-            fieldType={KFormFieldType.INPUT}
-            control={form.control}
-            disabled={isPending}
-            name="email"
-            label="Email address"
-          />
-          <KFormField
-            fieldType={KFormFieldType.PASSWORD}
-            control={form.control}
-            disabled={isPending}
-            name="password"
-            label="Password"
-          />
-        </div>
-        <Button
-          size="sm"
-          variant="link"
-          asChild
-          className="px-1 font-normal flex justify-start my-3"
-        >
-          <Link href="/auth/reset">Forgot password?</Link>
-        </Button>
-        <Button
-          type="submit"
-          disabled={isPending}
-          className="px-3 py-4 h-[46px]"
-        >
-          {isPending ? 'Logging in...' : 'Login'}
-        </Button>
-      </form>
-    </Form>
-  );
-}
-
-function TrainerLoginForm() {
-  const [isPending, startTransition] = useTransition();
-  const { login } = useAuth();
-  const router = useRouter();
-
-  const form = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    },
-  });
-
-  const onSubmit = (data: LoginFormData) => {
-    startTransition(async () => {
-      const result = await login(data.email, data.password);
-
-      if (result.success) {
-        toast.success('Trainer login successful!');
-        router.push('/dashboard');
-      } else {
-        toast.error(result.error || 'Trainer login failed');
-      }
-    });
-  };
-
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col">
-        <div className="flex flex-col gap-6 sm:gap-8">
-          <KFormField
-            fieldType={KFormFieldType.INPUT}
-            control={form.control}
-            disabled={isPending}
-            name="email"
-            label="Username"
-            placeholder="Enter your username"
-          />
-          <KFormField
-            fieldType={KFormFieldType.PASSWORD}
-            control={form.control}
-            disabled={isPending}
-            name="password"
-            label="Password"
-            placeholder="Enter your password"
-          />
-        </div>
-        <Button
-          size="sm"
-          variant="link"
-          asChild
-          className="px-1 font-normal flex justify-start my-3"
-        >
-          <Link href="/auth/reset">Forgot password?</Link>
-        </Button>
-        <Button
-          type="submit"
-          disabled={isPending}
-          className="px-3 py-4 h-[46px]"
-        >
-          {isPending ? 'Logging in...' : 'Login'}
-        </Button>
-      </form>
-    </Form>
-  );
-}
-
-export function LoginForm() {
-  const [isTrainerLogin, setIsTrainerLogin] = useState(false);
-
-  return (
     <AuthWrapper
       header={{
-        title: isTrainerLogin ? 'Trainer Login' : 'Login',
-        description: isTrainerLogin
-          ? 'Welcome back, trainer!'
-          : "Welcome back! Let's get started.",
-      }}
-      footer={{
-        linkText: isTrainerLogin ? 'Not a trainer?' : 'Are you a trainer?',
-        isLogin: !isTrainerLogin,
-        onFooterClick: () => setIsTrainerLogin(!isTrainerLogin),
+        title: 'Login',
+        description: "Welcome back! Let's get started.",
       }}
     >
-      {isTrainerLogin ? <TrainerLoginForm /> : <AdminLoginForm />}
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col">
+          <div className="flex flex-col gap-6 sm:gap-8">
+            <KFormField
+              fieldType={KFormFieldType.INPUT}
+              control={form.control}
+              disabled={isPending}
+              name="email"
+              label="Email address"
+            />
+            <KFormField
+              fieldType={KFormFieldType.PASSWORD}
+              control={form.control}
+              disabled={isPending}
+              name="password"
+              label="Password"
+            />
+          </div>
+          <Button
+            size="sm"
+            variant="link"
+            asChild
+            className="px-1 font-normal flex justify-start my-3"
+          >
+            <Link href="/auth/reset">Forgot password?</Link>
+          </Button>
+          <Button
+            type="submit"
+            disabled={isPending}
+            className="px-3 py-4 h-[46px]"
+          >
+            {isPending ? 'Logging in...' : 'Login'}
+          </Button>
+        </form>
+      </Form>
     </AuthWrapper>
   );
 }
