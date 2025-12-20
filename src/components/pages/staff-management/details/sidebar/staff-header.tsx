@@ -1,16 +1,26 @@
+import { useState } from 'react';
+
+import { Key } from 'lucide-react';
+
 import ProfilePictureUploader from '@/components/shared/uploaders/profile-uploader';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
 import { base64ToFile, safeDateFormat } from '@/lib/utils';
 import { EditableSectionProps } from '@/types/staff';
+
+import { UpdatePasswordDialog } from './update-password-dialog';
 
 export function StaffHeader({
   isEditing,
   details,
   onUpdate,
 }: EditableSectionProps) {
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const isTrainer = details?.trainerId !== undefined;
+
   return (
     <>
       <div className="items-center mb-4">
@@ -34,9 +44,12 @@ export function StaffHeader({
               isSmall
             />
           ) : (
-            <Avatar className="size-[64px]">
+            <Avatar className="size-16">
               <AvatarImage
-                src={`data:image/png;base64,${details?.profilePicture}`}
+                src={
+                  details?.photoPath ||
+                  `data:image/png;base64,${details?.profilePicture}`
+                }
                 alt="Profile picture"
               />
               <AvatarFallback
@@ -75,12 +88,38 @@ export function StaffHeader({
           </p>
         </div>
       </div>
-      <Badge className="bg-neutral-ochre-500 flex items-center w-fit justify-center text-sm rounded-full h-[30px] py-[8.5px] px-4 border border-neutral-ochre-800 bg-opacity-10">
-        Staff ID:{' '}
-        <span className="uppercase ml-1">
-          {details?.trainerId || details?.memberIdentifier}
-        </span>
-      </Badge>
+      <div className="space-y-3">
+        <Badge className="bg-neutral-ochre-500 flex items-center w-fit justify-center text-sm rounded-full h-[30px] py-[8.5px] px-4 border border-neutral-ochre-800 bg-opacity-10">
+          Staff ID:{' '}
+          <span className="uppercase ml-1">
+            {details?.trainerId || details?.memberIdentifier}
+          </span>
+        </Badge>
+
+        {isTrainer && details?.username && (
+          <div className="space-y-2">
+            <p className="text-xs text-primary-blue-100">Username</p>
+            <p className="text-sm text-white">{details.username}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowPasswordDialog(true)}
+              className="h-8 text-xs"
+            >
+              <Key className="h-3 w-3 mr-1" />
+              Update Password
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {isTrainer && details?.id && (
+        <UpdatePasswordDialog
+          open={showPasswordDialog}
+          onOpenChange={setShowPasswordDialog}
+          id={details.id}
+        />
+      )}
     </>
   );
 }

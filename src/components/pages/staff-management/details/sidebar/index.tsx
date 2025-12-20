@@ -62,7 +62,7 @@ export function Sidebar({
   ];
 
   return (
-    <div className="min-w-[336px] max-h-[calc(100vh-80px)] sticky left-0 top-[80px] max-w-[336px] h-auto pb-8 bg-primary-blue-500 text-white overflow-y-auto scrollbar-thin border-r border-secondary-blue-500">
+    <div className="min-w-[336px] max-h-[calc(100vh-80px)] sticky left-0 top-20 max-w-[336px] h-auto pb-8 bg-primary-blue-500 text-white overflow-y-auto scrollbar-thin border-r border-secondary-blue-500">
       <div className="px-8 sticky top-0 bg-primary-blue-500 py-8 z-20">
         <Breadcrumb
           items={[

@@ -106,3 +106,18 @@ export const deleteStaff = async (id: string | number, role: StaffType) => {
     return { error: errorMessage };
   }
 };
+
+export const updateTrainerPassword = async (
+  id: string | number,
+  newPassword: string
+) => {
+  try {
+    await api.put(`/Trainer/update-password/${id}`, { newPassword });
+    return { success: 'Password updated successfully' };
+  } catch (error) {
+    console.error('Error updating trainer password:', error);
+    const errorMessage =
+      error instanceof Error ? error.message : 'Failed to update password';
+    return { error: errorMessage };
+  }
+};

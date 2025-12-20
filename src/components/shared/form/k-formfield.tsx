@@ -10,11 +10,12 @@ import {
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 
-import { KDatePicker } from '@kurlclub/ui-components';
+import { KDatePicker as UIDatePicker } from '@kurlclub/ui-components';
 import { REGEXP_ONLY_DIGITS_AND_CHARS } from 'input-otp';
 import { E164Number } from 'libphonenumber-js/core';
 
 import { KDateInput } from '@/components/shared/form/k-date-input';
+import { KDatePicker } from '@/components/shared/form/k-datepicker';
 import { KInput } from '@/components/shared/form/k-input';
 import { KMultiSelect } from '@/components/shared/form/k-multi-select';
 import { KPassword } from '@/components/shared/form/k-password';
@@ -63,6 +64,7 @@ export enum KFormFieldType {
   PHONE_INPUT = 'phoneInput',
   CHECKBOX = 'checkbox',
   DATE_PICKER = 'datePicker',
+  UI_DATE_PICKER = 'uidatePicker',
   DATE_INPUT = 'dateInput',
   SELECT = 'select',
   MULTISELECT = 'multiSelect',
@@ -170,6 +172,7 @@ const RenderField = <T extends FieldValues>({
             placeholder=" "
             {...field}
             disabled={props.disabled}
+            maxLength={maxLength}
           />
         </FormControl>
       );
@@ -198,7 +201,10 @@ const RenderField = <T extends FieldValues>({
             value={field.value as E164Number | undefined}
             onChange={field.onChange}
             className={`peer ${className ? className : 'input-phone'}`}
-            countrySelectProps={{ tabIndex: -1 }}
+            countrySelectProps={{
+              className: 'country-select',
+              tabIndex: -1,
+            }}
             smartCaret={false}
             inputComponent={CustomPhoneInput}
           />
@@ -260,6 +266,34 @@ const RenderField = <T extends FieldValues>({
       return (
         <FormControl>
           <KDatePicker
+            numberOfMonths={numberOfMonths}
+            label={floating ? label : dateLabel}
+            floating={floating}
+            showPresets={showPresets}
+            showYearSelector={showYearSelector}
+            onDateChange={(date) => {
+              if (mode === 'single' && date instanceof Date) {
+                field.onChange(date.toISOString());
+              } else {
+                field.onChange(date);
+              }
+            }}
+            value={
+              mode === 'single' && typeof field.value === 'string'
+                ? safeParseDate(field.value)
+                : field.value
+            }
+            mode={mode ?? 'range'}
+            className={className}
+            icon={iconSrc}
+          />
+        </FormControl>
+      );
+
+    case KFormFieldType.UI_DATE_PICKER:
+      return (
+        <FormControl>
+          <UIDatePicker
             captionLayout="dropdown"
             numberOfMonths={numberOfMonths}
             label={floating ? label : dateLabel}

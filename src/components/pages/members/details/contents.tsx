@@ -2,9 +2,6 @@
 
 import React from 'react';
 
-import { Clock4 } from 'lucide-react';
-
-import InfoCard from '@/components/shared/cards/info-card';
 import { FormOptionsResponse } from '@/hooks/use-gymform-options';
 import { MemberDetails } from '@/types/member.types';
 
@@ -41,7 +38,8 @@ function Contents({
         handleSave={handleSave}
         toggleEdit={toggleEdit}
       />
-      <InfoCard
+      {/* TODO: Total hours functionality not implemented yet */}
+      {/* <InfoCard
         item={{
           id: 1,
           icon: <Clock4 className="text-black" />,
@@ -50,7 +48,7 @@ function Contents({
           count: 10,
         }}
         className="max-w-[332px]! w-full md:mt-4"
-      />
+      /> */}
       <div className="grid grid-cols-1 [@media(max-width:900px)]:grid-cols-1 sm:grid-cols-2 md:grid-cols-1 xl:grid-cols-2 gap-4 mt-3">
         <Chart />
         <PaymentCard memberId={memberId} formOptions={formOptions} />
