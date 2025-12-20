@@ -104,7 +104,7 @@ const PaymentFields = ({
       className="space-y-4 p-4 bg-secondary-blue-600/50 rounded-lg border border-secondary-blue-400"
     >
       <FieldRow>
-        <FieldColumn auto>
+        <FieldColumn auto={feeStatus === 'unpaid'}>
           <KFormField
             fieldType={KFormFieldType.SELECT}
             control={form.control}
@@ -380,9 +380,26 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                   </FormControl>
                 )}
               />
-              <Badge className="bg-secondary-blue-400 flex items-center w-fit justify-center text-sm text-white rounded-full h-[30px] py-2 px-2 border border-secondary-blue-300 bg-opacity-100">
-                Gym no: #Pending
-              </Badge>
+              <div className="flex flex-col gap-3 items-end">
+                <Badge className="bg-secondary-blue-400 flex items-center w-fit justify-center text-sm text-white rounded-full h-[30px] py-2 px-2 border border-secondary-blue-300 bg-opacity-100">
+                  Gym no: #Pending
+                </Badge>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="w-fit"
+                  onClick={() => {
+                    form.reset();
+                    form.clearErrors();
+                    setExistingPhotoUrl?.(null);
+                    setExistingIdCopyUrl?.(null);
+                  }}
+                  disabled={isSubmitting}
+                >
+                  Reset
+                </Button>
+              </div>
             </div>
 
             <h5 className="text-white text-base font-normal leading-normal mt-0!">
@@ -394,6 +411,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
               control={form.control}
               name="memberName"
               label="Member Name"
+              maxLength={50}
             />
             <KFormField
               fieldType={KFormFieldType.INPUT}
@@ -537,6 +555,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
               control={form.control}
               name="medicalHistory"
               label="Medical History or Notes"
+              maxLength={250}
             />
 
             <h5 className="text-white text-base font-normal leading-normal mt-8!">
@@ -588,6 +607,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
               control={form.control}
               name="emergencyContactName"
               label="Emergency Contact Name"
+              maxLength={50}
             />
             <KFormField
               fieldType={KFormFieldType.PHONE_INPUT}
@@ -612,6 +632,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
               control={form.control}
               name="address"
               label="Address Line"
+              maxLength={250}
             />
           </form>
         </FormProvider>
