@@ -38,7 +38,7 @@ const KPassword = forwardRef<HTMLInputElement, KPasswordProps>(
           <input
             type={inputType}
             className={cn(
-              'k-input px-4 pb-2.5 pt-6 bg-secondary-blue-500',
+              'k-input px-4 pb-2.5 pt-6 h-[52px] bg-secondary-blue-500',
               className
             )}
             ref={ref}

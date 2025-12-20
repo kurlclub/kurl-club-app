@@ -37,9 +37,9 @@ export const AddStaff: React.FC<CreateStaffDetailsProps> = ({
     defaultValues: {
       ProfilePicture: null,
       TrainerName: '',
-      Email: '',
+      Email: undefined,
       Phone: '',
-      Dob: '',
+      Dob: undefined,
       BloodGroup: '',
       Gender: '',
       AddressLine: '',
@@ -55,9 +55,9 @@ export const AddStaff: React.FC<CreateStaffDetailsProps> = ({
     defaultValues: {
       ProfilePicture: null,
       Name: '',
-      Email: '',
+      Email: undefined,
       Phone: '',
-      Dob: '',
+      Dob: undefined,
       bloodGroup: '',
       Gender: '',
       AddressLine: '',
