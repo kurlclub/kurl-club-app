@@ -10,19 +10,28 @@ export const validatePaymentAmount = (
   feeStatus: string,
   totalFee: number
 ): PaymentValidationResult => {
+  // If fee status is unpaid, skip all payment-related validation
+  if (feeStatus === 'unpaid') {
+    return {
+      showPaidWarning: false,
+      showUnpaidWarning: false,
+      showOverpaymentError: false,
+      hasAnyWarning: false,
+    };
+  }
+
   const paidAmount = amountPaid ? Number(amountPaid) : 0;
 
   const showPaidWarning =
     feeStatus === 'paid' && !!amountPaid && paidAmount < totalFee;
-  const showUnpaidWarning =
-    feeStatus === 'unpaid' && !!amountPaid && paidAmount > 0;
+  const showUnpaidWarning = false; // not applicable when feeStatus isn't 'unpaid'
   const showOverpaymentError = !!amountPaid && paidAmount > totalFee;
 
   return {
     showPaidWarning,
     showUnpaidWarning,
     showOverpaymentError,
-    hasAnyWarning: showPaidWarning || showUnpaidWarning || showOverpaymentError,
+    hasAnyWarning: showPaidWarning || showOverpaymentError,
   };
 };
 

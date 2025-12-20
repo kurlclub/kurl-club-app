@@ -261,10 +261,10 @@ export function NavUser() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="start"
-                  className="w-[calc(100%-2rem)] bg-secondary-blue-500/95 backdrop-blur-xl border border-primary-green-500/20 shadow-2xl rounded-md p-2"
+                  className="w-[calc(100%-3rem)] bg-secondary-blue-500/95 backdrop-blur-xl border border-primary-green-500/20 shadow-2xl rounded-lg p-2"
                 >
                   <div className="px-2 py-1 mb-2">
-                    <p className="text-xs text-primary-green-200/70 font-semibold">
+                    <p className="text-xs text-primary-green-500/70 font-semibold">
                       SWITCH CLUB
                     </p>
                   </div>

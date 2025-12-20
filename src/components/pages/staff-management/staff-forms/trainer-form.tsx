@@ -2,6 +2,7 @@
 
 import { useFormContext } from 'react-hook-form';
 
+import { FieldColumn, FieldRow } from '@/components/shared/form/field-layout';
 import {
   KFormField,
   KFormFieldType,
@@ -67,9 +68,8 @@ export default function TrainerForm({ gymId, isSubmitting }: TrainerFormProps) {
         label="Phone Number"
         disabled={isSubmitting}
       />
-      <div className="flex justify-between gap-3 flex-wrap sm:flex-nowrap">
-        {/* Gender */}
-        <div className="w-full sm:w-1/2">
+      <FieldRow>
+        <FieldColumn>
           <KFormField
             fieldType={KFormFieldType.SELECT}
             control={form.control}
@@ -78,10 +78,8 @@ export default function TrainerForm({ gymId, isSubmitting }: TrainerFormProps) {
             options={genderOptions}
             disabled={isSubmitting}
           />
-        </div>
-
-        {/* Blood Group */}
-        <div className="w-full sm:w-1/2">
+        </FieldColumn>
+        <FieldColumn>
           <KFormField
             fieldType={KFormFieldType.SELECT}
             control={form.control}
@@ -90,13 +88,12 @@ export default function TrainerForm({ gymId, isSubmitting }: TrainerFormProps) {
             options={bloodGroupOptions}
             disabled={isSubmitting}
           />
-        </div>
-      </div>
-      <div className="flex justify-between gap-3 flex-wrap sm:flex-nowrap">
-        {/* Date of joining */}
-        <div className="w-full sm:w-1/2">
+        </FieldColumn>
+      </FieldRow>
+      <FieldRow>
+        <FieldColumn>
           <KFormField
-            fieldType={KFormFieldType.DATE_PICKER}
+            fieldType={KFormFieldType.UI_DATE_PICKER}
             control={form.control}
             name="Doj"
             label="Date of joining"
@@ -104,10 +101,8 @@ export default function TrainerForm({ gymId, isSubmitting }: TrainerFormProps) {
             floating
             disabled={isSubmitting}
           />
-        </div>
-
-        {/* Date of birth */}
-        <div className="w-full sm:w-1/2">
+        </FieldColumn>
+        <FieldColumn>
           <KFormField
             fieldType={KFormFieldType.DATE_INPUT}
             control={form.control}
@@ -115,8 +110,8 @@ export default function TrainerForm({ gymId, isSubmitting }: TrainerFormProps) {
             label="Date of birth"
             disabled={isSubmitting}
           />
-        </div>
-      </div>
+        </FieldColumn>
+      </FieldRow>
       <KFormField
         fieldType={KFormFieldType.MULTISELECT}
         control={form.control}
@@ -131,6 +126,27 @@ export default function TrainerForm({ gymId, isSubmitting }: TrainerFormProps) {
               }))
             : []
         }
+        disabled={isSubmitting}
+      />
+
+      {/* User Credentials */}
+      <h5 className="text-white text-base font-normal leading-normal mt-8!">
+        User Credentials
+      </h5>
+      <KFormField
+        control={form.control}
+        name="Username"
+        fieldType={KFormFieldType.INPUT}
+        label="Username (Email)"
+        placeholder="trainer@example.com"
+        disabled={isSubmitting}
+      />
+      <KFormField
+        control={form.control}
+        name="Password"
+        fieldType={KFormFieldType.PASSWORD}
+        label="Password"
+        placeholder="Enter password"
         disabled={isSubmitting}
       />
 

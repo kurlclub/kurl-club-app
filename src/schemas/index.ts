@@ -12,100 +12,160 @@ export const DatePickerSchema = z.object({
   }),
 });
 
-export const createMemberSchema = z.object({
-  profilePicture: z
-    .custom<File | null>((value) => value instanceof File || value === null, {
-      error: 'Profile picture must be a file.',
-    })
-    .refine((file) => file === null || file.size <= 5 * 1024 * 1024, {
-      error: 'File size must be less than 5MB',
-    })
-    .optional(),
-  name: z.string().min(1, 'Member name is required'),
-  dob: z.iso.datetime('Please select a valid Date of Birth.'),
-  doj: z.iso.datetime('Please select a valid Date of Joining.'),
-  bloodGroup: z.string().min(1, 'Blood group selection is required'),
-  gender: z.string().min(1, 'Gender selection is required'),
-  membershipPlanId: z.string().min(1, 'Package selection is required'),
-  feeStatus: z.string().min(1, 'Fee status is required'),
-  phone: z
-    .string()
-    .min(10, 'Phone number must be at least 10 digits')
-    .max(15, 'Phone number must not exceed 15 digits')
-    .regex(/^\+?[1-9]\d{1,14}$/, 'Phone number must be valid'),
-  email: z
-    .string()
-    .optional()
-    .refine(
-      (val) => {
-        if (!val || val === '') return true;
-        return z.string().email().safeParse(val).success;
-      },
-      { message: 'Invalid email format' }
-    ),
-  height: z.string().min(1, 'Height is required'),
-  weight: z.string().min(1, 'Weight is required'),
-  personalTrainer: z.union([z.string(), z.number()]),
-  address: z
-    .string()
-    .min(1, 'Address is required.')
-    .max(250, 'Address must not exceed 250 characters.'),
-  amountPaid: z.string().min(0, 'Amount paid must be a positive number'),
-  workoutPlanId: z.string().min(1, 'Workout plan selection is required'),
-  modeOfPayment: z.string().min(1, 'Payment method is required'),
-  customSessionRate: z
-    .string()
-    .optional()
-    .refine(
-      (val) => {
-        if (!val || val === '') return true;
-        return Number(val) > 0;
-      },
-      { message: 'Session rate must be greater than 0' }
-    ),
-  numberOfSessions: z
-    .string()
-    .optional()
-    .refine(
-      (val) => {
-        if (!val || val === '') return true;
-        return Number(val) > 0;
-      },
-      { message: 'Number of sessions must be greater than 0' }
-    ),
-  idType: z.string().min(1, 'ID type is required'),
-  idNumber: z
-    .string()
-    .min(1, 'ID number is required')
-    .max(20, 'ID number must not exceed 20 characters'),
-  idCopyPath: z
-    .custom<File | null | string>(
-      (value) =>
-        value instanceof File || value === null || value === 'existing',
-      {
-        error: 'ID copy must be a file.',
+export const createMemberSchema = z
+  .object({
+    profilePicture: z
+      .custom<File | null>((value) => value instanceof File || value === null, {
+        error: 'Profile picture must be a file.',
+      })
+      .refine((file) => file === null || file.size <= 5 * 1024 * 1024, {
+        error: 'File size must be less than 5MB',
+      })
+      .optional(),
+    memberName: z
+      .string()
+      .min(1, 'Member name is required')
+      .max(50, 'Member name must not exceed 50 characters'),
+    dob: z
+      .string()
+      .optional()
+      .refine((val) => !val || !isNaN(Date.parse(val)), {
+        message: 'Please select a valid Date of Birth.',
+      }),
+    doj: z.iso.datetime('Please select a valid Date of Joining.'),
+    bloodGroup: z.string().min(1, 'Blood group selection is required'),
+    gender: z.string().min(1, 'Gender selection is required'),
+    membershipPlanId: z.string().min(1, 'Package selection is required'),
+    feeStatus: z.string().min(1, 'Fee status is required'),
+    phone: z
+      .string()
+      .min(10, 'Phone number must be at least 10 digits')
+      .max(15, 'Phone number must not exceed 15 digits')
+      .regex(/^\+?[1-9]\d{1,14}$/, 'Phone number must be valid'),
+    email: z
+      .string()
+      .optional()
+      .refine(
+        (val) => {
+          if (!val || val === '') return true;
+          return z.string().email().safeParse(val).success;
+        },
+        { message: 'Invalid email format' }
+      ),
+    height: z.string().min(1, 'Height is required'),
+    weight: z.string().min(1, 'Weight is required'),
+    personalTrainer: z
+      .union([z.string(), z.number()])
+      .refine((val) => String(val) !== '' && String(val) !== '0', {
+        message: 'Personal trainer selection is required',
+      }),
+    address: z
+      .string()
+      .min(1, 'Address is required.')
+      .max(250, 'Address must not exceed 250 characters.'),
+    amountPaid: z.string().optional(),
+    workoutPlanId: z.string().min(1, 'Workout plan selection is required'),
+    modeOfPayment: z.string().optional(),
+
+    customSessionRate: z
+      .string()
+      .optional()
+      .refine(
+        (val) => {
+          if (!val || val === '') return true;
+          return Number(val) > 0;
+        },
+        { message: 'Session rate must be greater than 0' }
+      ),
+    numberOfSessions: z
+      .string()
+      .optional()
+      .refine(
+        (val) => {
+          if (!val || val === '') return true;
+          return Number(val) > 0;
+        },
+        { message: 'Number of sessions must be greater than 0' }
+      ),
+    idType: z.string().optional(),
+    idNumber: z
+      .string()
+      .max(20, 'ID number must not exceed 20 characters')
+      .optional(),
+    idCopyPath: z
+      .custom<File | null | string>(
+        (value) =>
+          value instanceof File || value === null || value === 'existing',
+        {
+          error: 'ID copy must be a file.',
+        }
+      )
+      .refine(
+        (file) =>
+          file === null ||
+          file === 'existing' ||
+          (file instanceof File && file.size <= 4 * 1024 * 1024),
+        {
+          error: 'File size must be less than 4MB',
+        }
+      )
+      .optional(),
+    fitnessGoal: z.string().optional(),
+    medicalHistory: z
+      .string()
+      .max(250, 'Medical history must not exceed 250 characters')
+      .optional(),
+    emergencyContactName: z
+      .string()
+      .max(50, 'Emergency contact name must not exceed 50 characters')
+      .optional(),
+    emergencyContactPhone: z
+      .string()
+      .optional()
+      .refine(
+        (val) => {
+          if (!val || val === '') return true;
+          return (
+            val.length >= 10 &&
+            val.length <= 15 &&
+            /^\+?[1-9]\d{1,14}$/.test(val)
+          );
+        },
+        { message: 'Phone number must be valid' }
+      ),
+    emergencyContactRelation: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    // If fee status is not 'unpaid', ensure amountPaid and modeOfPayment are provided and valid
+    if (data.feeStatus && data.feeStatus !== 'unpaid') {
+      // Validate Amount Paid presence
+      if (!data.amountPaid || String(data.amountPaid).trim() === '') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Amount paid is required when fee status is not unpaid',
+          path: ['amountPaid'],
+        });
+      } else {
+        const amt = Number(String(data.amountPaid));
+        if (Number.isNaN(amt) || amt <= 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Amount paid must be a number greater than 0',
+            path: ['amountPaid'],
+          });
+        }
       }
-    )
-    .refine(
-      (file) =>
-        file === null ||
-        file === 'existing' ||
-        (file instanceof File && file.size <= 4 * 1024 * 1024),
-      {
-        error: 'File size must be less than 4MB',
+
+      // Validate mode of payment presence
+      if (!data.modeOfPayment || String(data.modeOfPayment).trim() === '') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Payment method is required when fee status is not unpaid',
+          path: ['modeOfPayment'],
+        });
       }
-    )
-    .optional(),
-  fitnessGoal: z.string().optional(),
-  medicalHistory: z.string().optional(),
-  emergencyContactName: z.string().min(1, 'Emergency contact name is required'),
-  emergencyContactPhone: z
-    .string()
-    .min(10, 'Phone number must be at least 10 digits')
-    .max(15, 'Phone number must not exceed 15 digits')
-    .regex(/^\+?[1-9]\d{1,14}$/, 'Phone number must be valid'),
-  emergencyContactRelation: z.string().min(1, 'Relation is required'),
-});
+    }
+  });
 
 export const workoutPlanSchema = z.object({
   planName: z.string().min(1, 'Plan name is required'),
@@ -147,6 +207,11 @@ export const trainerFormSchema = z.object({
     .min(1, 'Address is required.')
     .max(250, 'Address must not exceed 250 characters.'),
   BloodGroup: z.string().min(1, 'Blood group selection is required'),
+  Username: z.string().email('Please enter a valid email address'),
+  Password: z
+    .string()
+    .min(1, 'Password is required')
+    .min(6, 'Password must be at least 6 characters'),
 });
 
 export const adminstratorFormSchema = z.object({

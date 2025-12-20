@@ -16,8 +16,11 @@ import {
   usePaymentHistory,
 } from '@/hooks/use-payment-management';
 import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
-import { useMemberByID } from '@/services/member';
-import type { MemberPaymentDetails } from '@/types/payment';
+import type { PaymentHistory } from '@/services/transaction';
+import type {
+  MemberPaymentDetails,
+  SessionPaymentMember,
+} from '@/types/payment';
 
 import { MobilePreviewPopup } from './mobile-preview-popup';
 import { PaymentListItem } from './payment-list-item';
@@ -37,10 +40,40 @@ export function InvoiceGenerator({
   const [selectedPayment, setSelectedPayment] = useState<number | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [showMobilePreview, setShowMobilePreview] = useState(false);
-  const { data: paymentHistory = [], isLoading } = usePaymentHistory(
-    member?.memberId || 0
+  // Use different data source based on billing type
+  const shouldFetchPaymentHistory = member?.billingType === 'Recurring';
+  const { data: recurringPaymentHistory = [], isLoading } = usePaymentHistory(
+    shouldFetchPaymentHistory ? member?.memberId || 0 : 0
   );
-  const { data: memberDetails } = useMemberByID(member?.memberId || 0);
+
+  // For per-session billing, use sessionPayments from member data
+  const sessionPaymentHistory =
+    member?.billingType === 'PerSession'
+      ? (member as SessionPaymentMember).sessionPayments
+          ?.filter((s) => s.status === 'paid')
+          .map((s, index) => ({
+            id: s.sessionId || index + 1,
+            amount: s.amountPaid || s.sessionRate,
+            paymentMethod: 'Session Payment',
+            paymentDate: s.sessionDate,
+            paymentType: 1,
+            isEdited: false,
+            originalPaymentId: null,
+            status: 'completed',
+          })) || []
+      : [];
+
+  const paymentHistory =
+    member?.billingType === 'PerSession'
+      ? sessionPaymentHistory
+      : recurringPaymentHistory;
+  const memberDetails = member
+    ? {
+        photoPath: member.photoPath,
+        profilePicture: member.profilePicture,
+        doj: 'N/A', // This would need to come from member object if needed
+      }
+    : null;
   const { exportInvoice, sendInvoiceEmail, isExporting, isSending } =
     useInvoiceManagement();
   const { showConfirm } = useAppDialog();
@@ -80,7 +113,9 @@ export function InvoiceGenerator({
   const handleSendInvoice = () => {
     if (!selectedPayment || !member) return;
 
-    const payment = paymentHistory.find((p) => p.id === selectedPayment);
+    const payment = paymentHistory.find(
+      (p: PaymentHistory) => p.id === selectedPayment
+    );
     if (!payment) return;
 
     showConfirm({
@@ -132,7 +167,7 @@ export function InvoiceGenerator({
       {!member ? null : (
         <div className="relative md:space-y-0 h-full">
           {/* Member Info Header - Mobile Only */}
-          <div className="md:hidden rounded-lg border border-primary-blue-400 bg-gradient-to-br from-secondary-blue-500 to-primary-blue-500 px-5 py-4 shadow-sm mb-6">
+          <div className="md:hidden rounded-lg border border-primary-blue-400 bg-linear-to-br from-secondary-blue-500 to-primary-blue-500 px-5 py-4 shadow-sm mb-6">
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
@@ -165,10 +200,10 @@ export function InvoiceGenerator({
           <div className="flex flex-col md:flex-row md:gap-6 h-full">
             {/* Left Panel - Payment History List */}
             <div
-              className={`space-y-3 ${selectedPayment ? 'md:w-[380px] md:flex-shrink-0' : 'md:w-full'}`}
+              className={`space-y-3 ${selectedPayment ? 'md:w-[380px] md:shrink-0' : 'md:w-full'}`}
             >
               <div className="flex items-center gap-3 mb-5">
-                <Avatar className="size-[64px] flex-shrink-0">
+                <Avatar className="size-16 shrink-0">
                   <AvatarImage
                     src={
                       memberDetails?.photoPath ||
@@ -229,7 +264,7 @@ export function InvoiceGenerator({
                     </p>
                   </div>
                 ) : (
-                  paymentHistory.map((payment) => (
+                  paymentHistory.map((payment: PaymentHistory) => (
                     <PaymentListItem
                       key={payment.id}
                       payment={payment}
@@ -255,7 +290,7 @@ export function InvoiceGenerator({
                     initial={{ x: 20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
                     transition={{ delay: 0.2, duration: 0.3 }}
-                    className="flex items-center justify-between flex-shrink-0"
+                    className="flex items-center justify-between shrink-0"
                   >
                     <h3 className="text-sm font-semibold text-white flex items-center gap-2">
                       <Mail className="w-4 h-4 text-primary-green-200" />

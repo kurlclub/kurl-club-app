@@ -9,6 +9,7 @@ interface PreviewModalProps {
   src: string | null;
   onDelete: () => void;
   onReupload: () => void;
+  readonly?: boolean;
 }
 
 export default function PreviewModal({
@@ -17,18 +18,21 @@ export default function PreviewModal({
   src,
   onDelete,
   onReupload,
+  readonly = false,
 }: PreviewModalProps) {
   return (
     <KDialog
       footer={
-        <div className="flex items-center gap-2 w-full">
-          <Button variant="destructive" onClick={onDelete} className="flex-1">
-            Delete
-          </Button>
-          <Button onClick={onReupload} className="flex-1">
-            Re-upload
-          </Button>
-        </div>
+        readonly ? undefined : (
+          <div className="flex items-center gap-2 w-full">
+            <Button variant="destructive" onClick={onDelete} className="flex-1">
+              Delete
+            </Button>
+            <Button onClick={onReupload} className="flex-1">
+              Re-upload
+            </Button>
+          </div>
+        )
       }
       open={isOpen}
       onOpenChange={onClose}

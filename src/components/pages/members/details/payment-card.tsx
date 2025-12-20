@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { FormOptionsResponse } from '@/hooks/use-gymform-options';
 import { useSheet } from '@/hooks/use-sheet';
 import { useMemberPaymentDetails } from '@/services/member';
+import { RecurringPaymentMember, SessionPaymentMember } from '@/types/payment';
 
 import { ManageSessionPaymentSheet } from '../../payments/per-session/manage-session-payment';
 import { ManagePaymentSheet } from '../../payments/recurring';
@@ -28,13 +29,16 @@ function PaymentCard({ memberId, formOptions }: PaymentCardProps) {
     openSheet: openInvoice,
     closeSheet: closeInvoice,
   } = useSheet();
+
   const queryClient = useQueryClient();
 
-  const handleCloseSheet = () => {
-    closeSheet();
-    queryClient.invalidateQueries({
-      queryKey: ['memberPaymentDetails', memberId],
-    });
+  const handleCloseSheet = (open: boolean) => {
+    if (!open) {
+      closeSheet();
+      queryClient.invalidateQueries({
+        queryKey: ['memberPaymentDetails', memberId],
+      });
+    }
   };
 
   if (isLoading) {
@@ -61,7 +65,11 @@ function PaymentCard({ memberId, formOptions }: PaymentCardProps) {
           onGenerateInvoice={openInvoice}
         />
       ) : (
-        <SessionPaymentCard member={member} onRecordPayment={openSheet} />
+        <SessionPaymentCard
+          member={member as SessionPaymentMember}
+          onRecordPayment={openSheet}
+          onGenerateInvoice={openInvoice}
+        />
       )}
 
       {member.billingType === 'Recurring' ? (
@@ -69,7 +77,7 @@ function PaymentCard({ memberId, formOptions }: PaymentCardProps) {
           <ManagePaymentSheet
             open={isOpen}
             onOpenChange={handleCloseSheet}
-            member={member}
+            member={member as RecurringPaymentMember}
           />
           <InvoiceGenerator
             open={isInvoiceOpen}
@@ -78,11 +86,18 @@ function PaymentCard({ memberId, formOptions }: PaymentCardProps) {
           />
         </>
       ) : (
-        <ManageSessionPaymentSheet
-          open={isOpen}
-          onOpenChange={handleCloseSheet}
-          member={member}
-        />
+        <>
+          <ManageSessionPaymentSheet
+            open={isOpen}
+            onOpenChange={handleCloseSheet}
+            member={member as SessionPaymentMember}
+          />
+          <InvoiceGenerator
+            open={isInvoiceOpen}
+            onOpenChange={closeInvoice}
+            member={member}
+          />
+        </>
       )}
     </>
   );

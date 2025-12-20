@@ -87,6 +87,35 @@ export const useAllGymMembers = (gymId: number | string) => {
   });
 };
 
+// Get members assigned to a specific trainer with proper pagination
+export const useTrainerAssignedMembers = (
+  gymId: number | string,
+  trainerId: number,
+  filters?: MemberFilters
+) => {
+  return useQuery({
+    queryKey: ['trainerAssignedMembers', gymId, trainerId, filters],
+    queryFn: async () => {
+      const response = await fetchGymMembers(gymId, filters);
+      return {
+        data: response.data.filter(
+          (member) => member.assignedTrainer === trainerId
+        ),
+        pagination: {
+          ...response.pagination,
+          totalCount: response.data.filter(
+            (member) => member.assignedTrainer === trainerId
+          ).length,
+        },
+        availableFilters: response.availableFilters,
+      };
+    },
+    enabled: !!gymId && !!trainerId,
+    staleTime: 1000 * 60,
+    retry: 1,
+  });
+};
+
 export const fetchMemberByID = async (id: string | number) => {
   const response = await api.get<MemberDetailsResponse>(`/Member/${id}`);
   return response.data;
@@ -211,6 +240,7 @@ export const useMemberPaymentDetails = (memberId: number | string) => {
     queryKey: ['memberPaymentDetails', memberId],
     queryFn: () => fetchMemberPaymentDetails(memberId),
     enabled: !!memberId,
+    staleTime: 1000 * 60 * 2,
   });
 };
 

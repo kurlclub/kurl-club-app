@@ -45,7 +45,7 @@ export function EditableFormField(props: EditableFormFieldProps) {
   if (type === 'input') {
     const { value, onChange, suffix, customInput } = props;
     const displayValue =
-      typeof value === 'number' && value === 0 ? '' : (value ?? '');
+      value === null || value === undefined ? '' : String(value);
 
     return (
       <div className="py-3 flex flex-col gap-2">
@@ -88,6 +88,7 @@ export function EditableFormField(props: EditableFormFieldProps) {
 
   if (type === 'select') {
     const { value, onChange, options } = props;
+    const selectValue = value ?? undefined;
 
     return (
       <div className="py-3 flex flex-col gap-2">
@@ -95,7 +96,7 @@ export function EditableFormField(props: EditableFormFieldProps) {
           {label}
         </Label>
         {isEditing ? (
-          <Select value={value} onValueChange={onChange}>
+          <Select value={selectValue} onValueChange={onChange}>
             <SelectTrigger className="border-0 border-b rounded-none focus:outline-hidden focus:shadow-none focus:ring-0 p-0 h-auto text-[15px] text-white font-normal leading-normal pb-2 border-primary-blue-300 focus:border-white hover:border-white k-transition focus:outline-0">
               <SelectValue />
             </SelectTrigger>

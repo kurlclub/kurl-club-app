@@ -1,6 +1,6 @@
 'use client';
 
-import { Calendar, Clock, Edit, Info } from 'lucide-react';
+import { Calendar, Clock, Edit, FileText, Info } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -10,11 +10,13 @@ import { SessionPaymentMember } from '@/types/payment';
 interface SessionPaymentCardProps {
   member: SessionPaymentMember;
   onRecordPayment: () => void;
+  onGenerateInvoice: () => void;
 }
 
 export function SessionPaymentCard({
   member,
   onRecordPayment,
+  onGenerateInvoice,
 }: SessionPaymentCardProps) {
   const {
     sessionFee,
@@ -40,14 +42,24 @@ export function SessionPaymentCard({
         <div className="tracking-tight text-white text-base font-normal leading-normal">
           Per-Session Billing
         </div>
-        <Button
-          onClick={onRecordPayment}
-          className="bg-primary-blue-400 text-white hover:bg-primary-blue-500"
-          size="sm"
-        >
-          <Edit className="h-4 w-4" />
-          <span>Record Payment</span>
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={onGenerateInvoice}
+            className="bg-primary-blue-400 text-white hover:bg-primary-blue-500/80"
+            size="sm"
+          >
+            <FileText className="h-4 w-4" />
+            <span>Invoice</span>
+          </Button>
+          <Button
+            onClick={onRecordPayment}
+            className="bg-primary-blue-400 text-white hover:bg-primary-blue-500"
+            size="sm"
+          >
+            <Edit className="h-4 w-4" />
+            <span>Record Payment</span>
+          </Button>
+        </div>
       </div>
 
       {hasUnpaid && (

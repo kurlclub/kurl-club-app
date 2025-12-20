@@ -113,10 +113,31 @@ const baseFetch: typeof fetch = async (url, options = {}) => {
   const isFormData = restOptions.body instanceof FormData;
   const accessToken = getStorageItem('accessToken');
 
+  // Get user data for X-User and X-Role headers
+  let userData = null;
+  try {
+    const encryptedUser = getStorageItem('appUser');
+    if (encryptedUser) {
+      const { decrypt } = await import('@/lib/crypto');
+      const decryptedData = decrypt(encryptedUser);
+      if (decryptedData) {
+        userData = JSON.parse(decryptedData);
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to get user data for headers:', error);
+  }
+
   const headers: HeadersInit = {
     ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(accessToken && !skipAuth
       ? { Authorization: `Bearer ${accessToken}` }
+      : {}),
+    ...(userData && !skipAuth
+      ? {
+          'X-User': String(userData.userId || ''),
+          'X-Role': userData.userRole || '',
+        }
       : {}),
     ...(restOptions.headers || {}),
   };
