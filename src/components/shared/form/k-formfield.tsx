@@ -103,6 +103,7 @@ interface CustomProps<T extends FieldValues> {
     field: ControllerRenderProps<T, FieldPath<T>>
   ) => React.ReactNode;
   type?: React.InputHTMLAttributes<HTMLInputElement>['type'];
+  isLogin?: boolean;
 }
 
 const RenderField = <T extends FieldValues>({
@@ -157,6 +158,7 @@ const RenderField = <T extends FieldValues>({
                 mandetory={mandetory}
                 size={size}
                 type={type}
+                isLogin={props.isLogin}
               />
             </div>
           </div>
@@ -186,6 +188,7 @@ const RenderField = <T extends FieldValues>({
             placeholder=" "
             {...field}
             disabled={props.disabled}
+            isLogin={props.isLogin}
           />
         </FormControl>
       );

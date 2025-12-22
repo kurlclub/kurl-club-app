@@ -56,13 +56,14 @@ export function LoginForm() {
     >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col">
-          <div className="flex flex-col gap-6 sm:gap-8">
+          <div className="flex flex-col gap-4 sm:gap-6">
             <KFormField
               fieldType={KFormFieldType.INPUT}
               control={form.control}
               disabled={isPending}
               name="email"
               label="Email address"
+              isLogin
             />
             <KFormField
               fieldType={KFormFieldType.PASSWORD}
@@ -70,6 +71,7 @@ export function LoginForm() {
               disabled={isPending}
               name="password"
               label="Password"
+              isLogin
             />
           </div>
           <Button
