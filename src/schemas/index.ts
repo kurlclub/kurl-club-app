@@ -187,13 +187,15 @@ export const trainerFormSchema = z.object({
   TrainerName: z.string().min(2, {
     error: 'Name must be at least 2 characters.',
   }),
-  Email: z.email({
-    error: 'Please enter a valid email address.',
-  }),
+  Email: z
+    .email({
+      error: 'Please enter a valid email address.',
+    })
+    .optional(),
   Phone: z.string().min(10, {
     error: 'Phone number must be at least 10 digits.',
   }),
-  Dob: z.iso.datetime('Please select a valid Date of Birth.'),
+  Dob: z.iso.datetime('Please select a valid Date of Birth.').optional(),
   Doj: z.iso.datetime('Please select a valid Date of Joining.'),
   Certification: z.array(
     z.object({
@@ -226,13 +228,15 @@ export const adminstratorFormSchema = z.object({
   Name: z.string().min(2, {
     error: 'Name must be at least 2 characters.',
   }),
-  Email: z.email({
-    error: 'Please enter a valid email address.',
-  }),
+  Email: z
+    .email({
+      error: 'Please enter a valid email address.',
+    })
+    .optional(),
   Phone: z.string().min(10, {
     error: 'Phone number must be at least 10 digits.',
   }),
-  Dob: z.iso.datetime('Please select a valid Date of Birth.'),
+  Dob: z.iso.datetime('Please select a valid Date of Birth.').optional(),
   Doj: z.iso.datetime('Please select a valid Date of Joining.'),
   Gender: z.string().min(1, 'Gender selection is required'),
   AddressLine: z

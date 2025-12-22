@@ -32,7 +32,6 @@ interface AuthFooterProps {
 export const AuthFooter = ({
   footerDesc,
   footerLink,
-  isLogin,
   onFooterClick,
 }: AuthFooterProps) => {
   if (!footerLink && !onFooterClick) return null;
@@ -42,22 +41,12 @@ export const AuthFooter = ({
       <h6 className="text-sm font-normal leading-normal text-white">
         {footerDesc}
       </h6>
-      {onFooterClick ? (
-        <button
-          type="button"
-          onClick={onFooterClick}
-          className="text-sm font-normal leading-normal underline cursor-pointer text-semantic-blue-500 underline-offset-2 hover:no-underline k-transition"
-        >
-          {isLogin ? 'Login as Trainer' : 'Login as Admin'}
-        </button>
-      ) : (
-        <Link
-          className="text-sm font-normal leading-normal underline cursor-pointer text-semantic-blue-500 underline-offset-2 hover:no-underline k-transition"
-          href={footerLink!}
-        >
-          {isLogin ? 'Login as Trainer' : 'Login as Admin'}
-        </Link>
-      )}
+      <Link
+        className="text-sm font-normal leading-normal underline cursor-pointer text-semantic-blue-500 underline-offset-2 hover:no-underline k-transition"
+        href={footerLink!}
+      >
+        Login
+      </Link>
     </div>
   );
 };

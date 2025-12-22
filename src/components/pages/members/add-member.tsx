@@ -315,6 +315,28 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
     }
   };
 
+  const sheetTitle = (
+    <div className="flex items-center gap-5 w-full">
+      <span className="text-xl font-medium text-white leading-normal">
+        Add Member
+      </span>
+      <Button
+        type="button"
+        variant="secondary"
+        size="sm"
+        onClick={() => {
+          form.reset();
+          form.clearErrors();
+          setExistingPhotoUrl?.(null);
+          setExistingIdCopyUrl?.(null);
+        }}
+        disabled={isSubmitting}
+      >
+        Clear All
+      </Button>
+    </div>
+  );
+
   const footer = (
     <div className="flex justify-end gap-3">
       <Button
@@ -345,7 +367,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
       className="w-[536px]"
       isOpen={isOpen}
       onClose={closeSheet}
-      title="Add Member"
+      title={sheetTitle}
       footer={footer}
     >
       {isLoadingOnboarding ? (
@@ -380,26 +402,9 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                   </FormControl>
                 )}
               />
-              <div className="flex flex-col gap-3 items-end">
-                <Badge className="bg-secondary-blue-400 flex items-center w-fit justify-center text-sm text-white rounded-full h-[30px] py-2 px-2 border border-secondary-blue-300 bg-opacity-100">
-                  Gym no: #Pending
-                </Badge>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  className="w-fit"
-                  onClick={() => {
-                    form.reset();
-                    form.clearErrors();
-                    setExistingPhotoUrl?.(null);
-                    setExistingIdCopyUrl?.(null);
-                  }}
-                  disabled={isSubmitting}
-                >
-                  Reset
-                </Button>
-              </div>
+              <Badge className="bg-secondary-blue-400 flex items-center w-fit justify-center text-sm text-white rounded-full h-[30px] py-2 px-2 border border-secondary-blue-300 bg-opacity-100">
+                Gym no: #Pending
+              </Badge>
             </div>
 
             <h5 className="text-white text-base font-normal leading-normal mt-0!">
@@ -411,7 +416,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
               control={form.control}
               name="memberName"
               label="Member Name"
-              maxLength={50}
+              maxLength={20}
             />
             <KFormField
               fieldType={KFormFieldType.INPUT}
@@ -607,7 +612,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
               control={form.control}
               name="emergencyContactName"
               label="Emergency Contact Name"
-              maxLength={50}
+              maxLength={20}
             />
             <KFormField
               fieldType={KFormFieldType.PHONE_INPUT}
