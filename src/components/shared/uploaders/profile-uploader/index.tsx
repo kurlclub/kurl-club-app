@@ -112,14 +112,14 @@ export default function ProfilePictureUploader({
         <Button
           variant="outline"
           size="icon"
-          className={`${isSmall ? 'size-16' : 'size-[92px]'} bg-secondary-blue-400 rounded-[60px] hover:bg-secondary-blue-500 relative`}
+          className={`${isSmall ? 'size-16' : 'size-[92px]'} bg-secondary-blue-400 rounded-lg hover:bg-secondary-blue-500 relative`}
           onClick={() => fileInputRef.current?.click()}
         >
           <CircleUser
             className={`${isSmall ? 'size-8!' : 'size-11!'} text-secondary-blue-100`}
           />
           <span
-            className={`absolute bottom-0 right-0 ${isSmall ? 'size-5' : 'size-6'} p-1 bg-primary-green-500 flex justify-center items-center rounded-[60px]`}
+            className={`absolute bottom-0 right-0 ${isSmall ? 'size-5' : 'size-6'} p-1 bg-primary-green-500 flex justify-center items-center rounded-lg`}
           >
             <Plus
               className={` ${isSmall ? 'size-2!' : 'size-3!'} text-secondary-blue-500`}
