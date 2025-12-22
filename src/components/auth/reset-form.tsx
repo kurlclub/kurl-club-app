@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -47,7 +47,7 @@ export function ResetForm() {
   const [step, setStep] = useState<Step>('email');
   const [savedEmail, setSavedEmail] = useState('');
   const [savedOtp, setSavedOtp] = useState('');
-  const [canResend, setCanResend] = useState(true);
+  const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
 
   const emailForm = useForm<EmailFormData>({
     resolver: zodResolver(forgotPasswordEmailSchema),
@@ -74,11 +74,31 @@ export function ResetForm() {
       onSuccess: () => {
         toast.success('OTP sent to your email!');
         setStep('otp');
-        setCanResend(false);
-        setTimeout(() => setCanResend(true), 60000); // 60 seconds cooldown
+        setSecondsLeft(120);
       },
     });
   };
+
+  useEffect(() => {
+    if (secondsLeft === null) return;
+    if (secondsLeft <= 0) {
+      setSecondsLeft(null);
+      return;
+    }
+
+    const id = setInterval(() => {
+      setSecondsLeft((s) => {
+        if (s === null) return null;
+        if (s <= 1) {
+          clearInterval(id);
+          return null;
+        }
+        return s - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(id);
+  }, [secondsLeft]);
 
   const onOtpSubmit = (data: OtpFormData) => {
     if (!savedEmail) {
@@ -187,19 +207,21 @@ export function ResetForm() {
                     sendOtpMutation.mutate(savedEmail, {
                       onSuccess: () => {
                         toast.success('OTP resent!');
-                        setCanResend(false);
-                        setTimeout(() => setCanResend(true), 60000);
+                        setSecondsLeft(120);
                       },
                     });
                   }
                 }}
-                disabled={sendOtpMutation.isPending || !canResend}
+                disabled={
+                  sendOtpMutation.isPending ||
+                  (secondsLeft !== null && secondsLeft > 0)
+                }
                 className="p-0 h-auto font-normal text-primary-green-100 disabled:opacity-50"
               >
                 {sendOtpMutation.isPending
                   ? 'Sending...'
-                  : !canResend
-                    ? 'Wait 60s'
+                  : secondsLeft !== null && secondsLeft > 0
+                    ? `Wait ${secondsLeft}s`
                     : 'Resend'}
               </Button>
             </p>
@@ -232,12 +254,14 @@ export function ResetForm() {
                 control={passwordForm.control}
                 name="password"
                 label="New Password"
+                isLogin
               />
               <KFormField
                 fieldType={KFormFieldType.PASSWORD}
                 control={passwordForm.control}
                 name="confirmPassword"
                 label="Confirm Password"
+                isLogin
               />
             </div>
             <Button
@@ -277,6 +301,7 @@ export function ResetForm() {
               control={emailForm.control}
               name="email"
               label="Email address"
+              isLogin
             />
           </div>
           <Button
