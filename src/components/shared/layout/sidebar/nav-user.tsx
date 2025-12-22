@@ -1,9 +1,9 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useTransition } from 'react';
+import { useState, useTransition } from 'react';
 
-import { Check, LogOut, User } from 'lucide-react';
+import { Check, ChevronDown, LogOut, User } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -35,6 +35,7 @@ export function NavUser() {
   const profilePictureUrl = gymDetails?.photoPath || null;
 
   const [isPending, startTransition] = useTransition();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { showConfirm } = useAppDialog();
   const { state } = useSidebar();
 
@@ -129,56 +130,65 @@ export function NavUser() {
               <DropdownMenuSeparator className="bg-white/10 mx-2 my-2" />
               {user?.isMultiClub && user.clubs && user.clubs.length > 1 && (
                 <>
-                  <div className="px-2 py-2">
-                    <p className="text-xs text-primary-green-200/70 font-semibold mb-2 px-2">
-                      SWITCH CLUB
+                  <div className="px-3 py-2">
+                    <p className="text-xs text-primary-green-400 font-bold uppercase tracking-wider flex items-center gap-2">
+                      <span className="w-1 h-4 bg-primary-green-500 rounded-full"></span>
+                      Switch Club
                     </p>
-                    <div className="space-y-1">
-                      {user.clubs.map((club) => {
-                        const isActive = club.status === 1;
-                        const clubInitials = getInitials(club.gymName);
-                        const clubColor = getAvatarColor(club.gymName);
+                  </div>
+                  <div className="space-y-1 px-2 max-h-80 overflow-y-auto">
+                    {user.clubs.map((club) => {
+                      const isActive = club.status === 1;
+                      const clubInitials = getInitials(club.gymName);
+                      const clubColor = getAvatarColor(club.gymName);
 
-                        return (
-                          <DropdownMenuItem
-                            key={club.gymId}
-                            onClick={() => !isActive && switchClub(club.gymId)}
-                            disabled={isActive}
-                            className={`cursor-pointer rounded-lg px-2 py-2.5 transition-all duration-200 ${
-                              isActive
-                                ? 'bg-primary-green-500/20 border border-primary-green-500/30'
-                                : 'hover:bg-white/5 border border-transparent'
-                            }`}
-                          >
-                            <div className="flex items-center gap-3 w-full">
-                              <Avatar className="h-8 w-8 rounded-md">
-                                <AvatarImage
-                                  src={club.photoPath || undefined}
-                                  alt={club.gymName}
-                                />
-                                <AvatarFallback
-                                  className="rounded-md font-bold text-xs"
-                                  style={clubColor}
+                      return (
+                        <DropdownMenuItem
+                          key={club.gymId}
+                          onClick={() => !isActive && switchClub(club.gymId)}
+                          disabled={isActive}
+                          className={`cursor-pointer rounded-lg px-2 py-2 transition-all duration-200 relative overflow-hidden ${
+                            isActive
+                              ? 'bg-primary-green-500 border-2 border-primary-green-400 shadow-lg'
+                              : 'hover:bg-white/5 border border-transparent'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3 w-full relative z-10">
+                            <Avatar
+                              className={`h-8 w-8 rounded-md ${isActive ? 'ring-2 ring-white' : 'ring-1 ring-white/10'}`}
+                            >
+                              <AvatarImage
+                                src={club.photoPath || undefined}
+                                alt={club.gymName}
+                              />
+                              <AvatarFallback
+                                className="rounded-md font-bold text-xs"
+                                style={clubColor}
+                              >
+                                {clubInitials}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <p
+                                  className={`text-sm font-semibold truncate flex-1 ${isActive ? 'text-black' : 'text-white'}`}
                                 >
-                                  {clubInitials}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-white truncate">
                                   {club.gymName}
                                 </p>
-                                <p className="text-xs text-white/50 truncate">
-                                  {club.location}
-                                </p>
+                                {isActive && (
+                                  <Check className="h-4 w-4 text-black shrink-0" />
+                                )}
                               </div>
-                              {isActive && (
-                                <Check className="h-4 w-4 text-primary-green-500 shrink-0" />
-                              )}
+                              <p
+                                className={`text-xs truncate ${isActive ? 'text-black/70' : 'text-white/50'}`}
+                              >
+                                {club.location}
+                              </p>
                             </div>
-                          </DropdownMenuItem>
-                        );
-                      })}
-                    </div>
+                          </div>
+                        </DropdownMenuItem>
+                      );
+                    })}
                   </div>
                   <DropdownMenuSeparator className="bg-white/10 mx-2 my-2" />
                 </>
@@ -188,17 +198,17 @@ export function NavUser() {
                   onClick={() =>
                     router.push('/general-settings?tab=business_profile')
                   }
-                  className="cursor-pointer text-white hover:bg-primary-green-500/20 hover:text-primary-green-100 rounded-xl px-4 py-3 transition-all duration-200 font-medium"
+                  className="cursor-pointer text-white hover:bg-white/5 hover:text-white rounded-lg px-3 py-2.5 transition-all duration-200 font-medium"
                 >
-                  <User className="mr-3 h-4 w-4" />
-                  Gym Profile
+                  <User className="mr-2 h-4 w-4" />
+                  Profile
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={handleLogout}
                   disabled={isPending}
-                  className="cursor-pointer text-red-300 hover:bg-red-500/20 hover:text-red-200 rounded-xl px-4 py-3 transition-all duration-200 font-medium"
+                  className="cursor-pointer text-red-300 hover:bg-red-500/20 hover:text-red-200 rounded-lg px-3 py-2.5 transition-all duration-200 font-medium"
                 >
-                  <LogOut className="mr-3 h-4 w-4" />
+                  <LogOut className="mr-2 h-4 w-4" />
                   {isPending ? 'Signing out...' : 'Sign Out'}
                 </DropdownMenuItem>
               </div>
@@ -216,17 +226,9 @@ export function NavUser() {
           <div className="flex flex-col gap-4 p-4">
             {/* User Info Section with Club Switcher */}
             {user?.isMultiClub && user.clubs && user.clubs.length > 1 ? (
-              <DropdownMenu>
+              <DropdownMenu onOpenChange={setIsDropdownOpen}>
                 <DropdownMenuTrigger asChild>
-                  <button
-                    className={`
-    flex items-center gap-4 w-full px-2 py-1
-    rounded-lg transition-all duration-200 group
-    outline-none!
-    hover:bg-white/5
-    ${user?.isMultiClub ? 'cursor-pointer hover:scale-[1.03] active:scale-[0.98]' : ''}
-  `}
-                  >
+                  <button className="flex items-center gap-4 w-full px-2 py-1 rounded-lg transition-all duration-200 group outline-none hover:bg-white/5 cursor-pointer hover:scale-[1.03] active:scale-[0.98]">
                     <div className="relative shrink-0">
                       <Avatar className="h-12 w-12 rounded-lg">
                         <AvatarImage
@@ -257,58 +259,63 @@ export function NavUser() {
                         </div>
                       )}
                     </div>
+                    <ChevronDown
+                      className={`h-4 w-4 text-white/40 group-hover:text-primary-green-400 transition-all shrink-0 ${isDropdownOpen ? 'rotate-180' : 'rotate-0'}`}
+                    />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="start"
-                  className="w-[calc(100%-3rem)] bg-secondary-blue-500/95 backdrop-blur-xl border border-primary-green-500/20 shadow-2xl rounded-lg p-2"
+                  className="w-[calc(100%-28px)] bg-secondary-blue-500/98 backdrop-blur-xl border border-primary-green-500/20 shadow-2xl rounded-xl p-2"
                 >
-                  <div className="px-2 py-1 mb-2">
-                    <p className="text-xs text-primary-green-500/70 font-semibold">
-                      SWITCH CLUB
+                  <div className="px-2 py-1.5 mb-1">
+                    <p className="text-[10px] text-primary-green-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="w-0.5 h-3 bg-primary-green-500 rounded-full"></span>
+                      Switch Club
                     </p>
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-1 max-h-80 overflow-y-auto">
                     {user.clubs.map((club) => {
                       const isActive = club.status === 1;
                       const clubInitials = getInitials(club.gymName);
                       const clubColor = getAvatarColor(club.gymName);
-
                       return (
                         <DropdownMenuItem
                           key={club.gymId}
                           onClick={() => !isActive && switchClub(club.gymId)}
                           disabled={isActive}
-                          className={`cursor-pointer rounded-lg px-2 py-2.5 transition-all duration-200 ${
+                          className={`cursor-pointer rounded-lg px-2 py-2 transition-all duration-200 ${
                             isActive
-                              ? 'bg-primary-green-500/20 border border-primary-green-500/30'
-                              : 'hover:bg-white/5 border border-transparent'
+                              ? 'bg-linear-to-r from-primary-green-200/20 to-primary-green-700/40 border border-primary-green-500/40'
+                              : 'hover:bg-white/5 border border-transparent hover:border-white/10'
                           }`}
                         >
-                          <div className="flex items-center gap-3 w-full">
-                            <Avatar className="h-8 w-8 rounded-md">
+                          <div className="flex items-center gap-2.5 w-full">
+                            <Avatar className="h-8 w-8 rounded-lg ring-1 ring-white/10">
                               <AvatarImage
                                 src={club.photoPath || undefined}
                                 alt={club.gymName}
                               />
                               <AvatarFallback
-                                className="rounded-md font-bold text-xs"
+                                className="rounded-lg font-bold text-xs"
                                 style={clubColor}
                               >
                                 {clubInitials}
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-white truncate">
-                                {club.gymName}
-                              </p>
-                              <p className="text-xs text-white/50 truncate">
+                              <div className="flex items-center gap-2">
+                                <p className="text-xs font-semibold text-white truncate flex-1">
+                                  {club.gymName}
+                                </p>
+                                {isActive && (
+                                  <Check className="h-3 w-3 text-primary-green-400 shrink-0" />
+                                )}
+                              </div>
+                              <p className="text-[10px] text-white/80 truncate">
                                 {club.location}
                               </p>
                             </div>
-                            {isActive ? (
-                              <Check className="h-4 w-4 text-primary-green-500 shrink-0" />
-                            ) : null}
                           </div>
                         </DropdownMenuItem>
                       );
