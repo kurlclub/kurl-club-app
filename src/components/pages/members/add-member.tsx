@@ -315,15 +315,13 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
     }
   };
 
-  const sheetTitle = (
-    <div className="flex items-center gap-5 w-full">
-      <span className="text-xl font-medium text-white leading-normal">
-        Add Member
-      </span>
+  const footer = (
+    <div className="flex justify-between items-center w-full gap-3">
       <Button
         type="button"
         variant="secondary"
         size="sm"
+        className="h-[46px] min-w-[90px]"
         onClick={() => {
           form.reset();
           form.clearErrors();
@@ -332,33 +330,30 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
         }}
         disabled={isSubmitting}
       >
-        Clear All
+        Reset
       </Button>
-    </div>
-  );
-
-  const footer = (
-    <div className="flex justify-end gap-3">
-      <Button
-        type="button"
-        onClick={() => {
-          form.reset();
-          closeSheet();
-        }}
-        variant="secondary"
-        className="h-[46px] min-w-[90px]"
-        disabled={isSubmitting}
-      >
-        Cancel
-      </Button>
-      <Button
-        type="submit"
-        form="add-member-form"
-        className="h-[46px] min-w-[73px]"
-        disabled={isSubmitting}
-      >
-        {isSubmitting ? 'Saving...' : 'Add'}
-      </Button>
+      <div className="flex justify-center gap-3">
+        <Button
+          type="button"
+          onClick={() => {
+            form.reset();
+            closeSheet();
+          }}
+          variant="secondary"
+          className="h-[46px] min-w-[90px]"
+          disabled={isSubmitting}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          form="add-member-form"
+          className="h-[46px] min-w-[73px]"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Saving...' : 'Add'}
+        </Button>
+      </div>
     </div>
   );
 
@@ -367,7 +362,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
       className="w-[536px]"
       isOpen={isOpen}
       onClose={closeSheet}
-      title={sheetTitle}
+      title="Add Member"
       footer={footer}
     >
       {isLoadingOnboarding ? (

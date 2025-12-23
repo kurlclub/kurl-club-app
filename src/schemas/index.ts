@@ -197,12 +197,14 @@ export const trainerFormSchema = z.object({
   }),
   Dob: z.iso.datetime('Please select a valid Date of Birth.').optional(),
   Doj: z.iso.datetime('Please select a valid Date of Joining.'),
-  Certification: z.array(
-    z.object({
-      label: z.string(),
-      value: z.string(),
-    })
-  ),
+  Certification: z
+    .array(
+      z.object({
+        label: z.string(),
+        value: z.string(),
+      })
+    )
+    .min(1, 'Certification is required'),
   Gender: z.string().min(1, 'Gender selection is required'),
   AddressLine: z
     .string()

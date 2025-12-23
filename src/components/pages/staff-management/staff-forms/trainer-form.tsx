@@ -50,6 +50,7 @@ export default function TrainerForm({ gymId, isSubmitting }: TrainerFormProps) {
         label="Full Name"
         placeholder="John Doe"
         disabled={isSubmitting}
+        maxLength={30}
       />
       {/* Email */}
       <KFormField
@@ -160,6 +161,7 @@ export default function TrainerForm({ gymId, isSubmitting }: TrainerFormProps) {
         name="AddressLine"
         label="Address Line"
         disabled={isSubmitting}
+        maxLength={250}
       />
     </>
   );
