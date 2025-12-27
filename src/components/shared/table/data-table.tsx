@@ -136,7 +136,7 @@ export function DataTable<TData extends object, TValue>({
           <div className="relative">
             <div className="overflow-x-auto">
               <Table className="border-collapse [&_td]:border-0 [&_th]:border-0 bg-secondary-blue-500">
-                <TableHeader className="bg-primary-blue-400 [&_tr]:border-b-0">
+                <TableHeader className="bg-primary-blue-400 [&_tr]:border-b-0 text-nowrap">
                   <TableRow>
                     {/* Fixed Columns */}
                     <TableHead className="sm:sticky left-0 z-20 bg-primary-blue-400">
@@ -150,7 +150,7 @@ export function DataTable<TData extends object, TValue>({
                         >
                       )}
                     </TableHead>
-                    <TableHead className="sm:sticky left-24 z-20 bg-primary-blue-400">
+                    <TableHead className="sm:sticky left-24 z-20 bg-primary-blue-400 text-nowrap">
                       {flexRender(
                         columns[1].header,
                         table
@@ -166,7 +166,7 @@ export function DataTable<TData extends object, TValue>({
                       .getHeaderGroups()[0]
                       .headers.slice(2, -1)
                       .map((header) => (
-                        <TableHead key={header.id}>
+                        <TableHead className="text-nowrap" key={header.id}>
                           {header.isPlaceholder
                             ? null
                             : flexRender(

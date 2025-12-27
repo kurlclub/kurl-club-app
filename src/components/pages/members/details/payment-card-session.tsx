@@ -38,7 +38,7 @@ export function SessionPaymentCard({
 
   return (
     <div className="shadow-sm bg-secondary-blue-500 rounded-lg h-full flex flex-col">
-      <div className="flex items-center justify-between px-5 pt-5 pb-2">
+      <div className="flex items-center justify-between px-5 pt-5 pb-2 flex-wrap gap-y-3 gap-x-2">
         <div className="tracking-tight text-white text-base font-normal leading-normal">
           Per-Session Billing
         </div>
