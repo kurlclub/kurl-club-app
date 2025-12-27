@@ -74,7 +74,7 @@ export function ResetForm() {
       onSuccess: () => {
         toast.success('OTP sent to your email!');
         setStep('otp');
-        setSecondsLeft(120);
+        setSecondsLeft(60);
       },
     });
   };
@@ -207,7 +207,7 @@ export function ResetForm() {
                     sendOtpMutation.mutate(savedEmail, {
                       onSuccess: () => {
                         toast.success('OTP resent!');
-                        setSecondsLeft(120);
+                        setSecondsLeft(60);
                       },
                     });
                   }
