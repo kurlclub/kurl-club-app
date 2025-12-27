@@ -97,6 +97,7 @@ const KInput = forwardRef<HTMLInputElement, KInputProps>(
     return (
       <div className="relative">
         <Input
+          id={inputId}
           ref={ref}
           type={type}
           className={cn(
@@ -107,10 +108,14 @@ const KInput = forwardRef<HTMLInputElement, KInputProps>(
           placeholder=" "
           autoComplete={props.autoComplete || 'off'}
           maxLength={maxLength}
-          value={value}
+          value={value ?? ''}
           onChange={handleChange}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
+          onFocusCapture={() => setIsFocused(true)}
+          onBlurCapture={(e) => {
+            if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+              setIsFocused(false);
+            }
+          }}
           {...props}
         />
 

@@ -108,9 +108,25 @@ export const AddStaff: React.FC<CreateStaffDetailsProps> = ({
     setIsSubmitting(false);
   };
 
+  const handleReset = () => {
+    if (staffType === 'trainer') {
+      trainerForm.reset();
+    } else {
+      adminForm.reset();
+    }
+  };
+
   const footer = (
-    <div className="flex justify-between gap-3">
-      <div className="flex gap-3">
+    <div className="flex justify-between items-center w-full gap-3">
+      <Button
+        type="button"
+        variant="secondary"
+        className="h-[46px] min-w-[73px]"
+        onClick={handleReset}
+      >
+        Reset
+      </Button>
+      <div className="flex justify-center gap-3">
         <Button
           onClick={() => {
             activeForm.reset();

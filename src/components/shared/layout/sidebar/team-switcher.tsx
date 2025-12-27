@@ -23,7 +23,7 @@ export function TeamSwitcher() {
         >
           {state === 'collapsed' ? (
             <Image
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Frame%203-1bUu3foSGcahraLSyANoyl4dlcVN2Z.png"
+              src="/assets/svg/christmas-logo-shrink.svg"
               alt="KurlClub Logo"
               width={36}
               height={36}
@@ -32,8 +32,8 @@ export function TeamSwitcher() {
             <Image
               width={120}
               height={18}
-              className="w-auto object-contain h-4"
-              src="/assets/svg/logo-light.svg"
+              className="w-auto object-contain h-6"
+              src="/assets/svg/christmas-logo.svg"
               alt="KurlClub Logo"
             />
           )}
