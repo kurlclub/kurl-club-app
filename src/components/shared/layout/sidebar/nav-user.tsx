@@ -37,7 +37,11 @@ export function NavUser() {
   const [isPending, startTransition] = useTransition();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { showConfirm } = useAppDialog();
-  const { state } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
+
+  const closeMobileSidebar = () => {
+    if (isMobile) setOpenMobile(false);
+  };
 
   const handleLogout = () => {
     showConfirm({
@@ -48,6 +52,7 @@ export function NavUser() {
       cancelLabel: 'Cancel',
       onConfirm: () => {
         startTransition(() => {
+          closeMobileSidebar();
           logout();
           router.push('/auth/login');
           toast.success('Logged out successfully!');
@@ -145,7 +150,12 @@ export function NavUser() {
                       return (
                         <DropdownMenuItem
                           key={club.gymId}
-                          onClick={() => !isActive && switchClub(club.gymId)}
+                          onClick={() => {
+                            if (!isActive) {
+                              switchClub(club.gymId);
+                              closeMobileSidebar();
+                            }
+                          }}
                           disabled={isActive}
                           className={`cursor-pointer rounded-lg px-2 py-2 transition-all duration-200 relative overflow-hidden ${
                             isActive
@@ -195,9 +205,10 @@ export function NavUser() {
               )}
               <div className="p-2 space-y-1">
                 <DropdownMenuItem
-                  onClick={() =>
-                    router.push('/general-settings?tab=business_profile')
-                  }
+                  onClick={() => {
+                    closeMobileSidebar();
+                    router.push('/general-settings?tab=business_profile');
+                  }}
                   className="cursor-pointer text-white hover:bg-white/5 hover:text-white rounded-lg px-3 py-2.5 transition-all duration-200 font-medium"
                 >
                   <User className="mr-2 h-4 w-4" />
@@ -282,7 +293,12 @@ export function NavUser() {
                       return (
                         <DropdownMenuItem
                           key={club.gymId}
-                          onClick={() => !isActive && switchClub(club.gymId)}
+                          onClick={() => {
+                            if (!isActive) {
+                              switchClub(club.gymId);
+                              closeMobileSidebar();
+                            }
+                          }}
                           disabled={isActive}
                           className={`cursor-pointer rounded-lg px-2 py-2 transition-all duration-200 ${
                             isActive
@@ -363,9 +379,10 @@ export function NavUser() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() =>
-                  router.push('/general-settings?tab=business_profile')
-                }
+                onClick={() => {
+                  closeMobileSidebar();
+                  router.push('/general-settings?tab=business_profile');
+                }}
                 className="flex-1 h-9 text-xs bg-white/5 border-white/10 text-white hover:bg-primary-green-500 hover:border-primary-green-500 hover:text-black transition-all duration-200"
               >
                 <User className="h-3 w-3 mr-1" />
@@ -374,7 +391,10 @@ export function NavUser() {
               <Button
                 variant="destructive"
                 size="sm"
-                onClick={handleLogout}
+                onClick={() => {
+                  closeMobileSidebar();
+                  handleLogout();
+                }}
                 disabled={isPending}
                 className="flex-1 h-9 text-xs bg-red-500/20 border-red-500/30 text-red-200 hover:bg-red-500/30 hover:text-red-100 transition-all duration-200"
               >

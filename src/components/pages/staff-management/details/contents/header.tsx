@@ -43,7 +43,7 @@ function Header({
 
         if (response.success) {
           toast.success(response.success);
-          router.push('/settings/staff-management');
+          router.push('/staff-management');
           queryClient.invalidateQueries({ queryKey: ['gymStaffs'] });
         } else {
           toast.error(response.error || 'Failed to delete staff.');
