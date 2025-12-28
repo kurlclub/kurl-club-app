@@ -134,6 +134,29 @@ export default function TrainerForm({ gymId, isSubmitting }: TrainerFormProps) {
       <h5 className="text-white text-base font-normal leading-normal mt-8!">
         User Credentials
       </h5>
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          left: '-9999px',
+          width: '1px',
+          height: '1px',
+          overflow: 'hidden',
+        }}
+      >
+        <input
+          name="__fake_username"
+          type="text"
+          autoComplete="username"
+          tabIndex={-1}
+        />
+        <input
+          name="__fake_password"
+          type="password"
+          autoComplete="new-password"
+          tabIndex={-1}
+        />
+      </div>
       <KFormField
         control={form.control}
         name="Username"
@@ -141,6 +164,8 @@ export default function TrainerForm({ gymId, isSubmitting }: TrainerFormProps) {
         label="Username (Email)"
         placeholder="trainer@example.com"
         disabled={isSubmitting}
+        autoComplete="off"
+        type="email"
       />
       <KFormField
         control={form.control}
@@ -149,6 +174,7 @@ export default function TrainerForm({ gymId, isSubmitting }: TrainerFormProps) {
         label="Password"
         placeholder="Enter password"
         disabled={isSubmitting}
+        autoComplete="new-password"
       />
 
       {/* Address Details */}
