@@ -103,7 +103,9 @@ interface CustomProps<T extends FieldValues> {
     field: ControllerRenderProps<T, FieldPath<T>>
   ) => React.ReactNode;
   type?: React.InputHTMLAttributes<HTMLInputElement>['type'];
+  autoComplete?: string;
   isLogin?: boolean;
+  [key: string]: unknown;
 }
 
 const RenderField = <T extends FieldValues>({
