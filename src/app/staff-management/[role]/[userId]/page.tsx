@@ -42,6 +42,8 @@ export default function StaffDetailsPage({ params }: StaffDetailsPageProps) {
         details={details}
         updateStaffDetail={updateStaffDetail}
         staffRole={staffRole}
+        handleSave={handleSave}
+        toggleEdit={toggleEdit}
       />
       <Contents
         staffRole={staffRole}

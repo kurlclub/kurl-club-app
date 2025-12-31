@@ -40,7 +40,7 @@ interface AuthContextType {
   gymDetails: GymDetails | null;
   isLoading: boolean;
   login: (
-    userName: string,
+    email: string,
     password: string
   ) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
@@ -134,9 +134,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const handleLogin = async (userName: string, password: string) => {
+  const handleLogin = async (email: string, password: string) => {
     try {
-      const result = await login({ userName, password });
+      const result = await login({ email, password });
 
       if (!result.success || !result.data) {
         return { success: false, error: result.error || 'Login failed' };
