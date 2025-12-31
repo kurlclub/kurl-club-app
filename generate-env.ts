@@ -24,7 +24,6 @@ function generateEnvFile(
 
   // Check if the file already exists
   if (fs.existsSync(filePath)) {
-    console.log(`${fileName} already exists. Skipping.`);
     return;
   }
 
@@ -33,7 +32,6 @@ function generateEnvFile(
     .join('\n');
 
   fs.writeFileSync(filePath, content);
-  console.log(`${fileName} has been created.`);
 }
 
 // Main function to generate .env and .env.local files

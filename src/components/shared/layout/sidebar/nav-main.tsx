@@ -43,8 +43,13 @@ export function NavMain({
     }[];
   }[];
 }) {
-  const { state } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
   const pathname = usePathname();
+
+  const handleLinkClick = () => {
+    if (isMobile) setOpenMobile(false);
+  };
+
   const [openItems, setOpenItems] = useState<string[]>(() => {
     // Auto-expand items that have active sub-items
     const initialOpen: string[] = [];
@@ -107,7 +112,9 @@ export function NavMain({
                           asChild
                           className="shad-drop-item"
                         >
-                          <Link href={subItem.url}>{subItem.title}</Link>
+                          <Link href={subItem.url} onClick={handleLinkClick}>
+                            {subItem.title}
+                          </Link>
                         </DropdownMenuItem>
                       ))}
                     </DropdownMenuContent>
@@ -145,7 +152,7 @@ export function NavMain({
                             asChild
                             isActive={pathname === subItem.url}
                           >
-                            <Link href={subItem.url}>
+                            <Link href={subItem.url} onClick={handleLinkClick}>
                               <span>{subItem.title}</span>
                             </Link>
                           </SidebarMenuSubButton>
@@ -165,7 +172,7 @@ export function NavMain({
                 isActive={isCurrentPage}
                 tooltip={state === 'collapsed' ? item.title : undefined}
               >
-                <Link href={item.url}>
+                <Link href={item.url} onClick={handleLinkClick}>
                   {item.icon && <item.icon />}
                   <span>{item.title}</span>
                 </Link>

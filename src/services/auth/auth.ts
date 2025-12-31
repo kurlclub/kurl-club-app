@@ -1,7 +1,7 @@
 import { api } from '@/lib/api';
 
 interface LoginRequest {
-  userName: string;
+  email: string;
   password: string;
 }
 
