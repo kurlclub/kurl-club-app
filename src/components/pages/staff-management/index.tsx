@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { StudioLayout } from '@/components/shared/layout';
 import { DataTable, DataTableToolbar } from '@/components/shared/table';
@@ -26,11 +26,37 @@ export default function StaffManagement() {
   const isFromSetup = searchParams.get('setup') === 'true';
 
   const { data: gymStaffs = [], isLoading } = useGymStaffs(gymId!);
-
-  const { items: staffs, search } = useFilterableList<Staff>(
+  const { items: searchedStaffs, search } = useFilterableList<Staff>(
     gymStaffs,
     searchItems
   );
+
+  const [selectedFilters, setSelectedFilters] = useState<
+    Record<string, string[] | undefined>
+  >({});
+
+  const onFilterChange = (columnId: string, values: string[] | undefined) => {
+    setSelectedFilters((prev) => ({ ...prev, [columnId]: values }));
+  };
+
+  const onResetFilters = () => setSelectedFilters({});
+
+  const staffs = useMemo(() => {
+    return searchedStaffs.filter((s) => {
+      return Object.entries(selectedFilters).every(([col, vals]) => {
+        if (!vals || vals.length === 0) return true;
+
+        const key = col as keyof Staff;
+        const field = s[key];
+
+        if (field === undefined || field === null) return false;
+
+        return vals.some(
+          (v) => String(field).toLowerCase() === String(v).toLowerCase()
+        );
+      });
+    });
+  }, [searchedStaffs, selectedFilters]);
 
   useEffect(() => {
     // If user came from setup and has staff, redirect back to return URL
@@ -59,6 +85,9 @@ export default function StaffManagement() {
             table={table}
             onSearch={search}
             filters={staffFilters}
+            onFilterChange={onFilterChange}
+            selectedFilters={selectedFilters}
+            onResetFilters={onResetFilters}
           />
         )}
       />

@@ -163,6 +163,7 @@ export function Overview({
             label="Name"
             placeholder=" "
             value={plan.planName}
+            maxLength={30}
             onChange={(e) =>
               onUpdatePlan({ ...plan, planName: e.target.value })
             }
@@ -173,6 +174,7 @@ export function Overview({
           <KTextarea
             label="Description"
             value={plan.description}
+            maxLength={250}
             onChange={(e) =>
               onUpdatePlan({ ...plan, description: e.target.value })
             }

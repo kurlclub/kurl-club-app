@@ -3,7 +3,7 @@
 import { CheckCircle2 } from 'lucide-react';
 import { motion } from 'motion/react';
 
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -20,6 +20,7 @@ type Props = {
   member: {
     name: string;
     identifier: string;
+    photoPath?: string | null;
   } | null;
   action: 'checkin' | 'checkout';
   time: string;
@@ -61,12 +62,16 @@ export function AttendanceSuccessModal({
             className="relative mb-4"
           >
             <Avatar className="w-20 h-20 border-4 border-primary-green-500/30">
-              <AvatarFallback
-                className="text-xl font-semibold"
-                style={avatarStyle}
-              >
-                {initials}
-              </AvatarFallback>
+              {member?.photoPath ? (
+                <AvatarImage src={member.photoPath} alt={member.name} />
+              ) : (
+                <AvatarFallback
+                  className="text-xl font-semibold"
+                  style={avatarStyle}
+                >
+                  {initials}
+                </AvatarFallback>
+              )}
             </Avatar>
             <motion.div
               initial={{ scale: 0 }}
