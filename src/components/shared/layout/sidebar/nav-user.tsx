@@ -80,51 +80,51 @@ export function NavUser() {
             <DropdownMenuTrigger asChild>
               <SidebarMenuButton
                 size="lg"
-                className="cursor-pointer hover:bg-primary-green-500/10 transition-all duration-300 relative justify-center rounded-md border border-white/5 hover:border-primary-green-500/30 overflow-visible"
+                className="relative justify-center overflow-visible transition-all duration-300 border rounded-md cursor-pointer hover:bg-primary-green-500/10 border-white/5 hover:border-primary-green-500/30"
               >
                 <div className="relative">
-                  <Avatar className="h-9 w-9 rounded-sm shadow-lg">
+                  <Avatar className="rounded-sm shadow-lg h-9 w-9">
                     <AvatarImage
                       src={profilePictureUrl || undefined}
                       alt={currentGym?.gymName || 'User'}
                     />
                     <AvatarFallback
-                      className="rounded-md font-bold text-sm bg-linear-to-br from-primary-green-500/20 to-primary-green-600/10 text-primary-green-100"
+                      className="text-sm font-bold rounded-md bg-linear-to-br from-primary-green-500/20 to-primary-green-600/10 text-primary-green-100"
                       style={avatarStyle}
                     >
                       {currentGym ? getInitials(currentGym.gymName) : 'KC'}
                     </AvatarFallback>
                   </Avatar>
 
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-neutral-green-400 rounded-full border-2 border-secondary-blue-500 shadow-md" />
+                  <div className="absolute w-4 h-4 border-2 rounded-full shadow-md -bottom-1 -right-1 bg-neutral-green-400 border-secondary-blue-500" />
                 </div>
               </SidebarMenuButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent
-              className="w-72 bg-secondary-blue-500/95 backdrop-blur-xl border border-primary-green-500/20 shadow-2xl rounded-md p-2"
+              className="p-2 border rounded-md shadow-2xl w-72 bg-secondary-blue-500/95 backdrop-blur-xl border-primary-green-500/20"
               align="end"
               side="right"
               sideOffset={12}
             >
-              <DropdownMenuLabel className="text-white p-4 pb-2">
+              <DropdownMenuLabel className="p-4 pb-2 text-white">
                 <div className="flex items-center gap-4">
-                  <Avatar className="h-12 w-12 rounded-xl border-2 border-primary-green-500/30 shadow-lg">
+                  <Avatar className="w-12 h-12 border-2 shadow-lg rounded-xl border-primary-green-500/30">
                     <AvatarImage
                       src={profilePictureUrl || undefined}
                       alt={currentGym?.gymName || 'User'}
                     />
                     <AvatarFallback
-                      className="rounded-xl font-bold text-sm bg-linear-to-br from-primary-green-500/20 to-primary-green-600/10 text-primary-green-100"
+                      className="text-sm font-bold rounded-xl bg-linear-to-br from-primary-green-500/20 to-primary-green-600/10 text-primary-green-100"
                       style={avatarStyle}
                     >
                       {currentGym ? getInitials(currentGym.gymName) : 'KC'}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex flex-col space-y-1 flex-1">
+                  <div className="flex flex-col flex-1 space-y-1">
                     <p className="text-sm font-bold text-white truncate">
                       {currentGym?.gymName || 'No Gym Selected'}
                     </p>
-                    <p className="text-xs text-primary-green-200 font-medium">
+                    <p className="text-xs font-medium text-primary-green-200">
                       {currentGym
                         ? `ID: ${currentGym.gymIdentifier}`
                         : 'Select a gym'}
@@ -132,16 +132,16 @@ export function NavUser() {
                   </div>
                 </div>
               </DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-white/10 mx-2 my-2" />
+              <DropdownMenuSeparator className="mx-2 my-2 bg-white/10" />
               {user?.isMultiClub && user.clubs && user.clubs.length > 1 && (
                 <>
                   <div className="px-3 py-2">
-                    <p className="text-xs text-primary-green-400 font-bold uppercase tracking-wider flex items-center gap-2">
-                      <span className="w-1 h-4 bg-primary-green-500 rounded-full"></span>
+                    <p className="flex items-center gap-2 text-xs font-bold tracking-wider uppercase text-primary-green-400">
+                      <span className="w-1 h-4 rounded-full bg-primary-green-500"></span>
                       Switch Club
                     </p>
                   </div>
-                  <div className="space-y-1 px-2 max-h-80 overflow-y-auto">
+                  <div className="px-2 space-y-1 overflow-y-auto max-h-80">
                     {user.clubs.map((club) => {
                       const isActive = club.status === 1;
                       const clubInitials = getInitials(club.gymName);
@@ -163,7 +163,7 @@ export function NavUser() {
                               : 'hover:bg-white/5 border border-transparent'
                           }`}
                         >
-                          <div className="flex items-center gap-3 w-full relative z-10">
+                          <div className="relative z-10 flex items-center w-full gap-3">
                             <Avatar
                               className={`h-8 w-8 rounded-md ${isActive ? 'ring-2 ring-white' : 'ring-1 ring-white/10'}`}
                             >
@@ -172,7 +172,7 @@ export function NavUser() {
                                 alt={club.gymName}
                               />
                               <AvatarFallback
-                                className="rounded-md font-bold text-xs"
+                                className="text-xs font-bold rounded-md"
                                 style={clubColor}
                               >
                                 {clubInitials}
@@ -186,7 +186,7 @@ export function NavUser() {
                                   {club.gymName}
                                 </p>
                                 {isActive && (
-                                  <Check className="h-4 w-4 text-black shrink-0" />
+                                  <Check className="w-4 h-4 text-black shrink-0" />
                                 )}
                               </div>
                               <p
@@ -200,18 +200,18 @@ export function NavUser() {
                       );
                     })}
                   </div>
-                  <DropdownMenuSeparator className="bg-white/10 mx-2 my-2" />
+                  <DropdownMenuSeparator className="mx-2 my-2 bg-white/10" />
                 </>
               )}
               <div className="p-2 space-y-1">
                 <DropdownMenuItem
                   onClick={() => {
                     closeMobileSidebar();
-                    router.push('/general-settings?tab=business_profile');
+                    router.push('/account-settings');
                   }}
                   className="cursor-pointer text-white hover:bg-white/5 hover:text-white rounded-lg px-3 py-2.5 transition-all duration-200 font-medium"
                 >
-                  <User className="mr-2 h-4 w-4" />
+                  <User className="w-4 h-4 mr-2" />
                   Profile
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -219,7 +219,7 @@ export function NavUser() {
                   disabled={isPending}
                   className="cursor-pointer text-red-300 hover:bg-red-500/20 hover:text-red-200 rounded-lg px-3 py-2.5 transition-all duration-200 font-medium"
                 >
-                  <LogOut className="mr-2 h-4 w-4" />
+                  <LogOut className="w-4 h-4 mr-2" />
                   {isPending ? 'Signing out...' : 'Sign Out'}
                 </DropdownMenuItem>
               </div>
@@ -233,7 +233,7 @@ export function NavUser() {
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <div className="relative overflow-hidden rounded-xl bg-linear-to-br from-secondary-blue-200/10 via-secondary-blue-600/20 to-secondary-blue-600/5 border border-secondary-blue-200/20 backdrop-blur-sm shadow-md">
+        <div className="relative overflow-hidden border shadow-md rounded-xl bg-linear-to-br from-secondary-blue-200/10 via-secondary-blue-600/20 to-secondary-blue-600/5 border-secondary-blue-200/20 backdrop-blur-sm">
           <div className="flex flex-col gap-4 p-4">
             {/* User Info Section with Club Switcher */}
             {user?.isMultiClub && user.clubs && user.clubs.length > 1 ? (
@@ -241,13 +241,13 @@ export function NavUser() {
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-4 w-full px-2 py-1 rounded-lg transition-all duration-200 group outline-none hover:bg-white/5 cursor-pointer hover:scale-[1.03] active:scale-[0.98]">
                     <div className="relative shrink-0">
-                      <Avatar className="h-12 w-12 rounded-lg">
+                      <Avatar className="w-12 h-12 rounded-lg">
                         <AvatarImage
                           src={profilePictureUrl || undefined}
                           alt={currentGym?.gymName || 'User'}
                         />
                         <AvatarFallback
-                          className="rounded-lg font-semibold text-sm"
+                          className="text-sm font-semibold rounded-lg"
                           style={avatarStyle}
                         >
                           {currentGym ? getInitials(currentGym.gymName) : 'KC'}
@@ -256,10 +256,10 @@ export function NavUser() {
                       <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-secondary-blue-500" />
                     </div>
                     <div className="flex-1 min-w-0 text-left">
-                      <div className="truncate font-bold text-sm text-white mb-1 group-hover:text-primary-green-200 transition-colors">
+                      <div className="mb-1 text-sm font-bold text-white truncate transition-colors group-hover:text-primary-green-200">
                         {currentGym?.gymName || 'No Gym Selected'}
                       </div>
-                      <div className="truncate text-xs text-primary-green-50 font-medium">
+                      <div className="text-xs font-medium truncate text-primary-green-50">
                         {currentGym
                           ? `ID: ${currentGym.gymIdentifier}`
                           : 'Select a gym'}
@@ -285,7 +285,7 @@ export function NavUser() {
                       Switch Club
                     </p>
                   </div>
-                  <div className="space-y-1 max-h-80 overflow-y-auto">
+                  <div className="space-y-1 overflow-y-auto max-h-80">
                     {user.clubs.map((club) => {
                       const isActive = club.status === 1;
                       const clubInitials = getInitials(club.gymName);
@@ -307,13 +307,13 @@ export function NavUser() {
                           }`}
                         >
                           <div className="flex items-center gap-2.5 w-full">
-                            <Avatar className="h-8 w-8 rounded-lg ring-1 ring-white/10">
+                            <Avatar className="w-8 h-8 rounded-lg ring-1 ring-white/10">
                               <AvatarImage
                                 src={club.photoPath || undefined}
                                 alt={club.gymName}
                               />
                               <AvatarFallback
-                                className="rounded-lg font-bold text-xs"
+                                className="text-xs font-bold rounded-lg"
                                 style={clubColor}
                               >
                                 {clubInitials}
@@ -321,11 +321,11 @@ export function NavUser() {
                             </Avatar>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
-                                <p className="text-xs font-semibold text-white truncate flex-1">
+                                <p className="flex-1 text-xs font-semibold text-white truncate">
                                   {club.gymName}
                                 </p>
                                 {isActive && (
-                                  <Check className="h-3 w-3 text-primary-green-400 shrink-0" />
+                                  <Check className="w-3 h-3 text-primary-green-400 shrink-0" />
                                 )}
                               </div>
                               <p className="text-[10px] text-white/80 truncate">
@@ -342,25 +342,25 @@ export function NavUser() {
             ) : (
               <div className="flex items-center gap-4">
                 <div className="relative">
-                  <Avatar className="h-12 w-12 rounded-md">
+                  <Avatar className="w-12 h-12 rounded-md">
                     <AvatarImage
                       src={profilePictureUrl || undefined}
                       alt={currentGym?.gymName || 'User'}
                     />
                     <AvatarFallback
-                      className="rounded-md font-bold text-sm bg-linear-to-br from-primary-green-500/20 to-primary-green-600/10 text-primary-green-100"
+                      className="text-sm font-bold rounded-md bg-linear-to-br from-primary-green-500/20 to-primary-green-600/10 text-primary-green-100"
                       style={avatarStyle}
                     >
                       {currentGym ? getInitials(currentGym.gymName) : 'KC'}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-neutral-green-400 rounded-full border-2 border-secondary-blue-500 shadow-md" />
+                  <div className="absolute w-4 h-4 border-2 rounded-full shadow-md -bottom-1 -right-1 bg-neutral-green-400 border-secondary-blue-500" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="truncate font-bold text-sm text-white mb-1">
+                  <div className="mb-1 text-sm font-bold text-white truncate">
                     {currentGym?.gymName || 'No Gym Selected'}
                   </div>
-                  <div className="truncate text-xs text-primary-green-200 font-medium">
+                  <div className="text-xs font-medium truncate text-primary-green-200">
                     {currentGym
                       ? `ID: ${currentGym.gymIdentifier}`
                       : 'Select a gym'}
@@ -381,11 +381,11 @@ export function NavUser() {
                 size="sm"
                 onClick={() => {
                   closeMobileSidebar();
-                  router.push('/general-settings?tab=business_profile');
+                  router.push('/account-settings');
                 }}
-                className="flex-1 h-9 text-xs bg-white/5 border-white/10 text-white hover:bg-primary-green-500 hover:border-primary-green-500 hover:text-black transition-all duration-200"
+                className="flex-1 text-xs text-white transition-all duration-200 h-9 bg-white/5 border-white/10 hover:bg-primary-green-500 hover:border-primary-green-500 hover:text-black"
               >
-                <User className="h-3 w-3 mr-1" />
+                <User className="w-3 h-3 mr-1" />
                 Profile
               </Button>
               <Button
@@ -396,16 +396,16 @@ export function NavUser() {
                   handleLogout();
                 }}
                 disabled={isPending}
-                className="flex-1 h-9 text-xs bg-red-500/20 border-red-500/30 text-red-200 hover:bg-red-500/30 hover:text-red-100 transition-all duration-200"
+                className="flex-1 text-xs text-red-200 transition-all duration-200 h-9 bg-red-500/20 border-red-500/30 hover:bg-red-500/30 hover:text-red-100"
               >
-                <LogOut className="h-3 w-3 mr-1" />
+                <LogOut className="w-3 h-3 mr-1" />
                 {isPending ? 'Signing out...' : 'Sign Out'}
               </Button>
             </div>
           </div>
 
           {/* Animated gradient overlay */}
-          <div className="absolute inset-0 bg-linear-to-t from-primary-green-500/5 via-transparent to-primary-green-400/5 pointer-events-none opacity-50" />
+          <div className="absolute inset-0 opacity-50 pointer-events-none bg-linear-to-t from-primary-green-500/5 via-transparent to-primary-green-400/5" />
           <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-primary-blue-200/50 to-transparent" />
         </div>
       </SidebarMenuItem>
