@@ -4,7 +4,7 @@ import React from 'react';
 
 import { UserCheck, UserPlus, UserX } from 'lucide-react';
 
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -102,12 +102,19 @@ export function QuickAttendanceCommand({ onCheckIn, onCheckOut }: Props) {
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         <div className="relative shrink-0">
                           <Avatar className="h-10 w-10 border-2 border-secondary-blue-400">
-                            <AvatarFallback
-                              className="text-xs font-semibold"
-                              style={avatarStyle}
-                            >
-                              {initials}
-                            </AvatarFallback>
+                            {member?.photoPath ? (
+                              <AvatarImage
+                                src={member.photoPath}
+                                alt={member.memberName}
+                              />
+                            ) : (
+                              <AvatarFallback
+                                className="text-xs font-semibold"
+                                style={avatarStyle}
+                              >
+                                {initials}
+                              </AvatarFallback>
+                            )}
                           </Avatar>
                           {isCheckedIn && (
                             <span className="absolute -bottom-0.5 -right-0.5 flex h-3 w-3">

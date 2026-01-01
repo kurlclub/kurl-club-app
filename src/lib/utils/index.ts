@@ -181,31 +181,26 @@ export const getAvatarColors = (
   return colorCombinations[index];
 };
 
-/**
- * Returns a greeting message based on the current time of the day.
- *
- * - Morning: 5:00 AM to 11:59 AM -> "Good morning"
- * - Afternoon: 12:00 PM to 4:59 PM -> "Good afternoon"
- * - Evening: 5:00 PM to 8:59 PM -> "Good evening"
- * - Night: 9:00 PM to 4:59 AM -> "Good night"
- *
- * The function uses the user's local timezone to determine the current time.
- *
- * @returns {string} A greeting message corresponding to the current time of day.
- */
 export const getGreeting = (): string => {
-  const now = new Date();
-  const hour = now.getHours();
-
-  if (hour >= 5 && hour < 12) {
-    return 'Good morning 💪🏼';
-  } else if (hour >= 12 && hour < 17) {
-    return 'Good afternoon ☀️';
-  } else if (hour >= 17 && hour < 21) {
-    return 'Good evening 🌙';
-  } else {
-    return 'Good night 💤';
-  }
+  const quotes = [
+    'Crush your limits 💥',
+    'Rise & grind 🌄',
+    'Stronger every day 💪',
+    'No pain, all gain 🔥',
+    'Push past possible 🚀',
+    'Sweat. Smile. Repeat 😅',
+    'Own your progress 🏆',
+    'Level up today ⬆️',
+    'Focus. Hustle. Win 🎯',
+    'Discipline is power ⚡',
+    'Small reps, big results 🏋️',
+    'Consistency beats talent ⏱️',
+    'Lift, laugh, repeat 😎',
+    'Gym mode: ON 🔛',
+    'Move. Sweat. Shine ✨',
+    'Your journey, your rules 🛤️',
+  ];
+  return quotes[Math.floor(Math.random() * quotes.length)];
 };
 
 /**

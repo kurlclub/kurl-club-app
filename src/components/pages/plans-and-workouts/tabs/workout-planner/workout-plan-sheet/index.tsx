@@ -53,7 +53,7 @@ export function WorkoutPlanSheet({
   const [isMemberListVisible, setIsMemberListVisible] = useState(false);
   const [showSchedule, setShowSchedule] = useState(false);
 
-  const { showConfirm } = useAppDialog();
+  const { showConfirm, showAlert } = useAppDialog();
 
   const { gymBranch } = useGymBranch();
   // Only fetch members if sheet is open and a plan exists and gymId is present
@@ -76,6 +76,22 @@ export function WorkoutPlanSheet({
   }, [plan, isOpen]);
 
   const handleSavePlan = () => {
+    const hasExercises =
+      !!editedPlan.workouts &&
+      editedPlan.workouts.some(
+        (w) =>
+          w.categories &&
+          w.categories.some((c) => c.exercises && c.exercises.length > 0)
+      );
+
+    if (!hasExercises) {
+      showAlert({
+        title: 'Add at least one exercise',
+        description:
+          'Please add at least one exercise to the workout plan before saving.',
+      });
+      return;
+    }
     if (plan) {
       onUpdate(editedPlan);
     } else {
