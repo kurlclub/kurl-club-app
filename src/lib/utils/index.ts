@@ -194,18 +194,18 @@ export const getGreeting = (): string => {
     slot;
 
   const quotesBySlot: Record<number, string[]> = {
-    0: ['Quietly outworking.', 'Built while others rest.'],
-    1: ['The vision starts now.', 'Momentum begins early.'],
-    2: ['Early bird gets the gains.', 'Discipline over comfort.'],
-    3: ['Beat the sun.', 'Rise before excuses.'],
-    4: ['Crush the morning.', 'Energy follows action.'],
-    5: ['Prime your body.', 'Warm up to win.'],
-    6: ['No lunch break, just pump.', 'Midday, full intensity.'],
-    7: ['Power through the dip.', 'Stay sharp.'],
-    8: ['Clock out, Kurl in.', 'Evening effort matters.'],
-    9: ['The floor is yours.', 'Own the session.'],
-    10: ['Last set, best set.', 'Finish stronger.'],
-    11: ['Recover like a pro.', 'Rest with intent.'],
+    0: ['All set.', 'Everything’s ready.', 'All in order.'],
+    1: ['Ready when you are.', 'Up to date.', 'Good to go.'],
+    2: ['Set to continue.', 'Right where you left off.', 'Ready to proceed.'],
+    3: ['All prepared.', 'Everything’s in place.', 'Things are ready.'],
+    4: ['Ready to resume.', 'All set here.', 'Ready to begin.'],
+    5: ['All systems ready.', 'Everything’s aligned.', 'Ready to move ahead.'],
+    6: ['Ready to continue.', 'Setup complete.', 'All clear.'],
+    7: ['Everything’s steady.', 'All updated.', 'Ready to pick up.'],
+    8: ['All good to go.', 'Everything checks out.', 'All sorted.'],
+    9: ['Ready to carry on.', 'Things are set.', 'Everything’s current.'],
+    10: ['All ready here.', 'Ready to move forward.', 'All set up.'],
+    11: ['Everything’s prepared.', 'Good to continue.', 'Ready to step in.'],
   };
 
   const slotQuotes = quotesBySlot[slot] || ['Let’s move.'];
