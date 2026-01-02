@@ -182,25 +182,37 @@ export const getAvatarColors = (
 };
 
 export const getGreeting = (): string => {
-  const quotes = [
-    'Crush your limits 💥',
-    'Rise & grind 🌄',
-    'Stronger every day 💪',
-    'No pain, all gain 🔥',
-    'Push past possible 🚀',
-    'Sweat. Smile. Repeat 😅',
-    'Own your progress 🏆',
-    'Level up today ⬆️',
-    'Focus. Hustle. Win 🎯',
-    'Discipline is power ⚡',
-    'Small reps, big results 🏋️',
-    'Consistency beats talent ⏱️',
-    'Lift, laugh, repeat 😎',
-    'Gym mode: ON 🔛',
-    'Move. Sweat. Shine ✨',
-    'Your journey, your rules 🛤️',
-  ];
-  return quotes[Math.floor(Math.random() * quotes.length)];
+  const now = new Date();
+
+  const hour = now.getHours();
+  const slot = Math.floor(hour / 2);
+
+  const seed =
+    now.getFullYear() * 10000 +
+    (now.getMonth() + 1) * 100 +
+    now.getDate() * 10 +
+    slot;
+
+  const quotesBySlot: Record<number, string[]> = {
+    0: ['Quietly outworking.', 'Built while others rest.'],
+    1: ['The vision starts now.', 'Momentum begins early.'],
+    2: ['Early bird gets the gains.', 'Discipline over comfort.'],
+    3: ['Beat the sun.', 'Rise before excuses.'],
+    4: ['Crush the morning.', 'Energy follows action.'],
+    5: ['Prime your body.', 'Warm up to win.'],
+    6: ['No lunch break, just pump.', 'Midday, full intensity.'],
+    7: ['Power through the dip.', 'Stay sharp.'],
+    8: ['Clock out, Kurl in.', 'Evening effort matters.'],
+    9: ['The floor is yours.', 'Own the session.'],
+    10: ['Last set, best set.', 'Finish stronger.'],
+    11: ['Recover like a pro.', 'Rest with intent.'],
+  };
+
+  const slotQuotes = quotesBySlot[slot] || ['Let’s move.'];
+
+  const index = seed % slotQuotes.length;
+
+  return slotQuotes[index];
 };
 
 /**
