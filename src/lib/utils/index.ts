@@ -183,36 +183,17 @@ export const getAvatarColors = (
 
 export const getGreeting = (): string => {
   const now = new Date();
-
   const hour = now.getHours();
-  const slot = Math.floor(hour / 2);
 
-  const seed =
-    now.getFullYear() * 10000 +
-    (now.getMonth() + 1) * 100 +
-    now.getDate() * 10 +
-    slot;
-
-  const quotesBySlot: Record<number, string[]> = {
-    0: ['All set.', 'Everything’s ready.', 'All in order.'],
-    1: ['Ready when you are.', 'Up to date.', 'Good to go.'],
-    2: ['Set to continue.', 'Right where you left off.', 'Ready to proceed.'],
-    3: ['All prepared.', 'Everything’s in place.', 'Things are ready.'],
-    4: ['Ready to resume.', 'All set here.', 'Ready to begin.'],
-    5: ['All systems ready.', 'Everything’s aligned.', 'Ready to move ahead.'],
-    6: ['Ready to continue.', 'Setup complete.', 'All clear.'],
-    7: ['Everything’s steady.', 'All updated.', 'Ready to pick up.'],
-    8: ['All good to go.', 'Everything checks out.', 'All sorted.'],
-    9: ['Ready to carry on.', 'Things are set.', 'Everything’s current.'],
-    10: ['All ready here.', 'Ready to move forward.', 'All set up.'],
-    11: ['Everything’s prepared.', 'Good to continue.', 'Ready to step in.'],
-  };
-
-  const slotQuotes = quotesBySlot[slot] || ['Let’s move.'];
-
-  const index = seed % slotQuotes.length;
-
-  return slotQuotes[index];
+  if (hour >= 5 && hour < 12) {
+    return 'Good morning';
+  } else if (hour >= 12 && hour < 17) {
+    return 'Good afternoon';
+  } else if (hour >= 17 && hour < 21) {
+    return 'Good evening';
+  } else {
+    return 'Good night';
+  }
 };
 
 /**
