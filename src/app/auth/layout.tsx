@@ -32,7 +32,7 @@ export default function AuthLayout({
         <span>
           <Image
             className="ml-auto w-fit"
-            src="/assets/svg/christmas-logo.svg"
+            src="/assets/svg/logo.svg"
             alt="logo"
             height={1000}
             width={1000}

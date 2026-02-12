@@ -1,6 +1,7 @@
 import React from 'react';
 import { FormProvider, UseFormReturn } from 'react-hook-form';
 
+import { toast } from 'sonner';
 import { z } from 'zod/v4';
 
 import { FieldColumn, FieldRow } from '@/components/shared/form/field-layout';
@@ -16,6 +17,7 @@ import ProfilePictureUploader from '@/components/shared/uploaders/profile-upload
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { FormControl } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import { useGymFormOptions } from '@/hooks/use-gymform-options';
 import { useMemberForm } from '@/hooks/use-member-form';
 import {
@@ -97,6 +99,10 @@ const PaymentFields = ({
     validatePaymentAmount(amountPaid, feeStatus, totalAmount);
 
   const paidAmount = amountPaid ? Number(amountPaid) : 0;
+  const excessAmount = Math.max(
+    0,
+    Number((paidAmount - totalAmount).toFixed(2))
+  );
 
   return (
     <div
@@ -123,7 +129,11 @@ const PaymentFields = ({
               type="number"
               maxLength={10}
               suffix={
-                totalAmount > 0 ? `/ ${totalAmount.toLocaleString()}` : ''
+                totalAmount > 0
+                  ? `/ ${totalAmount.toLocaleString(undefined, {
+                      maximumFractionDigits: 2,
+                    })}`
+                  : ''
               }
             />
           </FieldColumn>
@@ -134,7 +144,9 @@ const PaymentFields = ({
         showPaidWarning={showPaidWarning}
         showUnpaidWarning={showUnpaidWarning}
         showOverpaymentError={showOverpaymentError}
-        excessAmount={(paidAmount - totalAmount).toLocaleString()}
+        excessAmount={excessAmount.toLocaleString(undefined, {
+          maximumFractionDigits: 2,
+        })}
       />
       {feeStatus !== 'unpaid' && (
         <KFormField
@@ -247,6 +259,64 @@ const PaymentSection = ({
   );
 };
 
+const EditableGymId = ({
+  isEditing,
+  gymIdValue,
+  onEdit,
+  onSave,
+  onCancel,
+  onChange,
+}: {
+  isEditing: boolean;
+  gymIdValue: string;
+  onEdit: () => void;
+  onSave: () => void;
+  onCancel: () => void;
+  onChange: (value: string) => void;
+}) => {
+  if (isEditing) {
+    return (
+      <div className="flex items-center gap-2">
+        <Input
+          type="text"
+          value={gymIdValue}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Enter Gym No"
+          className="h-[30px] w-32"
+          autoFocus
+        />
+        <Button
+          type="button"
+          size="sm"
+          onClick={onSave}
+          disabled={!gymIdValue.trim()}
+          className="h-[30px] px-2 text-xs"
+        >
+          Save
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          onClick={onCancel}
+          className="h-[30px] px-2 text-xs"
+        >
+          Cancel
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <Badge
+      onClick={onEdit}
+      className="bg-secondary-blue-400 flex items-center w-fit justify-center text-sm text-white rounded-full h-[30px] py-2 px-2 border border-secondary-blue-300 bg-opacity-100 cursor-pointer hover:bg-secondary-blue-500 transition-colors"
+    >
+      Gym no: #{gymIdValue || 'Pending'}
+    </Badge>
+  );
+};
+
 // MAIN COMPONENT
 type CreateMemberDetailsProps = {
   onSubmit?: (data: CreateMemberDetailsData) => void;
@@ -278,10 +348,22 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
   } = externalMemberForm || internalMemberForm;
   const isSubmitting = form.formState.isSubmitting;
 
+  const [isEditingGymId, setIsEditingGymId] = React.useState(false);
+  const [gymIdValue, setGymIdValue] = React.useState('');
+
   const selectedPlanId = form.watch('membershipPlanId');
   const selectedPlan = formOptions?.membershipPlans.find(
     (plan) => String(plan.membershipPlanId) === selectedPlanId
   );
+
+  const handleSaveGymId = async () => {
+    if (!gymIdValue.trim()) {
+      toast.error('Gym No is required');
+      return;
+    }
+
+    setIsEditingGymId(false);
+  };
 
   const onSubmit = async (data: CreateMemberDetailsData) => {
     if (selectedPlan) {
@@ -308,10 +390,14 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
       }
     }
 
-    const success = await handleSubmit(data);
+    const success = await handleSubmit(
+      data,
+      gymIdValue.trim() ? gymIdValue : undefined
+    );
     if (success) {
       closeSheet();
       form.reset();
+      setGymIdValue('');
     }
   };
 
@@ -397,9 +483,14 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                   </FormControl>
                 )}
               />
-              <Badge className="bg-secondary-blue-400 flex items-center w-fit justify-center text-sm text-white rounded-full h-[30px] py-2 px-2 border border-secondary-blue-300 bg-opacity-100">
-                Gym no: #Pending
-              </Badge>
+              <EditableGymId
+                isEditing={isEditingGymId}
+                gymIdValue={gymIdValue}
+                onEdit={() => setIsEditingGymId(true)}
+                onSave={handleSaveGymId}
+                onCancel={() => setIsEditingGymId(false)}
+                onChange={setGymIdValue}
+              />
             </div>
 
             <h5 className="text-white text-base font-normal leading-normal mt-0!">

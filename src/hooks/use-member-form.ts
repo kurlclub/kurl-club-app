@@ -105,7 +105,10 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
       });
   }, [onboardingId, form]);
 
-  const handleSubmit = async (data: CreateMemberDetailsData) => {
+  const handleSubmit = async (
+    data: CreateMemberDetailsData,
+    memberIdentifier?: string
+  ) => {
     const formData = new FormData();
 
     // Handle ProfilePicture vs PhotoPath
@@ -169,6 +172,9 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
 
     if (gymId) {
       formData.append('GymId', String(gymId));
+    }
+    if (memberIdentifier) {
+      formData.append('MemberIdentifier', memberIdentifier);
     }
     if (onboardingId) {
       formData.append('OnboardingId', String(onboardingId));
