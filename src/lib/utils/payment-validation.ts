@@ -5,6 +5,20 @@ type PaymentValidationResult = {
   hasAnyWarning: boolean;
 };
 
+const CURRENCY_SCALE = 100;
+
+const roundToCurrency = (value: number): number =>
+  Math.round((value + Number.EPSILON) * CURRENCY_SCALE) / CURRENCY_SCALE;
+
+const hasValue = (value: string | undefined): boolean =>
+  Boolean(value && value.trim() !== '');
+
+const parseAmount = (value: string | undefined): number => {
+  if (!hasValue(value)) return 0;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
 export const validatePaymentAmount = (
   amountPaid: string | undefined,
   feeStatus: string,
@@ -20,12 +34,14 @@ export const validatePaymentAmount = (
     };
   }
 
-  const paidAmount = amountPaid ? Number(amountPaid) : 0;
+  const paidAmount = roundToCurrency(parseAmount(amountPaid));
+  const totalAmount = roundToCurrency(totalFee);
+  const hasAmount = hasValue(amountPaid);
 
   const showPaidWarning =
-    feeStatus === 'paid' && !!amountPaid && paidAmount < totalFee;
+    feeStatus === 'paid' && hasAmount && paidAmount < totalAmount;
   const showUnpaidWarning = false; // not applicable when feeStatus isn't 'unpaid'
-  const showOverpaymentError = !!amountPaid && paidAmount > totalFee;
+  const showOverpaymentError = hasAmount && paidAmount > totalAmount;
 
   return {
     showPaidWarning,
@@ -40,9 +56,11 @@ export const calculateSessionTotal = (
   customRate: string | undefined,
   defaultRate: number
 ): number => {
-  const sessionsNum = numberOfSessions ? Number(numberOfSessions) : 0;
-  const sessionRate = customRate ? Number(customRate) : defaultRate;
-  return sessionsNum > 0 ? sessionRate * sessionsNum : 0;
+  const sessionsNum = parseAmount(numberOfSessions);
+  const sessionRate = hasValue(customRate)
+    ? parseAmount(customRate)
+    : defaultRate;
+  return sessionsNum > 0 ? roundToCurrency(sessionRate * sessionsNum) : 0;
 };
 
 export const calculatePlanFee = (

@@ -24,7 +24,7 @@ export function WorkoutCard({ plan, onClick }: WorkoutCardProps) {
 
   return (
     <Card
-      className="group cursor-pointer transition-all duration-300 hover:shadow-md hover:shadow-primary-green-500/10 border border-white/5 hover:border-primary-green-500/30 bg-gradient-to-br from-secondary-blue-500 to-secondary-blue-600 overflow-hidden h-72 sm:h-80 backdrop-blur-sm flex flex-col"
+      className="group cursor-pointer transition-all duration-300 hover:shadow-md hover:shadow-primary-green-500/10 border border-white/5 hover:border-primary-green-500/30 bg-gradient-to-br from-secondary-blue-500 to-secondary-blue-600 overflow-hidden h-auto backdrop-blur-sm flex flex-col"
       onClick={onClick}
     >
       {/* Header */}

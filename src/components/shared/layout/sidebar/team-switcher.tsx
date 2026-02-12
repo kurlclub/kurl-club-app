@@ -23,7 +23,7 @@ export function TeamSwitcher() {
         >
           {state === 'collapsed' ? (
             <Image
-              src="/assets/svg/christmas-logo-shrink.svg"
+              src="/assets/svg/logo-shrink.svg"
               alt="KurlClub Logo"
               width={36}
               height={36}
@@ -32,8 +32,8 @@ export function TeamSwitcher() {
             <Image
               width={120}
               height={18}
-              className="w-auto object-contain h-6"
-              src="/assets/svg/christmas-logo.svg"
+              className="w-auto object-contain h-4"
+              src="/assets/svg/logo.svg"
               alt="KurlClub Logo"
             />
           )}

@@ -39,7 +39,11 @@ export default function AttendanceRecords() {
 
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
-    member: { name: string; identifier: string } | null;
+    member: {
+      name: string;
+      identifier: string;
+      photoPath?: string | null;
+    } | null;
     action: 'checkin' | 'checkout';
     time: string;
   }>({ open: false, member: null, action: 'checkin', time: '' });
@@ -65,7 +69,11 @@ export default function AttendanceRecords() {
 
       setConfirmDialog({
         open: true,
-        member: { name: member.name, identifier: member.identifier },
+        member: {
+          name: member.name,
+          identifier: member.identifier,
+          photoPath: members.find((m) => m.memberId === member.id)?.photoPath,
+        },
         action: 'checkin',
         time: format(new Date(), 'h:mm a'),
       });
@@ -91,7 +99,11 @@ export default function AttendanceRecords() {
 
       setConfirmDialog({
         open: true,
-        member: { name: member.name, identifier: member.identifier },
+        member: {
+          name: member.name,
+          identifier: member.identifier,
+          photoPath: members.find((m) => m.memberId === member.id)?.photoPath,
+        },
         action: 'checkout',
         time: format(new Date(), 'h:mm a'),
       });
@@ -124,6 +136,9 @@ export default function AttendanceRecords() {
         member: {
           name: attendanceRecord.memberName,
           identifier: attendanceRecord.memberIdentifier,
+          photoPath: members.find(
+            (m) => m.memberIdentifier === attendanceRecord.memberIdentifier
+          )?.photoPath,
         },
         action: 'checkout',
         time: format(new Date(), 'h:mm a'),

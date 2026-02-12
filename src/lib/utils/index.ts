@@ -181,30 +181,18 @@ export const getAvatarColors = (
   return colorCombinations[index];
 };
 
-/**
- * Returns a greeting message based on the current time of the day.
- *
- * - Morning: 5:00 AM to 11:59 AM -> "Good morning"
- * - Afternoon: 12:00 PM to 4:59 PM -> "Good afternoon"
- * - Evening: 5:00 PM to 8:59 PM -> "Good evening"
- * - Night: 9:00 PM to 4:59 AM -> "Good night"
- *
- * The function uses the user's local timezone to determine the current time.
- *
- * @returns {string} A greeting message corresponding to the current time of day.
- */
 export const getGreeting = (): string => {
   const now = new Date();
   const hour = now.getHours();
 
   if (hour >= 5 && hour < 12) {
-    return 'Good morning 💪🏼';
+    return 'Good morning';
   } else if (hour >= 12 && hour < 17) {
-    return 'Good afternoon ☀️';
+    return 'Good afternoon';
   } else if (hour >= 17 && hour < 21) {
-    return 'Good evening 🌙';
+    return 'Good evening';
   } else {
-    return 'Good night 💤';
+    return 'Good night';
   }
 };
 
