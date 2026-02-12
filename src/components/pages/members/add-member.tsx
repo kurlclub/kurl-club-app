@@ -99,6 +99,10 @@ const PaymentFields = ({
     validatePaymentAmount(amountPaid, feeStatus, totalAmount);
 
   const paidAmount = amountPaid ? Number(amountPaid) : 0;
+  const excessAmount = Math.max(
+    0,
+    Number((paidAmount - totalAmount).toFixed(2))
+  );
 
   return (
     <div
@@ -125,7 +129,11 @@ const PaymentFields = ({
               type="number"
               maxLength={10}
               suffix={
-                totalAmount > 0 ? `/ ${totalAmount.toLocaleString()}` : ''
+                totalAmount > 0
+                  ? `/ ${totalAmount.toLocaleString(undefined, {
+                      maximumFractionDigits: 2,
+                    })}`
+                  : ''
               }
             />
           </FieldColumn>
@@ -136,7 +144,9 @@ const PaymentFields = ({
         showPaidWarning={showPaidWarning}
         showUnpaidWarning={showUnpaidWarning}
         showOverpaymentError={showOverpaymentError}
-        excessAmount={(paidAmount - totalAmount).toLocaleString()}
+        excessAmount={excessAmount.toLocaleString(undefined, {
+          maximumFractionDigits: 2,
+        })}
       />
       {feeStatus !== 'unpaid' && (
         <KFormField
