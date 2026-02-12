@@ -56,10 +56,13 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
 
   // Fetch onboarding data if onboardingId is provided
   useEffect(() => {
-    if (!onboardingId) return;
+    const resolvedOnboardingId = Number(onboardingId);
+    if (!Number.isFinite(resolvedOnboardingId) || resolvedOnboardingId <= 0) {
+      return;
+    }
 
     setIsLoadingOnboarding(true);
-    fetchPendingMemberDetails(onboardingId)
+    fetchPendingMemberDetails(resolvedOnboardingId)
       .then((data) => {
         setExistingPhotoUrl(data.photoPath || null);
         setExistingIdCopyUrl(
@@ -68,7 +71,7 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
 
         form.reset({
           profilePicture: null,
-          memberName: data.memberName || '',
+          memberName: data.memberName || data.name || '',
           email: data.email || '',
           phone: data.phone || '',
           gender: data.gender || '',
@@ -176,7 +179,8 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
     if (memberIdentifier) {
       formData.append('MemberIdentifier', memberIdentifier);
     }
-    if (onboardingId) {
+    const resolvedOnboardingId = Number(onboardingId);
+    if (Number.isFinite(resolvedOnboardingId) && resolvedOnboardingId > 0) {
       formData.append('OnboardingId', String(onboardingId));
     }
 

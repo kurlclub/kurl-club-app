@@ -342,8 +342,14 @@ export interface MemberDeleteResponse {
 // ----------------------------------------------------------------------------
 
 export interface OnboardingMember {
-  memberId: number;
-  memberName: string;
+  // NOTE: onboarding APIs have returned multiple key shapes over time.
+  // Keep these aliases optional so the UI can read older and newer payloads.
+  memberId?: number;
+  memberName?: string;
+  onboardingId?: number;
+  onboardId?: number;
+  id?: number;
+  name?: string;
   email: string | null;
   phone: string;
   gender: Gender;
