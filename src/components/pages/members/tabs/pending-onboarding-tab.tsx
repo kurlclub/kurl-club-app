@@ -15,6 +15,7 @@ import {
   rejectOnboardingMember,
   usePendingOnboardingMembers,
 } from '@/services/member';
+import { OnboardingMember } from '@/types/member.types';
 
 import AddMember from '../add-member';
 import {
@@ -36,9 +37,23 @@ export function PendingOnboardingTab() {
     gymId!
   );
 
+  const resolveOnboardingId = (member: OnboardingMember): number => {
+    const rawId =
+      member.onboardingId ??
+      member.onboardId ??
+      member.id ??
+      member.memberId ??
+      0;
+    const parsed = Number(rawId);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+  };
+
+  const resolveMemberName = (member: OnboardingMember): string =>
+    member.memberName || member.name || 'Unknown';
+
   const mappedMembers: PendingMember[] = pendingMembers.map((member) => ({
-    id: Number(member.memberId),
-    name: member.memberName,
+    id: resolveOnboardingId(member),
+    name: resolveMemberName(member),
     phone: member.phone,
     gender: member.gender || 'N/A',
     height: (member as { height?: number }).height || 0,
@@ -55,6 +70,10 @@ export function PendingOnboardingTab() {
   );
 
   const handleAccept = (member: PendingMember) => {
+    if (!Number.isFinite(member.id) || member.id <= 0) {
+      toast.error('Unable to open onboarding details. Invalid request ID.');
+      return;
+    }
     setSelectedMemberId(member.id);
     openSheet();
   };
@@ -67,6 +86,12 @@ export function PendingOnboardingTab() {
       confirmLabel: 'Reject Request',
       cancelLabel: 'Cancel',
       onConfirm: async () => {
+        if (!Number.isFinite(member.id) || member.id <= 0) {
+          toast.error(
+            'Unable to reject onboarding request. Invalid request ID.'
+          );
+          return;
+        }
         const result = await rejectOnboardingMember(member.id, queryClient);
         if (result.success) {
           toast.success(result.success);
