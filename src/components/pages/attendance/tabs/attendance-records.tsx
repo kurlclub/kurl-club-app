@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -9,6 +9,8 @@ import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/providers/auth-provider';
 import { useGymBranch } from '@/providers/gym-branch-provider';
 import {
+  ATTENDANCE_POLLING,
+  useAttendanceRealtimeSync,
   useAttendanceRecords,
   useCheckInMember,
   useCheckOutMember,
@@ -26,8 +28,28 @@ import {
 export default function AttendanceRecords() {
   const { user } = useAuth();
   const { gymBranch } = useGymBranch();
+  const [isPageVisible, setIsPageVisible] = useState(() =>
+    typeof document !== 'undefined'
+      ? document.visibilityState === 'visible'
+      : true
+  );
+  const shouldRunAttendanceSync = !!gymBranch?.gymId && isPageVisible;
+  const { connectionState } = useAttendanceRealtimeSync(gymBranch?.gymId, {
+    enabled: shouldRunAttendanceSync,
+  });
+  const attendanceRefetchInterval = !shouldRunAttendanceSync
+    ? false
+    : connectionState === 'connected'
+      ? ATTENDANCE_POLLING.SAFETY_REFRESH_INTERVAL_MS
+      : connectionState === 'connecting'
+        ? false
+        : ATTENDANCE_POLLING.FALLBACK_POLLING_INTERVAL_MS;
+
   const { data: members = [] } = useAllGymMembers(gymBranch?.gymId || 0);
-  const { data: attendanceResponse } = useAttendanceRecords(gymBranch?.gymId);
+  const { data: attendanceResponse } = useAttendanceRecords(gymBranch?.gymId, {
+    enabled: shouldRunAttendanceSync,
+    refetchInterval: attendanceRefetchInterval,
+  });
   const attendanceRecords = attendanceResponse?.data || [];
   const checkInMutation = useCheckInMember();
   const checkOutMutation = useCheckOutMember();
@@ -47,6 +69,17 @@ export default function AttendanceRecords() {
     action: 'checkin' | 'checkout';
     time: string;
   }>({ open: false, member: null, action: 'checkin', time: '' });
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsPageVisible(document.visibilityState === 'visible');
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   const handleManualModeToggle = (checked: boolean) => {
     setIsManualMode(checked);
