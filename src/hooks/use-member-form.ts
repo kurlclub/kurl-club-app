@@ -24,6 +24,7 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
     defaultValues: {
       profilePicture: null,
       memberName: '',
+      onboardingType: undefined,
       email: '',
       phone: '',
       amountPaid: '',
@@ -39,6 +40,7 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
       bloodGroup: '',
       workoutPlanId: '',
       modeOfPayment: '',
+      currentPackageStartDate: '',
       customSessionRate: '',
       numberOfSessions: '',
       idType: '',
@@ -72,6 +74,7 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
         form.reset({
           profilePicture: null,
           memberName: data.memberName || data.name || '',
+          onboardingType: undefined,
           email: data.email || '',
           phone: data.phone || '',
           gender: data.gender || '',
@@ -95,6 +98,7 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
           workoutPlanId: '',
           amountPaid: '',
           modeOfPayment: '',
+          currentPackageStartDate: '',
           customSessionRate: '',
           numberOfSessions: '',
         });
@@ -113,6 +117,7 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
     memberIdentifier?: string
   ) => {
     const formData = new FormData();
+    const isMigratedMember = data.onboardingType === 'migrated_member';
 
     // Handle ProfilePicture vs PhotoPath
     if (data.profilePicture instanceof File) {
@@ -131,6 +136,7 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
     // Append other fields
     Object.entries(data).forEach(([key, value]) => {
       if (key === 'profilePicture' || key === 'idCopyPath') return;
+      if (key === 'currentPackageStartDate' && !isMigratedMember) return;
 
       if (key === 'personalTrainer') {
         return formData.append(
@@ -167,6 +173,8 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
         emergencyContactPhone: 'EmergencyContactPhone',
         emergencyContactRelation: 'EmergencyContactRelation',
         modeOfPayment: 'ModeOfPayment',
+        onboardingType: 'MemberOnboardingType',
+        currentPackageStartDate: 'CurrentPackageStartDate',
       };
 
       const apiFieldName = fieldMap[key] || key;
