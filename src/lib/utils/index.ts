@@ -310,6 +310,21 @@ export const safeParseDate = (
 };
 
 /**
+ * Converts a date value to a UTC midnight ISO string using the same calendar day.
+ * Useful for date-only fields that should not shift based on client timezone.
+ */
+export const toUtcDateOnlyISOString = (
+  dateValue: Date | string | null | undefined
+): string => {
+  const date = safeParseDate(dateValue);
+  if (!date) return '';
+
+  return new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+  ).toISOString();
+};
+
+/**
  * Safely formats a date string using Intl.DateTimeFormat.
  * Returns fallback text if the date is invalid.
  *

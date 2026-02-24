@@ -34,7 +34,7 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from '@/components/ui/input-otp';
-import { safeParseDate } from '@/lib/utils';
+import { safeParseDate, toUtcDateOnlyISOString } from '@/lib/utils';
 
 const CustomPhoneInput = forwardRef<
   HTMLInputElement,
@@ -278,7 +278,7 @@ const RenderField = <T extends FieldValues>({
             showYearSelector={showYearSelector}
             onDateChange={(date) => {
               if (mode === 'single' && date instanceof Date) {
-                field.onChange(date.toISOString());
+                field.onChange(toUtcDateOnlyISOString(date));
               } else {
                 field.onChange(date);
               }
@@ -307,7 +307,7 @@ const RenderField = <T extends FieldValues>({
             showYearSelector={showYearSelector}
             onDateChange={(date) => {
               if (mode === 'single' && date instanceof Date) {
-                field.onChange(date.toISOString());
+                field.onChange(toUtcDateOnlyISOString(date));
               } else {
                 field.onChange(date);
               }

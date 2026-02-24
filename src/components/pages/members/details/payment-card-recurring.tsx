@@ -193,7 +193,7 @@ export function RecurringPaymentCard({
       <div className="px-5 py-2 border-t border-white/10 mt-auto">
         <div className="flex items-center justify-center gap-2 text-primary-blue-50 text-xs">
           <Clock className="h-3 w-3" />
-          <span>Cycle {currentCycle.cycleId}</span>
+          <span>Click Record Payment to manage recurring payments</span>
         </div>
       </div>
     </div>

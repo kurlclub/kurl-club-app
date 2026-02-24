@@ -9,7 +9,11 @@ import { KDatePicker } from '@/components/shared/form/k-datepicker';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { bloodGroupOptions } from '@/lib/constants';
-import { safeDateFormat, safeParseDate } from '@/lib/utils';
+import {
+  safeDateFormat,
+  safeParseDate,
+  toUtcDateOnlyISOString,
+} from '@/lib/utils';
 import type { EditableSectionProps } from '@/types/staff';
 
 export function PersonalInfoSection({
@@ -59,7 +63,10 @@ export function PersonalInfoSection({
             mode="single"
             value={safeParseDate(details?.dob)}
             onDateChange={(date) =>
-              onUpdate('dob', date instanceof Date ? date.toISOString() : '')
+              onUpdate(
+                'dob',
+                date instanceof Date ? toUtcDateOnlyISOString(date) : ''
+              )
             }
             label="Date of birth"
             className="bg-transparent border-0 border-b border-primary-blue-300 rounded-none hover:bg-transparent hover:border-white k-transition p-0 h-auto w-full pb-1.5 text-white text-[15px] leading-[140%] font-normal gap-1 flex-row-reverse justify-between"
@@ -82,7 +89,10 @@ export function PersonalInfoSection({
             mode="single"
             value={safeParseDate(details?.doj)}
             onDateChange={(date) =>
-              onUpdate('doj', date instanceof Date ? date.toISOString() : '')
+              onUpdate(
+                'doj',
+                date instanceof Date ? toUtcDateOnlyISOString(date) : ''
+              )
             }
             label="Date of joining"
             className="bg-transparent border-0 border-b border-primary-blue-300 rounded-none hover:bg-transparent hover:border-white k-transition p-0 h-auto w-full pb-1.5 text-white text-[15px] leading-[140%] font-normal gap-1 flex-row-reverse justify-between"
