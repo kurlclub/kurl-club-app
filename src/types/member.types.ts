@@ -149,6 +149,7 @@ export interface MemberDetails {
   membershipPlan: MembershipPlan;
   feeStatus: FeeStatus;
   doj: string;
+  currentPackageStartDate?: string | null;
   phone: string;
   email: string | null;
   height: number;
@@ -200,6 +201,7 @@ export interface MemberCreationPayload {
   // Membership
   MembershipPlanId: number;
   FeeStatus: FeeStatus;
+  CurrentPackageStartDate?: string;
   PersonalTrainer: number;
   WorkoutPlanId?: number;
 
@@ -284,6 +286,7 @@ export interface MemberUpdatePayload {
   membershipPlanId: number;
   feeStatus: FeeStatus;
   doj: string;
+  currentPackageStartDate?: string;
   personalTrainer: number;
   workoutPlanId?: number;
 

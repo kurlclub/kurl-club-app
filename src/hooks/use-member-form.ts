@@ -24,6 +24,7 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
     defaultValues: {
       profilePicture: null,
       memberName: '',
+      onboardingType: undefined,
       email: '',
       phone: '',
       amountPaid: '',
@@ -39,6 +40,7 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
       bloodGroup: '',
       workoutPlanId: '',
       modeOfPayment: '',
+      currentPackageStartDate: '',
       customSessionRate: '',
       numberOfSessions: '',
       idType: '',
@@ -72,6 +74,7 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
         form.reset({
           profilePicture: null,
           memberName: data.memberName || data.name || '',
+          onboardingType: undefined,
           email: data.email || '',
           phone: data.phone || '',
           gender: data.gender || '',
@@ -95,6 +98,7 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
           workoutPlanId: '',
           amountPaid: '',
           modeOfPayment: '',
+          currentPackageStartDate: '',
           customSessionRate: '',
           numberOfSessions: '',
         });
@@ -167,11 +171,19 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
         emergencyContactPhone: 'EmergencyContactPhone',
         emergencyContactRelation: 'EmergencyContactRelation',
         modeOfPayment: 'ModeOfPayment',
+        onboardingType: 'MemberOnboardingType',
+        currentPackageStartDate: 'CurrentPackageStartDate',
       };
 
       const apiFieldName = fieldMap[key] || key;
       formData.append(apiFieldName, String(value));
     });
+
+    const resolvedCurrentPackageStartDate =
+      data.currentPackageStartDate && data.currentPackageStartDate.trim() !== ''
+        ? data.currentPackageStartDate
+        : data.doj;
+    formData.set('CurrentPackageStartDate', resolvedCurrentPackageStartDate);
 
     if (gymId) {
       formData.append('GymId', String(gymId));

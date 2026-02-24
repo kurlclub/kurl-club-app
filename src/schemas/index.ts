@@ -26,6 +26,7 @@ export const createMemberSchema = z
       .string()
       .min(1, 'Member name is required')
       .max(50, 'Member name must not exceed 50 characters'),
+    onboardingType: z.enum(['fresh_join', 'migrated_member']).optional(),
     dob: z
       .string()
       .optional()
@@ -66,6 +67,12 @@ export const createMemberSchema = z
     amountPaid: z.string().optional(),
     workoutPlanId: z.string().min(1, 'Workout plan selection is required'),
     modeOfPayment: z.string().optional(),
+    currentPackageStartDate: z
+      .string()
+      .optional()
+      .refine((val) => !val || !isNaN(Date.parse(val)), {
+        message: 'Please select a valid Current Package Start Date.',
+      }),
 
     customSessionRate: z
       .string()
@@ -136,8 +143,28 @@ export const createMemberSchema = z
     emergencyContactRelation: z.string().optional(),
   })
   .superRefine((data, ctx) => {
+    if (!data.onboardingType) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Member onboarding type is required',
+        path: ['onboardingType'],
+      });
+      return;
+    }
+
+    if (
+      data.onboardingType === 'migrated_member' &&
+      !data.currentPackageStartDate
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Current package start date is required for migrated members',
+        path: ['currentPackageStartDate'],
+      });
+    }
+
     // If fee status is not 'unpaid', ensure amountPaid and modeOfPayment are provided and valid
-    if (data.feeStatus && data.feeStatus !== 'unpaid') {
+    if (data.feeStatus !== 'unpaid') {
       // Validate Amount Paid presence
       if (!data.amountPaid || String(data.amountPaid).trim() === '') {
         ctx.addIssue({

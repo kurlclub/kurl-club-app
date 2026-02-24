@@ -155,11 +155,16 @@ export function RecurringPaymentCard({
 
             <div className="text-center flex-1">
               <div className="text-lg font-bold text-blue-400">
-                ₹{currentCycle.lastAmountPaid.toLocaleString()}
+                ₹
+                {currentCycle.lastAmountPaid
+                  ? currentCycle.lastAmountPaid.toLocaleString()
+                  : 0}
               </div>
               <div className="text-primary-blue-50 text-xs">Last Paid</div>
               <div className="text-white/70 text-xs">
-                {formatDateTime(currentCycle.lastAmountPaidDate, 'date')}
+                {currentCycle.lastAmountPaidDate
+                  ? formatDateTime(currentCycle.lastAmountPaidDate, 'date')
+                  : 'N/A'}
               </div>
             </div>
 
