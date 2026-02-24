@@ -21,6 +21,7 @@ import {
   getPaymentBadgeStatus,
   getProfilePictureSrc,
   getUrgencyConfig,
+  safeParseDate,
 } from '@/lib/utils';
 import type {
   MemberPaymentDetails,
@@ -150,10 +151,11 @@ export const createPaymentColumns = (
       if (!dueDate) return <div className="min-w-24">-</div>;
 
       const daysDiff = calculateDaysRemaining(dueDate);
-      const formattedDate = new Date(dueDate).toLocaleDateString('en-GB', {
-        day: 'numeric',
-        month: 'short',
-      });
+      const formattedDate =
+        safeParseDate(dueDate)?.toLocaleDateString('en-GB', {
+          day: 'numeric',
+          month: 'short',
+        }) || '-';
 
       let statusColor = 'text-primary-blue-100';
       let statusText = '';
@@ -211,13 +213,11 @@ export const createPaymentColumns = (
         text: urgencyText,
       } = getUrgencyConfig(daysRemaining);
 
-      const formattedDate = new Date(bufferEndDate).toLocaleDateString(
-        'en-GB',
-        {
+      const formattedDate =
+        safeParseDate(bufferEndDate)?.toLocaleDateString('en-GB', {
           day: 'numeric',
           month: 'short',
-        }
-      );
+        }) || '-';
 
       return (
         <div className="min-w-24">
@@ -254,19 +254,25 @@ export const createPaymentColumns = (
         dueDate: string;
       }) => {
         if (cycle.bufferEndDate) {
-          return new Date(cycle.bufferEndDate);
+          return safeParseDate(cycle.bufferEndDate);
         }
-        return new Date(cycle.dueDate);
+        return safeParseDate(cycle.dueDate);
       };
 
       const aDate = getUrgencyDate(aData);
       const bDate = getUrgencyDate(bData);
+      if (!aDate || !bDate) return 0;
+
       aDate.setHours(0, 0, 0, 0);
       bDate.setHours(0, 0, 0, 0);
 
       // Calculate days remaining for each
-      const aDaysLeft = calculateDaysRemaining(aDate.toISOString());
-      const bDaysLeft = calculateDaysRemaining(bDate.toISOString());
+      const aDaysLeft = Math.ceil(
+        (aDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      const bDaysLeft = Math.ceil(
+        (bDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+      );
 
       // Sort by urgency: expired first, then by days remaining (ascending)
       return aDaysLeft - bDaysLeft;

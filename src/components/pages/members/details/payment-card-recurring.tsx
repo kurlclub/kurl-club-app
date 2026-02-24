@@ -11,6 +11,7 @@ import {
   calculateDaysRemaining,
   formatDateTime,
   getPaymentBadgeStatus,
+  safeParseDate,
 } from '@/lib/utils';
 import { RecurringPaymentMember } from '@/types/payment';
 
@@ -56,9 +57,11 @@ export function RecurringPaymentCard({
   const progressValue = (() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const startDate = new Date(currentCycle.startDate);
+    const startDate = safeParseDate(currentCycle.startDate);
+    const endDate = safeParseDate(currentCycle.endDate);
+    if (!startDate || !endDate) return 0;
+
     startDate.setHours(0, 0, 0, 0);
-    const endDate = new Date(currentCycle.endDate);
     endDate.setHours(0, 0, 0, 0);
 
     const cycleDays = Math.ceil(
@@ -190,7 +193,7 @@ export function RecurringPaymentCard({
       <div className="px-5 py-2 border-t border-white/10 mt-auto">
         <div className="flex items-center justify-center gap-2 text-primary-blue-50 text-xs">
           <Clock className="h-3 w-3" />
-          <span>Cycle {currentCycle.cycleId}</span>
+          <span>Click Record Payment to manage recurring payments</span>
         </div>
       </div>
     </div>

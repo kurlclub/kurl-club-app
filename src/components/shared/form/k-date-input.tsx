@@ -2,7 +2,7 @@
 
 import React, { forwardRef, useState } from 'react';
 
-import { cn } from '@/lib/utils';
+import { cn, safeParseDate, toUtcDateOnlyISOString } from '@/lib/utils';
 
 interface KDateInputProps extends Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
@@ -21,7 +21,8 @@ const KDateInput = forwardRef<HTMLInputElement, KDateInputProps>(
     const formatISOToDisplay = (isoString: string) => {
       if (!isoString) return '';
       try {
-        const date = new Date(isoString);
+        const date = safeParseDate(isoString);
+        if (!date) return '';
         const day = date.getDate().toString().padStart(2, '0');
         const month = (date.getMonth() + 1).toString().padStart(2, '0');
         const year = date.getFullYear();
@@ -37,12 +38,27 @@ const KDateInput = forwardRef<HTMLInputElement, KDateInputProps>(
       const [day, month, year] = displayDate.split('/');
       if (!day || !month || !year || year.length !== 4) return '';
       try {
-        const date = new Date(
-          parseInt(year),
-          parseInt(month) - 1,
-          parseInt(day)
-        );
-        return date.toISOString();
+        const parsedDay = parseInt(day, 10);
+        const parsedMonth = parseInt(month, 10);
+        const parsedYear = parseInt(year, 10);
+        if (
+          Number.isNaN(parsedDay) ||
+          Number.isNaN(parsedMonth) ||
+          Number.isNaN(parsedYear)
+        ) {
+          return '';
+        }
+
+        const date = new Date(parsedYear, parsedMonth - 1, parsedDay);
+        if (
+          date.getFullYear() !== parsedYear ||
+          date.getMonth() !== parsedMonth - 1 ||
+          date.getDate() !== parsedDay
+        ) {
+          return '';
+        }
+
+        return toUtcDateOnlyISOString(date);
       } catch {
         return '';
       }

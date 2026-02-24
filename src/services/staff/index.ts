@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { api } from '@/lib/api';
+import { safeParseDate } from '@/lib/utils';
 import { ApiResponse } from '@/types';
 import { Staff, StaffDetails, StaffType } from '@/types/staff';
 
@@ -35,7 +36,9 @@ export const fetchGymStaffs = async (gymId: number | string) => {
 
   const staffData = response.data || [];
   return staffData.sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    (a, b) =>
+      (safeParseDate(b.createdAt)?.getTime() ?? 0) -
+      (safeParseDate(a.createdAt)?.getTime() ?? 0)
   );
 };
 
