@@ -8,6 +8,10 @@ import { toast } from 'sonner';
 import { updateMember, useMemberByID } from '@/services/member';
 import { MemberDetails } from '@/types/member.types';
 
+type MemberDetailsWithCurrentPackageStartDate = MemberDetails & {
+  currentPackageStartDate?: string | null;
+};
+
 export function useMemberDetails(
   userId: string | number,
   initialData?: MemberDetails
@@ -78,7 +82,8 @@ export function useMemberDetails(
         if (
           key === 'profilePicture' ||
           key === 'photoPath' ||
-          key === 'idCopyPath'
+          key === 'idCopyPath' ||
+          key === 'currentPackageStartDate'
         )
           continue;
 
@@ -93,6 +98,13 @@ export function useMemberDetails(
           formData.append(formKey, String(value));
         }
       }
+
+      const currentPackageStartDate =
+        (details as MemberDetailsWithCurrentPackageStartDate)
+          .currentPackageStartDate ||
+        details.paymentCycleInfo?.startDate ||
+        details.doj;
+      formData.set('CurrentPackageStartDate', String(currentPackageStartDate));
 
       const response = await updateMember(userId, formData);
 

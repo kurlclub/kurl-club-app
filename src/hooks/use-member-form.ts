@@ -117,7 +117,6 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
     memberIdentifier?: string
   ) => {
     const formData = new FormData();
-    const isMigratedMember = data.onboardingType === 'migrated_member';
 
     // Handle ProfilePicture vs PhotoPath
     if (data.profilePicture instanceof File) {
@@ -136,7 +135,6 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
     // Append other fields
     Object.entries(data).forEach(([key, value]) => {
       if (key === 'profilePicture' || key === 'idCopyPath') return;
-      if (key === 'currentPackageStartDate' && !isMigratedMember) return;
 
       if (key === 'personalTrainer') {
         return formData.append(
@@ -180,6 +178,12 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
       const apiFieldName = fieldMap[key] || key;
       formData.append(apiFieldName, String(value));
     });
+
+    const resolvedCurrentPackageStartDate =
+      data.currentPackageStartDate && data.currentPackageStartDate.trim() !== ''
+        ? data.currentPackageStartDate
+        : data.doj;
+    formData.set('CurrentPackageStartDate', resolvedCurrentPackageStartDate);
 
     if (gymId) {
       formData.append('GymId', String(gymId));

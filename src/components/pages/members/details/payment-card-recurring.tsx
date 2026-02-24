@@ -162,7 +162,9 @@ export function RecurringPaymentCard({
               </div>
               <div className="text-primary-blue-50 text-xs">Last Paid</div>
               <div className="text-white/70 text-xs">
-                {formatDateTime(currentCycle.lastAmountPaidDate, 'date')}
+                {currentCycle.lastAmountPaidDate
+                  ? formatDateTime(currentCycle.lastAmountPaidDate, 'date')
+                  : 'N/A'}
               </div>
             </div>
 
