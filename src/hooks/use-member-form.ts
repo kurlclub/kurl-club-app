@@ -6,7 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-import { safeParseDate } from '@/lib/utils';
+import { safeParseDate, toUtcDateOnlyISOString } from '@/lib/utils';
 import { createMemberSchema } from '@/schemas/index';
 import { createMember, fetchPendingMemberDetails } from '@/services/member';
 
@@ -29,7 +29,7 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
       phone: '',
       amountPaid: '',
       dob: '',
-      doj: new Date().toISOString(),
+      doj: toUtcDateOnlyISOString(new Date()),
       height: '',
       weight: '',
       address: '',
@@ -78,7 +78,7 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
           email: data.email || '',
           phone: data.phone || '',
           gender: data.gender || '',
-          dob: safeParseDate(data.dob)?.toISOString() || '',
+          dob: toUtcDateOnlyISOString(safeParseDate(data.dob)) || '',
           height: String(data.height || ''),
           weight: String(data.weight || ''),
           bloodGroup: data.bloodGroup || '',
@@ -91,7 +91,7 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
           emergencyContactName: data.emergencyContactName || '',
           emergencyContactPhone: data.emergencyContactPhone || '',
           emergencyContactRelation: data.emergencyContactRelation || '',
-          doj: new Date().toISOString(),
+          doj: toUtcDateOnlyISOString(new Date()),
           membershipPlanId: '',
           feeStatus: '',
           personalTrainer: '',
@@ -117,6 +117,7 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
     memberIdentifier?: string
   ) => {
     const formData = new FormData();
+    const dateFieldKeys = new Set(['dob', 'doj', 'currentPackageStartDate']);
 
     // Handle ProfilePicture vs PhotoPath
     if (data.profilePicture instanceof File) {
@@ -176,6 +177,14 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
       };
 
       const apiFieldName = fieldMap[key] || key;
+      if (dateFieldKeys.has(key)) {
+        formData.append(
+          apiFieldName,
+          toUtcDateOnlyISOString(typeof value === 'string' ? value : '')
+        );
+        return;
+      }
+
       formData.append(apiFieldName, String(value));
     });
 
@@ -183,7 +192,10 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
       data.currentPackageStartDate && data.currentPackageStartDate.trim() !== ''
         ? data.currentPackageStartDate
         : data.doj;
-    formData.set('CurrentPackageStartDate', resolvedCurrentPackageStartDate);
+    formData.set(
+      'CurrentPackageStartDate',
+      toUtcDateOnlyISOString(resolvedCurrentPackageStartDate)
+    );
 
     if (gymId) {
       formData.append('GymId', String(gymId));

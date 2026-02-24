@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { api } from '@/lib/api';
+import { safeParseDate } from '@/lib/utils';
 import {
   AttendanceRealtimeConnectionState,
   AttendanceRealtimeUpdate,
@@ -196,8 +197,8 @@ export const useCheckOutMember = () => {
 
 const getRecordTimestamp = (record: AttendanceRecordResponse) => {
   const raw = record.checkOutTime || record.checkInTime || record.date;
-  const parsed = new Date(raw);
-  return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+  const parsed = safeParseDate(raw);
+  return parsed ? parsed.getTime() : 0;
 };
 
 const sortAttendanceRecords = (records: AttendanceRecordResponse[]) => {

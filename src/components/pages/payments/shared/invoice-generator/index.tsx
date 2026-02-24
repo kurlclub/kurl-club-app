@@ -16,6 +16,7 @@ import {
   usePaymentHistory,
 } from '@/hooks/use-payment-management';
 import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
+import { safeDateFormat } from '@/lib/utils';
 import type { PaymentHistory } from '@/services/transaction';
 import type {
   MemberPaymentDetails,
@@ -234,7 +235,8 @@ export function InvoiceGenerator({
                     </Badge>
                   </div>
                   <span className="text-primary-blue-50 text-nowrap text-[13px]">
-                    Member since {memberDetails?.doj || 'N/A'}
+                    Member since{' '}
+                    {safeDateFormat(memberDetails?.doj, 'MMM do, yyyy', 'N/A')}
                   </span>
                 </div>
               </div>

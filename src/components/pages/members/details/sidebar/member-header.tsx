@@ -1,7 +1,7 @@
 import ProfilePictureUploader from '@/components/shared/uploaders/profile-uploader';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { base64ToFile } from '@/lib/utils';
+import { base64ToFile, safeDateFormat } from '@/lib/utils';
 import { MemberDetails } from '@/types/member.types';
 
 export interface EditableSectionProps {
@@ -61,7 +61,7 @@ export function MemberHeader({
             </h6>
           )}
           <p className="text-sm text-primary-blue-50 mt-1">
-            Member since {details?.doj}
+            Member since {safeDateFormat(details?.doj)}
           </p>
         </div>
       </div>

@@ -8,6 +8,7 @@ import { z } from 'zod/v4';
 
 import { KSheet } from '@/components/shared/form/k-sheet';
 import { Button } from '@/components/ui/button';
+import { toUtcDateOnlyISOString } from '@/lib/utils';
 import { useGymBranch } from '@/providers/gym-branch-provider';
 import { adminstratorFormSchema, trainerFormSchema } from '@/schemas';
 import { createStaff } from '@/services/staff';
@@ -43,7 +44,7 @@ export const AddStaff: React.FC<CreateStaffDetailsProps> = ({
       BloodGroup: '',
       Gender: '',
       AddressLine: '',
-      Doj: new Date().toISOString(),
+      Doj: toUtcDateOnlyISOString(new Date()),
       Certification: [],
       Username: '',
       Password: '',
@@ -61,7 +62,7 @@ export const AddStaff: React.FC<CreateStaffDetailsProps> = ({
       bloodGroup: '',
       Gender: '',
       AddressLine: '',
-      Doj: new Date().toISOString(),
+      Doj: toUtcDateOnlyISOString(new Date()),
     },
   });
 

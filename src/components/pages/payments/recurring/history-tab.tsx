@@ -17,7 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useDebounce } from '@/hooks/use-debounce';
 import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
 import { FilterConfig } from '@/lib/filters';
-import { getProfilePictureSrc } from '@/lib/utils';
+import { getProfilePictureSrc, safeParseDate } from '@/lib/utils';
 import { useGymBranch } from '@/providers/gym-branch-provider';
 import { usePaymentHistory } from '@/services/payments';
 
@@ -99,21 +99,25 @@ const columns: ColumnDef<PaymentHistoryRecord>[] = [
     accessorKey: 'paymentDate',
     header: 'Payment Date',
     cell: ({ row }) => {
-      const date = new Date(row.original.paymentDate);
+      const date = safeParseDate(row.original.paymentDate);
       return (
         <div className="min-w-[120px]">
           <div className="text-white text-sm">
-            {date.toLocaleDateString('en-GB', {
-              day: 'numeric',
-              month: 'short',
-              year: 'numeric',
-            })}
+            {date
+              ? date.toLocaleDateString('en-GB', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                })
+              : '--'}
           </div>
           <div className="text-xs text-primary-blue-200">
-            {date.toLocaleTimeString('en-IN', {
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
+            {date
+              ? date.toLocaleTimeString('en-IN', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })
+              : '--'}
           </div>
         </div>
       );
@@ -172,24 +176,28 @@ const columns: ColumnDef<PaymentHistoryRecord>[] = [
     accessorKey: 'cycleStartDate',
     header: 'Cycle Period',
     cell: ({ row }) => {
-      const start = new Date(row.original.cycleStartDate);
-      const end = new Date(row.original.cycleEndDate);
+      const start = safeParseDate(row.original.cycleStartDate);
+      const end = safeParseDate(row.original.cycleEndDate);
       return (
         <div className="min-w-40">
           <div className="flex items-center gap-1.5 text-sm">
             <span className="text-white font-medium">
-              {start.toLocaleDateString('en-GB', {
-                day: '2-digit',
-                month: 'short',
-              })}
+              {start
+                ? start.toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                  })
+                : '--'}
             </span>
             <span className="text-primary-blue-200">→</span>
             <span className="text-white font-medium">
-              {end.toLocaleDateString('en-GB', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric',
-              })}
+              {end
+                ? end.toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                  })
+                : '--'}
             </span>
           </div>
         </div>
