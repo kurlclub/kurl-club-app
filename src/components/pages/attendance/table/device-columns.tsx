@@ -18,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { safeParseDate } from '@/lib/utils';
 import type { BiometricDevice } from '@/types/attendance';
 
 const StatusIndicator = ({ status }: { status: 'online' | 'offline' }) => (
@@ -116,19 +117,28 @@ export const deviceColumns: ColumnDef<BiometricDevice>[] = [
     accessorKey: 'lastSeen',
     header: 'Last Seen',
     cell: ({ row }) => {
-      const lastSeen = new Date(row.getValue('lastSeen'));
+      const lastSeen = safeParseDate(row.getValue<string>('lastSeen'));
       const now = new Date();
-      const diffMinutes = Math.floor(
-        (now.getTime() - lastSeen.getTime()) / (1000 * 60)
-      );
+      const diffMinutes = lastSeen
+        ? Math.floor((now.getTime() - lastSeen.getTime()) / (1000 * 60))
+        : null;
 
       return (
         <div className="min-w-[120px]">
           <div className="text-gray-900 dark:text-white text-sm">
-            {lastSeen.toLocaleTimeString()}
+            {lastSeen
+              ? lastSeen.toLocaleTimeString('en-US', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })
+              : '--'}
           </div>
           <div className="text-xs text-gray-600 dark:text-gray-400">
-            {diffMinutes < 1 ? 'Just now' : `${diffMinutes}m ago`}
+            {diffMinutes === null
+              ? 'Unknown'
+              : diffMinutes < 1
+                ? 'Just now'
+                : `${diffMinutes}m ago`}
           </div>
         </div>
       );

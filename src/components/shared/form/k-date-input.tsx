@@ -2,7 +2,7 @@
 
 import React, { forwardRef, useState } from 'react';
 
-import { cn } from '@/lib/utils';
+import { cn, safeParseDate } from '@/lib/utils';
 
 interface KDateInputProps extends Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
@@ -21,7 +21,8 @@ const KDateInput = forwardRef<HTMLInputElement, KDateInputProps>(
     const formatISOToDisplay = (isoString: string) => {
       if (!isoString) return '';
       try {
-        const date = new Date(isoString);
+        const date = safeParseDate(isoString);
+        if (!date) return '';
         const day = date.getDate().toString().padStart(2, '0');
         const month = (date.getMonth() + 1).toString().padStart(2, '0');
         const year = date.getFullYear();

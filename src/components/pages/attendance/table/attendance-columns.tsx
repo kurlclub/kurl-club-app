@@ -6,6 +6,7 @@ import { Clock, LogOut } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
+import { safeFormatDate, safeParseDate } from '@/lib/utils';
 import type { AttendanceRecordResponse } from '@/services/attendance';
 
 const StatusBadge = ({ status }: { status: string }) => {
@@ -97,7 +98,7 @@ const baseColumns: ColumnDef<AttendanceRecordResponse>[] = [
     cell: ({ row }) => (
       <div className="min-w-[100px]">
         <div className="text-gray-900 dark:text-white text-sm">
-          {row.original.date}
+          {safeFormatDate(row.original.date, 'en-GB', '--')}
         </div>
       </div>
     ),
@@ -108,11 +109,12 @@ const baseColumns: ColumnDef<AttendanceRecordResponse>[] = [
     header: 'Check In',
     cell: ({ row }) => {
       const checkInTime = row.original.checkInTime;
+      const parsedCheckIn = safeParseDate(checkInTime);
       const time = checkInTime
-        ? new Date(checkInTime).toLocaleTimeString('en-US', {
+        ? parsedCheckIn?.toLocaleTimeString('en-US', {
             hour: '2-digit',
             minute: '2-digit',
-          })
+          }) || '--'
         : '--';
       const isManual = row.original.mode === 'manual';
       const recordedBy = row.original.recordedBy;
@@ -141,11 +143,12 @@ const baseColumns: ColumnDef<AttendanceRecordResponse>[] = [
     cell: ({ row }) => {
       const checkOutTime = row.original.checkOutTime;
       const isActive = !checkOutTime;
+      const parsedCheckOut = safeParseDate(checkOutTime);
       const time = checkOutTime
-        ? new Date(checkOutTime).toLocaleTimeString('en-US', {
+        ? parsedCheckOut?.toLocaleTimeString('en-US', {
             hour: '2-digit',
             minute: '2-digit',
-          })
+          }) || '--'
         : null;
       const isManual = row.original.mode === 'manual';
       const recordedBy = row.original.recordedBy;

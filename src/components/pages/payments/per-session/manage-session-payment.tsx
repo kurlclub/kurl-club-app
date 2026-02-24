@@ -26,6 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useAppDialog } from '@/hooks/use-app-dialog';
 import { paymentMethodOptions } from '@/lib/constants';
+import { safeParseDate } from '@/lib/utils';
 import { useGymBranch } from '@/providers/gym-branch-provider';
 import {
   useMemberSessionDetails,
@@ -269,6 +270,7 @@ export function ManageSessionPaymentSheet({
                   );
                   const isPaid = session.paymentStatus === 'paid';
                   const isUsed = session.attendanceStatus === 'used';
+                  const checkInDate = safeParseDate(session.checkInTime);
 
                   return (
                     <div
@@ -299,13 +301,13 @@ export function ManageSessionPaymentSheet({
                           <>
                             <div className="flex items-center gap-2">
                               <p className="text-sm font-semibold text-white">
-                                {new Date(
-                                  session.checkInTime
-                                ).toLocaleDateString('en-IN', {
-                                  day: 'numeric',
-                                  month: 'short',
-                                  year: 'numeric',
-                                })}
+                                {checkInDate
+                                  ? checkInDate.toLocaleDateString('en-IN', {
+                                      day: 'numeric',
+                                      month: 'short',
+                                      year: 'numeric',
+                                    })
+                                  : '--'}
                               </p>
                               <Badge className="bg-primary-green-600/20 text-primary-green-400 text-[10px] px-2 py-0.5">
                                 Attended
@@ -313,13 +315,12 @@ export function ManageSessionPaymentSheet({
                             </div>
                             <div className="flex items-center gap-1 text-xs text-primary-blue-200 mt-1">
                               <Clock className="w-3 h-3" />
-                              {new Date(session.checkInTime).toLocaleTimeString(
-                                'en-IN',
-                                {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                }
-                              )}
+                              {checkInDate
+                                ? checkInDate.toLocaleTimeString('en-IN', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })
+                                : '--'}
                             </div>
                           </>
                         ) : (
