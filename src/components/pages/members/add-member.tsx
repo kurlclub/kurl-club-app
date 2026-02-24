@@ -1,6 +1,7 @@
 import React from 'react';
 import { FormProvider, UseFormReturn } from 'react-hook-form';
 
+import { ArrowRightLeft, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod/v4';
 
@@ -25,6 +26,7 @@ import {
   feeStatusOptions,
   genderOptions,
   idTypeOptions,
+  memberOnboardingTypeOptions,
   paymentModeOptions,
   purposeOptions,
   relationOptions,
@@ -36,11 +38,15 @@ import {
 import { createMemberSchema } from '@/schemas/index';
 
 type CreateMemberDetailsData = z.infer<typeof createMemberSchema>;
+type OnboardingTypeValue = NonNullable<
+  CreateMemberDetailsData['onboardingType']
+>;
 
 type MembershipPlanSubset = {
   membershipPlanId: number;
   planName: string;
   fee: number;
+  durationInDays?: number;
   billingType?: 'Recurring' | 'PerSession';
 };
 
@@ -93,7 +99,7 @@ const PaymentFields = ({
   paymentSectionRef?: React.RefObject<HTMLDivElement | null>;
 }) => {
   const amountPaid = form.watch('amountPaid');
-  const feeStatus = form.watch('feeStatus');
+  const feeStatus = form.watch('feeStatus') || '';
 
   const { showPaidWarning, showUnpaidWarning, showOverpaymentError } =
     validatePaymentAmount(amountPaid, feeStatus, totalAmount);
@@ -219,17 +225,17 @@ const PerSessionPayment = ({
 
 const RecurringPayment = ({
   form,
-  selectedPlan,
+  totalAmount,
   paymentSectionRef,
 }: {
   form: UseFormReturn<CreateMemberDetailsData>;
-  selectedPlan: MembershipPlanSubset;
+  totalAmount: number;
   paymentSectionRef: React.RefObject<HTMLDivElement | null>;
 }) => {
   return (
     <PaymentFields
       form={form}
-      totalAmount={selectedPlan.fee}
+      totalAmount={totalAmount}
       paymentSectionRef={paymentSectionRef}
     />
   );
@@ -238,10 +244,12 @@ const RecurringPayment = ({
 const PaymentSection = ({
   form,
   selectedPlan,
+  recurringTotalAmount,
   paymentSectionRef,
 }: {
   form: UseFormReturn<CreateMemberDetailsData>;
   selectedPlan: MembershipPlanSubset;
+  recurringTotalAmount?: number;
   paymentSectionRef: React.RefObject<HTMLDivElement | null>;
 }) => {
   return isPerSessionPlan(selectedPlan) ? (
@@ -253,9 +261,132 @@ const PaymentSection = ({
   ) : (
     <RecurringPayment
       form={form}
-      selectedPlan={selectedPlan}
+      totalAmount={recurringTotalAmount ?? selectedPlan.fee}
       paymentSectionRef={paymentSectionRef}
     />
+  );
+};
+
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
+
+const getStartOfDay = (date: Date): Date => {
+  const normalized = new Date(date);
+  normalized.setHours(0, 0, 0, 0);
+  return normalized;
+};
+
+const calculateMigratedRecurringTotal = ({
+  fee,
+  durationInDays,
+  startDate,
+}: {
+  fee: number;
+  durationInDays?: number;
+  startDate?: string;
+}): { cycles: number; total: number } => {
+  const planDuration = Math.max(1, durationInDays || 30);
+  if (!startDate) {
+    return { cycles: 1, total: fee };
+  }
+
+  const start = new Date(startDate);
+  if (Number.isNaN(start.getTime())) {
+    return { cycles: 1, total: fee };
+  }
+
+  const today = getStartOfDay(new Date());
+  const startDay = getStartOfDay(start);
+  const diffMs = Math.max(0, today.getTime() - startDay.getTime());
+  const elapsedDays = Math.floor(diffMs / DAY_IN_MS);
+  const cycles = Math.floor(elapsedDays / planDuration) + 1;
+
+  return { cycles, total: fee * cycles };
+};
+
+const onboardingTypeCardMeta: Record<
+  OnboardingTypeValue,
+  {
+    description: string;
+    helperText: string;
+    icon: React.ReactNode;
+  }
+> = {
+  fresh_join: {
+    description: 'New member joining today.',
+    helperText: 'Uses your current Add Member flow.',
+    icon: <UserPlus className="h-6 w-6" />,
+  },
+  migrated_member: {
+    description: 'Member joined before using KurlClub.',
+    helperText: 'Lets you set current package start date for auto total.',
+    icon: <ArrowRightLeft className="h-6 w-6" />,
+  },
+};
+
+const OnboardingTypeCards = ({
+  value,
+  onSelect,
+  errorMessage,
+}: {
+  value?: OnboardingTypeValue;
+  onSelect: (value: OnboardingTypeValue) => void;
+  errorMessage?: string;
+}) => {
+  return (
+    <div className="space-y-3">
+      <h5 className="text-white text-base font-normal leading-normal mt-0!">
+        Member Onboarding Type
+      </h5>
+      <p className="text-gray-400 text-sm">
+        Choose one to continue. The form will load based on your selection.
+      </p>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {memberOnboardingTypeOptions.map((option) => {
+          const onboardingValue = option.value as OnboardingTypeValue;
+          const meta = onboardingTypeCardMeta[onboardingValue];
+          const isSelected = value === onboardingValue;
+
+          return (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => onSelect(onboardingValue)}
+              className={`text-left rounded-xl border p-4 transition-all ${
+                isSelected
+                  ? 'border-primary-blue-400 bg-secondary-blue-500/80'
+                  : 'border-secondary-blue-300 bg-secondary-blue-600/40 hover:border-secondary-blue-200'
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-white text-base">{option.label}</p>
+                  <p className="text-sm text-gray-300 mt-1">
+                    {meta.description}
+                  </p>
+                </div>
+                <div
+                  className={`h-12 w-12 rounded-lg flex items-center justify-center ${
+                    isSelected
+                      ? 'bg-primary-blue-500/20 text-primary-blue-300'
+                      : 'bg-secondary-blue-500/50 text-gray-300'
+                  }`}
+                >
+                  {meta.icon}
+                </div>
+              </div>
+              <p className="text-xs text-gray-400 mt-3">{meta.helperText}</p>
+            </button>
+          );
+        })}
+      </div>
+
+      {errorMessage && (
+        <p className="text-alert-red-400 text-sm before:content-['*'] before:mr-px">
+          {errorMessage}
+        </p>
+      )}
+    </div>
   );
 };
 
@@ -351,10 +482,52 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
   const [isEditingGymId, setIsEditingGymId] = React.useState(false);
   const [gymIdValue, setGymIdValue] = React.useState('');
 
+  const onboardingType = form.watch('onboardingType');
+  const hasSelectedOnboardingType = Boolean(onboardingType);
+  const isMigratedMember = onboardingType === 'migrated_member';
   const selectedPlanId = form.watch('membershipPlanId');
+  const currentPackageStartDate = form.watch('currentPackageStartDate');
+  const onboardingTypeError =
+    form.formState.errors.onboardingType?.message?.toString();
   const selectedPlan = formOptions?.membershipPlans.find(
     (plan) => String(plan.membershipPlanId) === selectedPlanId
   );
+
+  const migratedRecurringCalculation = React.useMemo(() => {
+    if (
+      !isMigratedMember ||
+      !selectedPlan ||
+      isPerSessionPlan(selectedPlan) ||
+      !currentPackageStartDate
+    ) {
+      return null;
+    }
+
+    return calculateMigratedRecurringTotal({
+      fee: selectedPlan.fee,
+      durationInDays: selectedPlan.durationInDays,
+      startDate: currentPackageStartDate,
+    });
+  }, [currentPackageStartDate, isMigratedMember, selectedPlan]);
+
+  const handleOnboardingTypeSelect = (value: OnboardingTypeValue) => {
+    form.setValue('onboardingType', value, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+
+    if (value === 'fresh_join') {
+      form.setValue('currentPackageStartDate', '');
+    }
+  };
+
+  const handleChangeOnboardingType = () => {
+    form.setValue('onboardingType', undefined, {
+      shouldDirty: true,
+      shouldValidate: false,
+    });
+    form.clearErrors('onboardingType');
+  };
 
   const handleSaveGymId = async () => {
     if (!gymIdValue.trim()) {
@@ -366,6 +539,14 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
   };
 
   const onSubmit = async (data: CreateMemberDetailsData) => {
+    if (!data.onboardingType) {
+      form.setError('onboardingType', {
+        type: 'required',
+        message: 'Member onboarding type is required',
+      });
+      return;
+    }
+
     if (selectedPlan) {
       const totalFee = isPerSessionPlan(selectedPlan)
         ? calculateSessionTotal(
@@ -373,11 +554,11 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
             data.customSessionRate,
             selectedPlan.fee
           )
-        : selectedPlan.fee;
+        : migratedRecurringCalculation?.total || selectedPlan.fee;
 
       const { hasAnyWarning } = validatePaymentAmount(
         data.amountPaid,
-        data.feeStatus,
+        data.feeStatus || '',
         totalFee
       );
 
@@ -435,7 +616,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
           type="submit"
           form="add-member-form"
           className="h-[46px] min-w-[73px]"
-          disabled={isSubmitting}
+          disabled={isSubmitting || !hasSelectedOnboardingType}
         >
           {isSubmitting ? 'Saving...' : 'Add'}
         </Button>
@@ -465,266 +646,310 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
               form.setFocus(firstError);
             })}
           >
-            <div className="items-start gap-2 mb-6 flex justify-between">
-              <KFormField
-                fieldType={KFormFieldType.SKELETON}
-                control={form.control}
-                name="profilePicture"
-                renderSkeleton={(field) => (
-                  <FormControl>
-                    <ProfilePictureUploader
-                      files={field.value as File | null}
-                      onChange={(file) => {
-                        field.onChange(file);
-                        if (!file) setExistingPhotoUrl(null);
-                      }}
-                      existingImageUrl={existingPhotoUrl}
+            {!hasSelectedOnboardingType ? (
+              <OnboardingTypeCards
+                value={onboardingType}
+                onSelect={handleOnboardingTypeSelect}
+                errorMessage={onboardingTypeError}
+              />
+            ) : (
+              <>
+                <div className="flex justify-end">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleChangeOnboardingType}
+                    className="h-auto p-0 text-primary-blue-300 hover:text-primary-blue-200"
+                  >
+                    Change onboarding type
+                  </Button>
+                </div>
+                <div className="items-start gap-2 mb-6 flex justify-between">
+                  <KFormField
+                    fieldType={KFormFieldType.SKELETON}
+                    control={form.control}
+                    name="profilePicture"
+                    renderSkeleton={(field) => (
+                      <FormControl>
+                        <ProfilePictureUploader
+                          files={field.value as File | null}
+                          onChange={(file) => {
+                            field.onChange(file);
+                            if (!file) setExistingPhotoUrl(null);
+                          }}
+                          existingImageUrl={existingPhotoUrl}
+                        />
+                      </FormControl>
+                    )}
+                  />
+                  <EditableGymId
+                    isEditing={isEditingGymId}
+                    gymIdValue={gymIdValue}
+                    onEdit={() => setIsEditingGymId(true)}
+                    onSave={handleSaveGymId}
+                    onCancel={() => setIsEditingGymId(false)}
+                    onChange={setGymIdValue}
+                  />
+                </div>
+
+                <h5 className="text-white text-base font-normal leading-normal mt-0!">
+                  Basic Details
+                </h5>
+
+                <KFormField
+                  fieldType={KFormFieldType.INPUT}
+                  control={form.control}
+                  name="memberName"
+                  label="Member Name"
+                  maxLength={20}
+                />
+                <KFormField
+                  fieldType={KFormFieldType.INPUT}
+                  control={form.control}
+                  name="email"
+                  label="Email (Optional)"
+                />
+                <KFormField
+                  fieldType={KFormFieldType.PHONE_INPUT}
+                  control={form.control}
+                  name="phone"
+                  label="Phone"
+                  placeholder="(555) 123-4567"
+                />
+
+                <FieldRow>
+                  <FieldColumn>
+                    <KFormField
+                      fieldType={KFormFieldType.SELECT}
+                      control={form.control}
+                      name="gender"
+                      label="Gender"
+                      options={genderOptions}
                     />
-                  </FormControl>
+                  </FieldColumn>
+                  <FieldColumn>
+                    <KFormField
+                      fieldType={KFormFieldType.SELECT}
+                      control={form.control}
+                      name="bloodGroup"
+                      label="Blood Group"
+                      options={bloodGroupOptions}
+                    />
+                  </FieldColumn>
+                </FieldRow>
+
+                <FieldRow>
+                  <FieldColumn>
+                    <KFormField
+                      fieldType={KFormFieldType.INPUT}
+                      control={form.control}
+                      name="height"
+                      label="Height (CM)"
+                      maxLength={3}
+                    />
+                  </FieldColumn>
+                  <FieldColumn>
+                    <KFormField
+                      fieldType={KFormFieldType.INPUT}
+                      control={form.control}
+                      name="weight"
+                      label="Weight (KG)"
+                      maxLength={3}
+                    />
+                  </FieldColumn>
+                </FieldRow>
+
+                <FieldRow>
+                  <FieldColumn>
+                    <KFormField
+                      fieldType={KFormFieldType.UI_DATE_PICKER}
+                      control={form.control}
+                      name="doj"
+                      label="Date of joining"
+                      mode="single"
+                      floating
+                    />
+                  </FieldColumn>
+                  <FieldColumn>
+                    <KFormField
+                      fieldType={KFormFieldType.DATE_INPUT}
+                      control={form.control}
+                      name="dob"
+                      label="Date of birth (DD/MM/YYYY)"
+                    />
+                  </FieldColumn>
+                </FieldRow>
+
+                <FieldRow>
+                  <FieldColumn>
+                    <KFormField
+                      fieldType={KFormFieldType.SELECT}
+                      control={form.control}
+                      name="personalTrainer"
+                      label="Personal Trainer"
+                      options={
+                        formOptions?.trainers
+                          ? formOptions.trainers.map((option) => ({
+                              label: option.trainerName,
+                              value: String(option.id),
+                            }))
+                          : []
+                      }
+                    />
+                  </FieldColumn>
+                  <FieldColumn>
+                    <KFormField
+                      fieldType={KFormFieldType.SELECT}
+                      control={form.control}
+                      name="membershipPlanId"
+                      label="Package"
+                      options={formOptions?.membershipPlans.map((plan) => ({
+                        label: plan.planName,
+                        value: String(plan.membershipPlanId),
+                      }))}
+                    />
+                  </FieldColumn>
+                </FieldRow>
+
+                {isMigratedMember && selectedPlan && (
+                  <>
+                    <KFormField
+                      fieldType={KFormFieldType.UI_DATE_PICKER}
+                      control={form.control}
+                      name="currentPackageStartDate"
+                      label="Current Package Start Date"
+                      mode="single"
+                      floating
+                    />
+                    <InfoBanner
+                      variant="info"
+                      icon="ℹ️"
+                      message={
+                        migratedRecurringCalculation
+                          ? `Auto total till today: ₹${migratedRecurringCalculation.total.toLocaleString()} (${migratedRecurringCalculation.cycles} cycle${migratedRecurringCalculation.cycles > 1 ? 's' : ''})`
+                          : 'Select current package start date to auto-calculate total amount.'
+                      }
+                    />
+                  </>
                 )}
-              />
-              <EditableGymId
-                isEditing={isEditingGymId}
-                gymIdValue={gymIdValue}
-                onEdit={() => setIsEditingGymId(true)}
-                onSave={handleSaveGymId}
-                onCancel={() => setIsEditingGymId(false)}
-                onChange={setGymIdValue}
-              />
-            </div>
 
-            <h5 className="text-white text-base font-normal leading-normal mt-0!">
-              Basic Details
-            </h5>
-
-            <KFormField
-              fieldType={KFormFieldType.INPUT}
-              control={form.control}
-              name="memberName"
-              label="Member Name"
-              maxLength={20}
-            />
-            <KFormField
-              fieldType={KFormFieldType.INPUT}
-              control={form.control}
-              name="email"
-              label="Email (Optional)"
-            />
-            <KFormField
-              fieldType={KFormFieldType.PHONE_INPUT}
-              control={form.control}
-              name="phone"
-              label="Phone"
-              placeholder="(555) 123-4567"
-            />
-
-            <FieldRow>
-              <FieldColumn>
                 <KFormField
                   fieldType={KFormFieldType.SELECT}
                   control={form.control}
-                  name="gender"
-                  label="Gender"
-                  options={genderOptions}
-                />
-              </FieldColumn>
-              <FieldColumn>
-                <KFormField
-                  fieldType={KFormFieldType.SELECT}
-                  control={form.control}
-                  name="bloodGroup"
-                  label="Blood Group"
-                  options={bloodGroupOptions}
-                />
-              </FieldColumn>
-            </FieldRow>
-
-            <FieldRow>
-              <FieldColumn>
-                <KFormField
-                  fieldType={KFormFieldType.INPUT}
-                  control={form.control}
-                  name="height"
-                  label="Height (CM)"
-                  maxLength={3}
-                />
-              </FieldColumn>
-              <FieldColumn>
-                <KFormField
-                  fieldType={KFormFieldType.INPUT}
-                  control={form.control}
-                  name="weight"
-                  label="Weight (KG)"
-                  maxLength={3}
-                />
-              </FieldColumn>
-            </FieldRow>
-
-            <FieldRow>
-              <FieldColumn>
-                <KFormField
-                  fieldType={KFormFieldType.UI_DATE_PICKER}
-                  control={form.control}
-                  name="doj"
-                  label="Date of joining"
-                  mode="single"
-                  floating
-                />
-              </FieldColumn>
-              <FieldColumn>
-                <KFormField
-                  fieldType={KFormFieldType.DATE_INPUT}
-                  control={form.control}
-                  name="dob"
-                  label="Date of birth (DD/MM/YYYY)"
-                />
-              </FieldColumn>
-            </FieldRow>
-
-            <FieldRow>
-              <FieldColumn>
-                <KFormField
-                  fieldType={KFormFieldType.SELECT}
-                  control={form.control}
-                  name="personalTrainer"
-                  label="Personal Trainer"
-                  options={
-                    formOptions?.trainers
-                      ? formOptions.trainers.map((option) => ({
-                          label: option.trainerName,
-                          value: String(option.id),
-                        }))
-                      : []
-                  }
-                />
-              </FieldColumn>
-              <FieldColumn>
-                <KFormField
-                  fieldType={KFormFieldType.SELECT}
-                  control={form.control}
-                  name="membershipPlanId"
-                  label="Package"
-                  options={formOptions?.membershipPlans.map((plan) => ({
-                    label: plan.planName,
-                    value: String(plan.membershipPlanId),
+                  name="workoutPlanId"
+                  label="Workout Plan"
+                  options={formOptions?.workoutPlans.map((option) => ({
+                    label: option.name,
+                    value: String(option.id),
                   }))}
                 />
-              </FieldColumn>
-            </FieldRow>
 
-            <KFormField
-              fieldType={KFormFieldType.SELECT}
-              control={form.control}
-              name="workoutPlanId"
-              label="Workout Plan"
-              options={formOptions?.workoutPlans.map((option) => ({
-                label: option.name,
-                value: String(option.id),
-              }))}
-            />
-
-            {selectedPlan && (
-              <PaymentSection
-                form={form}
-                selectedPlan={selectedPlan}
-                paymentSectionRef={paymentSectionRef}
-              />
-            )}
-
-            <h5 className="text-white text-base font-normal leading-normal mt-8!">
-              Health & Fitness Goals
-            </h5>
-            <KFormField
-              fieldType={KFormFieldType.SELECT}
-              control={form.control}
-              name="fitnessGoal"
-              label="What brings you here?"
-              options={purposeOptions}
-            />
-            <KFormField
-              fieldType={KFormFieldType.TEXTAREA}
-              control={form.control}
-              name="medicalHistory"
-              label="Medical History or Notes"
-              maxLength={250}
-            />
-
-            <h5 className="text-white text-base font-normal leading-normal mt-8!">
-              Identity Verification
-            </h5>
-            <p className="text-gray-400 text-sm -mt-2 mb-2">
-              Please provide a government-issued ID for verification
-            </p>
-            <KFormField
-              fieldType={KFormFieldType.SELECT}
-              control={form.control}
-              name="idType"
-              label="ID Type"
-              options={idTypeOptions}
-            />
-            <KFormField
-              fieldType={KFormFieldType.INPUT}
-              control={form.control}
-              name="idNumber"
-              label="ID Number"
-            />
-            <KFormField
-              fieldType={KFormFieldType.SKELETON}
-              control={form.control}
-              name="idCopyPath"
-              renderSkeleton={(field) => (
-                <FormControl>
-                  <FileUploader
-                    file={field.value as File | null}
-                    onChange={(file) => {
-                      field.onChange(file);
-                      if (!file) setExistingIdCopyUrl(null);
-                    }}
-                    label="Upload ID Document"
-                    existingFileUrl={existingIdCopyUrl}
+                {selectedPlan && (
+                  <PaymentSection
+                    form={form}
+                    selectedPlan={selectedPlan}
+                    recurringTotalAmount={migratedRecurringCalculation?.total}
+                    paymentSectionRef={paymentSectionRef}
                   />
-                </FormControl>
-              )}
-            />
+                )}
 
-            <h5 className="text-white text-base font-normal leading-normal mt-8!">
-              Emergency Details
-            </h5>
-            <p className="text-gray-400 text-sm -mt-2 mb-2">
-              Who should we contact in case of emergency?
-            </p>
-            <KFormField
-              fieldType={KFormFieldType.INPUT}
-              control={form.control}
-              name="emergencyContactName"
-              label="Emergency Contact Name"
-              maxLength={20}
-            />
-            <KFormField
-              fieldType={KFormFieldType.PHONE_INPUT}
-              control={form.control}
-              name="emergencyContactPhone"
-              label="Emergency Contact Phone"
-              placeholder="(555) 123-4567"
-            />
-            <KFormField
-              fieldType={KFormFieldType.SELECT}
-              control={form.control}
-              name="emergencyContactRelation"
-              label="Relation"
-              options={relationOptions}
-            />
+                <h5 className="text-white text-base font-normal leading-normal mt-8!">
+                  Health & Fitness Goals
+                </h5>
+                <KFormField
+                  fieldType={KFormFieldType.SELECT}
+                  control={form.control}
+                  name="fitnessGoal"
+                  label="What brings you here?"
+                  options={purposeOptions}
+                />
+                <KFormField
+                  fieldType={KFormFieldType.TEXTAREA}
+                  control={form.control}
+                  name="medicalHistory"
+                  label="Medical History or Notes"
+                  maxLength={250}
+                />
 
-            <h5 className="text-white text-base font-normal leading-normal mt-8!">
-              Address Details
-            </h5>
-            <KFormField
-              fieldType={KFormFieldType.TEXTAREA}
-              control={form.control}
-              name="address"
-              label="Address Line"
-              maxLength={250}
-            />
+                <h5 className="text-white text-base font-normal leading-normal mt-8!">
+                  Identity Verification
+                </h5>
+                <p className="text-gray-400 text-sm -mt-2 mb-2">
+                  Please provide a government-issued ID for verification
+                </p>
+                <KFormField
+                  fieldType={KFormFieldType.SELECT}
+                  control={form.control}
+                  name="idType"
+                  label="ID Type"
+                  options={idTypeOptions}
+                />
+                <KFormField
+                  fieldType={KFormFieldType.INPUT}
+                  control={form.control}
+                  name="idNumber"
+                  label="ID Number"
+                />
+                <KFormField
+                  fieldType={KFormFieldType.SKELETON}
+                  control={form.control}
+                  name="idCopyPath"
+                  renderSkeleton={(field) => (
+                    <FormControl>
+                      <FileUploader
+                        file={field.value as File | null}
+                        onChange={(file) => {
+                          field.onChange(file);
+                          if (!file) setExistingIdCopyUrl(null);
+                        }}
+                        label="Upload ID Document"
+                        existingFileUrl={existingIdCopyUrl}
+                      />
+                    </FormControl>
+                  )}
+                />
+
+                <h5 className="text-white text-base font-normal leading-normal mt-8!">
+                  Emergency Details
+                </h5>
+                <p className="text-gray-400 text-sm -mt-2 mb-2">
+                  Who should we contact in case of emergency?
+                </p>
+                <KFormField
+                  fieldType={KFormFieldType.INPUT}
+                  control={form.control}
+                  name="emergencyContactName"
+                  label="Emergency Contact Name"
+                  maxLength={20}
+                />
+                <KFormField
+                  fieldType={KFormFieldType.PHONE_INPUT}
+                  control={form.control}
+                  name="emergencyContactPhone"
+                  label="Emergency Contact Phone"
+                  placeholder="(555) 123-4567"
+                />
+                <KFormField
+                  fieldType={KFormFieldType.SELECT}
+                  control={form.control}
+                  name="emergencyContactRelation"
+                  label="Relation"
+                  options={relationOptions}
+                />
+
+                <h5 className="text-white text-base font-normal leading-normal mt-8!">
+                  Address Details
+                </h5>
+                <KFormField
+                  fieldType={KFormFieldType.TEXTAREA}
+                  control={form.control}
+                  name="address"
+                  label="Address Line"
+                  maxLength={250}
+                />
+              </>
+            )}
           </form>
         </FormProvider>
       )}

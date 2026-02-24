@@ -10,6 +10,11 @@ export const feeStatusOptions = [
   { label: 'Partially Paid', value: 'partially_paid' },
 ];
 
+export const memberOnboardingTypeOptions = [
+  { label: 'Fresh Join', value: 'fresh_join' },
+  { label: 'Migrated Member', value: 'migrated_member' },
+];
+
 export const bloodGroupOptions = [
   { label: 'A+', value: 'A+' },
   { label: 'A-', value: 'A-' },
