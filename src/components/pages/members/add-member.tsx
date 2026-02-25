@@ -631,6 +631,11 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
       onClose={closeSheet}
       title="Add Member"
       footer={footer}
+      onCloseBtnClick={() => {
+        form.reset();
+        form.clearErrors();
+        closeSheet();
+      }}
     >
       {isLoadingOnboarding ? (
         <Spinner message="Loading member details..." />

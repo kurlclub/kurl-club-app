@@ -39,6 +39,8 @@ export const columns: ColumnDef<Staff>[] = [
       const name = row.getValue<string>('name') || 'Unknown';
       const avatarStyle = getAvatarColor(name);
       const initials = getInitials(name);
+      const hasProfilePicture = row.original.hasProfilePicture;
+      const photoPath = row.original.photoPath;
 
       return (
         <div className="flex items-center gap-2 w-[200px]">
@@ -46,7 +48,9 @@ export const columns: ColumnDef<Staff>[] = [
             <AvatarFallback className="font-medium" style={avatarStyle}>
               {initials}
             </AvatarFallback>
-            <AvatarImage src={row.original.avatar} alt={name} />
+            {hasProfilePicture && photoPath ? (
+              <AvatarImage src={photoPath} alt={name} />
+            ) : null}
           </Avatar>
           <span>{name}</span>
         </div>
