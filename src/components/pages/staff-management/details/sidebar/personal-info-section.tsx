@@ -8,7 +8,7 @@ import { EditableFormField } from '@/components/shared/form/editable-form-field'
 import { KDatePicker } from '@/components/shared/form/k-datepicker';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { bloodGroupOptions } from '@/lib/constants';
+import { bloodGroupOptions, genderOptions } from '@/lib/constants';
 import {
   safeDateFormat,
   safeParseDate,
@@ -78,32 +78,6 @@ export function PersonalInfoSection({
         )}
       </div>
 
-      {/* DOJ  */}
-      <div className="py-3 flex flex-col gap-2">
-        <Label className="text-primary-blue-100 font-normal text-sm leading-normal">
-          Date of Joining
-        </Label>
-        {isEditing ? (
-          <KDatePicker
-            icon={<Calendar />}
-            mode="single"
-            value={safeParseDate(details?.doj)}
-            onDateChange={(date) =>
-              onUpdate(
-                'doj',
-                date instanceof Date ? toUtcDateOnlyISOString(date) : ''
-              )
-            }
-            label="Date of joining"
-            className="bg-transparent border-0 border-b border-primary-blue-300 rounded-none hover:bg-transparent hover:border-white k-transition p-0 h-auto w-full pb-1.5 text-white text-[15px] leading-[140%] font-normal gap-1 flex-row-reverse justify-between"
-          />
-        ) : (
-          <p className="text-white text-[15px] leading-[140%] font-normal">
-            {safeDateFormat(details?.doj)}
-          </p>
-        )}
-      </div>
-
       {/* ADDRESS  */}
       <div className="py-3 flex flex-col gap-2">
         <Label className="text-primary-blue-100 font-normal text-sm leading-normal">
@@ -121,6 +95,16 @@ export function PersonalInfoSection({
           </p>
         )}
       </div>
+
+      {/* GENDER  */}
+      <EditableFormField
+        type="select"
+        label="Gender"
+        value={details?.gender}
+        isEditing={isEditing}
+        onChange={(value) => onUpdate('gender', value)}
+        options={genderOptions}
+      />
 
       {/* BLOOD_GROUP  */}
       <EditableFormField
