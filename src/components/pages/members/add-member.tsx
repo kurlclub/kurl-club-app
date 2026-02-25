@@ -10,6 +10,7 @@ import {
   KFormField,
   KFormFieldType,
 } from '@/components/shared/form/k-formfield';
+import { KInput } from '@/components/shared/form/k-input';
 import { KSheet } from '@/components/shared/form/k-sheet';
 import { InfoBanner } from '@/components/shared/info-banner';
 import { Spinner } from '@/components/shared/loader';
@@ -767,14 +768,39 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
 
                 <FieldRow>
                   <FieldColumn>
-                    <KFormField
-                      fieldType={KFormFieldType.UI_DATE_PICKER}
-                      control={form.control}
-                      name="doj"
-                      label="Date of joining"
-                      mode="single"
-                      floating
-                    />
+                    {isMigratedMember ? (
+                      <KFormField
+                        fieldType={KFormFieldType.UI_DATE_PICKER}
+                        control={form.control}
+                        name="doj"
+                        label="Date of joining"
+                        mode="single"
+                        floating
+                      />
+                    ) : (
+                      <KFormField
+                        fieldType={KFormFieldType.SKELETON}
+                        control={form.control}
+                        name="doj"
+                        renderSkeleton={(field) => (
+                          <FormControl>
+                            <KInput
+                              label="Date of joining"
+                              id="doj"
+                              value={
+                                typeof field.value === 'string'
+                                  ? new Date(field.value).toLocaleDateString(
+                                      'en-GB'
+                                    )
+                                  : ''
+                              }
+                              disabled
+                              onChange={() => {}}
+                            />
+                          </FormControl>
+                        )}
+                      />
+                    )}
                   </FieldColumn>
                   <FieldColumn>
                     <KFormField
@@ -785,6 +811,24 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                     />
                   </FieldColumn>
                 </FieldRow>
+
+                {form.watch('onboardingType') === 'migrated_member' && (
+                  <KFormField
+                    fieldType={KFormFieldType.UI_DATE_PICKER}
+                    control={form.control}
+                    name="currentPackageStartDate"
+                    label="Current Package Start Date"
+                    mode="single"
+                    floating
+                    disabledDates={(date) => {
+                      const doj = form.watch('doj');
+                      if (!doj) return false;
+                      const dojDate = new Date(doj);
+                      dojDate.setHours(0, 0, 0, 0);
+                      return date < dojDate;
+                    }}
+                  />
+                )}
 
                 <FieldRow>
                   <FieldColumn>
@@ -826,6 +870,13 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                       label="Current Package Start Date"
                       mode="single"
                       floating
+                      disabledDates={(date) => {
+                        const doj = form.watch('doj');
+                        if (!doj) return false;
+                        const dojDate = new Date(doj);
+                        dojDate.setHours(0, 0, 0, 0);
+                        return date < dojDate;
+                      }}
                     />
                     <InfoBanner
                       variant="info"

@@ -105,6 +105,7 @@ interface CustomProps<T extends FieldValues> {
   type?: React.InputHTMLAttributes<HTMLInputElement>['type'];
   autoComplete?: string;
   isLogin?: boolean;
+  disabledDates?: (date: Date) => boolean;
   [key: string]: unknown;
 }
 
@@ -320,6 +321,7 @@ const RenderField = <T extends FieldValues>({
             mode={mode ?? 'range'}
             className={className}
             icon={iconSrc}
+            disabledDates={props.disabledDates}
           />
         </FormControl>
       );

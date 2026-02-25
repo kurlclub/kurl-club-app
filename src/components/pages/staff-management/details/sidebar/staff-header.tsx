@@ -1,14 +1,20 @@
 import { useState } from 'react';
 
-import { Key } from 'lucide-react';
+import { safeParseDate } from '@kurlclub/ui-components';
+import { Calendar, Key } from 'lucide-react';
 
+import { KDatePicker } from '@/components/shared/form/k-datepicker';
 import ProfilePictureUploader from '@/components/shared/uploaders/profile-uploader';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
-import { base64ToFile, safeDateFormat } from '@/lib/utils';
+import {
+  base64ToFile,
+  safeDateFormat,
+  toUtcDateOnlyISOString,
+} from '@/lib/utils';
 import { EditableSectionProps } from '@/types/staff';
 
 import { UpdatePasswordDialog } from './update-password-dialog';
@@ -79,9 +85,25 @@ export function StaffHeader({
               {details?.name || details?.trainerName}
             </h6>
           )}
-          <p className="text-sm text-primary-blue-50 mt-1">
-            Staff since {safeDateFormat(details?.doj)}
-          </p>
+          {isEditing ? (
+            <KDatePicker
+              icon={<Calendar />}
+              mode="single"
+              value={safeParseDate(details?.doj)}
+              onDateChange={(date) =>
+                onUpdate(
+                  'doj',
+                  date instanceof Date ? toUtcDateOnlyISOString(date) : ''
+                )
+              }
+              label="Date of joining"
+              className="mt-2 bg-transparent border-0 border-b border-primary-blue-300 rounded-none hover:bg-transparent hover:border-white k-transition p-0 h-auto w-full pb-1.5 text-white text-[15px] leading-[140%] font-normal gap-1 flex-row-reverse justify-between"
+            />
+          ) : (
+            <p className="text-sm text-primary-blue-50 mt-1">
+              Staff since {safeDateFormat(details?.doj)}
+            </p>
+          )}
         </div>
       </div>
       <div className="space-y-3">
