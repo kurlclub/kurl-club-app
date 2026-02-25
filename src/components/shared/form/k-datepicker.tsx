@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import type { DateRange } from 'react-day-picker';
+import type { DateRange, DayPickerProps } from 'react-day-picker';
 
 import { format, getYear, setYear } from 'date-fns';
 import { CalendarDays } from 'lucide-react';
@@ -38,6 +38,7 @@ interface KDatePickerProps extends React.HTMLAttributes<HTMLDivElement> {
   mode?: 'range' | 'single';
   className?: string;
   icon?: React.ReactNode;
+  disabled?: DayPickerProps['disabled'];
 }
 
 export function KDatePicker({
@@ -64,6 +65,7 @@ export function KDatePicker({
   endYear = getYear(new Date()) + 100,
   mode = 'range',
   icon = <CalendarDays className="text-primary-green-100" />,
+  disabled,
 }: KDatePickerProps) {
   const [rangeDate, setRangeDate] = React.useState<DateRange | undefined>(
     mode === 'range' ? (value as DateRange) : undefined
@@ -159,6 +161,7 @@ export function KDatePicker({
       month: viewDate,
       onMonthChange: setViewDate,
       formatDay: formatDayWithLeadingZero,
+      disabled,
     };
 
     if (mode === 'range') {

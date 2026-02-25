@@ -31,18 +31,30 @@ export interface DashboardData {
 }
 
 export const fetchDashboardData = async (
-  gymId: number
+  gymId: number,
+  fromDate?: string,
+  toDate?: string
 ): Promise<DashboardData> => {
   const response = await api.get<ApiResponse<DashboardData>>(
-    `/Dashboard/${gymId}/gymDashboard`
+    `/Dashboard/${gymId}/gymDashboard`,
+    {
+      params: {
+        ...(fromDate && { fromDate }),
+        ...(toDate && { toDate }),
+      },
+    }
   );
   return response.data!;
 };
 
-export const useDashboardData = (gymId: number) => {
+export const useDashboardData = (
+  gymId: number,
+  fromDate?: string,
+  toDate?: string
+) => {
   return useQuery({
-    queryKey: ['dashboardData', gymId],
-    queryFn: () => fetchDashboardData(gymId),
+    queryKey: ['dashboardData', gymId, fromDate, toDate],
+    queryFn: () => fetchDashboardData(gymId, fromDate, toDate),
     enabled: !!gymId,
     staleTime: 1000 * 60 * 3, // 3 minutes
     retry: 1,
