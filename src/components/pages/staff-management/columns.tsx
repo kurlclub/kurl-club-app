@@ -94,7 +94,12 @@ export const columns: ColumnDef<Staff>[] = [
     accessorKey: 'gender',
     header: 'Gender',
     cell: ({ row }) => (
-      <div className="min-w-[80px] capitalize">{row.getValue('gender')}</div>
+      <div className="min-w-[80px]">
+        {row.getValue('gender')
+          ? (row.getValue('gender') as string).charAt(0).toUpperCase() +
+            (row.getValue('gender') as string).slice(1)
+          : ''}
+      </div>
     ),
   },
   {

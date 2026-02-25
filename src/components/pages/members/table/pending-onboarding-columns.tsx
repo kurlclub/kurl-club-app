@@ -82,9 +82,13 @@ export const createPendingOnboardingColumns = (
   {
     accessorKey: 'gender',
     header: 'Gender',
-    cell: ({ row }) => (
-      <div className="w-[70px] capitalize">{row.getValue('gender')}</div>
-    ),
+    cell: ({ row }) => {
+      const gender = row.getValue('gender') as string;
+      const capitalizedGender = gender
+        ? gender.charAt(0).toUpperCase() + gender.slice(1)
+        : '';
+      return <div className="w-[70px]">{capitalizedGender}</div>;
+    },
   },
   {
     accessorKey: 'bloodGroup',
