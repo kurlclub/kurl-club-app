@@ -8,9 +8,18 @@ import { useDashboardData } from '@/services/dashboard';
 import InfoCard from '../../shared/cards/info-card';
 import { KDumbbell, KSkipper } from '../../shared/icons/index';
 
-function CardList() {
+interface CardListProps {
+  fromDate?: string;
+  toDate?: string;
+}
+
+function CardList({ fromDate, toDate }: CardListProps) {
   const { gymBranch } = useGymBranch();
-  const { data: dashboardData } = useDashboardData(gymBranch?.gymId || 0);
+  const { data: dashboardData } = useDashboardData(
+    gymBranch?.gymId || 0,
+    fromDate,
+    toDate
+  );
 
   const cards = [
     {

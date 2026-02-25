@@ -1,8 +1,9 @@
 import { Fragment, useState } from 'react';
 
-import { Eye } from 'lucide-react';
+import { Calendar, Eye } from 'lucide-react';
 
 import { EditableFormField } from '@/components/shared/form/editable-form-field';
+import { KDatePicker } from '@/components/shared/form/k-datepicker';
 import { DocumentPreviewModal } from '@/components/shared/modals/document-preview-modal';
 import FileUploader from '@/components/shared/uploaders/file-uploader';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,11 @@ import {
   idTypeOptions,
   purposeOptions,
 } from '@/lib/constants';
+import {
+  safeDateFormat,
+  safeParseDate,
+  toUtcDateOnlyISOString,
+} from '@/lib/utils';
 import type {
   BloodGroup,
   FitnessGoal,
@@ -40,6 +46,33 @@ export function BasicDetailsSection({
 
   return (
     <Fragment>
+      {/* CALENDAR | DOJ */}
+      <div className="py-3 flex flex-col gap-2">
+        <Label className="text-primary-blue-100 font-normal text-sm leading-normal">
+          Date of Joining
+        </Label>
+        {isEditing ? (
+          <KDatePicker
+            icon={<Calendar />}
+            mode="single"
+            value={safeParseDate(details?.doj)}
+            onDateChange={(date) =>
+              onUpdate(
+                'doj',
+                date instanceof Date ? toUtcDateOnlyISOString(date) : ''
+              )
+            }
+            disabled={{ after: new Date() }}
+            label="Date of joining"
+            className="bg-transparent border-0 border-b border-primary-blue-300 rounded-none hover:bg-transparent hover:border-white k-transition p-0 h-auto w-full pb-1.5 text-white text-[15px] leading-[140%] font-normal gap-1 flex-row-reverse justify-between"
+          />
+        ) : (
+          <p className="text-white text-[15px] leading-[140%] font-normal">
+            {safeDateFormat(details?.doj)}
+          </p>
+        )}
+      </div>
+
       {/* HEIGHT  */}
       <EditableFormField
         type="input"
