@@ -112,7 +112,7 @@ export function Sidebar({
         }`}
       >
         <div className="px-4 md:px-8 sticky top-0 bg-primary-blue-500 py-4 md:py-8 z-20 flex items-start justify-between">
-          <div>
+          <div className="w-full">
             <Breadcrumb
               items={[
                 { label: 'Members', href: '/members' },

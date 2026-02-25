@@ -127,7 +127,7 @@ export function EditableFormField(props: EditableFormFieldProps) {
           </Select>
         ) : (
           <p className="text-white text-[15px] leading-[140%] font-normal">
-            {value}
+            {options.find((opt) => opt.value === value)?.label || value}
           </p>
         )}
       </div>

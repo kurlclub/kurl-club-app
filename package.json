@@ -21,7 +21,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@google/genai": "^1.32.0",
     "@hookform/resolvers": "^5.2.2",
-    "@kurlclub/ui-components": "^1.1.2",
+    "@kurlclub/ui-components": "^1.1.4",
     "@microsoft/signalr": "^10.0.0",
     "@number-flow/react": "^0.5.10",
     "@radix-ui/react-avatar": "^1.1.11",

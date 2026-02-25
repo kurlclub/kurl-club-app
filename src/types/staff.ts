@@ -5,7 +5,9 @@ export type Staff = {
   id: string;
   staffId: string;
   name: string;
-  avatar: string;
+  avatar?: string;
+  photoPath?: string;
+  hasProfilePicture?: boolean;
   role: StaffType;
   email: string;
   phone: string;
