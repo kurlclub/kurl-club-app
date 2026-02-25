@@ -503,3 +503,8 @@
 [data-sidebar='content']::-webkit-scrollbar-thumb:hover {
   background: rgba(211, 247, 2, 0.4);
 }
+
+.rdp-day[data-today='true'] .rdp-day_button {
+  border: none !important;
+  border-radius: 50% !important;
+}

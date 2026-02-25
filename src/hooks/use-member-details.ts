@@ -114,6 +114,9 @@ export function useMemberDetails(
 
         // Invalidate only necessary queries
         await queryClient.invalidateQueries({ queryKey: ['member', userId] });
+        // Ensure members list and any cached member lists are refreshed
+        await queryClient.invalidateQueries({ queryKey: ['gymMembers'] });
+        await queryClient.invalidateQueries({ queryKey: ['allGymMembers'] });
 
         return true;
       } else {

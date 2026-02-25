@@ -45,13 +45,9 @@ export function StaffHeader({
             />
           ) : (
             <Avatar className="size-16">
-              <AvatarImage
-                src={
-                  details?.photoPath ||
-                  `data:image/png;base64,${details?.profilePicture}`
-                }
-                alt="Profile picture"
-              />
+              {details?.hasProfilePicture && details?.photoPath ? (
+                <AvatarImage src={details.photoPath} alt="Profile picture" />
+              ) : null}
               <AvatarFallback
                 className="font-medium text-xl leading-normal"
                 style={getAvatarColor(

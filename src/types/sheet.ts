@@ -7,9 +7,11 @@ export interface SheetProps {
   footer?: ReactNode;
   isOpen: boolean;
   onClose: () => void;
+  onIconClose?: () => void;
   position?: 'top' | 'right' | 'bottom' | 'left';
   onOpenChange?: (open: boolean) => void;
   className?: string;
+  onCloseBtnClick?: () => void;
 }
 
 export interface UseSheetProps {

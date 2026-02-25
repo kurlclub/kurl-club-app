@@ -8,7 +8,7 @@ import { EditableFormField } from '@/components/shared/form/editable-form-field'
 import { KDatePicker } from '@/components/shared/form/k-datepicker';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { relationOptions } from '@/lib/constants';
+import { genderOptions, relationOptions } from '@/lib/constants';
 import {
   safeDateFormat,
   safeParseDate,
@@ -85,6 +85,18 @@ export function PersonalInfoSection({
             className="peer bg-transparent pb-1.5 border-b border-primary-blue-300 hover:border-white k-transition"
           />
         }
+      />
+
+      {/*  GENDER */}
+      <EditableFormField
+        type="select"
+        label="Gender"
+        value={details?.gender}
+        isEditing={isEditing}
+        onChange={(value) =>
+          onUpdate('gender', value as MemberDetails['gender'])
+        }
+        options={genderOptions}
       />
 
       <div className="py-3 flex flex-col gap-2">
