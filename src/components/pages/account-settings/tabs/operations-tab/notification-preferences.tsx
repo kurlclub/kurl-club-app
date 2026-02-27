@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Bell } from 'lucide-react';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
 import {
@@ -16,15 +18,22 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
+import { useGymBranch } from '@/providers/gym-branch-provider';
+import {
+  type NotificationSettings,
+  getNotificationSettings,
+  updateNotificationSettings,
+} from '@/services/notification';
 
 const notificationSchema = z.object({
   paymentReminders: z.boolean(),
-  paymentReminderDays: z.string(),
+  paymentReminderDays: z.number().min(1),
   memberExpiry: z.boolean(),
-  memberExpiryDays: z.string(),
+  memberExpiryDays: z.number().min(1),
+  notifyOnExpiryDay: z.boolean(),
   lowAttendance: z.boolean(),
-  lowAttendanceDays: z.string(),
   emailNotifications: z.boolean(),
   whatsappNotifications: z.boolean(),
 });
@@ -32,23 +41,98 @@ const notificationSchema = z.object({
 type NotificationForm = z.infer<typeof notificationSchema>;
 
 export default function NotificationPreferences() {
+  const [isLoading, setIsLoading] = useState(false);
+  const { gymBranch } = useGymBranch();
+
   const form = useForm<NotificationForm>({
     resolver: zodResolver(notificationSchema),
     defaultValues: {
       paymentReminders: true,
-      paymentReminderDays: '3',
+      paymentReminderDays: 3,
       memberExpiry: true,
-      memberExpiryDays: '7',
+      memberExpiryDays: 7,
+      notifyOnExpiryDay: true,
       lowAttendance: false,
-      lowAttendanceDays: '14',
       emailNotifications: true,
       whatsappNotifications: false,
     },
   });
 
+  // Fetch current settings
+  useEffect(() => {
+    const fetchSettings = async () => {
+      if (!gymBranch?.gymId) return;
+
+      setIsLoading(true);
+      try {
+        const settings = await getNotificationSettings(gymBranch.gymId);
+
+        // If settings exist, populate the form
+        if (settings) {
+          form.reset({
+            paymentReminders: settings.paymentReminder?.enabled ?? true,
+            paymentReminderDays: settings.paymentReminder?.daysBefore ?? 3,
+            memberExpiry: settings.membershipExpiryAlert?.enabled ?? true,
+            memberExpiryDays: settings.membershipExpiryAlert?.daysBefore ?? 7,
+            notifyOnExpiryDay:
+              settings.membershipExpiryAlert?.notifyOnExpiryDay ?? true,
+            lowAttendance: settings.lowAttendanceAlert?.enabled ?? false,
+            emailNotifications: settings.channels?.email ?? true,
+            whatsappNotifications: settings.channels?.whatsApp ?? false,
+          });
+        }
+        // If settings is null (doesn't exist), keep default values
+      } catch (error) {
+        console.error('Error loading notification settings:', error);
+        toast.error('Failed to load notification settings');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSettings();
+  }, [gymBranch?.gymId, form]);
+
   const onSubmit = async (data: NotificationForm) => {
-    console.log('Notification preferences:', data);
-    // TODO: Implement API call
+    if (!gymBranch?.gymId) {
+      toast.error('No gym selected');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Transform form data to API format
+      const settings: NotificationSettings = {
+        paymentReminder: {
+          enabled: data.paymentReminders,
+          daysBefore: data.paymentReminderDays,
+        },
+        membershipExpiryAlert: {
+          enabled: data.memberExpiry,
+          daysBefore: data.memberExpiryDays,
+          notifyOnExpiryDay: data.notifyOnExpiryDay,
+        },
+        lowAttendanceAlert: {
+          enabled: data.lowAttendance,
+        },
+        channels: {
+          email: data.emailNotifications,
+          whatsApp: data.whatsappNotifications,
+        },
+      };
+
+      const result = await updateNotificationSettings(
+        gymBranch.gymId,
+        settings
+      );
+      toast.success(result.success);
+      form.reset(data); // Reset form state to mark as not dirty
+    } catch (error) {
+      console.error('Error saving notification settings:', error);
+      toast.error('Failed to save notification settings');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const isDirty = form.formState.isDirty;
@@ -56,6 +140,18 @@ export default function NotificationPreferences() {
   const paymentRemindersEnabled = form.watch('paymentReminders');
   const memberExpiryEnabled = form.watch('memberExpiry');
   const lowAttendanceEnabled = form.watch('lowAttendance');
+
+  if (isLoading && !form.formState.isDirty) {
+    return (
+      <Card className="bg-secondary-blue-500/80 backdrop-blur-sm border-secondary-blue-400 relative overflow-hidden">
+        <CardContent className="p-8">
+          <div className="flex items-center justify-center">
+            <p className="text-gray-400">Loading notification settings...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="bg-secondary-blue-500/80 backdrop-blur-sm border-secondary-blue-400 relative overflow-hidden">
@@ -81,6 +177,7 @@ export default function NotificationPreferences() {
                 variant="outline"
                 size="sm"
                 onClick={() => form.reset()}
+                disabled={isLoading}
               >
                 Discard
               </Button>
@@ -88,8 +185,9 @@ export default function NotificationPreferences() {
                 type="button"
                 size="sm"
                 onClick={form.handleSubmit(onSubmit)}
+                disabled={isLoading}
               >
-                Save Changes
+                {isLoading ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
           )}
@@ -123,14 +221,15 @@ export default function NotificationPreferences() {
                       </p>
                     </div>
                     {paymentRemindersEnabled && (
-                      <div className="flex">
+                      <div className="flex items-center gap-2">
                         <KFormField
                           fieldType={KFormFieldType.INPUT}
                           control={form.control}
                           label="days before"
                           name="paymentReminderDays"
+                          type="number"
                           placeholder="3"
-                          className="w-20"
+                          className="w-24"
                           size="sm"
                         />
                       </div>
@@ -150,26 +249,52 @@ export default function NotificationPreferences() {
                   }
                 />
                 <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-white">
-                        Membership Expiry Alerts
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        Alert when memberships are about to expire
-                      </p>
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-white">
+                          Membership Expiry Alerts
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          Alert when memberships are about to expire
+                        </p>
+                      </div>
+                      {memberExpiryEnabled && (
+                        <div className="flex items-center gap-2">
+                          <KFormField
+                            fieldType={KFormFieldType.INPUT}
+                            control={form.control}
+                            name="memberExpiryDays"
+                            type="number"
+                            placeholder="7"
+                            className="w-24"
+                            size="sm"
+                            label="days before"
+                          />
+                        </div>
+                      )}
                     </div>
                     {memberExpiryEnabled && (
-                      <div className="flex">
-                        <KFormField
-                          fieldType={KFormFieldType.INPUT}
-                          control={form.control}
-                          name="memberExpiryDays"
-                          placeholder="7"
-                          className="w-20"
-                          size="sm"
-                          label="days before"
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="notifyOnExpiryDay"
+                          checked={form.watch('notifyOnExpiryDay')}
+                          onCheckedChange={(checked) =>
+                            form.setValue(
+                              'notifyOnExpiryDay',
+                              checked as boolean,
+                              {
+                                shouldDirty: true,
+                              }
+                            )
+                          }
                         />
+                        <label
+                          htmlFor="notifyOnExpiryDay"
+                          className="text-xs text-gray-300 cursor-pointer"
+                        >
+                          Also notify on expiry day
+                        </label>
                       </div>
                     )}
                   </div>
@@ -196,19 +321,6 @@ export default function NotificationPreferences() {
                         Notify when members haven&apos;t visited recently
                       </p>
                     </div>
-                    {lowAttendanceEnabled && (
-                      <div className="flex">
-                        <KFormField
-                          fieldType={KFormFieldType.INPUT}
-                          control={form.control}
-                          name="lowAttendanceDays"
-                          placeholder="14"
-                          label="days inactive"
-                          className="w-20"
-                          size="sm"
-                        />
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>

@@ -79,7 +79,7 @@ export function ProfileAndGymsTab() {
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       {/* Left Sidebar - Combined Profile & Gym Card */}
       <motion.div
-        className="lg:col-span-4 sticky top-[88px] self-start"
+        className="lg:col-span-4 lg:sticky lg:top-[88px] self-start"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
