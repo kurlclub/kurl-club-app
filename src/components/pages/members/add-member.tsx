@@ -812,24 +812,6 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                   </FieldColumn>
                 </FieldRow>
 
-                {form.watch('onboardingType') === 'migrated_member' && (
-                  <KFormField
-                    fieldType={KFormFieldType.UI_DATE_PICKER}
-                    control={form.control}
-                    name="currentPackageStartDate"
-                    label="Current Package Start Date"
-                    mode="single"
-                    floating
-                    disabledDates={(date) => {
-                      const doj = form.watch('doj');
-                      if (!doj) return false;
-                      const dojDate = new Date(doj);
-                      dojDate.setHours(0, 0, 0, 0);
-                      return date < dojDate;
-                    }}
-                  />
-                )}
-
                 <FieldRow>
                   <FieldColumn>
                     <KFormField
