@@ -4,8 +4,11 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { toast } from 'sonner';
 
+import { useGymBranch } from '@/providers/gym-branch-provider';
 import { updateStaff, useStaffByID } from '@/services/staff';
 import { StaffDetails, StaffType } from '@/types/staff';
+
+import { useInvalidateFormOptions } from './use-gymform-options';
 
 export function useStaffDetails(userId: string | number, role?: string) {
   const [isEditing, setIsEditing] = useState(false);
@@ -14,14 +17,16 @@ export function useStaffDetails(userId: string | number, role?: string) {
     null
   );
   const [error, setError] = useState<string | null>(null);
+  const { gymBranch } = useGymBranch();
+  const invalidateFormOptions = useInvalidateFormOptions();
 
   const { data, isLoading: loading } = useStaffByID(userId, role as StaffType);
 
   useEffect(() => {
-    if (data) {
-      setDetails(data);
-      setOriginalDetails(data);
-    }
+    if (!data) return;
+
+    setDetails(data);
+    setOriginalDetails(data);
   }, [data]);
 
   const updateStaffDetail = useCallback(
@@ -65,6 +70,11 @@ export function useStaffDetails(userId: string | number, role?: string) {
         // Update original details after successful save
         setOriginalDetails(details);
 
+        // Invalidate form options if updating a trainer (trainers appear in formData)
+        if (role === 'trainer' && gymBranch?.gymId) {
+          invalidateFormOptions(gymBranch.gymId);
+        }
+
         return true;
       } else {
         toast.error('Failed to update staff details.');
@@ -77,7 +87,7 @@ export function useStaffDetails(userId: string | number, role?: string) {
       toast.error('An error occurred while updating the staff details.');
       return false;
     }
-  }, [details, userId, role]);
+  }, [details, userId, role, gymBranch?.gymId, invalidateFormOptions]);
 
   const toggleEdit = useCallback(() => {
     setIsEditing((prev) => {

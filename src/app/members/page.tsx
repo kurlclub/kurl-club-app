@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-import Members from '@/components/members';
+import Members from '@/components/pages/members';
 
 export const metadata: Metadata = {
   title: 'Members',

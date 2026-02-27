@@ -1,3 +1,5 @@
+import type { BillingType } from './payment';
+
 export interface MembershipPlan {
   membershipPlanId: number;
   gymId: number;
@@ -6,4 +8,6 @@ export interface MembershipPlan {
   fee: number | string;
   durationInDays: number | string;
   isActive: boolean;
+  billingType: BillingType;
+  defaultSessionRate?: number;
 }

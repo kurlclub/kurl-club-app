@@ -1,12 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-
 import { WebsiteIcon } from '@/components/shared/icons';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  type SocialPlatform,
   detectSocialPlatform,
   validateSocialUrl,
 } from '@/lib/utils/social-icons';
@@ -26,20 +23,8 @@ export default function SocialLinkInput({
   placeholder = 'https://www.google.com',
   className,
 }: SocialLinkInputProps) {
-  const [platform, setPlatform] = useState<SocialPlatform | null>(null);
-  const [isValid, setIsValid] = useState(true);
-
-  useEffect(() => {
-    if (value) {
-      const detected = detectSocialPlatform(value);
-      setPlatform(detected);
-      setIsValid(validateSocialUrl(value));
-    } else {
-      setPlatform(null);
-      setIsValid(true);
-    }
-  }, [value]);
-
+  const platform = value ? detectSocialPlatform(value) : null;
+  const isValid = value ? validateSocialUrl(value) : true;
   const Icon = platform?.icon || WebsiteIcon;
 
   return (

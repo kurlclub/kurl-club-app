@@ -1,5 +1,6 @@
 'use client';
 
+import { forwardRef } from 'react';
 import {
   Control,
   ControllerRenderProps,
@@ -9,6 +10,7 @@ import {
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 
+import { KDatePicker as UIDatePicker } from '@kurlclub/ui-components';
 import { REGEXP_ONLY_DIGITS_AND_CHARS } from 'input-otp';
 import { E164Number } from 'libphonenumber-js/core';
 
@@ -32,7 +34,28 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from '@/components/ui/input-otp';
-import { safeParseDate } from '@/lib/utils';
+import { safeParseDate, toUtcDateOnlyISOString } from '@/lib/utils';
+
+const CustomPhoneInput = forwardRef<
+  HTMLInputElement,
+  React.InputHTMLAttributes<HTMLInputElement>
+>((props, ref) => (
+  <input
+    {...props}
+    ref={ref}
+    onFocus={(e) => {
+      props.onFocus?.(e);
+      requestAnimationFrame(() => {
+        e.target.setSelectionRange(
+          e.target.value.length,
+          e.target.value.length
+        );
+      });
+    }}
+  />
+));
+
+CustomPhoneInput.displayName = 'CustomPhoneInput';
 
 export enum KFormFieldType {
   INPUT = 'input',
@@ -41,6 +64,7 @@ export enum KFormFieldType {
   PHONE_INPUT = 'phoneInput',
   CHECKBOX = 'checkbox',
   DATE_PICKER = 'datePicker',
+  UI_DATE_PICKER = 'uidatePicker',
   DATE_INPUT = 'dateInput',
   SELECT = 'select',
   MULTISELECT = 'multiSelect',
@@ -79,6 +103,10 @@ interface CustomProps<T extends FieldValues> {
     field: ControllerRenderProps<T, FieldPath<T>>
   ) => React.ReactNode;
   type?: React.InputHTMLAttributes<HTMLInputElement>['type'];
+  autoComplete?: string;
+  isLogin?: boolean;
+  disabledDates?: (date: Date) => boolean;
+  [key: string]: unknown;
 }
 
 const RenderField = <T extends FieldValues>({
@@ -133,6 +161,7 @@ const RenderField = <T extends FieldValues>({
                 mandetory={mandetory}
                 size={size}
                 type={type}
+                isLogin={props.isLogin}
               />
             </div>
           </div>
@@ -148,6 +177,7 @@ const RenderField = <T extends FieldValues>({
             placeholder=" "
             {...field}
             disabled={props.disabled}
+            maxLength={maxLength}
           />
         </FormControl>
       );
@@ -161,6 +191,7 @@ const RenderField = <T extends FieldValues>({
             placeholder=" "
             {...field}
             disabled={props.disabled}
+            isLogin={props.isLogin}
           />
         </FormControl>
       );
@@ -176,6 +207,12 @@ const RenderField = <T extends FieldValues>({
             value={field.value as E164Number | undefined}
             onChange={field.onChange}
             className={`peer ${className ? className : 'input-phone'}`}
+            countrySelectProps={{
+              className: 'country-select',
+              tabIndex: -1,
+            }}
+            smartCaret={false}
+            inputComponent={CustomPhoneInput}
           />
         </FormControl>
       );
@@ -242,7 +279,7 @@ const RenderField = <T extends FieldValues>({
             showYearSelector={showYearSelector}
             onDateChange={(date) => {
               if (mode === 'single' && date instanceof Date) {
-                field.onChange(date.toISOString());
+                field.onChange(toUtcDateOnlyISOString(date));
               } else {
                 field.onChange(date);
               }
@@ -255,6 +292,36 @@ const RenderField = <T extends FieldValues>({
             mode={mode ?? 'range'}
             className={className}
             icon={iconSrc}
+          />
+        </FormControl>
+      );
+
+    case KFormFieldType.UI_DATE_PICKER:
+      return (
+        <FormControl>
+          <UIDatePicker
+            captionLayout="dropdown"
+            numberOfMonths={numberOfMonths}
+            label={floating ? label : dateLabel}
+            floating={floating}
+            showPresets={showPresets}
+            showYearSelector={showYearSelector}
+            onDateChange={(date) => {
+              if (mode === 'single' && date instanceof Date) {
+                field.onChange(toUtcDateOnlyISOString(date));
+              } else {
+                field.onChange(date);
+              }
+            }}
+            value={
+              mode === 'single' && typeof field.value === 'string'
+                ? safeParseDate(field.value)
+                : field.value
+            }
+            mode={mode ?? 'range'}
+            className={className}
+            icon={iconSrc}
+            disabledDates={props.disabledDates}
           />
         </FormControl>
       );

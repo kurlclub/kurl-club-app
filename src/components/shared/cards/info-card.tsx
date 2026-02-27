@@ -24,22 +24,40 @@ const InfoCard: React.FC<InfoCardProps> = ({ item, className }) => {
 
   return (
     <div
-      className={`w-full bg-secondary-blue-500 rounded-lg flex gap-4 items-center p-3 ${className}`}
+      className={`group relative w-full bg-secondary-blue-500 rounded-xl border border-white/5 
+        hover:border-white/10 transition-all duration-300 ease-out 
+        hover:shadow-lg hover:shadow-black/10 hover:-translate-y-0.5 
+        cursor-pointer overflow-hidden ${className}`}
     >
-      <span
-        className={`md:rounded-[18px] rounded-[12px] min-w-[40px] min-h-[40px] max-w-[40px] max-h-[40px] md:min-w-[48px] md:min-h-[48px] md:max-w-[48px] md:max-h-[48px] flex items-center justify-center ${
-          colorClasses[item.color || 'primary-green-500']
-        }`}
-      >
-        {item.icon}
-      </span>
-      <div className="flex flex-col gap-1">
-        <h6 className="text-white font-normal text-[15px] leading-normal">
-          {item.title}
-        </h6>
-        <h4 className="text-white font-bold text-xl leading-normal">
-          {item.count}
-        </h4>
+      {/* Subtle gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+      <div className="relative flex gap-3 items-center p-3">
+        <div
+          className={`relative rounded-xl w-9 h-9 flex items-center justify-center 
+            ${colorClasses[item.color || 'primary-green-500']} 
+            shadow-sm group-hover:shadow-md transition-all duration-300 
+            group-hover:scale-105`}
+        >
+          <div className="transform transition-transform duration-300 group-hover:scale-110">
+            {item.icon}
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+          <p
+            className="text-white/70 font-medium text-xs leading-tight truncate 
+            group-hover:text-white/80 transition-colors duration-300"
+          >
+            {item.title}
+          </p>
+          <p
+            className="text-white font-bold text-lg leading-tight 
+            transform transition-all duration-300 group-hover:scale-105 origin-left"
+          >
+            {item.count}
+          </p>
+        </div>
       </div>
     </div>
   );

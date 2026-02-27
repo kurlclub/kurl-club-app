@@ -26,14 +26,15 @@ interface AuthFooterProps {
   footerDesc?: string;
   footerLink?: string;
   isLogin?: boolean;
+  onFooterClick?: () => void;
 }
 
 export const AuthFooter = ({
   footerDesc,
   footerLink,
-  isLogin,
+  onFooterClick,
 }: AuthFooterProps) => {
-  if (!footerLink) return null;
+  if (!footerLink && !onFooterClick) return null;
 
   return (
     <div className="flex items-center justify-center w-full gap-2 mt-6">
@@ -42,9 +43,9 @@ export const AuthFooter = ({
       </h6>
       <Link
         className="text-sm font-normal leading-normal underline cursor-pointer text-semantic-blue-500 underline-offset-2 hover:no-underline k-transition"
-        href={footerLink}
+        href={footerLink!}
       >
-        {isLogin ? 'Sign up' : 'Login'}
+        Login
       </Link>
     </div>
   );

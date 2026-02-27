@@ -49,7 +49,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${figtree.className} bg-background-dark antialiased`}>
+      <body
+        className={`${figtree.className} bg-secondary-blue-500 antialiased`}
+      >
         <AppProviders>
           <AppLayout>{children}</AppLayout>
         </AppProviders>

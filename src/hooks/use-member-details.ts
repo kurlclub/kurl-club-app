@@ -6,7 +6,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import { updateMember, useMemberByID } from '@/services/member';
-import { MemberDetails } from '@/types/members';
+import { MemberDetails } from '@/types/member.types';
+
+type MemberDetailsWithCurrentPackageStartDate = MemberDetails & {
+  currentPackageStartDate?: string | null;
+};
 
 export function useMemberDetails(
   userId: string | number,
@@ -57,7 +61,32 @@ export function useMemberDetails(
     try {
       const formData = new FormData();
 
+      // Handle ProfilePicture vs PhotoPath
+      if (details.profilePicture instanceof File) {
+        formData.append('ProfilePicture', details.profilePicture);
+        formData.append('PhotoPath', '');
+      } else if (details.photoPath) {
+        formData.append('PhotoPath', details.photoPath);
+      }
+
+      // Handle IdCopyFile vs IdCopyPath
+      if (details.idCopyPath instanceof File) {
+        formData.append('IdCopyFile', details.idCopyPath);
+        formData.append('IdCopyPath', '');
+      } else if (typeof details.idCopyPath === 'string') {
+        formData.append('IdCopyPath', details.idCopyPath);
+      }
+
       for (const key in details) {
+        // Skip already handled fields
+        if (
+          key === 'profilePicture' ||
+          key === 'photoPath' ||
+          key === 'idCopyPath' ||
+          key === 'currentPackageStartDate'
+        )
+          continue;
+
         let formKey = key === 'fullAddress' ? 'address' : key;
         const value = details[key as keyof MemberDetails];
 
@@ -66,15 +95,16 @@ export function useMemberDetails(
         }
 
         if (value !== undefined && value !== null) {
-          if (formKey === 'profilePicture' && value instanceof File) {
-            formData.append(formKey, value);
-          } else if (formKey === 'profilePicture' && value === null) {
-            formData.append(formKey, 'null');
-          } else {
-            formData.append(formKey, String(value));
-          }
+          formData.append(formKey, String(value));
         }
       }
+
+      const currentPackageStartDate =
+        (details as MemberDetailsWithCurrentPackageStartDate)
+          .currentPackageStartDate ||
+        details.paymentCycleInfo?.startDate ||
+        details.doj;
+      formData.set('CurrentPackageStartDate', String(currentPackageStartDate));
 
       const response = await updateMember(userId, formData);
 
@@ -82,9 +112,11 @@ export function useMemberDetails(
         toast.success(response.message);
         setIsEditing(false);
 
-        // Invalidate queries to refresh data
-        await queryClient.invalidateQueries({ queryKey: ['gymMembers'] });
+        // Invalidate only necessary queries
         await queryClient.invalidateQueries({ queryKey: ['member', userId] });
+        // Ensure members list and any cached member lists are refreshed
+        await queryClient.invalidateQueries({ queryKey: ['gymMembers'] });
+        await queryClient.invalidateQueries({ queryKey: ['allGymMembers'] });
 
         return true;
       } else {

@@ -1,6 +1,7 @@
 import {
   AlertCircle,
   CircleUserRound,
+  Clock,
   Minus,
   PersonStanding,
 } from 'lucide-react';
@@ -8,6 +9,8 @@ import {
 export interface FilterOption {
   label: string;
   value: string;
+  count?: number;
+  icon?: React.ComponentType<{ className?: string }>;
 }
 
 export interface FilterConfig {
@@ -16,37 +19,54 @@ export interface FilterConfig {
   options: FilterOption[];
 }
 
-// Payment Status Filter (static)
+// Buffer Due Date Filter
+export const bufferDueDateFilter = {
+  columnId: 'currentCycle.bufferEndDate',
+  title: 'Due Date Urgency',
+  options: [
+    { label: 'Overdue', value: 'overdue', icon: AlertCircle },
+    { label: 'Due Today', value: 'today', icon: Clock },
+    { label: 'Due in 1-3 days', value: '1-3', icon: Clock },
+    { label: 'Due in 4-7 days', value: '4-7', icon: Clock },
+    { label: 'Due in 7+ days', value: '7+', icon: Clock },
+  ],
+};
+
+// Payment Status Filter
 export const paymentStatusFilter = {
-  columnId: 'feeStatus',
+  columnId: 'currentCycle.status',
   title: 'Payment Status',
   options: [
     { label: 'Pending', value: 'Pending', icon: AlertCircle },
     { label: 'Partial', value: 'Partial', icon: Minus },
     { label: 'Completed', value: 'Completed', icon: CircleUserRound },
-    { label: 'Arrears', value: 'Arrears', icon: AlertCircle },
+    { label: 'Debt', value: 'Debt', icon: AlertCircle },
   ],
 };
 
 // Helper function to create package filter with dynamic options
 export const createPackageFilter = (
-  membershipPlans: Array<{ planName: string }>
+  membershipPlans: Array<{ membershipPlanId: number; planName: string }>
 ) => ({
-  columnId: 'packageName',
+  columnId: 'membershipPlanId',
   title: 'Package Type',
   options: membershipPlans.map((plan) => ({
     label: plan.planName,
-    value: plan.planName,
+    value: plan.membershipPlanId.toString(),
   })),
 });
 
 // Helper functions to get filters for each tab
 export const getPaymentFilters = (
-  membershipPlans: Array<{ planName: string }> = []
-) => [paymentStatusFilter, createPackageFilter(membershipPlans)];
+  membershipPlans: Array<{ membershipPlanId: number; planName: string }> = []
+) => [
+  bufferDueDateFilter,
+  paymentStatusFilter,
+  createPackageFilter(membershipPlans),
+];
 
 export const getCompletedPaymentFilters = (
-  membershipPlans: Array<{ planName: string }> = []
+  membershipPlans: Array<{ membershipPlanId: number; planName: string }> = []
 ) => [createPackageFilter(membershipPlans)];
 
 // Staff filters

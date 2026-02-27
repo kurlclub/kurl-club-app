@@ -9,6 +9,7 @@ interface PreviewModalProps {
   src: string | null;
   onDelete: () => void;
   onReupload: () => void;
+  readonly?: boolean;
 }
 
 export default function PreviewModal({
@@ -17,30 +18,36 @@ export default function PreviewModal({
   src,
   onDelete,
   onReupload,
+  readonly = false,
 }: PreviewModalProps) {
   return (
     <KDialog
       footer={
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={onDelete}>
-            Delete
-          </Button>
-          <Button onClick={onReupload}>Re-upload</Button>
-        </div>
+        readonly ? undefined : (
+          <div className="flex items-center gap-2 w-full">
+            <Button variant="destructive" onClick={onDelete} className="flex-1">
+              Delete
+            </Button>
+            <Button onClick={onReupload} className="flex-1">
+              Re-upload
+            </Button>
+          </div>
+        )
       }
       open={isOpen}
       onOpenChange={onClose}
-      title="Profile Picture Preview"
-      className="max-w-[500px]"
+      title="Profile Picture"
+      className="max-w-[400px]"
     >
       {src && (
-        <div className="flex justify-center">
+        <div className="flex items-center justify-center py-4">
           <Image
             src={src}
             alt="Profile picture"
-            width={250}
-            height={250}
-            className="rounded-full"
+            width={400}
+            height={400}
+            className="max-w-full max-h-[60vh] object-contain rounded-lg"
+            style={{ width: 'auto', height: 'auto' }}
           />
         </div>
       )}

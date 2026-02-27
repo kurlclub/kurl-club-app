@@ -6,14 +6,14 @@ import { Slot as SlotPrimitive } from 'radix-ui';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm leading-normal font-semibold px-3 py-4 k-transition focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-20 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm leading-normal font-semibold px-3 py-4 k-transition focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
   {
     variants: {
       variant: {
         default:
           'bg-primary-green-500 text-primary-blue-500 shadow-sm hover:bg-primary-green-700',
         destructive:
-          'bg-alert-red-600 text-destructive-foreground shadow-xs hover:bg-alert-red-600/90',
+          'bg-alert-red-600 text-white shadow-xs hover:bg-alert-red-600/90 hover:text-white/80',
         outline:
           'border border-secondary-blue-500 text-white bg-background shadow-xs hover:bg-secondary-blue-500',
         outlinePrimary:
@@ -50,7 +50,8 @@ interface IconRefProps {
 }
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+  extends
+    React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
 }

@@ -15,6 +15,7 @@ interface ProfilePictureUploaderProps {
   onChange: (file: File | null) => void;
   isSmall?: boolean;
   existingImageUrl?: string | null;
+  readonly?: boolean;
 }
 
 export default function ProfilePictureUploader({
@@ -32,13 +33,15 @@ export default function ProfilePictureUploader({
 
   // Update the image state when `files` or `existingImageUrl` changes
   useEffect(() => {
+    let newImage: string | null = null;
+
     if (files) {
-      setImage(URL.createObjectURL(files));
+      newImage = URL.createObjectURL(files);
     } else if (existingImageUrl) {
-      setImage(existingImageUrl);
-    } else {
-      setImage(null);
+      newImage = existingImageUrl;
     }
+
+    setImage(newImage);
   }, [files, existingImageUrl]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,14 +58,20 @@ export default function ProfilePictureUploader({
     }
   };
 
-  const handleCrop = (croppedImage: string) => {
+  const handleCrop = async (croppedImage: string) => {
     if (currentFile) {
-      const croppedFile = new File([currentFile], currentFile.name, {
+      // Convert base64 to blob
+      const response = await fetch(croppedImage);
+      const blob = await response.blob();
+
+      // Create File from blob with original filename
+      const croppedFile = new File([blob], currentFile.name, {
         type: currentFile.type,
       });
+
       setImage(croppedImage);
       setCropModalOpen(false);
-      onChange(croppedFile); // Pass the binary file to the parent
+      onChange(croppedFile); // Pass the cropped file to the parent
     }
   };
 
@@ -91,7 +100,7 @@ export default function ProfilePictureUploader({
     <div className="flex flex-col">
       {image ? (
         <Avatar
-          className={`${isSmall ? 'size-[64px]' : 'size-[92px]'} cursor-pointer`}
+          className={`${isSmall ? 'size-16' : 'size-[92px]'} cursor-pointer rounded-lg`}
           onClick={() => setPreviewModalOpen(true)}
         >
           <AvatarImage src={image} alt="Profile picture" />
@@ -103,14 +112,14 @@ export default function ProfilePictureUploader({
         <Button
           variant="outline"
           size="icon"
-          className={`${isSmall ? 'size-[64px]' : 'size-[92px]'} bg-secondary-blue-400 rounded-[60px] hover:bg-secondary-blue-500 relative`}
+          className={`${isSmall ? 'size-16' : 'size-[92px]'} bg-secondary-blue-400 rounded-lg hover:bg-secondary-blue-500 relative`}
           onClick={() => fileInputRef.current?.click()}
         >
           <CircleUser
             className={`${isSmall ? 'size-8!' : 'size-11!'} text-secondary-blue-100`}
           />
           <span
-            className={`absolute bottom-0 right-0 ${isSmall ? 'size-5' : 'size-6'} p-1 bg-primary-green-500 flex justify-center items-center rounded-[60px]`}
+            className={`absolute bottom-0 right-0 ${isSmall ? 'size-5' : 'size-6'} p-1 bg-primary-green-500 flex justify-center items-center rounded-lg`}
           >
             <Plus
               className={` ${isSmall ? 'size-2!' : 'size-3!'} text-secondary-blue-500`}
@@ -137,6 +146,7 @@ export default function ProfilePictureUploader({
         src={image}
         onDelete={handleDelete}
         onReupload={handleReupload}
+        readonly
       />
     </div>
   );

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { api } from '@/lib/api';
+import { safeParseDate } from '@/lib/utils';
 import { ApiResponse } from '@/types';
 import { Staff, StaffDetails, StaffType } from '@/types/staff';
 
@@ -35,7 +36,9 @@ export const fetchGymStaffs = async (gymId: number | string) => {
 
   const staffData = response.data || [];
   return staffData.sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    (a, b) =>
+      (safeParseDate(b.createdAt)?.getTime() ?? 0) -
+      (safeParseDate(a.createdAt)?.getTime() ?? 0)
   );
 };
 
@@ -103,6 +106,21 @@ export const deleteStaff = async (id: string | number, role: StaffType) => {
         ? error.message
         : `An unexpected error occurred while deleting the ${role}.`;
 
+    return { error: errorMessage };
+  }
+};
+
+export const updateTrainerPassword = async (
+  id: string | number,
+  newPassword: string
+) => {
+  try {
+    await api.put(`/Trainer/update-password/${id}`, { newPassword });
+    return { success: 'Password updated successfully' };
+  } catch (error) {
+    console.error('Error updating trainer password:', error);
+    const errorMessage =
+      error instanceof Error ? error.message : 'Failed to update password';
     return { error: errorMessage };
   }
 };

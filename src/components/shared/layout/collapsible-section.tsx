@@ -1,8 +1,7 @@
 'use client';
 
+import { SectionHeader } from '@/components/pages/members/details/sidebar/section-headers';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
-
-import { SectionHeader } from '../../members/details/sidebar/section-headers';
 
 interface CollapsibleSectionProps {
   title: string;

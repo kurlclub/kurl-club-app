@@ -5,7 +5,9 @@ export type Staff = {
   id: string;
   staffId: string;
   name: string;
-  avatar: string;
+  avatar?: string;
+  photoPath?: string;
+  hasProfilePicture?: boolean;
   role: StaffType;
   email: string;
   phone: string;
@@ -29,6 +31,8 @@ export type StaffDetails = {
   status: string;
   profilePicture: string | File | null;
   hasProfilePicture?: boolean;
+  photoPath?: string; // Profile picture URL
+  username?: string; // Login username
   // Trainer specific
   certification?: string;
   gymId?: number;

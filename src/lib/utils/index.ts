@@ -6,7 +6,6 @@ import {
   endOfWeek,
   endOfYear,
   format,
-  parseISO,
   startOfMonth,
   startOfWeek,
   startOfYear,
@@ -23,6 +22,9 @@ export type PaymentBadgeStatus =
 export type UrgencyColor = 'red' | 'orange' | 'yellow' | 'green';
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
+const ISO_DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const ISO_DATETIME_PATTERN = /^\d{4}-\d{2}-\d{2}[T\s]\d{2}:\d{2}/;
+const ISO_TIMEZONE_PATTERN = /(Z|[+-]\d{2}:?\d{2})$/i;
 
 /**
  * Merges multiple class names conditionally and removes duplicates.
@@ -181,30 +183,18 @@ export const getAvatarColors = (
   return colorCombinations[index];
 };
 
-/**
- * Returns a greeting message based on the current time of the day.
- *
- * - Morning: 5:00 AM to 11:59 AM -> "Good morning"
- * - Afternoon: 12:00 PM to 4:59 PM -> "Good afternoon"
- * - Evening: 5:00 PM to 8:59 PM -> "Good evening"
- * - Night: 9:00 PM to 4:59 AM -> "Good night"
- *
- * The function uses the user's local timezone to determine the current time.
- *
- * @returns {string} A greeting message corresponding to the current time of day.
- */
 export const getGreeting = (): string => {
   const now = new Date();
   const hour = now.getHours();
 
   if (hour >= 5 && hour < 12) {
-    return 'Good morning 💪🏼';
+    return 'Good morning';
   } else if (hour >= 12 && hour < 17) {
-    return 'Good afternoon ☀️';
+    return 'Good afternoon';
   } else if (hour >= 17 && hour < 21) {
-    return 'Good evening 🌙';
+    return 'Good evening';
   } else {
-    return 'Good night 💤';
+    return 'Good night';
   }
 };
 
@@ -250,43 +240,88 @@ export const getDifficultyColor = (level: string) => {
 /**
  * Returns a valid image source for a profile picture.
  * Handles Base64 strings, data URLs, File objects, and provides a fallback if null.
+ * Checks both profilePicture and photoPath fields.
  *
  * @param profilePicture - The profile picture as a Base64 string, data URL, File, or null.
- * @param fallback - A fallback image URL if the profile picture is null.
- * @returns A valid image source URL.
+ * @param photoPath - Alternative field for photo path (URL or Base64).
+ * @returns A valid image source URL or undefined.
  */
 export const getProfilePictureSrc = (
-  profilePicture: string | File | null,
-  fallback: string
+  profilePicture?: string | File | null,
+  photoPath?: string | null
 ) => {
-  if (!profilePicture) return fallback;
+  const source = profilePicture || photoPath;
+  if (!source) return undefined;
 
-  if (typeof profilePicture === 'string') {
-    return profilePicture.startsWith('data:image')
-      ? profilePicture
-      : `data:image/png;base64,${profilePicture}`;
+  if (typeof source === 'string') {
+    // If it's already a full URL or data URL, return as is
+    if (source.startsWith('http') || source.startsWith('data:image')) {
+      return source;
+    }
+    // Otherwise treat as Base64
+    return `data:image/png;base64,${source}`;
   }
 
-  return URL.createObjectURL(profilePicture);
+  return URL.createObjectURL(source);
 };
 
 /**
- * Safely creates a Date object from a string value.
+ * Safely creates a Date object from backend date values.
+ * If timezone info is missing, it assumes UTC before converting to local time.
  * Returns undefined if the date is invalid.
  *
- * @param dateValue - The date string to parse.
+ * @param dateValue - The date value to parse.
  * @returns A valid Date object or undefined.
  */
 export const safeParseDate = (
-  dateValue: string | null | undefined
+  dateValue: string | number | Date | null | undefined
 ): Date | undefined => {
-  if (!dateValue) return undefined;
-  try {
+  if (dateValue === null || dateValue === undefined || dateValue === '') {
+    return undefined;
+  }
+
+  if (dateValue instanceof Date) {
+    return Number.isNaN(dateValue.getTime()) ? undefined : new Date(dateValue);
+  }
+
+  if (typeof dateValue === 'number') {
     const date = new Date(dateValue);
+    return Number.isNaN(date.getTime()) ? undefined : date;
+  }
+
+  try {
+    const normalizedValue = dateValue.trim();
+    if (!normalizedValue) return undefined;
+
+    const needsUtcSuffix =
+      ISO_DATETIME_PATTERN.test(normalizedValue) &&
+      !ISO_TIMEZONE_PATTERN.test(normalizedValue);
+    const normalizedIsoString = ISO_DATE_ONLY_PATTERN.test(normalizedValue)
+      ? `${normalizedValue}T00:00:00Z`
+      : needsUtcSuffix
+        ? `${normalizedValue.replace(' ', 'T')}Z`
+        : normalizedValue;
+
+    const date = new Date(normalizedIsoString);
     return !isNaN(date.getTime()) ? date : undefined;
   } catch {
     return undefined;
   }
+};
+
+/**
+ * Converts a date value to a UTC midnight ISO string using the same calendar day.
+ * Useful for date-only fields that should not shift based on client timezone.
+ */
+export const toUtcDateOnlyISOString = (
+  dateValue: Date | string | null | undefined
+): string => {
+  const date = safeParseDate(dateValue);
+  if (!date) return '';
+
+  return new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+  ).toISOString();
 };
 
 /**
@@ -321,12 +356,8 @@ export const safeDateFormat = (
   formatStr: string = 'MMM do, yyyy',
   fallback: string = 'N/A'
 ): string => {
-  if (!dateValue) return fallback;
-  try {
-    return format(parseISO(dateValue), formatStr);
-  } catch {
-    return fallback;
-  }
+  const date = safeParseDate(dateValue);
+  return date ? format(date, formatStr) : fallback;
 };
 
 /**
@@ -337,12 +368,11 @@ export const safeDateFormat = (
  * @returns A formatted string.
  */
 export const formatDateTime = (
-  isoString: string,
+  isoString: string | null | undefined,
   format: 'date' | 'time' | 'both' = 'both'
 ): string => {
-  try {
-    const date = new Date(isoString);
-
+  const date = safeParseDate(isoString);
+  if (date) {
     if (format === 'date') {
       return date.toLocaleDateString('en-US', {
         year: 'numeric',
@@ -359,7 +389,7 @@ export const formatDateTime = (
       });
     }
 
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -367,9 +397,10 @@ export const formatDateTime = (
       minute: '2-digit',
       hour12: true,
     });
-  } catch {
-    return isoString;
   }
+
+  if (typeof isoString === 'string') return isoString;
+  return 'N/A';
 };
 
 /**
@@ -379,7 +410,9 @@ export const formatDateTime = (
  * @returns The calculated age in years.
  */
 export const calculateAge = (dob: string): number => {
-  const birthDate = new Date(dob);
+  const birthDate = safeParseDate(dob);
+  if (!birthDate) return 0;
+
   const today = new Date();
   let age = today.getFullYear() - birthDate.getFullYear();
   const monthDiff = today.getMonth() - birthDate.getMonth();
@@ -404,7 +437,9 @@ export const calculateAge = (dob: string): number => {
 export const calculateDaysRemaining = (targetDate: string): number => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const target = new Date(targetDate);
+  const target = safeParseDate(targetDate);
+  if (!target) return 0;
+
   target.setHours(0, 0, 0, 0);
   return Math.ceil(
     (target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
@@ -421,18 +456,16 @@ export const calculateDaysRemaining = (targetDate: string): number => {
 export const getPaymentBadgeStatus = (
   paymentStatus: string,
   pendingAmount?: number
-): 'paid' | 'partially_paid' | 'pending' | 'overdue' => {
+): 'paid' | 'partially_paid' | 'unpaid' => {
   switch (paymentStatus) {
-    case 'Completed':
+    case 'paid':
       return 'paid';
-    case 'Partial':
+    case 'unpaid':
+      return 'unpaid';
+    case 'partially_paid':
       return 'partially_paid';
-    case 'Pending':
-      return 'pending';
-    case 'Arrears':
-      return 'overdue';
     default:
-      return (pendingAmount ?? 0) > 0 ? 'pending' : 'paid';
+      return (pendingAmount ?? 0) > 0 ? 'unpaid' : 'paid';
   }
 };
 
@@ -475,3 +508,26 @@ export const getUrgencyConfig = (daysRemaining: number) => {
     };
   }
 };
+
+/**
+ * Formats currency amounts with K/L suffixes for large numbers.
+ *
+ * @param amount - The amount to format.
+ * @returns Formatted currency string.
+ */
+export const formatAmount = (amount: number): string => {
+  if (amount >= 100000) {
+    return `₹${(amount / 100000).toFixed(0)}L`;
+  } else if (amount >= 1000) {
+    return `₹${(amount / 1000).toFixed(0)}K`;
+  }
+  return `₹${amount}`;
+};
+
+/**
+ * Payment chart color constants.
+ */
+export const PAYMENT_CHART_COLORS = {
+  UNPAID: '#F7FF93',
+  PAID: '#96AF01',
+} as const;

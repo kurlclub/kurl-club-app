@@ -5,36 +5,25 @@ export type ApiResponse<T = void> = {
   error?: string;
 };
 
-export type Member = {
-  id: string;
-  gymNo: string;
-  name: string;
-  avatar: string;
-  package: 'Monthly' | 'Yearly' | 'Special' | 'Quarterly' | 'Half_Yearly';
-  feeStatus: 'paid' | 'partially_paid' | 'unpaid';
-  email: string;
-  phone: string;
-  bloodGroup: string;
-  gender?: string;
-  doj?: string;
-  dob?: string;
-};
+// Re-export common types
+export type { BillingType, FeeStatus } from './payment';
 
+// Dashboard types
 export type OutstandingPayments = {
-  id: string;
-  gymNo: string;
-  name: string;
-  avatar: string;
-  package: 'Monthly' | 'Yearly' | 'Special' | 'Quarterly' | 'Half_Yearly';
+  memberId: number;
+  memberIdentifier: string;
+  memberName: string;
+  photoPath?: string | null;
+  package: string;
   feeStatus: 'paid' | 'partially_paid' | 'unpaid';
-  amount: string;
+  amount: number;
 };
 
 export type Skippers = {
-  id: string;
-  gymNo: string;
-  name: string;
-  avatar: string;
+  memberId: number;
+  memberIdentifier: string;
+  memberName: string;
+  photoPath: string | null;
   lastCheckIn: string;
-  sinceLastCheckIn: string;
+  daysSinceLastCheckIn: number;
 };

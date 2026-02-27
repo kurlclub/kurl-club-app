@@ -73,7 +73,7 @@ export function KTabs({
         </nav>
       ) : (
         // Underline Variant
-        <nav className="px-4 md:px-6 flex w-fit gap-6">
+        <nav className="px-2 flex w-full overflow-x-auto gap-4 md:gap-6">
           {items.map((item) => {
             const isActive = value === item.id;
             return (
@@ -81,7 +81,7 @@ export function KTabs({
                 key={item.id}
                 onClick={() => onTabChange?.(item.id)}
                 className={cn(
-                  'flex-1 border-b-2 text-nowrap leading-normal h-7 pb-3 k-transition text-center text-[15px] font-normal transition-all cursor-pointer',
+                  'flex-shrink-0 border-b-2 text-nowrap leading-normal h-7 pb-3 k-transition text-center text-sm md:text-[15px] font-normal transition-all cursor-pointer min-w-fit px-1',
                   {
                     'border-primary-green-200 text-primary-green-200': isActive,
                     'border-transparent text-white hover:text-primary-green-200':

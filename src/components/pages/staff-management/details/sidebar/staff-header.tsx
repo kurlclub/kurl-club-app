@@ -1,0 +1,143 @@
+import { useState } from 'react';
+
+import { safeParseDate } from '@kurlclub/ui-components';
+import { Calendar, Key } from 'lucide-react';
+
+import { KDatePicker } from '@/components/shared/form/k-datepicker';
+import ProfilePictureUploader from '@/components/shared/uploaders/profile-uploader';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
+import {
+  base64ToFile,
+  safeDateFormat,
+  toUtcDateOnlyISOString,
+} from '@/lib/utils';
+import { EditableSectionProps } from '@/types/staff';
+
+import { UpdatePasswordDialog } from './update-password-dialog';
+
+export function StaffHeader({
+  isEditing,
+  details,
+  onUpdate,
+}: EditableSectionProps) {
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const isTrainer = details?.trainerId !== undefined;
+
+  return (
+    <>
+      <div className="items-center mb-4">
+        <div className="mb-3">
+          {isEditing ? (
+            <ProfilePictureUploader
+              files={
+                details?.profilePicture instanceof File
+                  ? details.profilePicture
+                  : details?.profilePicture
+                    ? base64ToFile(details.profilePicture, 'profile.png')
+                    : null
+              }
+              onChange={(file) => {
+                if (file) {
+                  onUpdate('profilePicture', file);
+                } else {
+                  onUpdate('profilePicture', null);
+                }
+              }}
+              isSmall
+            />
+          ) : (
+            <Avatar className="size-16">
+              {details?.hasProfilePicture && details?.photoPath ? (
+                <AvatarImage src={details.photoPath} alt="Profile picture" />
+              ) : null}
+              <AvatarFallback
+                className="font-medium text-xl leading-normal"
+                style={getAvatarColor(
+                  details?.name || details?.trainerName || ''
+                )}
+              >
+                {getInitials(details?.name || details?.trainerName || '')}
+              </AvatarFallback>
+            </Avatar>
+          )}
+        </div>
+        <div>
+          {isEditing ? (
+            <div className="flex items-center pb-1.5 border-b gap-2 border-primary-blue-300 group focus-within:border-white hover:border-white k-transition">
+              <Input
+                value={details?.name || details?.trainerName}
+                onChange={(e) => {
+                  if (details?.trainerName !== undefined) {
+                    onUpdate('trainerName', e.target.value);
+                  } else {
+                    onUpdate('name', e.target.value);
+                  }
+                }}
+                className="border-0 font-medium rounded-none h-auto p-0 text-[20px]! focus-visible:outline-0 focus-visible:ring-0"
+              />
+            </div>
+          ) : (
+            <h6 className="text-xl font-medium text-white">
+              {details?.name || details?.trainerName}
+            </h6>
+          )}
+          {isEditing ? (
+            <KDatePicker
+              icon={<Calendar />}
+              mode="single"
+              value={safeParseDate(details?.doj)}
+              onDateChange={(date) =>
+                onUpdate(
+                  'doj',
+                  date instanceof Date ? toUtcDateOnlyISOString(date) : ''
+                )
+              }
+              label="Date of joining"
+              className="mt-2 bg-transparent border-0 border-b border-primary-blue-300 rounded-none hover:bg-transparent hover:border-white k-transition p-0 h-auto w-full pb-1.5 text-white text-[15px] leading-[140%] font-normal gap-1 flex-row-reverse justify-between"
+            />
+          ) : (
+            <p className="text-sm text-primary-blue-50 mt-1">
+              Staff since {safeDateFormat(details?.doj)}
+            </p>
+          )}
+        </div>
+      </div>
+      <div className="space-y-3">
+        <Badge className="bg-neutral-ochre-500 flex items-center w-fit justify-center text-sm rounded-full h-[30px] py-[8.5px] px-4 border border-neutral-ochre-800 bg-opacity-10">
+          Staff ID:{' '}
+          <span className="uppercase ml-1">
+            {details?.trainerId || details?.memberIdentifier}
+          </span>
+        </Badge>
+
+        {isTrainer && details?.username && (
+          <div className="space-y-2">
+            <p className="text-xs text-primary-blue-100">Username</p>
+            <p className="text-sm text-white">{details.username}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowPasswordDialog(true)}
+              className="h-8 text-xs"
+            >
+              <Key className="h-3 w-3 mr-1" />
+              Update Password
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {isTrainer && details?.id && (
+        <UpdatePasswordDialog
+          open={showPasswordDialog}
+          onOpenChange={setShowPasswordDialog}
+          id={details.id}
+        />
+      )}
+    </>
+  );
+}

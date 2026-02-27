@@ -14,6 +14,7 @@ export function Search({
   onSearch,
   className = '',
   wrapperClass = '',
+  value,
   ...props
 }: SearchProps) {
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -27,6 +28,7 @@ export function Search({
         placeholder="Search"
         className={`pl-10 bg-secondary-blue-500 rounded-md text-white border-transparent appearance-none ring-0!  transition-colors hover:border-secondary-blue-400 focus:border-secondary-blue-400 ease-in-out ${className}`}
         onChange={handleSearch}
+        value={value}
         {...props}
       />
     </div>

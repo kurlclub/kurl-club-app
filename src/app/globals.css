@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import '@kurlclub/ui-components/styles';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -204,6 +205,43 @@
   @apply hover:bg-secondary-blue-400/50! hover:backdrop-blur-md! rounded-md! k-transition! py-2! cursor-pointer! data-[state=checked]:bg-secondary-blue-600! data-[state=checked]:text-primary-green-500!;
 }
 
+/* Command Palette Styles */
+[data-radix-dialog-content]:has([cmdk-root]) {
+  @apply bg-secondary-blue-700! border-secondary-blue-400!;
+}
+
+[role='dialog'] [cmdk-root] {
+  @apply bg-secondary-blue-700! text-white!;
+}
+
+[role='dialog'] [cmdk-input-wrapper] {
+  @apply border-0! w-full! px-0!;
+}
+
+[cmdk-input] {
+  @apply w-full!;
+}
+
+@utility shad-command-input {
+  @apply bg-transparent! text-white! placeholder:text-gray-400! border-0! focus:ring-0! outline-none!;
+}
+
+@utility shad-command-item {
+  @apply hover:bg-secondary-blue-600! k-transition! cursor-pointer! text-white! data-[selected=true]:bg-secondary-blue-600! data-[selected=true]:text-primary-green-500!;
+}
+
+@utility shad-command-empty {
+  @apply text-gray-400! text-center! py-6!;
+}
+
+@utility shad-command-wrapper {
+  @apply flex! items-center! border-b! border-secondary-blue-400! px-3!;
+}
+
+@utility shad-command-list {
+  @apply bg-secondary-blue-700!;
+}
+
 @utility shad-otp {
   @apply w-full! flex! gap-3! justify-between!;
 }
@@ -216,6 +254,10 @@
 @utility input-phone {
   /* =====  REACT PHONE NUMBER INPUT OVERRIDES */
   @apply w-full! rounded-md! h-[52px]! py-[17px]! px-4! text-base! text-white! bg-secondary-blue-500! border-0! appearance-none! focus:outline-hidden! focus:ring-0!;
+}
+
+@utility country-select {
+  @apply bg-secondary-blue-500 text-white border-none! outline-none;
 }
 
 @utility input-phone-primary {
@@ -251,6 +293,14 @@
 
 @utility checkbox-label {
   @apply cursor-pointer text-sm font-normal text-white peer-disabled:cursor-not-allowed peer-disabled:opacity-70 md:leading-none;
+}
+
+@utility glass-effect {
+  @apply bg-white/60 dark:bg-white/5 backdrop-blur-sm border border-gray-200/50 dark:border-white/10;
+}
+
+@utility glass-effect-hover {
+  @apply hover:bg-white/80 dark:hover:bg-white/10;
 }
 
 @utility no-scrollbar {
@@ -367,3 +417,94 @@
     max-width: 500px !important;
   }
 }  */
+/*
+  ---break---
+*/
+:root {
+  --sidebar: #282b32;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #d3f702;
+  --sidebar-primary-foreground: #11141c;
+  --sidebar-accent: #414349;
+  --sidebar-accent-foreground: #d3f702;
+  --sidebar-border: #53555b;
+  --sidebar-ring: #d3f702;
+}
+/*
+  ---break---
+*/
+.dark {
+  --sidebar: #282b32;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #d3f702;
+  --sidebar-primary-foreground: #11141c;
+  --sidebar-accent: #414349;
+  --sidebar-accent-foreground: #d3f702;
+  --sidebar-border: #53555b;
+  --sidebar-ring: #d3f702;
+}
+/*
+  ---break---
+*/
+@theme inline {
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+/*
+  ---break---
+*/
+
+/* Custom Sidebar Styles */
+[data-sidebar='sidebar'] {
+  background: linear-gradient(180deg, #282b32 0%, #24272e 100%);
+  /* border-right: 1px solid #414349; */
+}
+
+[data-sidebar='menu-button'][data-active='true'] {
+  background: #414349;
+  color: #d3f702;
+}
+
+[data-sidebar='menu-button']:hover {
+  background: rgba(65, 67, 73, 0.6);
+  backdrop-filter: blur(8px);
+}
+
+[data-sidebar='group-label'] {
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.05em;
+}
+
+/* Collapsed sidebar icon glow effect */
+[data-state='collapsed'] [data-sidebar='menu-button'] svg {
+  filter: drop-shadow(0 0 4px rgba(211, 247, 2, 0.3));
+}
+
+/* Sidebar scrollbar styling */
+[data-sidebar='content']::-webkit-scrollbar {
+  width: 4px;
+}
+
+[data-sidebar='content']::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[data-sidebar='content']::-webkit-scrollbar-thumb {
+  background: rgba(211, 247, 2, 0.2);
+  border-radius: 2px;
+}
+
+[data-sidebar='content']::-webkit-scrollbar-thumb:hover {
+  background: rgba(211, 247, 2, 0.4);
+}
+
+.rdp-day[data-today='true'] .rdp-day_button {
+  border: none !important;
+  border-radius: 50% !important;
+}

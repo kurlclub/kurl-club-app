@@ -3,73 +3,74 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-import {
-  createGym,
-  fetchGymById,
-  fetchGymProfilePicture,
-  updateGym,
-} from '@/services/gym';
+import { useAuth } from '@/providers/auth-provider';
+import { fetchGymProfilePicture, updateGym } from '@/services/gym';
+import { GymDetails } from '@/types/gym';
 
-export function useGymDetails(gymId: number) {
-  return useQuery({
-    queryKey: ['gymDetails', gymId],
-    queryFn: () => fetchGymById(gymId),
-    enabled: !!gymId,
-    staleTime: 1000 * 60 * 5,
-  });
+interface UseGymDetailsReturn {
+  data: GymDetails | null;
+  isLoading: boolean;
+}
+
+export function useGymDetails(): UseGymDetailsReturn {
+  const { gymDetails } = useAuth();
+  return { data: gymDetails, isLoading: false };
+}
+
+interface GymProfilePictureData {
+  data: string;
 }
 
 export function useGymProfilePicture(gymId: number) {
-  return useQuery({
+  return useQuery<GymProfilePictureData | null>({
     queryKey: ['gymProfilePicture', gymId],
     queryFn: () => fetchGymProfilePicture(gymId),
     enabled: !!gymId,
     staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 30,
+    refetchOnWindowFocus: false,
   });
 }
 
-export function useGymManagement() {
+interface UpdateGymParams {
+  gymId: number;
+  data: FormData;
+}
+
+interface UpdateGymResult {
+  success: string;
+}
+
+interface SwitchClubResult {
+  success: boolean;
+  error?: string;
+}
+
+interface UseGymManagementReturn {
+  updateGym: (params: UpdateGymParams) => Promise<UpdateGymResult>;
+  isUpdating: boolean;
+  switchClub: (gymId: number) => Promise<SwitchClubResult>;
+}
+
+export function useGymManagement(): UseGymManagementReturn {
   const queryClient = useQueryClient();
+  const { refreshUser, switchClub: switchClubAuth } = useAuth();
 
-  const createGymMutation = useMutation({
-    mutationFn: (data: {
-      GymName: string;
-      Location: string;
-      ContactNumber1: string;
-      ContactNumber2?: string;
-      Email: string;
-      SocialLinks?: string;
-      ProfilePicture?: File | null;
-      GymAdminId: string;
-      Status?: string;
-    }) => createGym(data),
-    onSuccess: (result) => {
-      if (result.success) {
-        toast.success(result.success);
-      } else if (result.error) {
-        toast.error(result.error);
-      }
-    },
-    onError: (error) => {
-      toast.error(
-        error instanceof Error ? error.message : 'Failed to create gym'
-      );
-    },
-  });
-
-  const updateGymMutation = useMutation({
-    mutationFn: ({ gymId, data }: { gymId: number; data: FormData }) =>
-      updateGym(gymId, data),
-    onSuccess: (result, { gymId }) => {
-      if (result.success) {
-        queryClient.invalidateQueries({ queryKey: ['gymDetails', gymId] });
-        queryClient.invalidateQueries({
-          queryKey: ['gymProfilePicture', gymId],
-        });
-        toast.success(result.success);
-      } else if (result.error) {
-        toast.error(result.error);
-      }
+  const updateGymMutation = useMutation<
+    UpdateGymResult,
+    Error,
+    UpdateGymParams
+  >({
+    mutationFn: ({ gymId, data }) => updateGym(gymId, data),
+    onSuccess: async (result, { gymId }) => {
+      await queryClient.invalidateQueries({
+        queryKey: ['gymProfilePicture', gymId],
+      });
+      await queryClient.refetchQueries({
+        queryKey: ['gymProfilePicture', gymId],
+      });
+      await refreshUser();
+      toast.success(result.success);
     },
     onError: (error) => {
       toast.error(
@@ -78,10 +79,17 @@ export function useGymManagement() {
     },
   });
 
+  const handleSwitchClub = async (gymId: number): Promise<SwitchClubResult> => {
+    const result = await switchClubAuth(gymId);
+    if (result.success) {
+      await queryClient.invalidateQueries();
+    }
+    return result;
+  };
+
   return {
-    createGym: createGymMutation.mutateAsync,
-    isCreating: createGymMutation.isPending,
     updateGym: updateGymMutation.mutateAsync,
     isUpdating: updateGymMutation.isPending,
+    switchClub: handleSwitchClub,
   };
 }
