@@ -9,6 +9,7 @@ import {
   ChartColumnIncreasing,
   CreditCard,
   Dumbbell,
+  Goal,
   type LucideIcon,
   Settings,
   UserCheck,
@@ -120,6 +121,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       url: '/reports-and-expenses',
       icon: ChartColumnIncreasing,
       requiredFeature: 'basicReports',
+    },
+    {
+      title: 'Lead Management',
+      url: '/lead-management',
+      icon: Goal,
     },
     {
       title: 'Settings',
