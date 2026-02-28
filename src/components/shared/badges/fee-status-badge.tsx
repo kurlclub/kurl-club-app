@@ -1,10 +1,25 @@
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
-import { KBadgeCheck, KBadgeClose, KBadgeFlag, KBadgeMinus } from '../icons';
+import {
+  KBadgeCheck,
+  KBadgeClose,
+  KBadgeContacted,
+  KBadgeFlag,
+  KBadgeInterest,
+  KBadgeMinus,
+  KBadgeNew,
+} from '../icons';
 
 interface FeeStatusBadgeProps {
-  status?: 'paid' | 'partially_paid' | 'unpaid';
+  status?:
+    | 'paid'
+    | 'partially_paid'
+    | 'unpaid'
+    | 'lost'
+    | 'new'
+    | 'contacted'
+    | 'interested';
   days?: number;
   showIcon?: boolean;
   className?: string;
@@ -27,11 +42,17 @@ export const FeeStatusBadge = ({
 
     switch (status) {
       case 'paid':
+      case 'interested':
         return 'bg-neutral-green-500/10 border-neutral-green-500';
       case 'partially_paid':
         return 'bg-neutral-ochre-600/10 border-neutral-ochre-500';
       case 'unpaid':
+      case 'lost':
         return 'bg-alert-red-500/10 border-alert-red-500';
+      case 'new':
+        return 'bg-secondary-yellow-500/10 border-secondary-yellow-500';
+      case 'contacted':
+        return 'bg-semantic-blue-500/10 border-semantic-blue-500';
       default:
         return '';
     }
@@ -57,6 +78,14 @@ export const FeeStatusBadge = ({
         return <KBadgeMinus />;
       case 'unpaid':
         return <KBadgeClose />;
+      case 'lost':
+        return <KBadgeClose />;
+      case 'new':
+        return <KBadgeNew />;
+      case 'contacted':
+        return <KBadgeContacted />;
+      case 'interested':
+        return <KBadgeInterest />;
       default:
         return null;
     }

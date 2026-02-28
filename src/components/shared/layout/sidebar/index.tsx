@@ -8,6 +8,7 @@ import {
   Calendar,
   CreditCard,
   Dumbbell,
+  Goal,
   type LucideIcon,
   Settings,
   UserCheck,
@@ -99,6 +100,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: 'Plans & Workouts',
       url: '/plans-and-workouts',
       icon: Dumbbell,
+    },
+    {
+      title: 'Lead Management',
+      url: '/lead-management',
+      icon: Goal,
     },
     {
       title: 'Settings',

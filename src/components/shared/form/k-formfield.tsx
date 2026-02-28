@@ -321,7 +321,6 @@ const RenderField = <T extends FieldValues>({
             mode={mode ?? 'range'}
             className={className}
             icon={iconSrc}
-            disabledDates={props.disabledDates}
           />
         </FormControl>
       );

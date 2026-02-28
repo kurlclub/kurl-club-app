@@ -7,6 +7,7 @@ export type ApiResponse<T = void> = {
 
 // Re-export common types
 export type { BillingType, FeeStatus } from './payment';
+export type { Lead, InterestStatus, LeadSource, LeadListItem } from './lead';
 
 // Dashboard types
 export type OutstandingPayments = {

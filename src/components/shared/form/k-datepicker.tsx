@@ -87,6 +87,13 @@ export function KDatePicker({
   const hasValue = mode === 'single' ? !!singleDate : !!rangeDate?.from;
 
   React.useEffect(() => {
+    // whenever the parent provides a new `value` prop we mirror it
+    // in our local state.  it's important to explicitly handle the case
+    // where the value is cleared (undefined/null) because the previous
+    // implementation only updated state when `value` was truthy, which
+    // prevented the picker from visually resetting when the form was
+    // reset to its defaults.
+
     if (value) {
       if (mode === 'range') {
         setRangeDate(value as DateRange);
@@ -95,6 +102,14 @@ export function KDatePicker({
       } else if (mode === 'single') {
         setSingleDate(value as Date);
         setViewDate(value as Date);
+      }
+    } else {
+      // clear internal state when upstream value is removed
+      if (mode === 'range') {
+        setRangeDate(undefined);
+        setTempDate(undefined);
+      } else if (mode === 'single') {
+        setSingleDate(undefined);
       }
     }
   }, [value, mode]);
