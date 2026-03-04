@@ -15,16 +15,6 @@ const eslintConfig = defineConfig([
     'build/**',
     'next-env.d.ts',
   ]),
-  {
-    rules: {
-      'react-hooks/set-state-in-effect': 'off',
-      'react-hooks/incompatible-library': 'off',
-      'react-hooks/refs': 'off',
-      'react-hooks/static-components': 'off',
-      'react-hooks/purity': 'off',
-      'react-hooks/preserve-manual-memoization': 'off',
-    },
-  },
 ]);
 
 export default eslintConfig;

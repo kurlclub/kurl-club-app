@@ -7,18 +7,30 @@ import { useAuth } from './auth-provider';
 // Global ref to access clearGymBranch from auth provider
 let globalClearGymBranch: (() => void) | null = null;
 
+type GymBranch = {
+  gymId: number;
+  gymName: string;
+  gymLocation: string;
+};
+
+const getStoredGymBranch = (): GymBranch | null => {
+  if (typeof window === 'undefined') return null;
+
+  const storedGymBranch = localStorage.getItem('gymBranch');
+  if (!storedGymBranch) return null;
+
+  try {
+    return JSON.parse(storedGymBranch) as GymBranch;
+  } catch {
+    localStorage.removeItem('gymBranch');
+    return null;
+  }
+};
+
 const GymBranchContext = createContext<
   | {
-      gymBranch: {
-        gymId: number;
-        gymName: string;
-        gymLocation: string;
-      } | null;
-      setGymBranch: (gymBranch: {
-        gymId: number;
-        gymName: string;
-        gymLocation: string;
-      }) => void;
+      gymBranch: GymBranch | null;
+      setGymBranch: (gymBranch: GymBranch) => void;
       clearGymBranch: () => void;
     }
   | undefined
@@ -28,26 +40,40 @@ const GymBranchContext = createContext<
 export const GymBranchProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [gymBranch, setGymBranch] = useState<{
-    gymId: number;
-    gymName: string;
-    gymLocation: string;
-  } | null>(null);
+  const [storedGymBranch, setStoredGymBranch] = useState<GymBranch | null>(
+    getStoredGymBranch
+  );
   const { user } = useAuth();
 
-  const handleSetGymBranch = (gymBranch: {
-    gymId: number;
-    gymName: string;
-    gymLocation: string;
-  }) => {
-    setGymBranch(gymBranch);
-    localStorage.setItem('gymBranch', JSON.stringify(gymBranch));
-  };
+  const gymBranch = React.useMemo(() => {
+    if (user?.gyms && user.gyms.length > 0) {
+      return {
+        gymId: user.gyms[0].gymId,
+        gymName: user.gyms[0].gymName,
+        gymLocation: user.gyms[0].gymLocation,
+      };
+    }
 
-  const clearGymBranch = () => {
-    setGymBranch(null);
-    localStorage.removeItem('gymBranch');
-  };
+    if (user === null) {
+      return null;
+    }
+
+    return storedGymBranch;
+  }, [storedGymBranch, user]);
+
+  const handleSetGymBranch = React.useCallback((gymBranch: GymBranch) => {
+    setStoredGymBranch(gymBranch);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('gymBranch', JSON.stringify(gymBranch));
+    }
+  }, []);
+
+  const clearGymBranch = React.useCallback(() => {
+    setStoredGymBranch(null);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('gymBranch');
+    }
+  }, []);
 
   // Expose clearGymBranch globally
   useEffect(() => {
@@ -55,38 +81,21 @@ export const GymBranchProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => {
       globalClearGymBranch = null;
     };
-  }, []);
+  }, [clearGymBranch]);
 
-  // Sync with auth provider
+  // Keep localStorage synchronized with auth-derived gym branch.
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     if (user?.gyms && user.gyms.length > 0) {
-      const gymData = {
-        gymId: user.gyms[0].gymId,
-        gymName: user.gyms[0].gymName,
-        gymLocation: user.gyms[0].gymLocation,
-      };
-      setGymBranch(gymData);
-      localStorage.setItem('gymBranch', JSON.stringify(gymData));
+      localStorage.setItem('gymBranch', JSON.stringify(gymBranch));
       return;
     }
 
     if (user === null) {
-      setGymBranch(null);
       localStorage.removeItem('gymBranch');
     }
-  }, [user]);
-
-  // Initial load from localStorage
-  useEffect(() => {
-    const storedGymBranch = localStorage.getItem('gymBranch');
-    if (!storedGymBranch) return;
-
-    try {
-      setGymBranch(JSON.parse(storedGymBranch));
-    } catch {
-      localStorage.removeItem('gymBranch');
-    }
-  }, []);
+  }, [gymBranch, user]);
 
   return (
     <GymBranchContext.Provider

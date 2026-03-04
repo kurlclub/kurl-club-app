@@ -1,6 +1,6 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useMemo } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod/v4';
@@ -29,10 +29,6 @@ const DashboardDateRangeSchema = z.object({
 
 function Dashboard() {
   const { isLoading } = useAuth();
-  const [dateRange, setDateRange] = useState<{
-    fromDate?: string;
-    toDate?: string;
-  }>({});
 
   const form = useForm<z.infer<typeof DashboardDateRangeSchema>>({
     resolver: zodResolver(DashboardDateRangeSchema),
@@ -41,18 +37,20 @@ function Dashboard() {
     },
   });
 
-  // Watch for date range changes
-  useEffect(() => {
-    const subscription = form.watch((value) => {
-      if (value.dateRange?.from && value.dateRange?.to) {
-        setDateRange({
-          fromDate: toUtcDateOnlyISOString(value.dateRange.from),
-          toDate: toUtcDateOnlyISOString(value.dateRange.to),
-        });
-      }
-    });
-    return () => subscription.unsubscribe();
-  }, [form]);
+  const watchedDateRange = useWatch({
+    control: form.control,
+    name: 'dateRange',
+  });
+  const dateRange = useMemo(() => {
+    if (!watchedDateRange?.from || !watchedDateRange?.to) {
+      return { fromDate: undefined, toDate: undefined };
+    }
+
+    return {
+      fromDate: toUtcDateOnlyISOString(watchedDateRange.from),
+      toDate: toUtcDateOnlyISOString(watchedDateRange.to),
+    };
+  }, [watchedDateRange]);
 
   if (isLoading) {
     return (

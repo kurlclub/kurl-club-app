@@ -81,10 +81,7 @@ export function ResetForm() {
 
   useEffect(() => {
     if (secondsLeft === null) return;
-    if (secondsLeft <= 0) {
-      setSecondsLeft(null);
-      return;
-    }
+    if (secondsLeft <= 0) return;
 
     const id = setInterval(() => {
       setSecondsLeft((s) => {

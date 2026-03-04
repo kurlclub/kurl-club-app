@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { CircleUser, Plus, User } from 'lucide-react';
 
@@ -24,25 +24,24 @@ export default function ProfilePictureUploader({
   isSmall,
   existingImageUrl,
 }: ProfilePictureUploaderProps) {
-  const [image, setImage] = useState<string | null>(null);
   const [cropModalOpen, setCropModalOpen] = useState(false);
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [tempImage, setTempImage] = useState<string | null>(null);
   const [currentFile, setCurrentFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const filePreviewUrl = useMemo(
+    () => (files ? URL.createObjectURL(files) : null),
+    [files]
+  );
+  const image = filePreviewUrl || existingImageUrl || null;
 
-  // Update the image state when `files` or `existingImageUrl` changes
   useEffect(() => {
-    let newImage: string | null = null;
-
-    if (files) {
-      newImage = URL.createObjectURL(files);
-    } else if (existingImageUrl) {
-      newImage = existingImageUrl;
-    }
-
-    setImage(newImage);
-  }, [files, existingImageUrl]);
+    return () => {
+      if (filePreviewUrl) {
+        URL.revokeObjectURL(filePreviewUrl);
+      }
+    };
+  }, [filePreviewUrl]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -51,7 +50,6 @@ export default function ProfilePictureUploader({
       const reader = new FileReader();
       reader.onload = (e) => {
         setTempImage(e.target?.result as string);
-        setImage(null); // Clear the existing image
         setCropModalOpen(true);
       };
       reader.readAsDataURL(file);
@@ -69,14 +67,12 @@ export default function ProfilePictureUploader({
         type: currentFile.type,
       });
 
-      setImage(croppedImage);
       setCropModalOpen(false);
       onChange(croppedFile); // Pass the cropped file to the parent
     }
   };
 
   const handleDelete = () => {
-    setImage(null);
     setPreviewModalOpen(false);
     setCurrentFile(null);
     if (fileInputRef.current) {
@@ -87,7 +83,6 @@ export default function ProfilePictureUploader({
 
   const handleReupload = () => {
     setPreviewModalOpen(false);
-    setImage(null);
     setTempImage(null);
     setCurrentFile(null);
     if (fileInputRef.current) {
