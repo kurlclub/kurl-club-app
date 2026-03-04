@@ -27,11 +27,13 @@ interface PaymentTableProps<T extends object, TValue> {
   toolbar?: (table: ReturnType<typeof useReactTable<T>>) => React.ReactNode;
 }
 
-export function PaymentTable<T extends object, TValue>({
-  columns,
-  data,
-  toolbar,
-}: PaymentTableProps<T, TValue>) {
+export function PaymentTable<T extends object, TValue>(
+  props: PaymentTableProps<T, TValue>
+) {
+  'use no memo';
+  const { columns, data, toolbar } = props;
+  // React Compiler cannot safely memoize TanStack table internals in this component.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable<T>({
     data,
     columns,

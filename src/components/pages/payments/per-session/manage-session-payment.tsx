@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
+import { FormProvider, useForm, useWatch } from 'react-hook-form';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -72,7 +72,7 @@ export function ManageSessionPaymentSheet({
     },
   });
 
-  const formValues = form.watch();
+  const paymentMethod = useWatch({ control: form.control, name: 'method' });
   const sessions = sessionData?.sessions || [];
   const unpaidSessions = sessions.filter(
     (s: SessionDetail) => s.paymentStatus === 'unpaid'
@@ -119,7 +119,7 @@ export function ManageSessionPaymentSheet({
           {
             sessionPaymentIds: selectedSessions,
             totalAmountPaid: selectedAmount,
-            paymentMethod: formValues.method,
+            paymentMethod: paymentMethod || '',
             recordedBy: gymBranch.gymId,
           },
           {
@@ -435,7 +435,7 @@ export function ManageSessionPaymentSheet({
                     className="w-full"
                     disabled={
                       selectedSessions.length === 0 ||
-                      !formValues.method ||
+                      !paymentMethod ||
                       isProcessing
                     }
                     onClick={handleRecordPayment}

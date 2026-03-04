@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import { useGymBranch } from '@/providers/gym-branch-provider';
@@ -12,39 +13,35 @@ import { useInvalidateFormOptions } from './use-gymform-options';
 
 export function useStaffDetails(userId: string | number, role?: string) {
   const [isEditing, setIsEditing] = useState(false);
-  const [details, setDetails] = useState<StaffDetails | null>(null);
-  const [originalDetails, setOriginalDetails] = useState<StaffDetails | null>(
-    null
-  );
+  const [draftDetails, setDraftDetails] = useState<StaffDetails | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { gymBranch } = useGymBranch();
   const invalidateFormOptions = useInvalidateFormOptions();
+  const queryClient = useQueryClient();
 
   const { data, isLoading: loading } = useStaffByID(userId, role as StaffType);
-
-  useEffect(() => {
-    if (!data) return;
-
-    setDetails(data);
-    setOriginalDetails(data);
-  }, [data]);
+  const details = draftDetails ?? data ?? null;
 
   const updateStaffDetail = useCallback(
     <K extends keyof StaffDetails>(key: K, value: StaffDetails[K]) => {
-      setDetails((prev) => (prev ? { ...prev, [key]: value } : null));
+      setDraftDetails((prev) => {
+        const sourceDetails = prev ?? details;
+        return sourceDetails ? { ...sourceDetails, [key]: value } : null;
+      });
     },
-    []
+    [details]
   );
 
   const handleSave = useCallback(async () => {
-    if (!details) return false;
+    const detailsToSave = draftDetails ?? details;
+    if (!detailsToSave) return false;
 
     try {
       const formData = new FormData();
 
-      for (const key in details) {
+      for (const key in detailsToSave) {
         const formKey = key;
-        const value = details[key as keyof StaffDetails];
+        const value = detailsToSave[key as keyof StaffDetails];
 
         // Skip fields that shouldn't be sent to API
         if (['hasProfilePicture', 'status', 'gymId'].includes(key)) {
@@ -67,8 +64,11 @@ export function useStaffDetails(userId: string | number, role?: string) {
       if (response.status === 'Success') {
         toast.success(response.message);
         setIsEditing(false);
-        // Update original details after successful save
-        setOriginalDetails(details);
+        setDraftDetails(null);
+        queryClient.setQueryData(
+          ['staff', userId, role as StaffType],
+          detailsToSave
+        );
 
         // Invalidate form options if updating a trainer (trainers appear in formData)
         if (role === 'trainer' && gymBranch?.gymId) {
@@ -87,17 +87,28 @@ export function useStaffDetails(userId: string | number, role?: string) {
       toast.error('An error occurred while updating the staff details.');
       return false;
     }
-  }, [details, userId, role, gymBranch?.gymId, invalidateFormOptions]);
+  }, [
+    details,
+    draftDetails,
+    gymBranch,
+    invalidateFormOptions,
+    queryClient,
+    role,
+    userId,
+  ]);
 
   const toggleEdit = useCallback(() => {
-    setIsEditing((prev) => {
-      // If we're currently editing and toggling off (canceling), reset to original
-      if (prev && originalDetails) {
-        setDetails(originalDetails);
-      }
-      return !prev;
-    });
-  }, [originalDetails]);
+    if (isEditing) {
+      setDraftDetails(null);
+      setIsEditing(false);
+      return;
+    }
+
+    if (details) {
+      setDraftDetails({ ...details });
+    }
+    setIsEditing(true);
+  }, [details, isEditing]);
 
   return {
     details,

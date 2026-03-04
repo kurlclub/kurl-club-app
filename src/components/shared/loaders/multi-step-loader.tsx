@@ -77,25 +77,9 @@ export const MultiStepLoader = ({
   loop?: boolean;
 }) => {
   const [currentState, setCurrentState] = useState(0);
-  const [showLoader, setShowLoader] = useState(false);
 
   useEffect(() => {
-    if (!loading) {
-      setShowLoader(false);
-      return;
-    }
-
-    setShowLoader(true);
-    setCurrentState(0);
-
-    const totalDuration = loadingStates.length * duration;
-    const timer = setTimeout(() => setShowLoader(false), totalDuration);
-
-    return () => clearTimeout(timer);
-  }, [loading, loadingStates.length, duration]);
-
-  useEffect(() => {
-    if (!showLoader) return;
+    if (!loading) return;
 
     const interval = setInterval(() => {
       setCurrentState((prev) => {
@@ -107,24 +91,24 @@ export const MultiStepLoader = ({
     }, duration);
 
     return () => clearInterval(interval);
-  }, [showLoader, duration, loop, loadingStates.length]);
+  }, [loading, duration, loop, loadingStates.length]);
+
+  if (!loading) return null;
 
   return (
     <AnimatePresence mode="wait">
-      {showLoader && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="w-full h-full fixed inset-0 z-50 flex items-center justify-center"
-        >
-          <div className="absolute inset-0 bg-black/20" />
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="w-full h-full fixed inset-0 z-50 flex items-center justify-center"
+      >
+        <div className="absolute inset-0 bg-black/20" />
 
-          <div className="h-96 relative z-10">
-            <LoaderCore value={currentState} loadingStates={loadingStates} />
-          </div>
-        </motion.div>
-      )}
+        <div className="h-96 relative z-10">
+          <LoaderCore value={currentState} loadingStates={loadingStates} />
+        </div>
+      </motion.div>
     </AnimatePresence>
   );
 };

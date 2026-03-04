@@ -113,6 +113,7 @@ const PaymentFields = ({
 
   return (
     <div
+      id="payment-validation-section"
       ref={paymentSectionRef}
       className="space-y-4 p-4 bg-secondary-blue-600/50 rounded-lg border border-secondary-blue-400"
     >
@@ -564,7 +565,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
       );
 
       if (hasAnyWarning) {
-        paymentSectionRef.current?.scrollIntoView({
+        document.getElementById('payment-validation-section')?.scrollIntoView({
           behavior: 'smooth',
           block: 'center',
         });

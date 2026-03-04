@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { ChevronLeft, Plus } from 'lucide-react';
 
@@ -45,13 +45,35 @@ export function WorkoutPlanSheet({
   onDelete,
   onSaveNew,
 }: WorkoutPlanSheetProps) {
-  const [editedPlan, setEditedPlan] = useState<WorkoutPlan>(
-    plan || DEFAULT_PLAN
+  const sheetInstanceKey = `${isOpen ? 'open' : 'closed'}-${plan?.planId ?? 'new'}`;
+
+  return (
+    <WorkoutPlanSheetInner
+      key={sheetInstanceKey}
+      plan={plan}
+      isOpen={isOpen}
+      closeSheet={closeSheet}
+      onUpdate={onUpdate}
+      onDelete={onDelete}
+      onSaveNew={onSaveNew}
+    />
   );
+}
+
+function WorkoutPlanSheetInner({
+  plan,
+  isOpen,
+  closeSheet,
+  onUpdate,
+  onDelete,
+  onSaveNew,
+}: WorkoutPlanSheetProps) {
+  const initialPlan = plan || DEFAULT_PLAN;
+  const [editedPlan, setEditedPlan] = useState<WorkoutPlan>(initialPlan);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
-  const [isEditMode, setIsEditMode] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(!plan);
   const [isMemberListVisible, setIsMemberListVisible] = useState(false);
-  const [showSchedule, setShowSchedule] = useState(false);
+  const [showSchedule, setShowSchedule] = useState(!!plan);
 
   const { showConfirm, showAlert } = useAppDialog();
 
@@ -64,16 +86,6 @@ export function WorkoutPlanSheet({
   const planMembers = members.filter(
     (member) => member.workoutPlan === editedPlan.planName
   );
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    setEditedPlan(plan || DEFAULT_PLAN);
-    setIsEditMode(!plan);
-    setSelectedDay(null);
-    setIsMemberListVisible(false);
-    setShowSchedule(!!plan);
-  }, [plan, isOpen]);
 
   const handleSavePlan = () => {
     const hasExercises =
@@ -234,7 +246,7 @@ export function WorkoutPlanSheet({
     if (!plan) {
       closeSheet();
     } else {
-      setEditedPlan(plan);
+      setEditedPlan(initialPlan);
       setIsEditMode(false);
     }
   };
@@ -269,7 +281,7 @@ export function WorkoutPlanSheet({
             size="sm"
             className="mr-2"
             onClick={() => {
-              setEditedPlan(plan || DEFAULT_PLAN);
+              setEditedPlan(initialPlan);
               setSelectedDay(null);
             }}
           >
@@ -294,7 +306,7 @@ export function WorkoutPlanSheet({
           <Button
             type="button"
             onClick={() => {
-              setEditedPlan(plan || DEFAULT_PLAN);
+              setEditedPlan(initialPlan);
               setSelectedDay(null);
             }}
             variant="secondary"

@@ -270,12 +270,13 @@ export const useAttendanceRealtimeSync = (
   }: AttendanceRealtimeSyncOptions = {}
 ) => {
   const queryClient = useQueryClient();
-  const [connectionState, setConnectionState] =
+  const [realtimeConnectionState, setRealtimeConnectionState] =
     useState<AttendanceRealtimeConnectionState>('disconnected');
+  const connectionState: AttendanceRealtimeConnectionState =
+    enabled && gymId ? realtimeConnectionState : 'disconnected';
 
   useEffect(() => {
     if (!enabled || !gymId) {
-      setConnectionState('disconnected');
       onConnectionStateChange?.('disconnected');
       return;
     }
@@ -289,7 +290,7 @@ export const useAttendanceRealtimeSync = (
       state: AttendanceRealtimeConnectionState
     ) => {
       if (isCancelled) return;
-      setConnectionState(state);
+      setRealtimeConnectionState(state);
       onConnectionStateChange?.(state);
     };
 
