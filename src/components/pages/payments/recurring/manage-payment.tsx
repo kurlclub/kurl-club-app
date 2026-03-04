@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
+import { FormProvider, useForm, useWatch } from 'react-hook-form';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -76,12 +76,18 @@ export function ManagePaymentSheet({
     },
   });
 
-  const formValues = form.watch();
-  const amountNum = Number(formValues.amount) || 0;
-  const extendDaysNum = Number(formValues.extendDays) || 0;
+  const amountValue = useWatch({ control: form.control, name: 'amount' });
+  const extendDaysValue = useWatch({
+    control: form.control,
+    name: 'extendDays',
+  });
+  const paymentMethod = useWatch({ control: form.control, name: 'method' });
+
+  const amountNum = Number(amountValue) || 0;
+  const extendDaysNum = Number(extendDaysValue) || 0;
 
   const isPartialPaymentValid =
-    amountNum >= 1 && amountNum <= pending && formValues.method;
+    amountNum >= 1 && amountNum <= pending && Boolean(paymentMethod);
   const isExtendValid = extendDaysNum >= 1;
 
   const handlePartialPayment = () => {
@@ -97,7 +103,7 @@ export function ManagePaymentSheet({
           gymId: gymBranch.gymId,
           membershipPlanId: member.membershipPlanId,
           amount: amountNum,
-          paymentMethod: formValues.method,
+          paymentMethod: paymentMethod || '',
           paymentType: 0,
         });
 
@@ -108,7 +114,7 @@ export function ManagePaymentSheet({
   };
 
   const handleFullPayment = () => {
-    if (!member || !gymBranch?.gymId || !formValues.method) return;
+    if (!member || !gymBranch?.gymId || !paymentMethod) return;
 
     showConfirm({
       title: 'Confirm Full Payment',
@@ -120,7 +126,7 @@ export function ManagePaymentSheet({
           gymId: gymBranch.gymId,
           membershipPlanId: member.membershipPlanId,
           amount: pending,
-          paymentMethod: formValues.method,
+          paymentMethod,
           paymentType: 1,
         });
 
@@ -347,9 +353,7 @@ export function ManagePaymentSheet({
                     </div>
                     <Button
                       className="w-full"
-                      disabled={
-                        pending <= 0 || !formValues.method || isProcessing
-                      }
+                      disabled={pending <= 0 || !paymentMethod || isProcessing}
                       onClick={handleFullPayment}
                     >
                       {isProcessing ? (

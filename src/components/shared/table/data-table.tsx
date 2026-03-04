@@ -45,18 +45,22 @@ interface DataTableProps<TData extends object, TValue> {
   isLoading?: boolean;
 }
 
-export function DataTable<TData extends object, TValue>({
-  columns,
-  data,
-  initialSorting = [],
-  toolbar,
-  totalCount,
-  pageSize,
-  currentPage,
-  onPageChange,
-  onPageSizeChange,
-  isLoading = false,
-}: DataTableProps<TData, TValue>) {
+export function DataTable<TData extends object, TValue>(
+  props: DataTableProps<TData, TValue>
+) {
+  'use no memo';
+  const {
+    columns,
+    data,
+    initialSorting = [],
+    toolbar,
+    totalCount,
+    pageSize,
+    currentPage,
+    onPageChange,
+    onPageSizeChange,
+    isLoading = false,
+  } = props;
   const [sorting, setSorting] = React.useState<SortingState>(initialSorting);
 
   const initialColumnVisibility = React.useMemo(() => {
@@ -77,6 +81,8 @@ export function DataTable<TData extends object, TValue>({
 
   const isServerSide = totalCount !== undefined;
 
+  // React Compiler cannot safely memoize TanStack table internals in this component.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable<TData>({
     data,
     columns,

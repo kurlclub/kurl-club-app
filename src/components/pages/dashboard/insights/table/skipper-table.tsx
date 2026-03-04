@@ -27,11 +27,13 @@ interface SkipperTableProps<T extends object, TValue> {
   toolbar?: (table: ReturnType<typeof useReactTable<T>>) => React.ReactNode;
 }
 
-export function SkipperTable<T extends object, TValue>({
-  columns,
-  data,
-  toolbar,
-}: SkipperTableProps<T, TValue>) {
+export function SkipperTable<T extends object, TValue>(
+  props: SkipperTableProps<T, TValue>
+) {
+  'use no memo';
+  const { columns, data, toolbar } = props;
+  // React Compiler cannot safely memoize TanStack table internals in this component.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable<T>({
     data,
     columns,

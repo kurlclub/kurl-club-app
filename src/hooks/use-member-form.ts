@@ -17,7 +17,14 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
   const [existingIdCopyUrl, setExistingIdCopyUrl] = useState<string | null>(
     null
   );
-  const [isLoadingOnboarding, setIsLoadingOnboarding] = useState(false);
+  const resolvedOnboardingId = Number(onboardingId);
+  const shouldPrefillOnboarding =
+    Number.isFinite(resolvedOnboardingId) && resolvedOnboardingId > 0;
+  const [completedOnboardingId, setCompletedOnboardingId] = useState<
+    number | null
+  >(null);
+  const isLoadingOnboarding =
+    shouldPrefillOnboarding && completedOnboardingId !== resolvedOnboardingId;
 
   const form = useForm<CreateMemberDetailsData>({
     resolver: zodResolver(createMemberSchema),
@@ -58,14 +65,12 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
 
   // Fetch onboarding data if onboardingId is provided
   useEffect(() => {
-    const resolvedOnboardingId = Number(onboardingId);
-    if (!Number.isFinite(resolvedOnboardingId) || resolvedOnboardingId <= 0) {
-      return;
-    }
+    if (!shouldPrefillOnboarding) return;
+    let isMounted = true;
 
-    setIsLoadingOnboarding(true);
     fetchPendingMemberDetails(resolvedOnboardingId)
       .then((data) => {
+        if (!isMounted) return;
         setExistingPhotoUrl(data.photoPath || null);
         setExistingIdCopyUrl(
           typeof data.idCopyPath === 'string' ? data.idCopyPath : null
@@ -104,13 +109,19 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
         });
       })
       .catch((error) => {
+        if (!isMounted) return;
         console.error('Failed to fetch onboarding details:', error);
         toast.error('Failed to load member details');
       })
       .finally(() => {
-        setIsLoadingOnboarding(false);
+        if (isMounted) {
+          setCompletedOnboardingId(resolvedOnboardingId);
+        }
       });
-  }, [onboardingId, form]);
+    return () => {
+      isMounted = false;
+    };
+  }, [form, resolvedOnboardingId, shouldPrefillOnboarding]);
 
   const handleSubmit = async (
     data: CreateMemberDetailsData,

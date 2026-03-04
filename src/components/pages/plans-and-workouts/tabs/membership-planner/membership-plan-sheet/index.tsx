@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -49,22 +49,44 @@ export function MembershipPlanSheet({
   onDelete,
   onSaveNew,
 }: PackageManageSheetProps) {
-  const [editedPlan, setEditedPlan] = useState<MembershipPlan>(
-    plan || DEFAULT_PLAN
+  const sheetInstanceKey = `${isOpen ? 'open' : 'closed'}-${plan?.membershipPlanId ?? 'new'}`;
+
+  return (
+    <MembershipPlanSheetInner
+      key={sheetInstanceKey}
+      plan={plan}
+      isOpen={isOpen}
+      closeSheet={closeSheet}
+      onUpdate={onUpdate}
+      onDelete={onDelete}
+      onSaveNew={onSaveNew}
+    />
   );
+}
+
+function MembershipPlanSheetInner({
+  plan,
+  isOpen,
+  closeSheet,
+  onUpdate,
+  onDelete,
+  onSaveNew,
+}: PackageManageSheetProps) {
+  const initialPlan = plan || DEFAULT_PLAN;
+  const [editedPlan, setEditedPlan] = useState<MembershipPlan>(initialPlan);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
-  const [isEditMode, setIsEditMode] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(!plan);
   const [isMemberListVisible, setIsMemberListVisible] = useState(false);
 
   const form = useForm<MembershipPlanFormData>({
     resolver: zodResolver(membershipPlanSchema),
     defaultValues: {
-      planName: '',
-      billingType: 'Recurring',
-      fee: '',
-      details: '',
-      durationInDays: '',
-      defaultSessionRate: undefined,
+      planName: initialPlan.planName,
+      billingType: initialPlan.billingType || 'Recurring',
+      fee: initialPlan.fee,
+      details: initialPlan.details,
+      durationInDays: initialPlan.durationInDays,
+      defaultSessionRate: initialPlan.defaultSessionRate,
     },
   });
 
@@ -79,25 +101,6 @@ export function MembershipPlanSheet({
   const planMembers = members.filter(
     (member) => member.workoutPlan === editedPlan.planName
   );
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const planData = plan || DEFAULT_PLAN;
-    setEditedPlan(planData);
-    setIsEditMode(!plan);
-    setSelectedDay(null);
-    setIsMemberListVisible(false);
-
-    form.reset({
-      planName: planData.planName,
-      billingType: planData.billingType || 'Recurring',
-      fee: planData.fee,
-      details: planData.details,
-      durationInDays: planData.durationInDays,
-      defaultSessionRate: planData.defaultSessionRate,
-    });
-  }, [plan, isOpen, form]);
 
   const handleSavePlan = async (data: MembershipPlanFormData) => {
     const updatedPlan: MembershipPlan = {
@@ -142,7 +145,7 @@ export function MembershipPlanSheet({
     if (!plan) {
       closeSheet();
     } else {
-      setEditedPlan(plan);
+      setEditedPlan(initialPlan);
       setIsEditMode(false);
     }
   };
@@ -177,7 +180,7 @@ export function MembershipPlanSheet({
             size="sm"
             className="mr-2"
             onClick={() => {
-              setEditedPlan(plan || DEFAULT_PLAN);
+              setEditedPlan(initialPlan);
               setSelectedDay(null);
             }}
           >
@@ -202,7 +205,7 @@ export function MembershipPlanSheet({
           <Button
             type="button"
             onClick={() => {
-              setEditedPlan(plan || DEFAULT_PLAN);
+              setEditedPlan(initialPlan);
               setSelectedDay(null);
             }}
             variant="secondary"
