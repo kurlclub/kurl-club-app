@@ -94,6 +94,7 @@ export const GymBranchProvider: React.FC<{ children: React.ReactNode }> = ({
 
     if (user === null) {
       localStorage.removeItem('gymBranch');
+      localStorage.removeItem('gymDetails'); // Also clear gym details when user is null
     }
   }, [gymBranch, user]);
 
