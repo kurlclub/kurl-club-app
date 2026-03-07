@@ -39,6 +39,7 @@ interface KDatePickerProps extends React.HTMLAttributes<HTMLDivElement> {
   className?: string;
   icon?: React.ReactNode;
   disabled?: DayPickerProps['disabled'];
+  disabledDates?: (date: Date) => boolean;
 }
 
 export function KDatePicker({
@@ -66,6 +67,7 @@ export function KDatePicker({
   mode = 'range',
   icon = <CalendarDays className="text-primary-green-100" />,
   disabled,
+  disabledDates,
 }: KDatePickerProps) {
   const [rangeDate, setRangeDate] = React.useState<DateRange | undefined>(
     mode === 'range' ? (value as DateRange) : undefined
@@ -152,6 +154,18 @@ export function KDatePicker({
   };
 
   const renderCalendar = () => {
+    // Merge disabledDates with the existing disabled prop
+    let mergedDisabled = disabled;
+    if (disabledDates) {
+      if (disabled && typeof disabled === 'function') {
+        mergedDisabled = (date: Date) => {
+          return disabled(date) || disabledDates(date);
+        };
+      } else {
+        mergedDisabled = disabledDates;
+      }
+    }
+
     const commonProps = {
       initialFocus: true,
       classNames: { day_selected: 'selected-date' },
@@ -161,7 +175,7 @@ export function KDatePicker({
       month: viewDate,
       onMonthChange: setViewDate,
       formatDay: formatDayWithLeadingZero,
-      disabled,
+      disabled: mergedDisabled,
     };
 
     if (mode === 'range') {

@@ -94,6 +94,11 @@ export function useMemberDetails(
           formKey = 'workoutPlanId';
         }
 
+        // Skip DOB if it's null, undefined, empty, or "N/A"
+        if (formKey === 'dob' && (!value || value === 'N/A')) {
+          continue;
+        }
+
         if (value !== undefined && value !== null) {
           formData.append(formKey, String(value));
         }
