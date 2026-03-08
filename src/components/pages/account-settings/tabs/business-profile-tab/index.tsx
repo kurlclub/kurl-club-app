@@ -60,7 +60,8 @@ const parseSocialLinks = (socialLinks?: string | null) => {
 const transformToApiData = (
   data: BusinessProfile,
   gymId: number,
-  socialLinks: string
+  socialLinks: string,
+  existingPhoto: string | null = null
 ) => ({
   Id: gymId,
   GymName: data.GymName,
@@ -68,18 +69,24 @@ const transformToApiData = (
   ContactNumber1: data.Phone,
   Email: data.Email,
   SocialLinks: socialLinks,
-  ProfilePicture: data.ProfilePicture,
+  ProfilePicture: data.ProfilePicture ?? existingPhoto ?? '',
 });
 
 const createFormData = (apiData: Record<string, unknown>) => {
   const formData = new FormData();
+
   Object.entries(apiData).forEach(([key, value]) => {
-    if (key === 'ProfilePicture' && value instanceof File) {
-      formData.append(key, value);
+    if (key === 'ProfilePicture') {
+      if (value instanceof File) {
+        formData.append(key, value);
+      } else if (typeof value === 'string' && value) {
+        formData.append('PhotoPath', value);
+      }
     } else if (value !== null && value !== undefined) {
       formData.append(key, String(value));
     }
   });
+
   return formData;
 };
 
@@ -205,7 +212,12 @@ export function BusinessProfileTab() {
           .map((link: { url: string }) => link.url)
           .join(',') || '';
 
-      const apiData = transformToApiData(data, gymDetails.id, validSocialLinks);
+      const apiData = transformToApiData(
+        data,
+        gymDetails.id,
+        validSocialLinks,
+        profilePictureUrl
+      );
       const formData = createFormData(apiData);
       await updateGym({ gymId: gymDetails.id, data: formData });
       form.reset(data);
@@ -234,7 +246,8 @@ export function BusinessProfileTab() {
       const apiData = transformToApiData(
         currentData,
         gymDetails.id,
-        validSocialLinks
+        validSocialLinks,
+        profilePictureUrl
       );
       const formData = createFormData(apiData);
       await updateGym({ gymId: gymDetails.id, data: formData });
