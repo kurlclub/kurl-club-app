@@ -141,7 +141,6 @@ export default function ProfilePictureUploader({
         src={image}
         onDelete={handleDelete}
         onReupload={handleReupload}
-        readonly
       />
     </div>
   );

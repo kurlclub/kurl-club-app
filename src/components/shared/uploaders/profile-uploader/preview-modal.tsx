@@ -16,7 +16,6 @@ export default function PreviewModal({
   isOpen,
   onClose,
   src,
-  onDelete,
   onReupload,
   readonly = false,
 }: PreviewModalProps) {
@@ -25,9 +24,9 @@ export default function PreviewModal({
       footer={
         readonly ? undefined : (
           <div className="flex items-center gap-2 w-full">
-            <Button variant="destructive" onClick={onDelete} className="flex-1">
+            {/* <Button variant="destructive" onClick={onDelete} className="flex-1">
               Delete
-            </Button>
+            </Button> */}
             <Button onClick={onReupload} className="flex-1">
               Re-upload
             </Button>
@@ -37,7 +36,7 @@ export default function PreviewModal({
       open={isOpen}
       onOpenChange={onClose}
       title="Profile Picture"
-      className="max-w-[400px]"
+      className="max-w-100"
     >
       {src && (
         <div className="flex items-center justify-center py-4">
