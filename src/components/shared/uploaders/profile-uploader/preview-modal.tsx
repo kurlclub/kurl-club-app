@@ -16,7 +16,6 @@ export default function PreviewModal({
   isOpen,
   onClose,
   src,
-  onDelete,
   onReupload,
   readonly = false,
 }: PreviewModalProps) {
@@ -37,7 +36,7 @@ export default function PreviewModal({
       open={isOpen}
       onOpenChange={onClose}
       title="Profile Picture"
-      className="max-w-[400px]"
+      className="max-w-100"
     >
       {src && (
         <div className="flex items-center justify-center py-4">
