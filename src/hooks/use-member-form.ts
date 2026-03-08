@@ -232,6 +232,12 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
           queryKey: ['pendingOnboardingMembers', gymId],
         });
       }
+      // also refresh dashboard cards (members count, signups, etc.)
+      if (gymId) {
+        await queryClient.invalidateQueries({
+          queryKey: ['dashboardData', gymId],
+        });
+      }
       return true;
     } else {
       toast.error(result.error);

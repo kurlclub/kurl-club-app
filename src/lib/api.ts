@@ -70,6 +70,7 @@ const refreshAccessToken = async (): Promise<string | null> => {
 
       const data = await response.json();
       const newAccessToken = data?.data?.accessToken;
+      const newRefreshToken = data?.data?.refreshToken;
 
       if (!newAccessToken || typeof newAccessToken !== 'string') {
         clearStorage();
@@ -78,6 +79,11 @@ const refreshAccessToken = async (): Promise<string | null> => {
       }
 
       setStorageItem('accessToken', newAccessToken);
+
+      // Server uses rotating refresh tokens — MUST save the new one or next refresh fails
+      if (newRefreshToken && typeof newRefreshToken === 'string') {
+        setStorageItem('refreshToken', newRefreshToken);
+      }
 
       // Update cookie
       if (typeof document !== 'undefined') {
