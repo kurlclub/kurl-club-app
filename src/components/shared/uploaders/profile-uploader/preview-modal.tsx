@@ -25,9 +25,9 @@ export default function PreviewModal({
       footer={
         readonly ? undefined : (
           <div className="flex items-center gap-2 w-full">
-            <Button variant="destructive" onClick={onDelete} className="flex-1">
+            {/* <Button variant="destructive" onClick={onDelete} className="flex-1">
               Delete
-            </Button>
+            </Button> */}
             <Button onClick={onReupload} className="flex-1">
               Re-upload
             </Button>
