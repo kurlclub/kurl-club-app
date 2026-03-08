@@ -11,9 +11,9 @@ import { ThemeProvider } from '@/providers/theme-provider';
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
     <QueryProvider>
-      <AuthProvider>
-        <GymBranchProvider>
-          <DialogProvider>
+      <DialogProvider>
+        <AuthProvider>
+          <GymBranchProvider>
             <ThemeProvider
               attribute="class"
               defaultTheme="dark"
@@ -23,9 +23,9 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
               <Toaster richColors position="top-right" />
               {children}
             </ThemeProvider>
-          </DialogProvider>
-        </GymBranchProvider>
-      </AuthProvider>
+          </GymBranchProvider>
+        </AuthProvider>
+      </DialogProvider>
     </QueryProvider>
   );
 }

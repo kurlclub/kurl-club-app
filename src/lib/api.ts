@@ -40,7 +40,7 @@ const redirectToLogin = (): void => {
   window.location.href = '/auth/login';
 };
 
-const refreshAccessToken = async (): Promise<string | null> => {
+export const refreshAccessToken = async (): Promise<string | null> => {
   if (isRefreshing && refreshPromise) {
     return refreshPromise;
   }

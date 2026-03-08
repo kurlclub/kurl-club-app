@@ -3,7 +3,9 @@
 import { useRouter } from 'next/navigation';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
+import { refreshAccessToken } from '@/lib/api';
 import { decrypt, encrypt } from '@/lib/crypto';
+import { useDialog } from '@/providers/dialog-context';
 import {
   getUserByUid,
   login,
@@ -51,13 +53,37 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const SESSION_WARNING_MS = 2 * 60 * 1000;
+const SESSION_CHECK_INTERVAL_MS = 30 * 1000;
+
+const getTokenExpiryMs = (token: string): number | null => {
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) return null;
+
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const paddedBase64 = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
+    const decoded = atob(paddedBase64);
+    const parsed = JSON.parse(decoded) as { exp?: number };
+
+    if (!parsed.exp || typeof parsed.exp !== 'number') return null;
+    return parsed.exp * 1000;
+  } catch {
+    return null;
+  }
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<AppUser | null>(null);
   const [gymDetails, setGymDetails] = useState<GymDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSessionRefreshInProgress, setIsSessionRefreshInProgress] =
+    useState(false);
   const router = useRouter();
+  const { openDialog } = useDialog();
+  const hasPromptedSessionRef = React.useRef(false);
 
   // Load cached user on mount
   useEffect(() => {
@@ -228,6 +254,63 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setGymDetails(null);
     router.push('/auth/login');
   };
+
+  useEffect(() => {
+    if (isLoading || !user) return;
+
+    const evaluateSessionState = () => {
+      if (hasPromptedSessionRef.current || isSessionRefreshInProgress) {
+        return;
+      }
+
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+
+      const expiresAt = getTokenExpiryMs(token);
+      if (!expiresAt) return;
+
+      const remainingMs = expiresAt - Date.now();
+      if (remainingMs > SESSION_WARNING_MS) {
+        return;
+      }
+
+      hasPromptedSessionRef.current = true;
+      openDialog({
+        title: 'Session Expired',
+        description:
+          'Your session is about to expire. Do you want to stay signed in?',
+        confirmLabel: 'Stay Signed In',
+        cancelLabel: 'Logout',
+        loadingLabel: 'Refreshing session...',
+        onConfirm: async () => {
+          try {
+            setIsSessionRefreshInProgress(true);
+            const nextToken = await refreshAccessToken();
+            if (!nextToken) {
+              handleLogout();
+              return;
+            }
+            hasPromptedSessionRef.current = false;
+          } finally {
+            setIsSessionRefreshInProgress(false);
+          }
+        },
+        onCancel: () => {
+          handleLogout();
+        },
+      });
+    };
+
+    evaluateSessionState();
+    const intervalId = window.setInterval(
+      evaluateSessionState,
+      SESSION_CHECK_INTERVAL_MS
+    );
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [isLoading, isSessionRefreshInProgress, openDialog, user]);
 
   const handleSwitchClub = async (gymId: number) => {
     if (!user?.uid) {
