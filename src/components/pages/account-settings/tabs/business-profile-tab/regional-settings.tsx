@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Globe } from 'lucide-react';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
 import {
@@ -16,61 +18,104 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  COUNTRY_CODES,
+  CURRENCIES,
+  REGIONS,
+} from '@/lib/constants/regional-options';
+import { getGymCurrencyRegion, updateGymCurrencyRegion } from '@/services/gym';
 
 const regionalSettingsSchema = z.object({
   currency: z.string().min(1, 'Currency is required'),
-  timezone: z.string().min(1, 'Timezone is required'),
-  dateFormat: z.string().min(1, 'Date format is required'),
-  numberFormat: z.string().min(1, 'Number format is required'),
+  region: z.string().min(1, 'Region is required'),
+  countryCode: z.string().min(1, 'Country code is required'),
 });
 
 type RegionalSettingsForm = z.infer<typeof regionalSettingsSchema>;
 
-const CURRENCIES = [
-  { label: '₹ Indian Rupee (INR)', value: 'INR' },
-  { label: '$ US Dollar (USD)', value: 'USD' },
-  { label: '€ Euro (EUR)', value: 'EUR' },
-  { label: '£ British Pound (GBP)', value: 'GBP' },
-  { label: '$ Australian Dollar (AUD)', value: 'AUD' },
-  { label: '$ Canadian Dollar (CAD)', value: 'CAD' },
-  { label: '¥ Japanese Yen (JPY)', value: 'JPY' },
-  { label: 'د.إ UAE Dirham (AED)', value: 'AED' },
-];
+interface RegionalSettingsProps {
+  gymId?: number;
+}
 
-const TIMEZONES = [
-  { label: 'Asia/Kolkata (IST)', value: 'Asia/Kolkata' },
-  { label: 'America/New_York (EST)', value: 'America/New_York' },
-  { label: 'Europe/London (GMT)', value: 'Europe/London' },
-  { label: 'Asia/Dubai (GST)', value: 'Asia/Dubai' },
-  { label: 'Australia/Sydney (AEST)', value: 'Australia/Sydney' },
-];
+export default function RegionalSettings({ gymId }: RegionalSettingsProps) {
+  const [isPrefilling, setIsPrefilling] = useState(false);
 
-const DATE_FORMATS = [
-  { label: 'DD/MM/YYYY (31/12/2025)', value: 'DD/MM/YYYY' },
-  { label: 'MM/DD/YYYY (12/31/2025)', value: 'MM/DD/YYYY' },
-  { label: 'YYYY-MM-DD (2025-12-31)', value: 'YYYY-MM-DD' },
-];
-
-const NUMBER_FORMATS = [
-  { label: '1,234.56 (Comma separator)', value: 'en-US' },
-  { label: '1.234,56 (Dot separator)', value: 'de-DE' },
-  { label: '1 234,56 (Space separator)', value: 'fr-FR' },
-];
-
-export default function RegionalSettings() {
   const form = useForm<RegionalSettingsForm>({
     resolver: zodResolver(regionalSettingsSchema),
     defaultValues: {
       currency: 'INR',
-      timezone: 'Asia/Kolkata',
-      dateFormat: 'DD/MM/YYYY',
-      numberFormat: 'en-US',
+      region: 'IND',
+      countryCode: '+91',
     },
   });
 
+  const isSaving = form.formState.isSubmitting;
+
+  useEffect(() => {
+    if (!gymId) {
+      form.reset({
+        currency: 'INR',
+        region: 'IND',
+        countryCode: '+91',
+      });
+      return;
+    }
+
+    let isMounted = true;
+
+    const loadRegionalSettings = async () => {
+      setIsPrefilling(true);
+      try {
+        const data = await getGymCurrencyRegion(gymId);
+        if (!isMounted) return;
+
+        form.reset({
+          currency: data.currency,
+          region: data.region,
+          countryCode: data.countryCode,
+        });
+      } catch (error) {
+        if (!isMounted) return;
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : 'Failed to load currency and regional settings'
+        );
+      } finally {
+        if (isMounted) setIsPrefilling(false);
+      }
+    };
+
+    loadRegionalSettings();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [gymId, form]);
+
   const onSubmit = async (data: RegionalSettingsForm) => {
-    console.log('Regional settings:', data);
-    // TODO: Implement API call
+    if (!gymId) {
+      toast.error('No gym selected');
+      return;
+    }
+
+    try {
+      const result = await updateGymCurrencyRegion(gymId, data);
+      if (result.data) {
+        form.reset({
+          currency: result.data.currency,
+          region: result.data.region,
+          countryCode: result.data.countryCode,
+        });
+      }
+      toast.success(result.success);
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to update currency and regional settings'
+      );
+    }
   };
 
   const isDirty = form.formState.isDirty;
@@ -97,6 +142,7 @@ export default function RegionalSettings() {
                 variant="outline"
                 size="sm"
                 onClick={() => form.reset()}
+                disabled={isSaving || isPrefilling}
               >
                 Discard
               </Button>
@@ -104,8 +150,9 @@ export default function RegionalSettings() {
                 type="button"
                 size="sm"
                 onClick={form.handleSubmit(onSubmit)}
+                disabled={isSaving || isPrefilling || !gymId}
               >
-                Save Changes
+                {isSaving ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
           )}
@@ -126,25 +173,17 @@ export default function RegionalSettings() {
               <KFormField
                 fieldType={KFormFieldType.SELECT}
                 control={form.control}
-                name="timezone"
-                label="Timezone"
-                options={TIMEZONES}
+                name="region"
+                label="Region"
+                options={REGIONS}
                 className="bg-gray-50 dark:bg-primary-blue-400"
               />
               <KFormField
                 fieldType={KFormFieldType.SELECT}
                 control={form.control}
-                name="dateFormat"
-                label="Date Format"
-                options={DATE_FORMATS}
-                className="bg-gray-50 dark:bg-primary-blue-400"
-              />
-              <KFormField
-                fieldType={KFormFieldType.SELECT}
-                control={form.control}
-                name="numberFormat"
-                label="Number Format"
-                options={NUMBER_FORMATS}
+                name="countryCode"
+                label="Country Code"
+                options={COUNTRY_CODES}
                 className="bg-gray-50 dark:bg-primary-blue-400"
               />
             </div>

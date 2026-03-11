@@ -6,6 +6,7 @@ import * as React from 'react';
 import {
   BarChart3,
   Calendar,
+  ChartColumnIncreasing,
   CreditCard,
   Dumbbell,
   type LucideIcon,
@@ -99,6 +100,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: 'Plans & Workouts',
       url: '/plans-and-workouts',
       icon: Dumbbell,
+    },
+    {
+      title: 'Reports & expenses',
+      url: '/reports-and-expenses',
+      icon: ChartColumnIncreasing,
     },
     {
       title: 'Settings',
