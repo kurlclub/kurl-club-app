@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import ExpenseList from './expense-list';
 import NetProfitBanner from './net-profit-banner';
 import ProfitChart from './profit-chart';
+import RevenueChart from './revenue-chart';
 
 const ReportsAndExpenses = () => {
   return (
@@ -22,6 +23,7 @@ const ReportsAndExpenses = () => {
         <div className="flex flex-col gap-6 w-full">
           <NetProfitBanner />
           <ProfitChart />
+          <RevenueChart />
         </div>
         <ExpenseList />
       </div>

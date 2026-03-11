@@ -145,7 +145,7 @@ const ExpenseList = () => {
   );
 
   return (
-    <div className="p-5 rounded-lg border border-secondary-blue-500 bg-secondary-blue-500 flex flex-col gap-6 w-full max-w-[400px] sticky top-0 max-h-[calc(100vh-210px)] overflow-y-auto">
+    <div className="p-5 rounded-lg border border-secondary-blue-500 bg-secondary-blue-500 flex flex-col gap-6 w-full max-w-[400px] sticky top-[70px] max-h-[calc(100vh-100px)] overflow-y-auto">
       {sortedDates.map((date) => (
         <div key={date} className="flex flex-col gap-4">
           <span className="font-medium text-[18px]">
