@@ -18,6 +18,11 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  COUNTRY_CODES,
+  CURRENCIES,
+  REGIONS,
+} from '@/lib/constants/regional-options';
 import { getGymCurrencyRegion, updateGymCurrencyRegion } from '@/services/gym';
 
 const regionalSettingsSchema = z.object({
@@ -27,36 +32,6 @@ const regionalSettingsSchema = z.object({
 });
 
 type RegionalSettingsForm = z.infer<typeof regionalSettingsSchema>;
-
-const CURRENCIES = [
-  { label: '₹ Indian Rupee (INR)', value: 'INR' },
-  { label: '$ US Dollar (USD)', value: 'USD' },
-  { label: '€ Euro (EUR)', value: 'EUR' },
-  { label: '£ British Pound (GBP)', value: 'GBP' },
-  { label: '$ Australian Dollar (AUD)', value: 'AUD' },
-  { label: '$ Canadian Dollar (CAD)', value: 'CAD' },
-  { label: '¥ Japanese Yen (JPY)', value: 'JPY' },
-  { label: 'د.إ UAE Dirham (AED)', value: 'AED' },
-];
-
-const REGIONS = [
-  { label: 'India (IND)', value: 'IND' },
-  { label: 'United States (USA)', value: 'USA' },
-  { label: 'United Kingdom (GBR)', value: 'GBR' },
-  { label: 'United Arab Emirates (ARE)', value: 'ARE' },
-  { label: 'Australia (AUS)', value: 'AUS' },
-  { label: 'Canada (CAN)', value: 'CAN' },
-  { label: 'Japan (JPN)', value: 'JPN' },
-];
-
-const COUNTRY_CODES = [
-  { label: 'India (+91)', value: '+91' },
-  { label: 'United States (+1)', value: '+1' },
-  { label: 'United Kingdom (+44)', value: '+44' },
-  { label: 'United Arab Emirates (+971)', value: '+971' },
-  { label: 'Australia (+61)', value: '+61' },
-  { label: 'Japan (+81)', value: '+81' },
-];
 
 interface RegionalSettingsProps {
   gymId?: number;
