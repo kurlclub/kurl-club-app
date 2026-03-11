@@ -473,7 +473,7 @@ export function BusinessProfileTab() {
         </Card>
 
         {/* Regional Settings */}
-        <RegionalSettings />
+        <RegionalSettings gymId={gymDetails?.id} />
       </div>
     </FormProvider>
   );

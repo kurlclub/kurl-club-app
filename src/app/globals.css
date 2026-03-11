@@ -132,6 +132,8 @@
   --color-background-light: #ffffff;
   --color-background-dark: #11141c;
 
+  --color-card-bg: #212633;
+
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
   --animate-caret-blink: caret-blink 1.25s ease-out infinite;

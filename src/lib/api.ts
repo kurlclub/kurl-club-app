@@ -177,12 +177,20 @@ const baseFetch: typeof fetch = async (url, options = {}) => {
 
   if (!response.ok) {
     let errorMessage = 'Unknown API error';
+    let errorPayload:
+      | {
+          status?: string;
+          message?: string;
+          feature?: string;
+        }
+      | undefined;
 
     try {
       const responseText = await response.text();
       if (responseText) {
         try {
           const error = JSON.parse(responseText);
+          errorPayload = error;
           errorMessage = error.message || errorMessage;
         } catch {
           errorMessage = responseText;
@@ -194,8 +202,16 @@ const baseFetch: typeof fetch = async (url, options = {}) => {
 
     const error = new Error(errorMessage) as Error & {
       response: { status: number };
+      status?: string;
+      feature?: string;
     };
     error.response = { status: response.status };
+    if (errorPayload?.status) {
+      error.status = errorPayload.status;
+    }
+    if (errorPayload?.feature) {
+      error.feature = errorPayload.feature;
+    }
     throw error;
   }
 

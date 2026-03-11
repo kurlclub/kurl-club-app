@@ -47,6 +47,7 @@ export const fetchGymMembers = async (
   if (filters?.feeStatus) params.append('feeStatus', filters.feeStatus);
   if (filters?.package) params.append('package', filters.package);
   if (filters?.gender) params.append('gender', filters.gender);
+  if (filters?.trainer) params.append('trainer', filters.trainer.toString());
   if (filters?.sortBy) params.append('sortBy', filters.sortBy);
   if (filters?.sortOrder) params.append('sortOrder', filters.sortOrder);
 
@@ -56,6 +57,35 @@ export const fetchGymMembers = async (
     data: response.data,
     pagination: response.pagination,
     availableFilters: response.availableFilters,
+  };
+};
+
+const fetchAllGymMembersByFilters = async (
+  gymId: number | string,
+  filters?: MemberFilters
+) => {
+  const pageSize = filters?.pageSize ?? 100;
+  let page = 1;
+  let hasNextPage = true;
+  const allMembers: MemberListItem[] = [];
+  let availableFilters: PaginatedMembers['availableFilters'] | undefined;
+
+  while (hasNextPage) {
+    const response = await fetchGymMembers(gymId, {
+      ...filters,
+      page,
+      pageSize,
+    });
+
+    allMembers.push(...response.data);
+    availableFilters = response.availableFilters;
+    hasNextPage = response.pagination.hasNextPage;
+    page += 1;
+  }
+
+  return {
+    data: allMembers,
+    availableFilters,
   };
 };
 
@@ -93,19 +123,37 @@ export const useTrainerAssignedMembers = (
   trainerId: number,
   filters?: MemberFilters
 ) => {
+  const currentPage = filters?.page ?? 1;
+  const pageSize = filters?.pageSize ?? 10;
+
   return useQuery({
     queryKey: ['trainerAssignedMembers', gymId, trainerId, filters],
     queryFn: async () => {
-      const response = await fetchGymMembers(gymId, filters);
+      const response = await fetchAllGymMembersByFilters(gymId, {
+        ...filters,
+        trainer: trainerId,
+      });
+
+      const assignedMembers = response.data.filter(
+        (member) => member.assignedTrainer === trainerId
+      );
+      const totalCount = assignedMembers.length;
+      const totalPages =
+        totalCount === 0 ? 0 : Math.ceil(totalCount / pageSize);
+      const normalizedPage =
+        totalPages === 0 ? 1 : Math.min(Math.max(currentPage, 1), totalPages);
+      const startIndex = (normalizedPage - 1) * pageSize;
+      const endIndex = startIndex + pageSize;
+
       return {
-        data: response.data.filter(
-          (member) => member.assignedTrainer === trainerId
-        ),
+        data: assignedMembers.slice(startIndex, endIndex),
         pagination: {
-          ...response.pagination,
-          totalCount: response.data.filter(
-            (member) => member.assignedTrainer === trainerId
-          ).length,
+          totalCount,
+          currentPage: normalizedPage,
+          pageSize,
+          totalPages,
+          hasPreviousPage: normalizedPage > 1,
+          hasNextPage: totalPages > 0 && normalizedPage < totalPages,
         },
         availableFilters: response.availableFilters,
       };
