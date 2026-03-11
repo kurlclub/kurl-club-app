@@ -16,10 +16,17 @@ interface KDateInputProps extends Omit<
 const KDateInput = forwardRef<HTMLInputElement, KDateInputProps>(
   ({ className, label, onChange, value, size = 'default', ...props }, ref) => {
     const [isFocused, setIsFocused] = useState(false);
+    const ISO_DATE_OR_DATETIME_PATTERN = /^\d{4}-\d{2}-\d{2}(?:[T\s].*)?$/;
 
     // Convert ISO date string to DD/MM/YYYY format
     const formatISOToDisplay = (isoString: string) => {
       if (!isoString) return '';
+      const dateOnlyMatch = isoString.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (dateOnlyMatch) {
+        const [, year, month, day] = dateOnlyMatch;
+        return `${day}/${month}/${year}`;
+      }
+
       try {
         const date = safeParseDate(isoString);
         if (!date) return '';
@@ -66,7 +73,7 @@ const KDateInput = forwardRef<HTMLInputElement, KDateInputProps>(
 
     // Get display value from form value
     const displayValue =
-      typeof value === 'string' && value.includes('T')
+      typeof value === 'string' && ISO_DATE_OR_DATETIME_PATTERN.test(value)
         ? formatISOToDisplay(value)
         : (value as string) || '';
 
@@ -87,9 +94,12 @@ const KDateInput = forwardRef<HTMLInputElement, KDateInputProps>(
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const formatted = formatDateInput(e.target.value);
 
-      // Convert to ISO format if complete date (DD/MM/YYYY)
+      // Convert to ISO only when the date is complete and valid.
+      // Keep the typed value for partial/invalid states to avoid abrupt clearing.
       const valueToSend =
-        formatted.length === 10 ? formatDisplayToISO(formatted) : formatted;
+        formatted.length === 10
+          ? formatDisplayToISO(formatted) || formatted
+          : formatted;
 
       // Create a new event with the appropriate value
       const newEvent = {

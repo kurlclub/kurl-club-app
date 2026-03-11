@@ -475,6 +475,7 @@ export interface MemberQueryFilters {
   feeStatus?: string;
   package?: string;
   gender?: string;
+  trainer?: number;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }
