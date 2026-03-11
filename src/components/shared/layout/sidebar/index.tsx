@@ -13,6 +13,7 @@ import {
   Settings,
   UserCheck,
   Users,
+  Wallet,
 } from 'lucide-react';
 
 import { NavMain } from '@/components/shared/layout/sidebar/nav-main';
@@ -114,6 +115,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       url: '/reports-and-expenses',
       icon: ChartColumnIncreasing,
       requiredFeature: 'basicReports',
+    },
+    {
+      title: 'Payroll management',
+      url: '/payroll-management',
+      icon: Wallet,
     },
     {
       title: 'Settings',
