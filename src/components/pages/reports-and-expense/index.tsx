@@ -6,8 +6,8 @@ import { useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Crown, Sparkles } from 'lucide-react';
-import { Plus } from 'lucide-react';
+import { Crown, Download, Loader2, Plus, Sparkles } from 'lucide-react';
+import { toast } from 'sonner';
 import { z } from 'zod/v4';
 
 import {
@@ -29,14 +29,19 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useSheet } from '@/hooks/use-sheet';
 import { toUtcDateOnlyISOString } from '@/lib/utils';
 import { useGymBranch } from '@/providers/gym-branch-provider';
-import { ReportAccessError, useReportsAndExpenses } from '@/services/report';
+import {
+  ReportAccessError,
+  reportService,
+  useReportsAndExpenses,
+} from '@/services/report';
+import { Expense } from '@/services/revenue';
 import { ReportsAndExpensesData } from '@/types/reports-and-expenses';
 
-import AddExpense from './add-expense';
-import ExpenseList from './expense-list';
-import NetProfitBanner from './net-profit-banner';
-import ProfitChart from './profit-chart';
-import RevenueChart from './revenue-chart';
+import AddExpense from './expenses/add-expense';
+import ExpenseTracker from './expenses/expense-tracker';
+import NetProfitBanner from './reports/net-profit-banner';
+import ProfitChart from './reports/profit-chart';
+import RevenueChart from './reports/revenue-chart';
 
 const previewReport: ReportsAndExpensesData = {
   currentMemberCollections: 194717,
@@ -78,6 +83,103 @@ interface LockedReportsStateProps {
   message: string;
 }
 
+const previewExpensesByDate = [
+  {
+    date: 'Feb 26',
+    items: [
+      {
+        title: 'Communications',
+        notes: 'Salary payment for Veera...',
+        amount: '+₹200',
+        time: '1:33 PM',
+      },
+      {
+        title: 'Sales',
+        notes: 'Commission for product sale...',
+        amount: '-₹250',
+        time: '1:33 PM',
+      },
+      {
+        title: 'Refund',
+        notes: 'Customer refund processed',
+        amount: '+₹150',
+        time: '2:10 PM',
+      },
+    ],
+  },
+  {
+    date: 'Feb 12',
+    items: [
+      {
+        title: 'Marketing',
+        notes: 'Digital marketing campaign',
+        amount: '-₹300',
+        time: '3:00 PM',
+      },
+      {
+        title: 'Subscription',
+        notes: 'Monthly subscription fee',
+        amount: '-₹100',
+        time: '5:00 PM',
+      },
+    ],
+  },
+];
+
+const PreviewExpenseSidebar = () => (
+  <aside className="rounded-lg border border-secondary-blue-500 bg-secondary-blue-500 p-5 w-full xl:max-w-100 xl:sticky xl:top-17.5 xl:h-[calc(100vh-180px)] overflow-hidden flex flex-col">
+    <h3 className="text-[28px] leading-none font-semibold text-white">
+      Expenses
+    </h3>
+    <div className="mt-4 flex-1 min-h-0 space-y-5 overflow-y-auto pr-1">
+      {previewExpensesByDate.map((section) => (
+        <div key={section.date} className="space-y-3">
+          <h4 className="text-[32px] leading-none font-semibold text-white">
+            {section.date}
+          </h4>
+          <div className="space-y-2">
+            {section.items.map((item, index) => (
+              <div
+                key={`${item.title}-${index}`}
+                className="flex items-center justify-between gap-2 rounded-lg border border-primary-blue-400/40 bg-primary-blue-400/15 px-3 py-2"
+              >
+                <div className="min-w-0 flex items-center gap-2.5">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-green-500 text-[11px] font-semibold text-[#0A1020]">
+                    ₹
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-base font-medium text-white">
+                      {item.title}
+                    </p>
+                    <p className="truncate text-sm text-primary-blue-100">
+                      {item.notes}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <div
+                    className={`text-base font-semibold ${
+                      item.amount.startsWith('-')
+                        ? 'text-alert-red-400'
+                        : 'text-[#6BC160]'
+                    }`}
+                  >
+                    {item.amount}
+                  </div>
+                  <p className="text-[11px] text-primary-blue-100">
+                    {item.time}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </aside>
+);
+
 const LockedReportsState = ({ message }: LockedReportsStateProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(true);
   const router = useRouter();
@@ -92,10 +194,7 @@ const LockedReportsState = ({ message }: LockedReportsStateProps) => {
               <ProfitChart report={previewReport} />
               <RevenueChart report={previewReport} />
             </div>
-            <ExpenseList
-              expenseBreakdown={previewReport.expenseBreakdown}
-              totalExpenses={previewReport.totalExpenses}
-            />
+            <PreviewExpenseSidebar />
           </div>
         </div>
       </div>
@@ -149,10 +248,21 @@ const LockedReportsState = ({ message }: LockedReportsStateProps) => {
 const ReportsAndExpenses = () => {
   const { isOpen, openSheet, closeSheet } = useSheet();
   const { gymBranch } = useGymBranch();
+  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
+  const [isDownloadingReport, setIsDownloadingReport] = useState(false);
+  const defaultFromDate = useMemo(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  }, []);
+  const defaultToDate = useMemo(() => new Date(), []);
+
   const form = useForm<z.infer<typeof ReportsDateRangeSchema>>({
     resolver: zodResolver(ReportsDateRangeSchema),
     defaultValues: {
-      dateRange: undefined,
+      dateRange: {
+        from: defaultFromDate,
+        to: defaultToDate,
+      },
     },
   });
   const watchedDateRange = useWatch({
@@ -160,16 +270,15 @@ const ReportsAndExpenses = () => {
     name: 'dateRange',
   });
   const dateRange = useMemo(() => {
-    if (!watchedDateRange?.from || !watchedDateRange?.to) {
-      return { fromDate: undefined, toDate: undefined };
-    }
-
     return {
-      fromDate: toUtcDateOnlyISOString(watchedDateRange.from),
-      toDate: toUtcDateOnlyISOString(watchedDateRange.to),
+      fromDate: toUtcDateOnlyISOString(
+        watchedDateRange?.from || defaultFromDate
+      ),
+      toDate: toUtcDateOnlyISOString(watchedDateRange?.to || defaultToDate),
     };
-  }, [watchedDateRange]);
-  const gymId = gymBranch?.gymId ?? 1;
+  }, [defaultFromDate, defaultToDate, watchedDateRange]);
+
+  const gymId = gymBranch?.gymId ?? 0;
   const {
     data: report,
     isLoading,
@@ -183,17 +292,76 @@ const ReportsAndExpenses = () => {
     /subscription plan|upgrade/i.test(accessError?.message ?? '');
   const lockedMessage =
     accessError?.message ?? 'Upgrade your subscription plan to unlock reports.';
+  const closeExpenseSheet = () => {
+    closeSheet();
+    setSelectedExpense(null);
+  };
 
-  const content = (() => {
+  const openAddExpenseSheet = () => {
+    setSelectedExpense(null);
+    openSheet();
+  };
+
+  const openEditExpenseSheet = (expense: Expense) => {
+    setSelectedExpense(expense);
+    openSheet();
+  };
+
+  const handleDownloadReport = async () => {
+    if (!gymId) {
+      toast.error('Please select a gym before downloading reports');
+      return;
+    }
+
+    setIsDownloadingReport(true);
+    try {
+      const { blob, filename } = await reportService.downloadCSV(
+        gymId,
+        dateRange.fromDate,
+        dateRange.toDate
+      );
+
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      URL.revokeObjectURL(url);
+      toast.success('Report downloaded successfully');
+    } catch (downloadError) {
+      toast.error(
+        downloadError instanceof Error
+          ? downloadError.message
+          : 'Failed to download report'
+      );
+    } finally {
+      setIsDownloadingReport(false);
+    }
+  };
+
+  const reportContent = (() => {
+    if (!gymId) {
+      return (
+        <div className="rounded-xl border border-primary-blue-400/60 bg-primary-blue-400/20 p-5 text-white">
+          <h3 className="text-lg font-medium">Select a gym branch</h3>
+          <p className="mt-1 text-sm text-primary-blue-100">
+            Choose a gym branch to load reports and expense analytics.
+          </p>
+        </div>
+      );
+    }
+
     if (isLoading) {
       return (
         <div className="flex flex-col xl:flex-row gap-8 w-full justify-between relative">
           <div className="flex flex-col gap-6 w-full">
-            <Skeleton className="h-[230px] w-full rounded-xl" />
-            <Skeleton className="h-[214px] w-full rounded-xl" />
-            <Skeleton className="h-[390px] w-full rounded-xl" />
+            <Skeleton className="h-57.5 w-full rounded-xl" />
+            <Skeleton className="h-53.5 w-full rounded-xl" />
+            <Skeleton className="h-97.5 w-full rounded-xl" />
           </div>
-          <Skeleton className="h-[560px] w-full xl:max-w-[400px] rounded-xl" />
+          <Skeleton className="h-140 w-full xl:max-w-100 rounded-xl" />
         </div>
       );
     }
@@ -221,13 +389,16 @@ const ReportsAndExpenses = () => {
           <ProfitChart report={report} />
           <RevenueChart report={report} />
         </div>
-        <ExpenseList
-          expenseBreakdown={report.expenseBreakdown}
-          totalExpenses={report.totalExpenses}
+        <ExpenseTracker
+          key={gymId}
+          gymId={gymId}
+          onEditExpense={openEditExpenseSheet}
         />
       </div>
     );
   })();
+
+  const content = reportContent;
 
   return (
     <StudioLayout
@@ -235,23 +406,44 @@ const ReportsAndExpenses = () => {
       headerActions={
         <>
           <Form {...form}>
-            <form className="min-w-[240px]">
+            <form className="min-w-60">
               <KFormField
                 fieldType={KFormFieldType.DATE_PICKER}
                 control={form.control}
                 name="dateRange"
                 label="Date Range"
                 numberOfMonths={2}
-                dateLabel="Last month"
+                dateLabel="This month"
                 showPresets
               />
             </form>
           </Form>
-          <Button className="h-10" onClick={openSheet}>
+          <Button
+            className="h-10"
+            variant="secondary"
+            onClick={handleDownloadReport}
+            disabled={isDownloadingReport || !gymId}
+          >
+            {isDownloadingReport ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            Download CSV
+          </Button>
+          <Button
+            className="h-10"
+            onClick={openAddExpenseSheet}
+            disabled={!gymId}
+          >
             <Plus className="h-4 w-4" />
             Add expenses
           </Button>
-          <AddExpense isOpen={isOpen} closeSheet={closeSheet} />
+          <AddExpense
+            isOpen={isOpen}
+            closeSheet={closeExpenseSheet}
+            expenseToEdit={selectedExpense}
+          />
         </>
       }
     >

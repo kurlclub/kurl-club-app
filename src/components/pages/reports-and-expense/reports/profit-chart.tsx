@@ -1,6 +1,8 @@
 import { ReportsAndExpensesData } from '@/types/reports-and-expenses';
 import { formatCurrency } from '@/utils/format-currency';
 
+import { isRevenueFlowEmpty } from './report-empty-state-utils';
+
 interface ProfitChartProps {
   report: ReportsAndExpensesData;
 }
@@ -11,24 +13,29 @@ const ProfitChart = ({ report }: ProfitChartProps) => {
       label: 'Memberships',
       value: report.revenueFlow.memberships,
       color: 'bg-secondary-yellow-500',
+      mutedColor: 'bg-[#7F879A]',
     },
     {
       label: 'Per session',
       value: report.revenueFlow.perSession,
       color: 'bg-secondary-pink-500',
+      mutedColor: 'bg-[#7F879A]',
     },
     {
       label: 'Other collections',
       value: report.revenueFlow.otherMemberCollections,
       color: 'bg-neutral-green-400',
+      mutedColor: 'bg-[#7F879A]',
     },
     {
       label: 'Other income',
       value: report.revenueFlow.otherIncome,
       color: 'bg-semantic-blue-300',
+      mutedColor: 'bg-[#7F879A]',
     },
   ];
   const total = data.reduce((acc, item) => acc + item.value, 0);
+  const isEmptyState = isRevenueFlowEmpty(report);
   const GAP = 1.5;
 
   return (
@@ -54,26 +61,33 @@ const ProfitChart = ({ report }: ProfitChartProps) => {
 
       <div className="relative w-full h-4 bg-muted rounded-full overflow-hidden mt-4">
         {data.map((item, index) => {
-          const percent = total ? (item.value / total) * 100 : 0;
+          const percent = total
+            ? (item.value / total) * 100
+            : 100 / data.length;
 
           const leftPercent = data
             .slice(0, index)
-            .reduce((acc, i) => acc + (total ? (i.value / total) * 100 : 0), 0);
+            .reduce(
+              (acc, i) =>
+                acc + (total ? (i.value / total) * 100 : 100 / data.length),
+              0
+            );
 
           const isFirst = index === 0;
           const isLast = index === data.length - 1;
+          const segmentColor = isEmptyState ? item.mutedColor : item.color;
 
           return (
             <div
               key={index}
-              className={`absolute top-0 h-full ${item.color}
+              className={`absolute top-0 h-full ${segmentColor}
         ${isFirst ? 'rounded-l-full' : ''}
         ${isLast ? 'rounded-r-full' : ''}
         ${!isFirst && !isLast ? 'rounded-none' : ''}
         `}
               style={{
                 left: `calc(${leftPercent}% + ${index * GAP}px)`,
-                width: total ? `calc(${percent}% - ${GAP}px)` : '0%',
+                width: `calc(${percent}% - ${GAP}px)`,
               }}
             />
           );
@@ -87,7 +101,11 @@ const ProfitChart = ({ report }: ProfitChartProps) => {
             className="bg-secondary-blue-700 rounded-lg p-2 flex flex-col gap-2"
           >
             <div className="flex items-center gap-2 text-[14px] leading-normal text-secondary-blue-200">
-              <span className={`w-3 h-3 rounded-[3px] ${item.color}`} />
+              <span
+                className={`w-3 h-3 rounded-[3px] ${
+                  isEmptyState ? item.mutedColor : item.color
+                }`}
+              />
               {item.label}
             </div>
 

@@ -87,6 +87,41 @@ export const fetchReportsAndExpenses = async (
   }
 };
 
+export const downloadReportCSV = async (
+  gymId: number,
+  fromDate: string,
+  toDate: string
+): Promise<{ blob: Blob; filename: string }> => {
+  const { blob, contentDisposition } = await api.get<{
+    blob: Blob;
+    contentDisposition: string | null;
+  }>('/Report/download-csv', {
+    params: {
+      gymId,
+      fromDate,
+      toDate,
+    },
+    responseType: 'blob',
+  });
+
+  let filename = `GymReport_${gymId}_${Date.now()}.csv`;
+
+  if (contentDisposition) {
+    const utf8Match = contentDisposition.match(
+      /filename\*=UTF-8''(.+?)(?:;|$)/
+    );
+    const regularMatch = contentDisposition.match(/filename=([^;]+)/);
+
+    if (utf8Match?.[1]) {
+      filename = decodeURIComponent(utf8Match[1]);
+    } else if (regularMatch?.[1]) {
+      filename = regularMatch[1].replace(/["']/g, '').trim();
+    }
+  }
+
+  return { blob, filename };
+};
+
 export const useReportsAndExpenses = (
   gymId: number | string,
   fromDate?: string,
@@ -99,4 +134,8 @@ export const useReportsAndExpenses = (
     staleTime: 1000 * 60 * 3,
     retry: 1,
   });
+};
+
+export const reportService = {
+  downloadCSV: downloadReportCSV,
 };
