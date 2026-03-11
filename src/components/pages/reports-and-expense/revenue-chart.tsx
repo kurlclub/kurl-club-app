@@ -9,61 +9,26 @@ import {
   Tooltip,
 } from 'recharts';
 
+import { ReportsAndExpensesData } from '@/types/reports-and-expenses';
 import { formatCurrency } from '@/utils/format-currency';
 
-const revenueData = [
-  {
-    name: 'Memberships',
-    value: 260000,
-    color: '#F9B130',
-  },
-  {
-    name: 'Personal Training',
-    value: 110000,
-    color: '#E94B8A',
-  },
-  {
-    name: 'Group Classes',
-    value: 85000,
-    color: '#7DC74D',
-  },
-  {
-    name: 'Nutritional Plans',
-    value: 45000,
-    color: '#4BA5FF',
-  },
-  {
-    name: 'Merchandise Sales',
-    value: 38000,
-    color: '#FF7F50',
-  },
-  {
-    name: 'Supplements',
-    value: 52000,
-    color: '#A78BFA',
-  },
-  {
-    name: 'Corporate Memberships',
-    value: 95000,
-    color: '#06B6D4',
-  },
-  {
-    name: 'Facility Rental',
-    value: 28000,
-    color: '#EC4899',
-  },
-];
-
-const total = revenueData.reduce((acc, item) => acc + item.value, 0);
+interface RevenueChartProps {
+  report: ReportsAndExpensesData;
+}
 
 interface CustomTooltipProps {
   active?: boolean;
   payload?: Array<{
-    payload: (typeof revenueData)[number];
+    payload: {
+      name: string;
+      amount: number;
+      color: string;
+    };
   }>;
+  total: number;
 }
 
-const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
+const CustomTooltip = ({ active, payload, total }: CustomTooltipProps) => {
   if (active && payload?.[0]) {
     const data = payload[0].payload;
 
@@ -78,11 +43,11 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
         </div>
 
         <p className="text-secondary-blue-200 text-xs">
-          {formatCurrency(data.value)}
+          {formatCurrency(data.amount)}
         </p>
 
         <p className="text-secondary-blue-200 text-xs">
-          {((data.value / total) * 100).toFixed(1)}%
+          {total ? `${((data.amount / total) * 100).toFixed(1)}%` : '0%'}
         </p>
       </div>
     );
@@ -91,28 +56,29 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
   return null;
 };
 
-const RevenueChart = () => {
+const RevenueChart = ({ report }: RevenueChartProps) => {
+  const total = report.totalExpenses || 0;
+
   return (
     <div className="p-5 rounded-xl bg-primary-blue-400/39 text-white">
       <h3 className="text-[20px] leading-normal font-medium mb-5">
-        Revenue breakdown
+        Expense breakdown
       </h3>
 
       <div className="flex flex-col lg:flex-row gap-3">
-        {/* Donut Chart */}
         <div className="flex-1 flex justify-center bg-secondary-blue-700 rounded-[28px] py-6.5 px-8.5 relative">
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie
-                data={revenueData}
+                data={report.expenseBreakdown}
                 cx="50%"
                 cy="50%"
                 innerRadius={80}
                 outerRadius={120}
-                dataKey="value"
+                dataKey="amount"
                 stroke="none"
               >
-                {revenueData.map((entry, index) => (
+                {report.expenseBreakdown.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
 
@@ -127,7 +93,7 @@ const RevenueChart = () => {
                       fill="white"
                     >
                       <tspan x="50%" dy="-0.4em" fontSize="15">
-                        Total revenue
+                        Total expenses
                       </tspan>
                       <tspan x="50%" dy="1.4em" fontSize="20" fontWeight="bold">
                         {formatCurrency(total)}
@@ -136,14 +102,13 @@ const RevenueChart = () => {
                   )}
                 />
               </Pie>
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<CustomTooltip total={total} />} />
             </PieChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Stats Grid */}
         <div className="flex-1 flex flex-col gap-4.5 bg-secondary-blue-700 rounded-[28px] p-5">
-          {revenueData.map((item, index) => (
+          {report.expenseBreakdown.map((item, index) => (
             <div key={index} className="flex justify-between gap-2">
               <div className="flex items-center gap-2.5">
                 <span
@@ -152,9 +117,16 @@ const RevenueChart = () => {
                 />
                 <span className="text-[15px] leading-normal">{item.name}</span>
               </div>
-              <span className="text-[15px] font-bold leading-normal">
-                {formatCurrency(item.value)}
-              </span>
+              <div className="text-right">
+                <div className="text-[15px] font-bold leading-normal">
+                  {formatCurrency(item.amount)}
+                </div>
+                <div className="text-[12px] text-primary-blue-100">
+                  {total
+                    ? `${((item.amount / total) * 100).toFixed(1)}%`
+                    : '0%'}
+                </div>
+              </div>
             </div>
           ))}
         </div>

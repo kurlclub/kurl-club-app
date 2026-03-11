@@ -1,44 +1,64 @@
+import { ReportsAndExpensesData } from '@/types/reports-and-expenses';
 import { formatCurrency } from '@/utils/format-currency';
 
-const data = [
-  {
-    label: 'Memberships',
-    value: 260000,
-    color: 'bg-secondary-yellow-500',
-  },
-  {
-    label: 'Personal training',
-    value: 110000,
-    color: 'bg-secondary-pink-500',
-  },
-  {
-    label: 'Add-On’s',
-    value: 50000,
-    color: 'bg-neutral-green-400',
-  },
-  {
-    label: 'Joining fees',
-    value: 30000,
-    color: 'bg-semantic-blue-300',
-  },
-];
+interface ProfitChartProps {
+  report: ReportsAndExpensesData;
+}
 
-const ProfitChart = () => {
+const ProfitChart = ({ report }: ProfitChartProps) => {
+  const data = [
+    {
+      label: 'Memberships',
+      value: report.revenueFlow.memberships,
+      color: 'bg-secondary-yellow-500',
+    },
+    {
+      label: 'Per session',
+      value: report.revenueFlow.perSession,
+      color: 'bg-secondary-pink-500',
+    },
+    {
+      label: 'Other collections',
+      value: report.revenueFlow.otherMemberCollections,
+      color: 'bg-neutral-green-400',
+    },
+    {
+      label: 'Other income',
+      value: report.revenueFlow.otherIncome,
+      color: 'bg-semantic-blue-300',
+    },
+  ];
   const total = data.reduce((acc, item) => acc + item.value, 0);
   const GAP = 1.5;
 
   return (
     <div className="p-5 rounded-xl bg-primary-blue-400/40 text-white">
-      <h3 className="text-[18px] leading-normal font-medium">Net profit</h3>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h3 className="text-[18px] leading-normal font-medium">
+            Revenue flow
+          </h3>
+          <p className="text-sm text-primary-blue-100 mt-1">
+            Collections grouped by the streams returned from the report API.
+          </p>
+        </div>
+        <div className="text-right">
+          <div className="text-[12px] uppercase tracking-[0.08em] text-primary-blue-100">
+            Tracked flow
+          </div>
+          <div className="text-[20px] font-semibold">
+            {formatCurrency(total)}
+          </div>
+        </div>
+      </div>
 
-      {/* Segmented Progress */}
       <div className="relative w-full h-4 bg-muted rounded-full overflow-hidden mt-4">
         {data.map((item, index) => {
-          const percent = (item.value / total) * 100;
+          const percent = total ? (item.value / total) * 100 : 0;
 
           const leftPercent = data
             .slice(0, index)
-            .reduce((acc, i) => acc + (i.value / total) * 100, 0);
+            .reduce((acc, i) => acc + (total ? (i.value / total) * 100 : 0), 0);
 
           const isFirst = index === 0;
           const isLast = index === data.length - 1;
@@ -53,15 +73,14 @@ const ProfitChart = () => {
         `}
               style={{
                 left: `calc(${leftPercent}% + ${index * GAP}px)`,
-                width: `calc(${percent}% - ${GAP}px)`,
+                width: total ? `calc(${percent}% - ${GAP}px)` : '0%',
               }}
             />
           );
         })}
       </div>
 
-      {/* Cards */}
-      <div className="grid grid-cols-4 gap-2 mt-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2 mt-5">
         {data.map((item, index) => (
           <div
             key={index}
@@ -74,6 +93,12 @@ const ProfitChart = () => {
 
             <span className="text-[24px] font-medium leading-normal">
               {formatCurrency(item.value)}
+            </span>
+
+            <span className="text-[12px] text-primary-blue-100">
+              {total
+                ? `${((item.value / total) * 100).toFixed(1)}% of flow`
+                : '0% of flow'}
             </span>
           </div>
         ))}

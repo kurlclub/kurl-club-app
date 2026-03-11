@@ -1,11 +1,23 @@
-type Role = 'Admin' | 'Trainer' | 'Staff';
+export interface ReportRevenueFlow {
+  memberships: number;
+  perSession: number;
+  otherMemberCollections: number;
+  otherIncome: number;
+}
 
-export interface ExpenseType {
-  category: string;
-  description: string;
-  amount: string;
-  time: string;
-  date: string; // ISO date string (YYYY-MM-DD)
-  role: Role;
-  attachments: number;
+export interface ReportBreakdownItem {
+  name: string;
+  amount: number;
+  color: string;
+}
+
+export interface ReportsAndExpensesData {
+  currentMemberCollections: number;
+  netProfit: number;
+  totalRevenue: number;
+  totalExpenses: number;
+  revenueTrendPercentage: number;
+  expenseTrendPercentage: number;
+  revenueFlow: ReportRevenueFlow;
+  expenseBreakdown: ReportBreakdownItem[];
 }

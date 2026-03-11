@@ -1,8 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import { ChangeEvent, useEffect, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { useForm, useWatch } from 'react-hook-form';
 
 import { Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -16,24 +16,11 @@ import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { toUtcDateOnlyISOString } from '@/lib/utils';
+import { useGymBranch } from '@/providers/gym-branch-provider';
+import { useCreateExpense, useExpenseCategories } from '@/services/revenue';
 
 type SelectOption = { label: string; value: string };
-
-const EXPENSE_CATEGORY_OPTIONS: SelectOption[] = [
-  { label: 'Communications', value: 'Communications' },
-  { label: 'Staff Salaries', value: 'Staff Salaries' },
-  { label: 'Food and Beverages', value: 'Food and Beverages' },
-  { label: 'Rent', value: 'Rent' },
-  { label: 'Entertainment', value: 'Entertainment' },
-  { label: 'Insurance', value: 'Insurance' },
-  { label: 'Equipment Maintenance', value: 'Equipment Maintenance' },
-];
-
-const EXPENSE_ROLE_OPTIONS: SelectOption[] = [
-  { label: 'Admin', value: 'Admin' },
-  { label: 'Trainer', value: 'Trainer' },
-  { label: 'Staff', value: 'Staff' },
-];
 
 const ENTRY_TYPE_OPTIONS: SelectOption[] = [
   { label: 'Expense', value: 'expense' },
@@ -47,10 +34,9 @@ type AddExpenseProps = {
 
 type ExpenseFormState = {
   entryType: 'expense' | 'income';
-  category: string;
+  categoryId: string;
   amount: string;
   expenseDate: string;
-  paidBy: string;
   description: string;
 };
 
@@ -62,21 +48,58 @@ type AttachmentItem = {
   previewUrl: string | null;
 };
 
-const createInitialValues = (): ExpenseFormValues => ({
+const createInitialValues = (categoryId = ''): ExpenseFormValues => ({
   entryType: 'expense',
-  category: 'Communications',
+  categoryId,
   amount: '',
   expenseDate: new Date().toISOString().split('T')[0],
-  paidBy: 'Admin',
   description: '',
 });
 
 const AddExpense = ({ isOpen, closeSheet }: AddExpenseProps) => {
+  const { gymBranch } = useGymBranch();
+  const { data: categories = [], isLoading: isCategoriesLoading } =
+    useExpenseCategories();
+  const createExpenseMutation = useCreateExpense();
   const [attachments, setAttachments] = useState<AttachmentItem[]>([]);
   const attachmentInputRef = useRef<HTMLInputElement | null>(null);
+  const activeCategories = useMemo(
+    () => categories.filter((category) => category.isActive),
+    [categories]
+  );
+  const categoryOptions = useMemo<SelectOption[]>(
+    () =>
+      activeCategories.map((category) => ({
+        label: category.name,
+        value: String(category.id),
+      })),
+    [activeCategories]
+  );
+  const defaultCategoryId =
+    activeCategories.find((category) => category.isDefault)?.id ??
+    activeCategories[0]?.id;
   const form = useForm<ExpenseFormValues>({
     defaultValues: createInitialValues(),
   });
+  const selectedCategoryId = useWatch({
+    control: form.control,
+    name: 'categoryId',
+  });
+
+  useEffect(() => {
+    if (!defaultCategoryId) return;
+
+    const currentCategoryId = form.getValues('categoryId');
+    const hasSelectedCategory = activeCategories.some(
+      (category) => String(category.id) === currentCategoryId
+    );
+
+    if (!hasSelectedCategory) {
+      form.setValue('categoryId', String(defaultCategoryId), {
+        shouldDirty: false,
+      });
+    }
+  }, [activeCategories, defaultCategoryId, form]);
 
   const resetAttachments = () => {
     setAttachments((current) => {
@@ -105,7 +128,9 @@ const AddExpense = ({ isOpen, closeSheet }: AddExpenseProps) => {
   }, [attachments]);
 
   const handleReset = () => {
-    form.reset(createInitialValues());
+    form.reset(
+      createInitialValues(defaultCategoryId ? String(defaultCategoryId) : '')
+    );
     resetAttachments();
   };
 
@@ -145,16 +170,58 @@ const AddExpense = ({ isOpen, closeSheet }: AddExpenseProps) => {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const handleSubmit = (values: ExpenseFormValues) => {
-    if (!values.amount || !values.expenseDate || !values.description.trim()) {
+  const selectedCategory = activeCategories.find(
+    (category) => String(category.id) === selectedCategoryId
+  );
+
+  const handleSubmit = async (values: ExpenseFormValues) => {
+    if (!gymBranch?.gymId) {
+      toast.error('Please select a gym before adding an expense');
+
+      return;
+    }
+
+    if (!values.amount || !values.expenseDate || !values.categoryId) {
       toast.error('Please fill all required fields');
 
       return;
     }
 
-    toast.success('Expense captured in the sidebar form');
-    handleReset();
-    closeSheet();
+    const parsedAmount = Number(values.amount);
+    if (Number.isNaN(parsedAmount) || parsedAmount <= 0) {
+      toast.error('Enter a valid expense amount');
+
+      return;
+    }
+
+    const expenseDate = toUtcDateOnlyISOString(values.expenseDate);
+    if (!expenseDate) {
+      toast.error('Enter a valid expense date');
+
+      return;
+    }
+
+    try {
+      const createdExpense = await createExpenseMutation.mutateAsync({
+        gymId: gymBranch.gymId,
+        expenseCategoryId: Number(values.categoryId),
+        amount: parsedAmount,
+        expenseDate,
+        notes: values.description.trim(),
+        type: values.entryType,
+        receiptFiles: attachments.map((attachment) => attachment.file),
+      });
+
+      toast.success(
+        `${createdExpense.categoryName} ${createdExpense.type} created successfully`
+      );
+      handleReset();
+      closeSheet();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to create expense'
+      );
+    }
   };
 
   const footer = (
@@ -164,6 +231,7 @@ const AddExpense = ({ isOpen, closeSheet }: AddExpenseProps) => {
         variant="secondary"
         className="h-[46px]"
         onClick={handleReset}
+        disabled={createExpenseMutation.isPending}
       >
         Reset
       </Button>
@@ -176,6 +244,7 @@ const AddExpense = ({ isOpen, closeSheet }: AddExpenseProps) => {
             handleReset();
             closeSheet();
           }}
+          disabled={createExpenseMutation.isPending}
         >
           Cancel
         </Button>
@@ -183,8 +252,13 @@ const AddExpense = ({ isOpen, closeSheet }: AddExpenseProps) => {
           type="submit"
           form="add-expense-form"
           className="h-[46px] min-w-[110px]"
+          disabled={
+            createExpenseMutation.isPending ||
+            isCategoriesLoading ||
+            !gymBranch?.gymId
+          }
         >
-          Add expense
+          {createExpenseMutation.isPending ? 'Saving...' : 'Add expense'}
         </Button>
       </div>
     </div>
@@ -220,14 +294,19 @@ const AddExpense = ({ isOpen, closeSheet }: AddExpenseProps) => {
             <KFormField
               fieldType={KFormFieldType.SELECT}
               control={form.control}
-              name="category"
+              name="categoryId"
               label="Category"
-              options={EXPENSE_CATEGORY_OPTIONS}
+              options={categoryOptions}
             />
           </div>
 
-          {/* Amount / Date / Paid By */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {selectedCategory?.description && (
+            <div className="rounded-xl border border-primary-blue-400/50 bg-primary-blue-400/10 px-4 py-3 text-sm text-primary-blue-100">
+              {selectedCategory.description}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <KFormField
               fieldType={KFormFieldType.INPUT}
               control={form.control}
@@ -242,25 +321,15 @@ const AddExpense = ({ isOpen, closeSheet }: AddExpenseProps) => {
               name="expenseDate"
               label="Expense date"
             />
-
-            <KFormField
-              fieldType={KFormFieldType.SELECT}
-              control={form.control}
-              name="paidBy"
-              label="Paid by"
-              options={EXPENSE_ROLE_OPTIONS}
-            />
           </div>
 
-          {/* Description */}
           <KFormField
             fieldType={KFormFieldType.TEXTAREA}
             control={form.control}
             name="description"
-            label="Description"
+            label="Notes"
           />
 
-          {/* Attachments */}
           <div className="flex flex-col gap-3">
             <Label htmlFor="expense-attachments">Attachments</Label>
 
@@ -270,6 +339,7 @@ const AddExpense = ({ isOpen, closeSheet }: AddExpenseProps) => {
               type="file"
               multiple
               onChange={handleAttachmentChange}
+              disabled={createExpenseMutation.isPending}
               className="h-12 border-primary-blue-400 bg-primary-blue-400/20 text-white
       file:mr-4 file:rounded-md file:border-0 file:bg-primary-blue-500
       file:px-3 file:py-2 file:text-sm file:font-medium file:text-white"
@@ -321,6 +391,7 @@ const AddExpense = ({ isOpen, closeSheet }: AddExpenseProps) => {
                       variant="ghost"
                       size="icon"
                       onClick={() => handleRemoveAttachment(attachment.id)}
+                      disabled={createExpenseMutation.isPending}
                       className="text-alert-red-400 hover:text-alert-red-300"
                     >
                       <Trash2 className="h-4 w-4" />
