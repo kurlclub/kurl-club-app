@@ -188,11 +188,17 @@ const LockedReportsState = ({ message }: LockedReportsStateProps) => {
     <>
       <div className="relative">
         <div className="pointer-events-none select-none blur-sm saturate-[0.8] opacity-45">
-          <div className="flex flex-col xl:flex-row gap-8 w-full justify-between relative">
-            <div className="flex flex-col gap-6 w-full">
-              <NetProfitBanner report={previewReport} />
-              <ProfitChart report={previewReport} />
-              <RevenueChart report={previewReport} />
+          <div className="flex flex-col xl:flex-row gap-6 w-full justify-between relative">
+            <div className="flex flex-col gap-4 w-full xl:h-[calc(100vh-180px)] xl:min-h-0">
+              <NetProfitBanner
+                report={previewReport}
+                className="xl:flex-[0.9]"
+              />
+              <ProfitChart report={previewReport} className="xl:flex-[1.05]" />
+              <RevenueChart
+                report={previewReport}
+                className="xl:flex-[1.35] xl:min-h-0"
+              />
             </div>
             <PreviewExpenseSidebar />
           </div>
@@ -355,13 +361,13 @@ const ReportsAndExpenses = () => {
 
     if (isLoading) {
       return (
-        <div className="flex flex-col xl:flex-row gap-8 w-full justify-between relative">
-          <div className="flex flex-col gap-6 w-full">
-            <Skeleton className="h-57.5 w-full rounded-xl" />
-            <Skeleton className="h-53.5 w-full rounded-xl" />
-            <Skeleton className="h-97.5 w-full rounded-xl" />
+        <div className="flex flex-col xl:flex-row gap-6 w-full justify-between relative">
+          <div className="flex flex-col gap-4 w-full xl:h-[calc(100vh-180px)] xl:min-h-0">
+            <Skeleton className="h-46 w-full rounded-xl xl:h-auto xl:flex-[0.9]" />
+            <Skeleton className="h-43 w-full rounded-xl xl:h-auto xl:flex-[1.05]" />
+            <Skeleton className="h-78 w-full rounded-xl xl:h-auto xl:flex-[1.35]" />
           </div>
-          <Skeleton className="h-140 w-full xl:max-w-100 rounded-xl" />
+          <Skeleton className="h-120 w-full xl:max-w-100 xl:h-[calc(100vh-180px)] rounded-xl" />
         </div>
       );
     }
@@ -383,11 +389,11 @@ const ReportsAndExpenses = () => {
     }
 
     return (
-      <div className="flex flex-col xl:flex-row gap-8 w-full justify-between relative">
-        <div className="flex flex-col gap-6 w-full">
-          <NetProfitBanner report={report} />
-          <ProfitChart report={report} />
-          <RevenueChart report={report} />
+      <div className="flex flex-col xl:flex-row gap-6 w-full justify-between relative">
+        <div className="flex flex-col gap-3 w-full xl:h-[calc(100vh-180px)] xl:min-h-0">
+          <NetProfitBanner report={report} className="xl:flex-[0.7]" />
+          <ProfitChart report={report} className="xl:flex-[0.8]" />
+          <RevenueChart report={report} className="xl:flex-[1.5] xl:min-h-0" />
         </div>
         <ExpenseTracker
           key={gymId}
