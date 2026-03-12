@@ -367,10 +367,10 @@ const ReportsAndExpenses = () => {
 
     return (
       <div className="flex flex-col xl:flex-row gap-6 w-full justify-between relative">
-        <div className="flex flex-col gap-3 w-full xl:h-[calc(100vh-180px)] xl:min-h-0">
+        <div className="flex flex-col gap-3 w-full xl:min-h-0">
           <NetProfitBanner report={report} className="xl:flex-[0.7]" />
           <ProfitChart report={report} className="xl:flex-[0.8]" />
-          <RevenueChart report={report} className="xl:flex-[1.5] xl:min-h-0" />
+          <RevenueChart report={report} className="xl:min-h-0" />
         </div>
         <ExpenseTracker
           key={gymId}
