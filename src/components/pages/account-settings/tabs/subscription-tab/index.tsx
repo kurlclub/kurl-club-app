@@ -7,10 +7,24 @@ import { Pricing } from '@/components/pages/account-settings/tabs/subscription-t
 import { SubscriptionCard } from '@/components/shared/cards/subscription-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
 import { useSubscriptionPlans } from '@/hooks/use-subscription-plans';
+import { safeFormatDate } from '@/lib/utils';
 
 export function SubscriptionTab() {
   const { data: pricingData, isLoading, error } = useSubscriptionPlans();
+  const { subscription } = useSubscriptionAccess();
+  const nextBillingDate = safeFormatDate(subscription?.endDate, 'en-GB', 'N/A');
+  const billingCycleLabel = subscription?.billingCycle
+    ? `${subscription.billingCycle} billing`
+    : 'N/A';
+
+  const handleScrollToPlans = () => {
+    const element = document.getElementById('available-plans');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -20,7 +34,7 @@ export function SubscriptionTab() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <SubscriptionCard variant="premium" />
+        <SubscriptionCard onSubmit={handleScrollToPlans} />
       </motion.div>
 
       {/* Available Plans */}
@@ -29,7 +43,10 @@ export function SubscriptionTab() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
       >
-        <Card className="bg-secondary-blue-500 border-secondary-blue-400">
+        <Card
+          id="available-plans"
+          className="bg-secondary-blue-500 border-secondary-blue-400"
+        >
           <CardContent>
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
@@ -83,13 +100,13 @@ export function SubscriptionTab() {
               <div className="p-4 bg-secondary-blue-600 rounded-lg">
                 <p className="font-medium text-white mb-1">Next billing date</p>
                 <p className="text-sm text-secondary-blue-200">
-                  January 15, 2026
+                  {nextBillingDate}
                 </p>
               </div>
               <div className="p-4 bg-secondary-blue-600 rounded-lg">
                 <p className="font-medium text-white mb-1">Billing cycle</p>
                 <p className="text-sm text-secondary-blue-200">
-                  Monthly billing
+                  {billingCycleLabel}
                 </p>
               </div>
             </div>

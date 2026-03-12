@@ -125,12 +125,13 @@ export const downloadReportCSV = async (
 export const useReportsAndExpenses = (
   gymId: number | string,
   fromDate?: string,
-  toDate?: string
+  toDate?: string,
+  options?: { enabled?: boolean }
 ) => {
   return useQuery({
     queryKey: ['reports-and-expenses', gymId, fromDate, toDate],
     queryFn: () => fetchReportsAndExpenses(gymId, fromDate, toDate),
-    enabled: !!gymId,
+    enabled: !!gymId && (options?.enabled ?? true),
     staleTime: 1000 * 60 * 3,
     retry: 1,
   });

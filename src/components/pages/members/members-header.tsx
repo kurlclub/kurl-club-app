@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useGymFormOptions } from '@/hooks/use-gymform-options';
 import { useMemberForm } from '@/hooks/use-member-form';
+import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
 
 import AddFrom from './add-member';
 import { SetupChecklistDialog } from './setup-checklist-dialog';
@@ -20,6 +21,7 @@ interface MembersHeaderProps {
   isOpen: boolean;
   closeSheet: () => void;
   gymId?: number;
+  currentMemberCount: number;
 }
 
 export const MembersHeader = ({
@@ -28,11 +30,13 @@ export const MembersHeader = ({
   isOpen,
   closeSheet,
   gymId,
+  currentMemberCount,
 }: MembersHeaderProps) => {
   const [showAddMemberForm, setShowAddMemberForm] = useState(false);
   const { formOptions } = useGymFormOptions(gymId);
   const memberForm = useMemberForm(gymId);
   const searchParams = useSearchParams();
+  const { requireLimitAccess } = useSubscriptionAccess();
 
   const hasPackages = (formOptions?.membershipPlans?.length ?? 0) > 0;
   const hasTrainers = (formOptions?.trainers?.length ?? 0) > 0;
@@ -41,6 +45,12 @@ export const MembersHeader = ({
   const cameFromSetup = searchParams.get('setup') === 'true';
 
   const handleAddNewClick = () => {
+    const allowed = requireLimitAccess('maxMembers', currentMemberCount, {
+      title: 'Member limit reached',
+      message: 'Upgrade your plan to add more members.',
+    });
+    if (!allowed) return;
+
     // If all setup is complete and not coming from setup, go directly to add member
     if (allSetupComplete && !cameFromSetup) {
       setShowAddMemberForm(true);

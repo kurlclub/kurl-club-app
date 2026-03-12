@@ -27,11 +27,13 @@ import {
 } from '@/components/ui/sidebar';
 import { useGymFormOptions } from '@/hooks/use-gymform-options';
 import { useGymBranch } from '@/providers/gym-branch-provider';
+import { SubscriptionFeatureKey } from '@/types/subscription';
 
 type NavItem = {
   title: string;
   url: string;
   icon: LucideIcon;
+  requiredFeature?: SubscriptionFeatureKey;
   items?: { title: string; url: string }[];
 };
 
@@ -46,13 +48,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   );
 
   // Create navigation items based on billing types
-  const getPaymentsNavItem = () => {
+  const getPaymentsNavItem = (): NavItem => {
     if (hasPerSessionPlans) {
       // Show tree structure when PerSession plans exist
       return {
         title: 'Payments',
         url: '#',
         icon: CreditCard,
+        requiredFeature: 'paymentTracking',
         items: [
           {
             title: 'Recurring Payments',
@@ -70,6 +73,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         title: 'Payments',
         url: '/payments',
         icon: CreditCard,
+        requiredFeature: 'paymentTracking',
       };
     }
   };
@@ -84,27 +88,32 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: 'Members',
       url: '/members',
       icon: Users,
+      requiredFeature: 'memberManagement',
     },
     getPaymentsNavItem(),
     {
       title: 'Attendance',
       url: '/attendance',
       icon: Calendar,
+      requiredFeature: 'attendanceTracking',
     },
     {
       title: 'Staff Management',
       url: '/staff-management',
       icon: UserCheck,
+      requiredFeature: 'staffManagement',
     },
     {
       title: 'Plans & Workouts',
       url: '/plans-and-workouts',
       icon: Dumbbell,
+      requiredFeature: 'membershipManagement',
     },
     {
       title: 'Reports & expenses',
       url: '/reports-and-expenses',
       icon: ChartColumnIncreasing,
+      requiredFeature: 'basicReports',
     },
     {
       title: 'Settings',

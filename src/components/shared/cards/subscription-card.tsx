@@ -2,6 +2,10 @@
 
 import React from 'react';
 
+import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
+import { SUBSCRIPTION_FEATURE_LABELS } from '@/lib/subscription/feature-labels';
+import { safeFormatDate } from '@/lib/utils';
+
 import { Button } from '../../ui/button';
 import { KPremiumListIcon } from '../icons';
 
@@ -12,85 +16,84 @@ interface SubscriptionCardProps {
   onSubmit?: () => void;
 }
 
-const descriptions: Record<SubscriptionVariant, string> = {
-  standard: 'Plan expires 15 Mar, 2025, subscribed since 15 Mar, 2024',
-  premium: 'Per account, per month billed annually.',
-  expired: 'Plan expired at 15 Mar, 2025',
-};
-
-const premiumFeatures = [
-  'Unlimited members',
-  'Exclusive Access to Class & Trainer Scheduling',
-  'Automated Payment & Renewal',
-  'Member app for the ultimate P.T experience.',
-];
-
 export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
-  variant = 'standard',
+  variant,
   onSubmit,
 }) => {
+  const { subscription, status, daysRemaining } = useSubscriptionAccess();
+  const planName = subscription?.plan?.name || 'No active plan';
+  const endDateLabel = safeFormatDate(subscription?.endDate, 'en-GB', 'N/A');
+  const billingCycle = subscription?.billingCycle || 'monthly';
+  const effectiveVariant =
+    variant || (status === 'expired' ? 'expired' : 'premium');
+
   const bgClass = {
     standard: 'bg-primary-green-50',
     premium: 'bg-primary-green-100',
     expired: 'bg-alert-red-500 bg-none',
-  }[variant];
+  }[effectiveVariant];
 
   const title = {
-    standard: 'Standard',
+    standard: planName,
     premium: (
       <>
-        Level up your business, unlock{' '}
-        <span className="text-primary-green-900 font-bold">
-          Kurlclub premium!
-        </span>
+        Current plan:{' '}
+        <span className="text-primary-green-900 font-bold">{planName}</span>
       </>
     ),
-    expired: 'Plan expired ⚠️',
-  }[variant];
+    expired: 'Plan expired',
+  }[effectiveVariant];
+
+  const description =
+    effectiveVariant === 'expired'
+      ? `Plan expired on ${endDateLabel}.`
+      : `Billing cycle: ${billingCycle} • Ends on ${endDateLabel}${
+          typeof daysRemaining === 'number' && daysRemaining >= 0
+            ? ` • ${daysRemaining} days left`
+            : ''
+        }`;
+
+  const enabledFeatures = subscription?.features
+    ? (
+        Object.entries(subscription.features) as Array<
+          [keyof typeof subscription.features, boolean | number]
+        >
+      )
+        .filter(([, value]) =>
+          typeof value === 'number' ? value > 0 : value === true
+        )
+        .map(([key]) => SUBSCRIPTION_FEATURE_LABELS[key])
+        .filter(Boolean)
+        .slice(0, 4)
+    : [];
 
   const renderButtons = () => {
-    switch (variant) {
-      case 'standard':
-        return (
-          <>
-            <Button
-              onClick={onSubmit}
-              variant="secondary"
-              className="h-[46px] bg-secondary-blue-500 hover:bg-secondary-blue-900 rounded-lg"
-            >
-              Upgrade
-            </Button>
-            <Button className="h-[46px] bg-transparent! shadow-none border border-transparent hover:border-secondary-blue-900 rounded-lg">
-              Payment details
-            </Button>
-          </>
-        );
-      case 'premium':
-        return (
+    if (effectiveVariant === 'expired') {
+      return (
+        <>
           <Button
             onClick={onSubmit}
             variant="secondary"
-            className="h-[46px] bg-secondary-blue-500 hover:bg-secondary-blue-900 rounded-lg"
+            className="h-[46px] text-white bg-secondary-blue-500 hover:bg-secondary-blue-900 rounded-lg"
           >
-            See all plans
+            Reactivate plan
           </Button>
-        );
-      case 'expired':
-        return (
-          <>
-            <Button
-              onClick={onSubmit}
-              variant="secondary"
-              className="h-[46px] text-white bg-secondary-blue-500 hover:bg-secondary-blue-900 rounded-lg"
-            >
-              Reactivate plan
-            </Button>
-            <Button className="h-[46px] bg-transparent! shadow-none text-white border border-transparent hover:border-white rounded-lg">
-              Payment details
-            </Button>
-          </>
-        );
+          <Button className="h-[46px] bg-transparent! shadow-none text-white border border-transparent hover:border-white rounded-lg">
+            Payment details
+          </Button>
+        </>
+      );
     }
+
+    return (
+      <Button
+        onClick={onSubmit}
+        variant="secondary"
+        className="h-[46px] bg-secondary-blue-500 hover:bg-secondary-blue-900 rounded-lg"
+      >
+        See all plans
+      </Button>
+    );
   };
 
   return (
@@ -98,19 +101,19 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
       className={`rounded-lg w-full p-5 border border-transparent ${bgClass} bg-[url("/assets/svg/subscription-bg.svg")] bg-no-repeat bg-right bg-contain`}
     >
       <h1
-        className={`text-secondary-blue-900 text-2xl font-medium leading-normal ${variant === 'expired' && 'text-white!'}`}
+        className={`text-secondary-blue-900 text-2xl font-medium leading-normal ${effectiveVariant === 'expired' && 'text-white!'}`}
       >
         {title}
       </h1>
       <p
-        className={`text-secondary-blue-900 text-sm leading-normal mt-2 ${variant === 'expired' && 'text-white!'}`}
+        className={`text-secondary-blue-900 text-sm leading-normal mt-2 ${effectiveVariant === 'expired' && 'text-white!'}`}
       >
-        {descriptions[variant]}
+        {description}
       </p>
 
-      {variant === 'premium' && (
+      {enabledFeatures.length > 0 && effectiveVariant !== 'expired' && (
         <ul className="mt-4 flex flex-col gap-2">
-          {premiumFeatures.map((feature, idx) => (
+          {enabledFeatures.map((feature, idx) => (
             <li
               key={idx}
               className="flex items-start gap-2 text-sm font-semibold leading-normal text-secondary-blue-900"

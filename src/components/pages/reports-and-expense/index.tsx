@@ -1,12 +1,10 @@
 'use client';
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Crown, Download, Loader2, Plus, Sparkles } from 'lucide-react';
+import { Download, Loader2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod/v4';
 
@@ -15,18 +13,12 @@ import {
   KFormFieldType,
 } from '@/components/shared/form/k-formfield';
 import { StudioLayout } from '@/components/shared/layout';
+import { FeatureLockOverlay } from '@/components/shared/subscription';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Form } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSheet } from '@/hooks/use-sheet';
+import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
 import { toUtcDateOnlyISOString } from '@/lib/utils';
 import { useGymBranch } from '@/providers/gym-branch-provider';
 import {
@@ -68,8 +60,6 @@ const previewReport: ReportsAndExpensesData = {
   ],
 };
 
-const upgradeRoute = '/account-settings?tab=subscription';
-
 const ReportsDateRangeSchema = z.object({
   dateRange: z
     .object({
@@ -80,7 +70,10 @@ const ReportsDateRangeSchema = z.object({
 });
 
 interface LockedReportsStateProps {
-  message: string;
+  message?: string;
+  onUpgrade?: () => void;
+  showOverlay?: boolean;
+  blur?: boolean;
 }
 
 const previewExpensesByDate = [
@@ -180,80 +173,45 @@ const PreviewExpenseSidebar = () => (
   </aside>
 );
 
-const LockedReportsState = ({ message }: LockedReportsStateProps) => {
-  const [isDialogOpen, setIsDialogOpen] = useState(true);
-  const router = useRouter();
-
+const LockedReportsState = ({
+  message,
+  onUpgrade,
+  showOverlay = false,
+  blur = true,
+}: LockedReportsStateProps) => {
+  const blurClass = blur
+    ? 'pointer-events-none select-none blur-sm saturate-[0.8] opacity-45'
+    : '';
   return (
-    <>
-      <div className="relative">
-        <div className="pointer-events-none select-none blur-sm saturate-[0.8] opacity-45">
-          <div className="flex flex-col xl:flex-row gap-6 w-full justify-between relative">
-            <div className="flex flex-col gap-4 w-full xl:h-[calc(100vh-180px)] xl:min-h-0">
-              <NetProfitBanner
-                report={previewReport}
-                className="xl:flex-[0.9]"
-              />
-              <ProfitChart report={previewReport} className="xl:flex-[1.05]" />
-              <RevenueChart
-                report={previewReport}
-                className="xl:flex-[1.35] xl:min-h-0"
-              />
-            </div>
-            <PreviewExpenseSidebar />
+    <div className="relative">
+      <div className={blurClass}>
+        <div className="flex flex-col xl:flex-row gap-6 w-full justify-between relative">
+          <div className="flex flex-col gap-4 w-full xl:h-[calc(100vh-180px)] xl:min-h-0">
+            <NetProfitBanner report={previewReport} className="xl:flex-[0.9]" />
+            <ProfitChart report={previewReport} className="xl:flex-[1.05]" />
+            <RevenueChart
+              report={previewReport}
+              className="xl:flex-[1.35] xl:min-h-0"
+            />
           </div>
+          <PreviewExpenseSidebar />
         </div>
       </div>
-
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-md border-secondary-blue-400 bg-secondary-blue-500 text-white">
-          <DialogHeader className="text-left">
-            <div className="flex items-center gap-3">
-              <div className="h-11 w-11 rounded-2xl bg-primary-green-500/15 border border-primary-green-500/30 flex items-center justify-center">
-                <Crown className="h-5 w-5 text-primary-green-500" />
-              </div>
-              <div>
-                <DialogTitle>Reports require a higher plan</DialogTitle>
-                <DialogDescription className="text-primary-blue-100 mt-1">
-                  Upgrade your subscription to unlock Basic Reports.
-                </DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-
-          <div className="rounded-2xl border border-secondary-blue-400 bg-primary-blue-400/40 p-4">
-            <p className="text-sm leading-6 text-primary-blue-100">{message}</p>
-
-            <div className="mt-4 flex items-center gap-2 rounded-xl bg-secondary-blue-700 px-3 py-2">
-              <Sparkles className="h-4 w-4 text-primary-green-500" />
-              <span className="text-sm text-white">
-                Unlock financial summaries, revenue flow, and expense
-                breakdowns.
-              </span>
-            </div>
-          </div>
-
-          <DialogFooter className="sm:justify-start">
-            <Button asChild className="h-11">
-              <Link href={upgradeRoute}>See plans</Link>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-11 border-white/15 bg-transparent hover:bg-white/5"
-              onClick={() => router.push('/dashboard')}
-            >
-              Maybe later
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+      {showOverlay && message && onUpgrade && (
+        <FeatureLockOverlay
+          title="Reports require a higher plan"
+          message={message}
+          onUpgrade={onUpgrade}
+        />
+      )}
+    </div>
   );
 };
 
 const ReportsAndExpenses = () => {
   const { isOpen, openSheet, closeSheet } = useSheet();
   const { gymBranch } = useGymBranch();
+  const { hasFeatureAccess, openUpgradeModal } = useSubscriptionAccess();
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [isDownloadingReport, setIsDownloadingReport] = useState(false);
   const defaultFromDate = useMemo(() => {
@@ -285,11 +243,14 @@ const ReportsAndExpenses = () => {
   }, [defaultFromDate, defaultToDate, watchedDateRange]);
 
   const gymId = gymBranch?.gymId ?? 0;
+  const canAccessReports = hasFeatureAccess('basicReports');
   const {
     data: report,
     isLoading,
     error,
-  } = useReportsAndExpenses(gymId, dateRange.fromDate, dateRange.toDate);
+  } = useReportsAndExpenses(gymId, dateRange.fromDate, dateRange.toDate, {
+    enabled: canAccessReports,
+  });
   const reportError = error as Error | null;
   const accessError =
     reportError instanceof ReportAccessError ? reportError : null;
@@ -373,7 +334,23 @@ const ReportsAndExpenses = () => {
     }
 
     if (isReportLocked) {
-      return <LockedReportsState message={lockedMessage} />;
+      return (
+        <LockedReportsState
+          message={lockedMessage}
+          onUpgrade={() =>
+            openUpgradeModal({
+              title: 'Reports require a higher plan',
+              message: lockedMessage,
+            })
+          }
+          showOverlay
+          blur
+        />
+      );
+    }
+
+    if (!canAccessReports) {
+      return <LockedReportsState blur={false} />;
     }
 
     if (error || !report) {

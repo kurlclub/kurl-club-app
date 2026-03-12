@@ -16,6 +16,8 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { DialogTitle } from '@/components/ui/dialog';
+import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
+import { SubscriptionFeatureKey } from '@/types/subscription';
 
 const commands = [
   {
@@ -24,6 +26,7 @@ const commands = [
     icon: UserPlus,
     action: 'modal',
     keywords: ['onboarding', 'send', 'whatsapp', 'link'],
+    requiredFeature: 'whatsAppNotifications' as SubscriptionFeatureKey,
   },
   {
     id: 'record-payment',
@@ -31,6 +34,7 @@ const commands = [
     icon: CreditCard,
     action: '/payments?action=record',
     keywords: ['payment', 'record', 'fee', 'collect'],
+    requiredFeature: 'paymentTracking' as SubscriptionFeatureKey,
   },
   {
     id: 'view-members',
@@ -38,6 +42,7 @@ const commands = [
     icon: Users,
     action: '/members',
     keywords: ['members', 'list', 'view', 'all'],
+    requiredFeature: 'memberManagement' as SubscriptionFeatureKey,
   },
 ];
 
@@ -45,6 +50,7 @@ export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const router = useRouter();
+  const { requireFeatureAccess } = useSubscriptionAccess();
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -58,8 +64,18 @@ export function CommandPalette() {
     return () => document.removeEventListener('keydown', down);
   }, []);
 
-  const runCommand = (action: string) => {
+  const runCommand = (
+    action: string,
+    requiredFeature?: SubscriptionFeatureKey
+  ) => {
     setOpen(false);
+    if (requiredFeature) {
+      const allowed = requireFeatureAccess(requiredFeature, {
+        title: 'Upgrade required',
+        message: 'Upgrade your subscription to unlock this action.',
+      });
+      if (!allowed) return;
+    }
     if (action === 'modal') {
       setOnboardingOpen(true);
     } else {
@@ -89,7 +105,9 @@ export function CommandPalette() {
             {commands.map((command) => (
               <CommandItem
                 key={command.id}
-                onSelect={() => runCommand(command.action)}
+                onSelect={() =>
+                  runCommand(command.action, command.requiredFeature)
+                }
                 className="shad-command-item"
               >
                 <command.icon className="mr-2 h-4 w-4" />
@@ -106,6 +124,7 @@ export function CommandPalette() {
 export function QuickActionsButton() {
   const [open, setOpen] = useState(false);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const { requireFeatureAccess } = useSubscriptionAccess();
 
   return (
     <>
@@ -149,6 +168,17 @@ export function QuickActionsButton() {
                 key={command.id}
                 onSelect={() => {
                   setOpen(false);
+                  if (command.requiredFeature) {
+                    const allowed = requireFeatureAccess(
+                      command.requiredFeature,
+                      {
+                        title: 'Upgrade required',
+                        message:
+                          'Upgrade your subscription to unlock this action.',
+                      }
+                    );
+                    if (!allowed) return;
+                  }
                   if (command.action === 'modal') {
                     setOnboardingOpen(true);
                   } else {

@@ -8,6 +8,7 @@ import { z } from 'zod/v4';
 
 import { KSheet } from '@/components/shared/form/k-sheet';
 import { Button } from '@/components/ui/button';
+import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
 import { toUtcDateOnlyISOString } from '@/lib/utils';
 import { useGymBranch } from '@/providers/gym-branch-provider';
 import { adminstratorFormSchema, trainerFormSchema } from '@/schemas';
@@ -19,6 +20,8 @@ import StaffForm from './staff-forms';
 type CreateStaffDetailsProps = {
   closeSheet: () => void;
   isOpen: boolean;
+  staffCount: number;
+  trainerCount: number;
 };
 
 type TrainerFormValues = z.infer<typeof trainerFormSchema>;
@@ -27,11 +30,14 @@ type AdministratorFormValues = z.infer<typeof adminstratorFormSchema>;
 export const AddStaff: React.FC<CreateStaffDetailsProps> = ({
   isOpen,
   closeSheet,
+  staffCount,
+  trainerCount,
 }) => {
   const { gymBranch } = useGymBranch();
   const queryClient = useQueryClient();
   const [staffType, setStaffType] = useState<StaffType>('trainer');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { requireLimitAccess } = useSubscriptionAccess();
 
   const trainerForm = useForm<TrainerFormValues>({
     resolver: zodResolver(trainerFormSchema),
@@ -73,6 +79,17 @@ export const AddStaff: React.FC<CreateStaffDetailsProps> = ({
   const handleSubmit = async (
     data: TrainerFormValues | AdministratorFormValues
   ) => {
+    const limitKey = staffType === 'trainer' ? 'maxTrainers' : 'maxStaffs';
+    const currentCount = staffType === 'trainer' ? trainerCount : staffCount;
+    const allowed = requireLimitAccess(limitKey, currentCount, {
+      title:
+        staffType === 'trainer'
+          ? 'Trainer limit reached'
+          : 'Staff limit reached',
+      message: 'Upgrade your plan to add more team members.',
+    });
+    if (!allowed) return;
+
     setIsSubmitting(true);
     const formData = new FormData();
 

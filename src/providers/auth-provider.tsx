@@ -20,6 +20,25 @@ interface AppUser {
   uid: string;
   photoURL?: string;
   isMultiClub: boolean;
+  subscription?: {
+    plan: {
+      id: number;
+      name: string;
+      tier: string;
+      status: 'active' | 'expired' | 'cancelled';
+    };
+    subscriptionId: number;
+    billingCycle: 'monthly' | 'sixMonths' | 'yearly';
+    startDate: string;
+    endDate: string;
+    usageLimits: {
+      maxClubs: number;
+      maxMembers: number;
+      maxTrainers: number;
+      maxStaffs: number;
+    };
+    features: Record<string, boolean | number>;
+  };
   gyms: Array<{
     gymId: number;
     gymName: string;

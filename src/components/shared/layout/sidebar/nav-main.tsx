@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
-import { ChevronRight, type LucideIcon } from 'lucide-react';
+import { ChevronRight, Lock, type LucideIcon } from 'lucide-react';
 
 import {
   Collapsible,
@@ -28,6 +28,8 @@ import {
   SidebarMenuSubItem,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
+import { SubscriptionFeatureKey } from '@/types/subscription';
 
 export function NavMain({
   items,
@@ -37,14 +39,17 @@ export function NavMain({
     url: string;
     icon?: LucideIcon;
     isActive?: boolean;
+    requiredFeature?: SubscriptionFeatureKey;
     items?: {
       title: string;
       url: string;
+      requiredFeature?: SubscriptionFeatureKey;
     }[];
   }[];
 }) {
   const { state, isMobile, setOpenMobile } = useSidebar();
   const pathname = usePathname();
+  const { hasFeatureAccess, requireFeatureAccess } = useSubscriptionAccess();
 
   const handleLinkClick = () => {
     if (isMobile) setOpenMobile(false);
@@ -88,6 +93,8 @@ export function NavMain({
           );
 
           if (hasSubItems) {
+            const isParentLocked =
+              item.requiredFeature && !hasFeatureAccess(item.requiredFeature);
             if (state === 'collapsed') {
               return (
                 <SidebarMenuItem key={item.title}>
@@ -99,6 +106,9 @@ export function NavMain({
                       >
                         {item.icon && <item.icon />}
                         <span>{item.title}</span>
+                        {isParentLocked && (
+                          <Lock className="ml-auto h-3.5 w-3.5 text-primary-green-500" />
+                        )}
                       </SidebarMenuButton>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
@@ -106,17 +116,48 @@ export function NavMain({
                       align="start"
                       className="bg-secondary-blue-700 border-secondary-blue-400 text-white"
                     >
-                      {item.items?.map((subItem) => (
-                        <DropdownMenuItem
-                          key={subItem.title}
-                          asChild
-                          className="shad-drop-item"
-                        >
-                          <Link href={subItem.url} onClick={handleLinkClick}>
-                            {subItem.title}
-                          </Link>
-                        </DropdownMenuItem>
-                      ))}
+                      {item.items?.map((subItem) => {
+                        const requiredFeature =
+                          subItem.requiredFeature || item.requiredFeature;
+                        const isLocked =
+                          (requiredFeature &&
+                            !hasFeatureAccess(requiredFeature)) ||
+                          isParentLocked;
+                        return (
+                          <DropdownMenuItem
+                            key={subItem.title}
+                            className="shad-drop-item"
+                            onClick={(event) => {
+                              if (isLocked) {
+                                event.preventDefault();
+                                if (requiredFeature) {
+                                  requireFeatureAccess(requiredFeature, {
+                                    title: 'Upgrade required',
+                                    message:
+                                      'Upgrade your subscription to unlock this section.',
+                                  });
+                                }
+                                return;
+                              }
+                              handleLinkClick();
+                            }}
+                          >
+                            {isLocked ? (
+                              <span className="flex items-center gap-2">
+                                <Lock className="h-3.5 w-3.5 text-primary-green-500" />
+                                {subItem.title}
+                              </span>
+                            ) : (
+                              <Link
+                                href={subItem.url}
+                                onClick={handleLinkClick}
+                              >
+                                {subItem.title}
+                              </Link>
+                            )}
+                          </DropdownMenuItem>
+                        );
+                      })}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </SidebarMenuItem>
@@ -137,6 +178,9 @@ export function NavMain({
                     >
                       {item.icon && <item.icon />}
                       <span>{item.title}</span>
+                      {isParentLocked && (
+                        <Lock className="ml-auto h-3.5 w-3.5 text-primary-green-500" />
+                      )}
                       <ChevronRight
                         className={`ml-auto transition-transform duration-200 ${
                           isOpen ? 'rotate-90' : ''
@@ -146,18 +190,48 @@ export function NavMain({
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <SidebarMenuSub>
-                      {item.items?.map((subItem) => (
-                        <SidebarMenuSubItem key={subItem.title}>
-                          <SidebarMenuSubButton
-                            asChild
-                            isActive={pathname === subItem.url}
-                          >
-                            <Link href={subItem.url} onClick={handleLinkClick}>
-                              <span>{subItem.title}</span>
-                            </Link>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
+                      {item.items?.map((subItem) => {
+                        const requiredFeature =
+                          subItem.requiredFeature || item.requiredFeature;
+                        const isLocked =
+                          (requiredFeature &&
+                            !hasFeatureAccess(requiredFeature)) ||
+                          isParentLocked;
+                        return (
+                          <SidebarMenuSubItem key={subItem.title}>
+                            <SidebarMenuSubButton
+                              asChild={!isLocked}
+                              isActive={pathname === subItem.url}
+                              onClick={(event) => {
+                                if (isLocked) {
+                                  event.preventDefault();
+                                  if (requiredFeature) {
+                                    requireFeatureAccess(requiredFeature, {
+                                      title: 'Upgrade required',
+                                      message:
+                                        'Upgrade your subscription to unlock this section.',
+                                    });
+                                  }
+                                }
+                              }}
+                            >
+                              {isLocked ? (
+                                <span className="flex items-center gap-2">
+                                  <Lock className="h-3.5 w-3.5 text-primary-green-500" />
+                                  {subItem.title}
+                                </span>
+                              ) : (
+                                <Link
+                                  href={subItem.url}
+                                  onClick={handleLinkClick}
+                                >
+                                  <span>{subItem.title}</span>
+                                </Link>
+                              )}
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        );
+                      })}
                     </SidebarMenuSub>
                   </CollapsibleContent>
                 </SidebarMenuItem>
@@ -165,17 +239,41 @@ export function NavMain({
             );
           }
 
+          const requiredFeature = item.requiredFeature;
+          const isLocked =
+            requiredFeature && !hasFeatureAccess(requiredFeature);
+
           return (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
-                asChild
+                asChild={!isLocked}
                 isActive={isCurrentPage}
                 tooltip={state === 'collapsed' ? item.title : undefined}
+                onClick={(event) => {
+                  if (isLocked) {
+                    event.preventDefault();
+                    if (requiredFeature) {
+                      requireFeatureAccess(requiredFeature, {
+                        title: 'Upgrade required',
+                        message:
+                          'Upgrade your subscription to unlock this section.',
+                      });
+                    }
+                  }
+                }}
               >
-                <Link href={item.url} onClick={handleLinkClick}>
-                  {item.icon && <item.icon />}
-                  <span>{item.title}</span>
-                </Link>
+                {isLocked ? (
+                  <span className="flex items-center gap-2">
+                    {item.icon && <item.icon />}
+                    <span>{item.title}</span>
+                    <Lock className="h-3.5 w-3.5 text-primary-green-500" />
+                  </span>
+                ) : (
+                  <Link href={item.url} onClick={handleLinkClick}>
+                    {item.icon && <item.icon />}
+                    <span>{item.title}</span>
+                  </Link>
+                )}
               </SidebarMenuButton>
             </SidebarMenuItem>
           );
