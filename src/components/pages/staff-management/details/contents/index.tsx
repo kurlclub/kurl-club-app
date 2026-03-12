@@ -1,8 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-
 import { KTabs, TabItem } from '@/components/shared/form/k-tabs';
+import { useTabState } from '@/hooks/use-tab-state';
 import { StaffType } from '@/types/staff';
 
 import AssignedMembersTable from './assigned-members-table';
@@ -23,9 +22,7 @@ export default function Contents({
   handleSave: () => Promise<boolean>;
   toggleEdit: () => void;
 }) {
-  const [activeTab, setActiveTab] = useState<'members' | 'roles' | 'salary'>(
-    staffRole === 'trainer' ? 'members' : 'roles'
-  );
+  const defaultTab = staffRole === 'trainer' ? 'members' : 'roles';
 
   const tabs: TabItem[] =
     staffRole === 'trainer'
@@ -37,6 +34,8 @@ export default function Contents({
           { id: 'roles', label: 'Roles & Permissions' },
           { id: 'salary', label: 'Salary Configuration' },
         ];
+
+  const { activeTab, handleTabChange } = useTabState(tabs, defaultTab);
 
   return (
     <div className="md:px-8 pt-0 w-full max-w-[calc(100%-95px)] md:max-w-[calc(100%-300px)] lg:max-w-[calc(100%-336px)]">
@@ -52,9 +51,7 @@ export default function Contents({
           items={tabs}
           variant="underline"
           value={activeTab}
-          onTabChange={(tabId) =>
-            setActiveTab(tabId as 'members' | 'roles' | 'salary')
-          }
+          onTabChange={handleTabChange}
           className="border-secondary-blue-500"
         />
         <div className="py-4">

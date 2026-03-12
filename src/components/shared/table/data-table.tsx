@@ -246,7 +246,7 @@ export function DataTable<TData extends object, TValue>(
                           <div
                             className={
                               isActionsColumn
-                                ? 'flex h-full items-center justify-center'
+                                ? 'flex h-full items-center pl-4'
                                 : ''
                             }
                           >

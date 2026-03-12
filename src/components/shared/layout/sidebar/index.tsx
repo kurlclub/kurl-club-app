@@ -105,6 +105,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       requiredFeature: 'staffManagement',
     },
     {
+      title: 'Payroll management',
+      url: '/payroll-management',
+      icon: Wallet,
+    },
+    {
       title: 'Plans & Workouts',
       url: '/plans-and-workouts',
       icon: Dumbbell,
@@ -115,11 +120,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       url: '/reports-and-expenses',
       icon: ChartColumnIncreasing,
       requiredFeature: 'basicReports',
-    },
-    {
-      title: 'Payroll management',
-      url: '/payroll-management',
-      icon: Wallet,
     },
     {
       title: 'Settings',

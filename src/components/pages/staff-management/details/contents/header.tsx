@@ -53,7 +53,7 @@ function Header({
   };
 
   return (
-    <div className="flex pt-4 md:pt-[26px] pb-4 w-full items-center justify-between gap-3">
+    <div className="flex pt-4 md:pt-6.5 pb-4 w-full items-center justify-between gap-3">
       <h3 className="text-white font-medium text-xl leading-normal">
         Staff management
       </h3>

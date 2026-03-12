@@ -1,20 +1,45 @@
-import { useMemo, useState } from 'react';
+'use client';
 
-import { format } from 'date-fns';
-import { Calendar, IndianRupee, Pencil } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Controller, FormProvider, useForm, useWatch } from 'react-hook-form';
+
+import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
+import { z } from 'zod';
 
-import { KDatePicker } from '@/components/shared/form/k-datepicker';
+import {
+  KFormField,
+  KFormFieldType,
+} from '@/components/shared/form/k-formfield';
+import { InfoBanner } from '@/components/shared/info-banner';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { useUpsertStaffSalary } from '@/hooks/use-payroll';
 import { useStaffSalaryDetails } from '@/services/staff';
 import { StaffType } from '@/types/staff';
+import { formatCurrency } from '@/utils/format-currency';
 
 interface SalaryConfigurationProps {
   staffId: string;
   staffRole: StaffType;
 }
+
+const salarySchema = z.object({
+  amount: z.string().min(1, 'Salary amount is required'),
+  salaryDate: z.date({ message: 'Salary date is required' }),
+  isHourly: z.boolean(),
+  payDay: z.string().optional(),
+});
+
+type SalaryFormData = z.infer<typeof salarySchema>;
 
 function SalaryConfiguration({ staffId, staffRole }: SalaryConfigurationProps) {
   const {
@@ -24,54 +49,74 @@ function SalaryConfiguration({ staffId, staffRole }: SalaryConfigurationProps) {
   } = useStaffSalaryDetails(staffId, staffRole);
   const upsertSalaryMutation = useUpsertStaffSalary();
   const isSaving = upsertSalaryMutation.isPending;
+  const [initialDataLoaded, setInitialDataLoaded] = useState(false);
 
-  const [isEditing, setIsEditing] = useState(false);
+  const form = useForm<SalaryFormData>({
+    resolver: zodResolver(salarySchema),
+    defaultValues: {
+      amount: '',
+      salaryDate: undefined,
+      isHourly: false,
+      payDay: '',
+    },
+    mode: 'onSubmit',
+  });
 
-  const initialSalaryData = useMemo(() => {
-    if (!salaryDetails) return { amount: '', date: undefined };
-    return {
+  const isHourly = useWatch({ control: form.control, name: 'isHourly' });
+  const amount = useWatch({ control: form.control, name: 'amount' });
+
+  // Initialize form data
+  useEffect(() => {
+    if (!salaryDetails) return;
+
+    const formData: SalaryFormData = {
       amount: String(salaryDetails.salary ?? ''),
-      date: salaryDetails.salaryDate
+      salaryDate: salaryDetails.salaryDate
         ? new Date(salaryDetails.salaryDate)
-        : undefined,
+        : undefined!,
+      isHourly: false,
+      payDay: '',
     };
-  }, [salaryDetails]);
 
-  const [draftAmount, setDraftAmount] = useState(initialSalaryData.amount);
-  const [draftDate, setDraftDate] = useState<Date | undefined>(
-    initialSalaryData.date
-  );
+    form.reset(formData, { keepDefaultValues: false });
 
-  const savedAmount = initialSalaryData.amount;
-  const savedDate = initialSalaryData.date;
+    const timer = setTimeout(() => setInitialDataLoaded(true), 100);
+    return () => clearTimeout(timer);
+  }, [salaryDetails, form]);
 
-  const isDirty = useMemo(
-    () =>
-      draftAmount !== savedAmount ||
-      (draftDate?.toDateString() ?? '') !== (savedDate?.toDateString() ?? ''),
-    [draftAmount, draftDate, savedAmount, savedDate]
-  );
-
-  const handleStartEdit = () => {
-    setDraftAmount(savedAmount);
-    setDraftDate(savedDate);
-    setIsEditing(true);
-  };
+  const isDirty = useMemo(() => {
+    const { isDirty, dirtyFields } = form.formState;
+    return (
+      isDirty &&
+      (dirtyFields.amount ||
+        dirtyFields.salaryDate ||
+        dirtyFields.isHourly ||
+        dirtyFields.payDay)
+    );
+  }, [form.formState]);
 
   const handleDiscard = () => {
-    setDraftAmount(savedAmount);
-    setDraftDate(savedDate);
-    setIsEditing(false);
+    if (!salaryDetails) return;
+
+    const formData: SalaryFormData = {
+      amount: String(salaryDetails.salary ?? ''),
+      salaryDate: salaryDetails.salaryDate
+        ? new Date(salaryDetails.salaryDate)
+        : undefined!,
+      isHourly: false,
+      payDay: '',
+    };
+    form.reset(formData);
   };
 
-  const handleSave = async () => {
-    const salaryValue = Number(draftAmount);
-    if (!draftAmount || !Number.isFinite(salaryValue) || salaryValue <= 0) {
+  const handleSubmit = async (data: SalaryFormData) => {
+    const salaryValue = Number(data.amount);
+    if (!data.amount || !Number.isFinite(salaryValue) || salaryValue <= 0) {
       toast.error('Please enter a valid salary amount.');
       return;
     }
 
-    if (!draftDate) {
+    if (!data.salaryDate) {
       toast.error('Please select a salary date.');
       return;
     }
@@ -86,9 +131,9 @@ function SalaryConfiguration({ staffId, staffRole }: SalaryConfigurationProps) {
         employeeId: Number(staffId),
         employeeType: staffRole,
         salary: salaryValue,
-        salaryDate: draftDate,
+        salaryDate: data.salaryDate,
       });
-      setIsEditing(false);
+      form.reset(data);
       toast.success('Salary configuration saved.');
     } catch (error) {
       toast.error(
@@ -99,104 +144,153 @@ function SalaryConfiguration({ staffId, staffRole }: SalaryConfigurationProps) {
     }
   };
 
+  const numericSalary = Number(amount);
+  const hasValidSalary = Number.isFinite(numericSalary) && numericSalary > 0;
+
   if (isLoading) {
     return (
-      <div className="bg-secondary-blue-500 border border-primary-blue-300 rounded-lg p-6 text-secondary-blue-100">
-        Loading salary details...
-      </div>
+      <Card className="bg-white dark:bg-secondary-blue-500 border-gray-200 dark:border-secondary-blue-400">
+        <CardContent className="p-6">
+          <p className="text-gray-600 dark:text-secondary-blue-100">
+            Loading salary details...
+          </p>
+        </CardContent>
+      </Card>
     );
   }
 
   if (isError) {
     return (
-      <div className="bg-secondary-blue-500 border border-primary-blue-300 rounded-lg p-6 text-red-300">
-        Failed to load salary details.
-      </div>
+      <Card className="bg-white dark:bg-secondary-blue-500 border-gray-200 dark:border-secondary-blue-400">
+        <CardContent className="p-6">
+          <p className="text-red-500 dark:text-red-300">
+            Failed to load salary details.
+          </p>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="bg-secondary-blue-500 border border-primary-blue-300 rounded-lg p-6 space-y-6">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h5 className="text-white text-base font-medium leading-normal">
-            Salary Configuration
-          </h5>
-          <p className="text-secondary-blue-100 text-sm mt-1">
-            Set monthly payout amount and salary disbursement date.
-          </p>
-        </div>
-
-        {!isEditing && (
-          <Button variant="outline" className="h-10" onClick={handleStartEdit}>
-            <Pencil className="h-4 w-4" />
-            Edit
-          </Button>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <label className="text-sm text-secondary-blue-100">
-            Salary Amount
-          </label>
-          <div className="relative">
-            <IndianRupee className="h-4 w-4 text-secondary-blue-100 absolute left-3 top-1/2 -translate-y-1/2" />
-            <Input
-              type="number"
-              min={0}
-              step="0.01"
-              value={draftAmount}
-              disabled={!isEditing}
-              onChange={(e) => setDraftAmount(e.target.value)}
-              className="pl-8 h-12 bg-primary-blue-500 font-semibold border-primary-blue-300 text-white disabled:opacity-100 disabled:text-secondary-blue-100 disabled:font-normal"
-              placeholder="Enter salary amount"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm text-secondary-blue-100">Salary Date</label>
-          {isEditing ? (
-            <KDatePicker
-              mode="single"
-              showPresets={false}
-              showYearSelector
-              value={draftDate}
-              onDateChange={(date) => setDraftDate(date as Date | undefined)}
-              label="Select salary date"
-              icon={<Calendar className="text-primary-green-100 h-4 w-4" />}
-              className="h-12 bg-primary-blue-500! w-full"
-            />
-          ) : (
-            <div className="h-12 rounded-md border border-primary-blue-300 bg-primary-blue-500 px-3 flex opacity-100 items-center text-secondary-blue-100 text-sm gap-2">
-              <Calendar className="h-4 w-4 text-secondary-blue-100" />
-              {savedDate ? format(savedDate, 'dd MMM yyyy') : 'Not set'}
+    <FormProvider {...form}>
+      <Card className="bg-white dark:bg-secondary-blue-500 border-gray-200 dark:border-secondary-blue-400 py-2">
+        <CardHeader className="pb-4">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <CardTitle className="text-gray-900 dark:text-white">
+                Salary Configuration
+              </CardTitle>
+              <CardDescription className="text-gray-600 dark:text-secondary-blue-200 text-[15px]">
+                Set monthly payout amount and salary disbursement date
+              </CardDescription>
             </div>
-          )}
-        </div>
-      </div>
+            {isDirty && initialDataLoaded && (
+              <div
+                className="flex items-center gap-2 animate-in fade-in zoom-in-95 duration-200"
+                aria-live="polite"
+              >
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleDiscard}
+                  disabled={isSaving}
+                >
+                  Discard
+                </Button>
+                <Button
+                  type="button"
+                  onClick={form.handleSubmit(handleSubmit)}
+                  disabled={isSaving}
+                >
+                  {isSaving ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardHeader>
 
-      {isEditing && (
-        <div className="flex items-center justify-end gap-2 border-t border-primary-blue-300 pt-4">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={handleDiscard}
-            disabled={isSaving}
-          >
-            Discard
-          </Button>
-          <Button
-            type="button"
-            onClick={handleSave}
-            disabled={!isDirty || isSaving}
-          >
-            {isSaving ? 'Saving...' : 'Save Changes'}
-          </Button>
-        </div>
-      )}
-    </div>
+        <CardContent className="space-y-6">
+          {/* Salary Amount */}
+          <KFormField
+            fieldType={KFormFieldType.INPUT}
+            control={form.control}
+            name="amount"
+            label="Salary amount"
+            placeholder="Enter salary amount"
+            className="bg-primary-blue-400"
+            inputType="number"
+            mandetory
+          />
+
+          {hasValidSalary && (
+            <p className="text-xs text-gray-500 dark:text-secondary-blue-200 -mt-4">
+              {formatCurrency(numericSalary)}{' '}
+              {isHourly ? 'per hour' : 'per month'}
+            </p>
+          )}
+
+          {/* Payment Frequency */}
+          <div className="space-y-3">
+            <div className="flex items-center space-x-2">
+              <Controller
+                control={form.control}
+                name="isHourly"
+                render={({ field }) => (
+                  <Checkbox
+                    id="isHourly"
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                )}
+              />
+              <Label
+                htmlFor="isHourly"
+                className="text-sm font-medium text-gray-700 dark:text-secondary-blue-100 cursor-pointer"
+              >
+                Hourly payment
+              </Label>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-secondary-blue-200">
+              {isHourly
+                ? 'Payment will be calculated based on hours worked'
+                : 'Payment will be a fixed monthly amount'}
+            </p>
+          </div>
+
+          {/* Payment Day (Monthly only) */}
+          {!isHourly && (
+            <>
+              <KFormField
+                fieldType={KFormFieldType.INPUT}
+                control={form.control}
+                name="payDay"
+                label="Payment day of month"
+                placeholder="e.g., 1, 15, 30"
+                className="bg-primary-blue-400"
+                inputType="number"
+              />
+              <InfoBanner
+                variant="info"
+                icon="ℹ️"
+                message="Enter a day between 1 and 31 for monthly salary disbursement"
+              />
+            </>
+          )}
+
+          {/* Salary Date */}
+          <KFormField
+            fieldType={KFormFieldType.UI_DATE_PICKER}
+            control={form.control}
+            name="salaryDate"
+            label="Salary date"
+            placeholder="Select salary date"
+            mode="single"
+            floating
+            mandetory
+          />
+        </CardContent>
+      </Card>
+    </FormProvider>
   );
 }
 

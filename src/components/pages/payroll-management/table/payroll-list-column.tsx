@@ -1,7 +1,11 @@
+import Image from 'next/image';
+import Link from 'next/link';
+
 import type { ColumnDef } from '@tanstack/react-table';
-import { Dumbbell, Eye, Users } from 'lucide-react';
+import { ArrowUpRight, ChevronRight } from 'lucide-react';
 
 import { FeeStatusBadge } from '@/components/shared/badges';
+import { KBadgeWarning } from '@/components/shared/icons';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -26,7 +30,12 @@ export const getPayrollColumns = (
   {
     accessorKey: 'staffId',
     header: 'Staff ID',
-    cell: ({ row }) => <div className="w-30 ">{row.getValue('staffId')}</div>,
+    cell: ({ row }) => (
+      <div className="w-25 uppercase">
+        <span className="text-primary-blue-200/80 font-bold mr-0.5">#</span>
+        {row.getValue('staffId')}
+      </div>
+    ),
     enableSorting: false,
     enableHiding: false,
   },
@@ -58,15 +67,26 @@ export const getPayrollColumns = (
     cell: ({ row }) => {
       const role = row.getValue<PayrollRow['role']>('role');
 
+      const getRoleIcon = (role: string) => {
+        if (role === 'Staff') return '/assets/svg/staff-icon.svg';
+        if (role === 'Trainer') return '/assets/svg/trainer-icon.svg';
+        return '/assets/svg/admin-icon.svg';
+      };
+
       return (
         <div className="min-w-27.5">
-          <Badge
-            variant="outline"
-            className="rounded-lg p-1.5 bg-primary-blue-400 border-none gap-2 text-[13px] leading-normal"
-          >
-            {role === 'Staff' ? <Users size={18} /> : <Dumbbell size={18} />}
+          <div className="flex items-center gap-2 text-white leading-normal text-[15px] font-normal capitalize">
+            <span className="w-4.5 h-4.5 flex items-center justify-center">
+              <Image
+                height={18}
+                width={18}
+                src={getRoleIcon(role)}
+                alt={role}
+                className="object-cover"
+              />
+            </span>
             {role}
-          </Badge>
+          </div>
         </div>
       );
     },
@@ -77,6 +97,27 @@ export const getPayrollColumns = (
     header: 'Fee status',
     cell: ({ row }) => {
       const status = row.getValue<PayrollRow['feeStatus']>('feeStatus');
+      const isSalaryConfigured = row.original.isSalaryConfigured;
+      const roleKey = row.original.roleKey;
+      const staffId = row.original.id;
+
+      if (!isSalaryConfigured) {
+        return (
+          <Link
+            href={`/staff-management/${roleKey}/${staffId}?tab=salary`}
+            className="group inline-flex items-center gap-2"
+          >
+            <Badge
+              variant="warning"
+              className="rounded-[35px] text-xs h-7 gap-2 cursor-pointer"
+            >
+              <KBadgeWarning />
+              Not configured
+              <ChevronRight size={16} />
+            </Badge>
+          </Link>
+        );
+      }
 
       return <FeeStatusBadge status={mapFeeStatus(status)} />;
     },
@@ -92,8 +133,8 @@ export const getPayrollColumns = (
         type="button"
         onClick={() => options?.onView?.(row.original)}
       >
-        <span className="sr-only">View details</span>
-        <Eye className="h-4 w-4 text-primary-green-600" />
+        <span className="sr-only">Pay salary</span>
+        <ArrowUpRight className="text-white" />
       </Button>
     ),
   },
