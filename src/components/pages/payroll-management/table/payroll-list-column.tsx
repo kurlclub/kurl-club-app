@@ -2,7 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { Dumbbell, Eye, Users } from 'lucide-react';
 
 import { FeeStatusBadge } from '@/components/shared/badges';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getAvatarColor } from '@/lib/avatar-utils';
@@ -16,7 +16,13 @@ const mapFeeStatus = (status: PayrollRow['feeStatus']) => {
   return 'unpaid';
 };
 
-export const columns: ColumnDef<PayrollRow>[] = [
+interface PayrollColumnOptions {
+  onView?: (row: PayrollRow) => void;
+}
+
+export const getPayrollColumns = (
+  options?: PayrollColumnOptions
+): ColumnDef<PayrollRow>[] => [
   {
     accessorKey: 'staffId',
     header: 'Staff ID',
@@ -29,12 +35,14 @@ export const columns: ColumnDef<PayrollRow>[] = [
     header: 'Name',
     cell: ({ row }) => {
       const name = row.getValue<string>('name') || 'Unknown';
+      const imageUrl = row.original.imageUrl;
       const avatarStyle = getAvatarColor(name);
       const initials = getInitials(name);
 
       return (
         <div className="flex items-center gap-2 w-35">
           <Avatar className="h-8 w-8">
+            {imageUrl ? <AvatarImage src={imageUrl} alt={name} /> : null}
             <AvatarFallback style={avatarStyle}>{initials}</AvatarFallback>
           </Avatar>
           <span>{name}</span>
@@ -77,8 +85,13 @@ export const columns: ColumnDef<PayrollRow>[] = [
   {
     id: 'actions',
     header: 'Actions',
-    cell: () => (
-      <Button variant="ghost" className="h-8 w-8 p-0" type="button">
+    cell: ({ row }) => (
+      <Button
+        variant="ghost"
+        className="h-8 w-8 p-0"
+        type="button"
+        onClick={() => options?.onView?.(row.original)}
+      >
         <span className="sr-only">View details</span>
         <Eye className="h-4 w-4 text-primary-green-600" />
       </Button>

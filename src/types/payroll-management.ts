@@ -3,4 +3,5 @@ export type PayrollRow = {
   name: string;
   role: 'Admin' | 'Trainer' | 'Staff';
   feeStatus: 'Paid' | 'Unpaid' | 'Partially Paid';
+  imageUrl?: string;
 };

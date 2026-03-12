@@ -13,7 +13,10 @@ import { searchItems } from '@/lib/utils';
 import type { PayrollRow } from '@/types/payroll-management';
 
 import CardWrapper from './card-wrapper';
-import { columns } from './table/payroll-list-column';
+import PaymentDetails from './payment-details';
+import PaymentSuccess from './payment-success';
+import PayRollDetails from './payroll-details';
+import { getPayrollColumns } from './table/payroll-list-column';
 
 const DUMMY_PAYROLL_DATA: PayrollRow[] = [
   {
@@ -21,12 +24,14 @@ const DUMMY_PAYROLL_DATA: PayrollRow[] = [
     name: 'Aarav Sharma',
     role: 'Trainer',
     feeStatus: 'Paid',
+    imageUrl: 'https://i.pravatar.cc/100?img=12',
   },
   {
     staffId: 'STF-1003',
     name: 'Rahul Verma',
     role: 'Staff',
     feeStatus: 'Unpaid',
+    imageUrl: 'https://i.pravatar.cc/100?img=22',
   },
   {
     staffId: 'STF-1004',
@@ -39,6 +44,7 @@ const DUMMY_PAYROLL_DATA: PayrollRow[] = [
     name: 'Karan Mehta',
     role: 'Staff',
     feeStatus: 'Paid',
+    imageUrl: 'https://i.pravatar.cc/100?img=16',
   },
   {
     staffId: 'STF-1007',
@@ -51,6 +57,7 @@ const DUMMY_PAYROLL_DATA: PayrollRow[] = [
     name: 'Ananya Rao',
     role: 'Staff',
     feeStatus: 'Unpaid',
+    imageUrl: 'https://i.pravatar.cc/100?img=48',
   },
   {
     staffId: 'STF-1009',
@@ -63,6 +70,7 @@ const DUMMY_PAYROLL_DATA: PayrollRow[] = [
     name: 'Nitin Kapoor',
     role: 'Staff',
     feeStatus: 'Paid',
+    imageUrl: 'https://i.pravatar.cc/100?img=29',
   },
   {
     staffId: 'STF-1012',
@@ -107,6 +115,40 @@ const PayrollManagement = () => {
   const [selectedFilters, setSelectedFilters] = useState<
     Record<string, string[] | undefined>
   >({});
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isPaymentDetailsOpen, setIsPaymentDetailsOpen] = useState(false);
+  const [isPaymentSuccessOpen, setIsPaymentSuccessOpen] = useState(false);
+  const [selectedPayroll, setSelectedPayroll] = useState<PayrollRow | null>(
+    null
+  );
+
+  const handleOpenPaymentConfirmation = () => {
+    setIsDetailsOpen(false);
+    setIsPaymentDetailsOpen(true);
+  };
+
+  const handlePayNow = () => {
+    setIsPaymentDetailsOpen(false);
+    setIsPaymentSuccessOpen(true);
+  };
+
+  const handleCloseSuccess = (open: boolean) => {
+    setIsPaymentSuccessOpen(open);
+    if (!open) {
+      setSelectedPayroll(null);
+    }
+  };
+
+  const columns = useMemo(
+    () =>
+      getPayrollColumns({
+        onView: (row) => {
+          setSelectedPayroll(row);
+          setIsDetailsOpen(true);
+        },
+      }),
+    []
+  );
 
   const onFilterChange = (columnId: string, values: string[] | undefined) => {
     setSelectedFilters((prev) => ({ ...prev, [columnId]: values }));
@@ -157,6 +199,26 @@ const PayrollManagement = () => {
               onResetFilters={onResetFilters}
             />
           )}
+        />
+
+        <PayRollDetails
+          details={selectedPayroll}
+          isDetailsOpen={isDetailsOpen}
+          setIsDetailsOpen={setIsDetailsOpen}
+          onMakePayment={handleOpenPaymentConfirmation}
+        />
+
+        <PaymentDetails
+          details={selectedPayroll}
+          open={isPaymentDetailsOpen}
+          onOpenChange={setIsPaymentDetailsOpen}
+          onPayNow={handlePayNow}
+        />
+
+        <PaymentSuccess
+          details={selectedPayroll}
+          open={isPaymentSuccessOpen}
+          onOpenChange={handleCloseSuccess}
         />
       </div>
     </StudioLayout>
