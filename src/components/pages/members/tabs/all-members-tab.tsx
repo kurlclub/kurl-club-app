@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { DataTable, DataTableToolbar } from '@/components/shared/table';
 import { ImportCSVModal } from '@/components/shared/table/import-csv-modal';
 import { useDebounce } from '@/hooks/use-debounce';
+import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
 import { FilterConfig } from '@/lib/filters';
 import {
   MemberFilters,
@@ -27,6 +28,7 @@ export function AllMembersTab({
   onCloseImportModal,
 }: AllMembersTabProps) {
   const queryClient = useQueryClient();
+  const { requireLimitAccess } = useSubscriptionAccess();
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearch = useDebounce(searchTerm, 500);
   const [selectedFilters, setSelectedFilters] = useState<{
@@ -180,6 +182,15 @@ export function AllMembersTab({
         isOpen={isImportModalOpen}
         onClose={onCloseImportModal}
         onImport={async (items) => {
+          const allowed = requireLimitAccess(
+            'maxMembers',
+            totalCount + items.length,
+            {
+              title: 'Member limit reached',
+              message: 'Upgrade your plan to import more members.',
+            }
+          );
+          if (!allowed) return;
           const result = await bulkImportMembers(items);
           if (result.success) {
             await queryClient.invalidateQueries({

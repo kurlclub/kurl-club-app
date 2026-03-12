@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { MessageSquareText, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { KEdit } from '@/components/shared/icons';
@@ -53,7 +53,7 @@ function Header({
   };
 
   return (
-    <div className="flex pt-4 md:pt-[26px] pb-4 w-full items-center justify-between gap-3">
+    <div className="flex pt-4 md:pt-6.5 pb-4 w-full items-center justify-between gap-3">
       <h3 className="text-white font-medium text-xl leading-normal">
         Staff management
       </h3>
@@ -67,9 +67,6 @@ function Header({
           </>
         ) : (
           <>
-            <Button className="h-10 w-10" variant="outline">
-              <MessageSquareText className="text-primary-green-500 h-5! w-5!" />
-            </Button>
             <Button className="h-10" variant="outline" onClick={toggleEdit}>
               <KEdit className="h-5! w-5!" />
               Edit

@@ -9,10 +9,12 @@ import { DataTable, DataTableToolbar } from '@/components/shared/table';
 import { useAppDialog } from '@/hooks/use-app-dialog';
 import { useFilterableList } from '@/hooks/use-filterable-list';
 import { useSheet } from '@/hooks/use-sheet';
+import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
 import { searchItems } from '@/lib/utils';
 import { useGymBranch } from '@/providers/gym-branch-provider';
 import {
   rejectOnboardingMember,
+  useGymMembers,
   usePendingOnboardingMembers,
 } from '@/services/member';
 import { OnboardingMember } from '@/types/member.types';
@@ -32,10 +34,16 @@ export function PendingOnboardingTab() {
   const [selectedMemberId, setSelectedMemberId] = useState<
     number | undefined
   >();
+  const { requireLimitAccess } = useSubscriptionAccess();
 
   const { data: pendingMembers = [], isLoading } = usePendingOnboardingMembers(
     gymId!
   );
+  const { data: memberCountData } = useGymMembers(gymId!, {
+    page: 1,
+    pageSize: 1,
+  });
+  const totalMemberCount = memberCountData?.pagination?.totalCount || 0;
 
   const resolveOnboardingId = (member: OnboardingMember): number => {
     const rawId =
@@ -74,6 +82,11 @@ export function PendingOnboardingTab() {
       toast.error('Unable to open onboarding details. Invalid request ID.');
       return;
     }
+    const allowed = requireLimitAccess('maxMembers', totalMemberCount, {
+      title: 'Member limit reached',
+      message: 'Upgrade your plan to add more members.',
+    });
+    if (!allowed) return;
     setSelectedMemberId(member.id);
     openSheet();
   };

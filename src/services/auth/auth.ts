@@ -33,6 +33,7 @@ interface UserDetailsResponse {
     userId: number;
     userName: string;
     userEmail: string;
+    photoPath?: string | null;
     userRole: string;
     isMultiClub: boolean;
     clubs: Array<{
@@ -48,6 +49,25 @@ interface UserDetailsResponse {
       gymIdentifier: string;
       photoPath: string | null;
     }>;
+    subscription?: {
+      plan: {
+        id: number;
+        name: string;
+        tier: string;
+        status: 'active' | 'expired' | 'cancelled';
+      };
+      subscriptionId: number;
+      billingCycle: 'monthly' | 'sixMonths' | 'yearly';
+      startDate: string;
+      endDate: string;
+      usageLimits: {
+        maxClubs: number;
+        maxMembers: number;
+        maxTrainers: number;
+        maxStaffs: number;
+      };
+      features: Record<string, boolean | number>;
+    };
   };
 }
 

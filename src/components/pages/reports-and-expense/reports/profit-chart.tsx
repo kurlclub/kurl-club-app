@@ -24,14 +24,14 @@ const ProfitChart = ({ report, className }: ProfitChartProps) => {
       mutedColor: 'bg-[#7F879A]',
     },
     {
-      label: 'Other collections',
-      value: report.revenueFlow.otherMemberCollections,
+      label: 'Joining fees',
+      value: report.revenueFlow.joiningFees,
       color: 'bg-neutral-green-400',
       mutedColor: 'bg-[#7F879A]',
     },
     {
-      label: 'Other income',
-      value: report.revenueFlow.otherIncome,
+      label: 'Other collection',
+      value: report.revenueFlow.otherCollection,
       color: 'bg-semantic-blue-300',
       mutedColor: 'bg-[#7F879A]',
     },

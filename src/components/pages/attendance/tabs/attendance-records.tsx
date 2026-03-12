@@ -5,7 +5,9 @@ import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
+import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
 import { useAuth } from '@/providers/auth-provider';
 import { useGymBranch } from '@/providers/gym-branch-provider';
 import {
@@ -28,12 +30,16 @@ import {
 export default function AttendanceRecords() {
   const { user } = useAuth();
   const { gymBranch } = useGymBranch();
+  const { hasFeatureAccess, requireFeatureAccess } = useSubscriptionAccess();
+  const canManualAttendance = hasFeatureAccess('manualAttendance');
+  const canLiveAttendance = hasFeatureAccess('liveAttendance');
   const [isPageVisible, setIsPageVisible] = useState(() =>
     typeof document !== 'undefined'
       ? document.visibilityState === 'visible'
       : true
   );
-  const shouldRunAttendanceSync = !!gymBranch?.gymId && isPageVisible;
+  const shouldRunAttendanceSync =
+    !!gymBranch?.gymId && isPageVisible && canLiveAttendance;
   const { connectionState } = useAttendanceRealtimeSync(gymBranch?.gymId, {
     enabled: shouldRunAttendanceSync,
   });
@@ -58,6 +64,7 @@ export default function AttendanceRecords() {
     const saved = localStorage.getItem('attendance-manual-mode');
     return saved ? JSON.parse(saved) : false;
   });
+  const effectiveManualMode = canManualAttendance ? isManualMode : false;
 
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
@@ -82,6 +89,13 @@ export default function AttendanceRecords() {
   }, []);
 
   const handleManualModeToggle = (checked: boolean) => {
+    if (!canManualAttendance) {
+      requireFeatureAccess('manualAttendance', {
+        title: 'Manual attendance requires a higher plan',
+        message: 'Upgrade your subscription to enable manual attendance.',
+      });
+      return;
+    }
     setIsManualMode(checked);
     localStorage.setItem('attendance-manual-mode', JSON.stringify(checked));
   };
@@ -206,7 +220,7 @@ export default function AttendanceRecords() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {isManualMode && (
+          {effectiveManualMode && (
             <QuickAttendanceCommand
               onCheckIn={handleCheckIn}
               onCheckOut={handleCheckOut}
@@ -214,7 +228,7 @@ export default function AttendanceRecords() {
           )}
           <div className="flex items-center gap-2">
             <Switch
-              checked={isManualMode}
+              checked={effectiveManualMode}
               onCheckedChange={handleManualModeToggle}
               className="data-[state=checked]:bg-primary-green-500"
             />
@@ -224,11 +238,28 @@ export default function AttendanceRecords() {
           </div>
         </div>
       </div>
+      {!canLiveAttendance && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-secondary-blue-400/60 bg-secondary-blue-600/40 px-4 py-3 text-sm text-primary-blue-100">
+          <span>Live attendance sync is disabled on your plan.</span>
+          <Button
+            variant="outline"
+            className="h-9 border-white/20 bg-transparent hover:bg-white/5"
+            onClick={() =>
+              requireFeatureAccess('liveAttendance', {
+                title: 'Live attendance requires a higher plan',
+                message: 'Upgrade your subscription to enable live attendance.',
+              })
+            }
+          >
+            Upgrade
+          </Button>
+        </div>
+      )}
 
       <AttendanceTableView
         records={attendanceRecords}
         columns={
-          isManualMode
+          effectiveManualMode
             ? manualModeColumns(handleQuickCheckOut)
             : attendanceColumns
         }
