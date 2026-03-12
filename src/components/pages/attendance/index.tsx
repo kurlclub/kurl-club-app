@@ -2,6 +2,7 @@
 
 import { TabItem } from '@/components/shared/form/k-tabs';
 import { StudioLayout } from '@/components/shared/layout';
+import { FeatureAccessGuard } from '@/components/shared/subscription';
 import { useTabState } from '@/hooks/use-tab-state';
 
 import {
@@ -22,16 +23,41 @@ export default function AttendanceMain() {
   const { activeTab, handleTabChange } = useTabState(TABS, 'dashboard');
 
   return (
-    <StudioLayout
-      title="Attendance Management"
-      tabs={TABS}
-      activeTab={activeTab}
-      onTabChange={handleTabChange}
+    <FeatureAccessGuard
+      feature="attendanceTracking"
+      title="Attendance requires a higher plan"
+      message="Upgrade your subscription to access attendance."
+      mode="block"
     >
-      {activeTab === 'dashboard' && <Dashboard />}
-      {activeTab === 'records' && <AttendanceRecords />}
-      {activeTab === 'insights' && <MemberInsights />}
-      {activeTab === 'devices' && <DeviceManagement />}
-    </StudioLayout>
+      <StudioLayout
+        title="Attendance Management"
+        tabs={TABS}
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+      >
+        {activeTab === 'dashboard' && (
+          <FeatureAccessGuard
+            feature="liveAttendance"
+            title="Live attendance requires a higher plan"
+            message="Upgrade your subscription to access live attendance."
+            mode="overlay"
+          >
+            <Dashboard />
+          </FeatureAccessGuard>
+        )}
+        {activeTab === 'records' && <AttendanceRecords />}
+        {activeTab === 'insights' && <MemberInsights />}
+        {activeTab === 'devices' && (
+          <FeatureAccessGuard
+            feature="liveAttendance"
+            title="Device access requires a higher plan"
+            message="Upgrade your subscription to manage devices."
+            mode="overlay"
+          >
+            <DeviceManagement />
+          </FeatureAccessGuard>
+        )}
+      </StudioLayout>
+    </FeatureAccessGuard>
   );
 }

@@ -1,5 +1,7 @@
 'use client';
 
+import { useMemo, useState } from 'react';
+
 import { ColumnDef } from '@tanstack/react-table';
 
 import { DataTable } from '@/components/shared/table/data-table';
@@ -24,12 +26,61 @@ export const BaseTable = <T extends Record<string, unknown>>({
     searchItems
   );
 
+  const [selectedFilters, setSelectedFilters] = useState<
+    Record<string, string[] | undefined>
+  >({});
+
+  const normalizeFilterValue = (value: unknown) =>
+    String(value)
+      .toLowerCase()
+      .replace(/[_\s]+/g, '-');
+
+  const filteredByFacets = useMemo(() => {
+    return filteredData.filter((item) => {
+      return Object.entries(selectedFilters).every(([columnId, values]) => {
+        if (!values?.length) return true;
+
+        const fieldValue = item[columnId as keyof T];
+        if (fieldValue === undefined || fieldValue === null) return false;
+
+        const normalizedField = normalizeFilterValue(fieldValue);
+
+        return values.some((value) => {
+          const normalizedValue = normalizeFilterValue(value);
+          return (
+            normalizedField === normalizedValue ||
+            String(fieldValue).toLowerCase() === String(value).toLowerCase()
+          );
+        });
+      });
+    });
+  }, [filteredData, selectedFilters]);
+
+  const handleFilterChange = (
+    columnId: string,
+    values: string[] | undefined
+  ) => {
+    setSelectedFilters((prev) => ({
+      ...prev,
+      [columnId]: values,
+    }));
+  };
+
+  const handleResetFilters = () => setSelectedFilters({});
+
   return (
     <DataTable
       columns={columns as ColumnDef<object, unknown>[]}
-      data={filteredData as object[]}
+      data={filteredByFacets as object[]}
       toolbar={(table) => (
-        <DataTableToolbar table={table} onSearch={search} filters={filters} />
+        <DataTableToolbar
+          table={table}
+          onSearch={search}
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onResetFilters={handleResetFilters}
+          selectedFilters={selectedFilters}
+        />
       )}
     />
   );

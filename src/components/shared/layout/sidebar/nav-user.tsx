@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/sidebar';
 import { useAppDialog } from '@/hooks/use-app-dialog';
 import { useGymDetails } from '@/hooks/use-gym-management';
+import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
 import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
 import { useAuth } from '@/providers/auth-provider';
 
@@ -31,6 +32,7 @@ export function NavUser() {
   const router = useRouter();
   const { logout, user, switchClub } = useAuth();
   const { data: gymDetails } = useGymDetails();
+  const { requireLimitAccess } = useSubscriptionAccess();
 
   const profilePictureUrl = gymDetails?.photoPath || null;
 
@@ -70,6 +72,7 @@ export function NavUser() {
       }
     : null;
 
+  const clubCount = user?.clubs?.length || 0;
   const avatarStyle = getAvatarColor(currentGym?.gymName || 'KC');
 
   if (state === 'collapsed') {
@@ -152,6 +155,16 @@ export function NavUser() {
                           key={club.gymId}
                           onClick={() => {
                             if (!isActive) {
+                              const allowed = requireLimitAccess(
+                                'maxClubs',
+                                clubCount,
+                                {
+                                  title: 'Upgrade required',
+                                  message:
+                                    'Upgrade your subscription to access multiple clubs.',
+                                }
+                              );
+                              if (!allowed) return;
                               switchClub(club.gymId);
                               closeMobileSidebar();
                             }

@@ -1,8 +1,8 @@
 export interface ReportRevenueFlow {
   memberships: number;
   perSession: number;
-  otherMemberCollections: number;
-  otherIncome: number;
+  joiningFees: number;
+  otherCollection: number;
 }
 
 export interface ReportBreakdownItem {
@@ -19,5 +19,5 @@ export interface ReportsAndExpensesData {
   revenueTrendPercentage: number;
   expenseTrendPercentage: number;
   revenueFlow: ReportRevenueFlow;
-  expenseBreakdown: ReportBreakdownItem[];
+  revenueBreakdown: ReportBreakdownItem[];
 }

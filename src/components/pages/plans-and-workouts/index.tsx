@@ -2,6 +2,7 @@
 
 import { TabItem } from '@/components/shared/form/k-tabs';
 import { StudioLayout } from '@/components/shared/layout';
+import { FeatureAccessGuard } from '@/components/shared/subscription';
 import { useTabState } from '@/hooks/use-tab-state';
 
 import { PackageManager } from './tabs/membership-planner';
@@ -22,14 +23,21 @@ export default function PlansAndWorkoutsContent() {
   const { activeTab, handleTabChange } = useTabState(tabs, 'membership-plans');
 
   return (
-    <StudioLayout
-      title="Plans & Workouts"
-      tabs={tabs}
-      activeTab={activeTab}
-      onTabChange={handleTabChange}
+    <FeatureAccessGuard
+      feature="membershipManagement"
+      title="Plans & workouts require a higher plan"
+      message="Upgrade your subscription to manage plans and workouts."
+      mode="block"
     >
-      {activeTab === 'membership-plans' && <PackageManager />}
-      {activeTab === 'workout-plans' && <WorkoutPlanner />}
-    </StudioLayout>
+      <StudioLayout
+        title="Plans & Workouts"
+        tabs={tabs}
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+      >
+        {activeTab === 'membership-plans' && <PackageManager />}
+        {activeTab === 'workout-plans' && <WorkoutPlanner />}
+      </StudioLayout>
+    </FeatureAccessGuard>
   );
 }

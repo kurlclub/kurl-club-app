@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
 import { StudioLayout } from '@/components/shared/layout';
+import { FeatureAccessGuard } from '@/components/shared/subscription';
 import { DataTable, DataTableToolbar } from '@/components/shared/table';
 import { useFilterableList } from '@/hooks/use-filterable-list';
 import { useSheet } from '@/hooks/use-sheet';
@@ -58,6 +59,9 @@ export default function StaffManagement() {
     });
   }, [searchedStaffs, selectedFilters]);
 
+  const staffCount = gymStaffs.filter((s) => s.role === 'staff').length;
+  const trainerCount = gymStaffs.filter((s) => s.role === 'trainer').length;
+
   useEffect(() => {
     // If user came from setup and has staff, redirect back to return URL
     if (isFromSetup && returnUrl && gymStaffs.length > 0) {
@@ -66,31 +70,40 @@ export default function StaffManagement() {
   }, [isFromSetup, returnUrl, gymStaffs.length, router]);
 
   return (
-    <StudioLayout
-      title="Staff Management"
-      headerActions={
-        <StaffsHeader
-          onAddNewClick={() => openSheet()}
-          isOpen={isOpen}
-          closeSheet={closeSheet}
-        />
-      }
+    <FeatureAccessGuard
+      feature="staffManagement"
+      title="Staff management requires a higher plan"
+      message="Upgrade your subscription to manage staff and trainers."
+      mode="block"
     >
-      <DataTable
-        columns={columns}
-        data={staffs}
-        isLoading={isLoading}
-        toolbar={(table) => (
-          <DataTableToolbar
-            table={table}
-            onSearch={search}
-            filters={staffFilters}
-            onFilterChange={onFilterChange}
-            selectedFilters={selectedFilters}
-            onResetFilters={onResetFilters}
+      <StudioLayout
+        title="Staff Management"
+        headerActions={
+          <StaffsHeader
+            onAddNewClick={() => openSheet()}
+            isOpen={isOpen}
+            closeSheet={closeSheet}
+            staffCount={staffCount}
+            trainerCount={trainerCount}
           />
-        )}
-      />
-    </StudioLayout>
+        }
+      >
+        <DataTable
+          columns={columns}
+          data={staffs}
+          isLoading={isLoading}
+          toolbar={(table) => (
+            <DataTableToolbar
+              table={table}
+              onSearch={search}
+              filters={staffFilters}
+              onFilterChange={onFilterChange}
+              selectedFilters={selectedFilters}
+              onResetFilters={onResetFilters}
+            />
+          )}
+        />
+      </StudioLayout>
+    </FeatureAccessGuard>
   );
 }

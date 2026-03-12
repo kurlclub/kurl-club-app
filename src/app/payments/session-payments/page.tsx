@@ -2,6 +2,7 @@
 
 import { SessionPaymentTab } from '@/components/pages/payments/per-session';
 import { StudioLayout } from '@/components/shared/layout';
+import { FeatureAccessGuard } from '@/components/shared/subscription';
 import { useGymBranch } from '@/providers/gym-branch-provider';
 
 export default function SessionPaymentsPage() {
@@ -25,11 +26,18 @@ export default function SessionPaymentsPage() {
   }
 
   return (
-    <StudioLayout
-      title="Per Session Payments"
-      description="Manage payments for session-based memberships"
+    <FeatureAccessGuard
+      feature="paymentTracking"
+      title="Payments require a higher plan"
+      message="Upgrade your subscription to access payments."
+      mode="block"
     >
-      <SessionPaymentTab gymId={gymBranch.gymId} />
-    </StudioLayout>
+      <StudioLayout
+        title="Per Session Payments"
+        description="Manage payments for session-based memberships"
+      >
+        <SessionPaymentTab gymId={gymBranch.gymId} />
+      </StudioLayout>
+    </FeatureAccessGuard>
   );
 }

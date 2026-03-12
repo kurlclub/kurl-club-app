@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import React, { ReactNode } from 'react';
 
 import Loading from '@/app/loading';
+import { SubscriptionRouteGuard } from '@/components/shared/subscription';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { useAuth } from '@/providers/auth-provider';
 
@@ -43,7 +44,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         <div className="sticky top-0 z-50 shrink-0">
           <AppHeader />
         </div>
-        <div className="h-full">{children}</div>
+        <div className="h-full">
+          <SubscriptionRouteGuard>{children}</SubscriptionRouteGuard>
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );
