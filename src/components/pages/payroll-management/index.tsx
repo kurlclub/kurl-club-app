@@ -21,7 +21,6 @@ import type { PayrollRow } from '@/types/payroll-management';
 
 import AddPayment from './add-payment';
 import CardWrapper from './card-wrapper';
-import PayIndividual from './pay-individual';
 import PaymentDetails from './payment-details';
 import PaymentSuccess from './payment-success';
 import PayRollDetails from './payroll-details';
@@ -106,19 +105,12 @@ const PayrollManagement = () => {
     Record<string, string[] | undefined>
   >({});
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [isPayIndividualOpen, setIsPayIndividualOpen] = useState(false);
   const [isPaymentDetailsOpen, setIsPaymentDetailsOpen] = useState(false);
   const [isPaymentSuccessOpen, setIsPaymentSuccessOpen] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [selectedPayroll, setSelectedPayroll] = useState<PayrollRow | null>(
     null
   );
-
-  const handleOpenPaymentConfirmation = () => {
-    setIsDetailsOpen(false);
-    setIsPayIndividualOpen(false);
-    setIsPaymentDetailsOpen(true);
-  };
 
   const handlePayNow = async () => {
     if (!selectedPayroll) return;
@@ -269,16 +261,8 @@ const PayrollManagement = () => {
           setIsDetailsOpen={setIsDetailsOpen}
           onMakePayment={() => {
             setIsDetailsOpen(false);
-            setIsPayIndividualOpen(true);
+            setIsPaymentDetailsOpen(true);
           }}
-        />
-
-        <PayIndividual
-          details={selectedPayroll}
-          open={isPayIndividualOpen}
-          onOpenChange={setIsPayIndividualOpen}
-          onProceedToPay={handleOpenPaymentConfirmation}
-          paymentMonth={dashboardData?.paymentMonth}
         />
 
         <PaymentDetails
