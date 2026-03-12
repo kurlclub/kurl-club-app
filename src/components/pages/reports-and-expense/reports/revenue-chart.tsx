@@ -154,7 +154,7 @@ const RevenueChart = ({ report, className }: RevenueChartProps) => {
       ) : (
         <ReportEmptyState
           className="mt-3 rounded-[28px] border-0 bg-secondary-blue-700 px-5 py-5"
-          icon={<RevenueBreakdownEmptyIcon />}
+          icon={<RevenueBreakdownEmptyIcon size={180} />}
           title="No data available yet !"
           description="Add expenses or revenue manually, or through staff payments and membership fees."
           titleClassName="text-[28px] mt-4 leading-[1.05]"
