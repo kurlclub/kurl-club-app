@@ -10,6 +10,7 @@ import {
 } from 'recharts';
 
 import { RevenueBreakdownEmptyIcon } from '@/components/shared/icons/revenue-breakdown-empty-icon';
+import { cn } from '@/lib/utils';
 import { ReportsAndExpensesData } from '@/types/reports-and-expenses';
 import { formatCurrency } from '@/utils/format-currency';
 
@@ -18,6 +19,7 @@ import { hasExpenseBreakdownData } from './report-empty-state-utils';
 
 interface RevenueChartProps {
   report: ReportsAndExpensesData;
+  className?: string;
 }
 
 interface CustomTooltipProps {
@@ -60,20 +62,25 @@ const CustomTooltip = ({ active, payload, total }: CustomTooltipProps) => {
   return null;
 };
 
-const RevenueChart = ({ report }: RevenueChartProps) => {
+const RevenueChart = ({ report, className }: RevenueChartProps) => {
   const total = report.totalExpenses || 0;
   const hasBreakdownData = hasExpenseBreakdownData(report);
 
   return (
-    <div className="p-5 rounded-xl bg-primary-blue-400/39 text-white">
-      <h3 className="text-[20px] leading-normal font-medium mb-5">
+    <div
+      className={cn(
+        'p-4 rounded-xl bg-primary-blue-400/39 text-white',
+        className
+      )}
+    >
+      <h3 className="text-[18px] leading-normal font-medium mb-3">
         Expense breakdown
       </h3>
 
       {hasBreakdownData ? (
         <div className="flex flex-col lg:flex-row gap-3">
-          <div className="flex-1 flex justify-center bg-secondary-blue-700 rounded-[28px] py-6.5 px-8.5 relative">
-            <ResponsiveContainer width="100%" height={250}>
+          <div className="flex-1 flex justify-center items-center bg-secondary-blue-700 rounded-[28px] relative h-72">
+            <ResponsiveContainer width="100%" height={288}>
               <PieChart>
                 <Pie
                   data={report.expenseBreakdown}
@@ -98,13 +105,13 @@ const RevenueChart = ({ report }: RevenueChartProps) => {
                         dominantBaseline="middle"
                         fill="white"
                       >
-                        <tspan x="50%" dy="-0.4em" fontSize="15">
+                        <tspan x="50%" dy="-0.4em" fontSize={12}>
                           Total expenses
                         </tspan>
                         <tspan
                           x="50%"
                           dy="1.4em"
-                          fontSize="20"
+                          fontSize={16}
                           fontWeight="bold"
                         >
                           {formatCurrency(total)}
@@ -118,7 +125,7 @@ const RevenueChart = ({ report }: RevenueChartProps) => {
             </ResponsiveContainer>
           </div>
 
-          <div className="flex-1 flex flex-col gap-4.5 bg-secondary-blue-700 rounded-[28px] p-5">
+          <div className="flex-1 flex flex-col gap-3 bg-secondary-blue-700 rounded-[28px] p-4 overflow-y-auto h-72">
             {report.expenseBreakdown.map((item, index) => (
               <div key={index} className="flex justify-between gap-2">
                 <div className="flex items-center gap-2.5">
@@ -126,15 +133,15 @@ const RevenueChart = ({ report }: RevenueChartProps) => {
                     className="w-3 h-3 rounded-[3px]"
                     style={{ backgroundColor: item.color }}
                   />
-                  <span className="text-[15px] leading-normal">
+                  <span className="text-[13px] leading-normal">
                     {item.name}
                   </span>
                 </div>
                 <div className="text-right">
-                  <div className="text-[15px] font-bold leading-normal">
+                  <div className="text-[13px] font-bold leading-normal">
                     {formatCurrency(item.amount)}
                   </div>
-                  <div className="text-[12px] text-primary-blue-100">
+                  <div className="text-[11px] text-primary-blue-100">
                     {total
                       ? `${((item.amount / total) * 100).toFixed(1)}%`
                       : '0%'}
@@ -146,11 +153,11 @@ const RevenueChart = ({ report }: RevenueChartProps) => {
         </div>
       ) : (
         <ReportEmptyState
-          className="mt-5 rounded-[28px] border-0 bg-secondary-blue-700 px-6 py-7"
+          className="mt-3 rounded-[28px] border-0 bg-secondary-blue-700 px-5 py-5"
           icon={<RevenueBreakdownEmptyIcon />}
           title="No data available yet !"
           description="Add expenses or revenue manually, or through staff payments and membership fees."
-          titleClassName="mt-5 text-[38px] leading-[1.05]"
+          titleClassName="text-[28px] mt-4 leading-[1.05]"
           descriptionClassName="mx-auto mt-2 max-w-135"
         />
       )}
