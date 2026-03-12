@@ -1,16 +1,19 @@
 import { useId } from 'react';
 import { SVGProps } from 'react';
 
-export const RevenueBreakdownEmptyIcon = (props: SVGProps<SVGSVGElement>) => {
+export const RevenueBreakdownEmptyIcon = (
+  props: SVGProps<SVGSVGElement> & { size?: number }
+) => {
   const uniqueId = useId().replace(/:/g, '');
   const gradientId = `rb-empty-grad-${uniqueId}`;
   const plusGradientId = `rb-empty-plus-grad-${uniqueId}`;
   const maskId = `rb-empty-mask-${uniqueId}`;
+  const iconSize = props.size || 241;
 
   return (
     <svg
-      width="241"
-      height="241"
+      width={iconSize}
+      height={iconSize}
       viewBox="0 0 241 241"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
