@@ -5,6 +5,14 @@ import { safeParseDate } from '@/lib/utils';
 import { ApiResponse } from '@/types';
 import { Staff, StaffDetails, StaffType } from '@/types/staff';
 
+interface StaffSalaryDetails {
+  employeeId: number;
+  employeeType: 'Staff' | 'Trainer';
+  name: string;
+  salary: number;
+  salaryDay?: number;
+}
+
 export const createStaff = async (
   data: FormData,
   type: 'staff' | 'trainer'
@@ -123,4 +131,38 @@ export const updateTrainerPassword = async (
       error instanceof Error ? error.message : 'Failed to update password';
     return { error: errorMessage };
   }
+};
+
+export const fetchStaffSalaryDetails = async (
+  employeeId: string | number,
+  role: StaffType
+): Promise<StaffSalaryDetails | null> => {
+  const endpoint = `/Payroll/${role}/${employeeId}/salary`;
+
+  try {
+    const response = await api.get<{
+      status: string;
+      data: StaffSalaryDetails;
+    }>(endpoint);
+
+    return response.data;
+  } catch (error) {
+    const maybeError = error as Error & { response?: { status?: number } };
+    if (maybeError.response?.status === 404) {
+      return null;
+    }
+    throw error;
+  }
+};
+
+export const useStaffSalaryDetails = (
+  employeeId: string | number,
+  role: StaffType
+) => {
+  return useQuery({
+    queryKey: ['staffSalary', String(employeeId), role],
+    queryFn: () => fetchStaffSalaryDetails(employeeId, role),
+    enabled: !!employeeId && !!role,
+    staleTime: 1000 * 60 * 5,
+  });
 };

@@ -83,10 +83,10 @@ function Permissions() {
             value={roleValue}
             onValueChange={(value) => setRoleValue(value)}
           >
-            <SelectTrigger className="border border-transparent rounded-md focus:outline-hidden focus:border-primary-blue-200 hover:border-primary-blue-200 focus:shadow-none focus:ring-0 p-[10px] h-[52px] text-[15px] text-white font-normal leading-normal focus:outline-0 bg-secondary-blue-400 max-w-[265px] data-[state=open]:border-primary-blue-200 data-[state=open]:border-b-transparent data-[state=open]:rounded-b-none">
+            <SelectTrigger className="border border-transparent rounded-md focus:outline-hidden focus:border-primary-blue-200 hover:border-primary-blue-200 focus:shadow-none focus:ring-0 p-2.5 h-13 text-[15px] text-white font-normal leading-normal focus:outline-0 bg-secondary-blue-400 max-w-66.25 data-[state=open]:border-primary-blue-200 data-[state=open]:border-b-transparent data-[state=open]:rounded-b-none">
               <SelectValue placeholder="Select role" />
             </SelectTrigger>
-            <SelectContent className="bg-secondary-blue-400 m-0 rounded-t-none border mt-[-3.7px] border-primary-blue-200 max-w-[265px]  border-t-primary-blue-300">
+            <SelectContent className="bg-secondary-blue-400 m-0 rounded-t-none border mt-[-3.7px] border-primary-blue-200 max-w-66.25  border-t-primary-blue-300">
               {roleOptions.map((option) => (
                 <SelectItem
                   className="cursor-pointer p-2 pl-3 hover:bg-primary-blue-300 k-transition h-10"
@@ -98,7 +98,7 @@ function Permissions() {
                   font-normal capitalize"
                   >
                     {option.avatar && (
-                      <span className="w-[18px] h-[18px] flex items-center justify-center">
+                      <span className="w-4.5 h-4.5 flex items-center justify-center">
                         <Image
                           height={18}
                           width={18}

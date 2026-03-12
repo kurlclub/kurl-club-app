@@ -101,6 +101,8 @@ export const AddStaff: React.FC<CreateStaffDetailsProps> = ({
       } else if (key === 'Certification' && Array.isArray(value)) {
         const labels = value.map((cert) => cert.label);
         formData.append(key, JSON.stringify(labels));
+      } else if (key === 'Email' && (!value || value === '')) {
+        // Skip empty email - don't append to FormData
       } else {
         formData.append(key, String(value));
       }
@@ -139,7 +141,7 @@ export const AddStaff: React.FC<CreateStaffDetailsProps> = ({
       <Button
         type="button"
         variant="secondary"
-        className="h-[46px] min-w-[73px]"
+        className="h-11.5 min-w-18.25"
         onClick={handleReset}
       >
         Reset
@@ -152,7 +154,7 @@ export const AddStaff: React.FC<CreateStaffDetailsProps> = ({
           }}
           type="button"
           variant="secondary"
-          className="h-[46px] min-w-[90px]"
+          className="h-11.5 min-w-22.5"
           disabled={isSubmitting}
         >
           Cancel
@@ -160,7 +162,7 @@ export const AddStaff: React.FC<CreateStaffDetailsProps> = ({
         <Button
           form={activeId}
           type="submit"
-          className="h-[46px] min-w-[73px]"
+          className="h-11.5 min-w-18.25"
           disabled={isSubmitting}
         >
           {isSubmitting ? 'Adding...' : 'Add'}
@@ -171,7 +173,7 @@ export const AddStaff: React.FC<CreateStaffDetailsProps> = ({
 
   return (
     <KSheet
-      className="w-[450px]"
+      className="w-112.5"
       isOpen={isOpen}
       onClose={closeSheet}
       title="Add New Staff"
