@@ -43,11 +43,15 @@ export const useUpsertStaffSalary = () => {
       employeeId: number;
       employeeType: 'staff' | 'trainer';
       salary: number;
-      salaryDate: Date;
+      salaryDay?: string;
     }) => upsertStaffSalary(payload),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ['staffSalary', variables.employeeId, variables.employeeType],
+        queryKey: [
+          'staffSalary',
+          String(variables.employeeId),
+          variables.employeeType,
+        ],
       });
       queryClient.invalidateQueries({ queryKey: payrollKeys.all });
     },

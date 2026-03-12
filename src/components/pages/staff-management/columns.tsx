@@ -95,7 +95,10 @@ export const columns: ColumnDef<Staff>[] = [
   {
     accessorKey: 'email',
     header: 'Email',
-    cell: ({ row }) => <div className="min-w-45">{row.getValue('email')}</div>,
+    cell: ({ row }) => {
+      const email = row.getValue<string | null>('email');
+      return <div className="min-w-45">{email || 'N/A'}</div>;
+    },
   },
   {
     accessorKey: 'phone',

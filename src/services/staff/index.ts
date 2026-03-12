@@ -10,7 +10,7 @@ interface StaffSalaryDetails {
   employeeType: 'Staff' | 'Trainer';
   name: string;
   salary: number;
-  salaryDate: string;
+  salaryDay?: number;
 }
 
 export const createStaff = async (
@@ -137,19 +137,13 @@ export const fetchStaffSalaryDetails = async (
   employeeId: string | number,
   role: StaffType
 ): Promise<StaffSalaryDetails | null> => {
-  const employeeType = role === 'trainer' ? 'Trainer' : 'Staff';
   const endpoint = `/Payroll/${role}/${employeeId}/salary`;
 
   try {
     const response = await api.get<{
       status: string;
       data: StaffSalaryDetails;
-    }>(endpoint, {
-      params: {
-        employeeType,
-        employeeId: Number(employeeId),
-      },
-    });
+    }>(endpoint);
 
     return response.data;
   } catch (error) {
@@ -166,7 +160,7 @@ export const useStaffSalaryDetails = (
   role: StaffType
 ) => {
   return useQuery({
-    queryKey: ['staffSalary', employeeId, role],
+    queryKey: ['staffSalary', String(employeeId), role],
     queryFn: () => fetchStaffSalaryDetails(employeeId, role),
     enabled: !!employeeId && !!role,
     staleTime: 1000 * 60 * 5,

@@ -42,7 +42,7 @@ export const upsertStaffSalary = async (payload: {
   employeeId: number;
   employeeType: 'staff' | 'trainer';
   salary: number;
-  salaryDate: Date;
+  salaryDay?: string;
 }) => {
   const response = await api.post<PayrollResponse<unknown>>(
     `/Payroll/add-salary`,
@@ -50,7 +50,7 @@ export const upsertStaffSalary = async (payload: {
       employeeId: payload.employeeId,
       employeeType: payload.employeeType,
       salary: payload.salary,
-      salaryDate: payload.salaryDate.toISOString(),
+      salaryDay: payload.salaryDay,
     }
   );
 

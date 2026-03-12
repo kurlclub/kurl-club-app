@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Controller, FormProvider, useForm, useWatch } from 'react-hook-form';
+import { FormProvider, useForm, useWatch } from 'react-hook-form';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
@@ -20,8 +20,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
 import { useUpsertStaffSalary } from '@/hooks/use-payroll';
 import { useStaffSalaryDetails } from '@/services/staff';
 import { StaffType } from '@/types/staff';
@@ -34,8 +32,6 @@ interface SalaryConfigurationProps {
 
 const salarySchema = z.object({
   amount: z.string().min(1, 'Salary amount is required'),
-  salaryDate: z.date({ message: 'Salary date is required' }),
-  isHourly: z.boolean(),
   payDay: z.string().optional(),
 });
 
@@ -55,14 +51,11 @@ function SalaryConfiguration({ staffId, staffRole }: SalaryConfigurationProps) {
     resolver: zodResolver(salarySchema),
     defaultValues: {
       amount: '',
-      salaryDate: undefined,
-      isHourly: false,
       payDay: '',
     },
     mode: 'onSubmit',
   });
 
-  const isHourly = useWatch({ control: form.control, name: 'isHourly' });
   const amount = useWatch({ control: form.control, name: 'amount' });
 
   // Initialize form data
@@ -71,11 +64,7 @@ function SalaryConfiguration({ staffId, staffRole }: SalaryConfigurationProps) {
 
     const formData: SalaryFormData = {
       amount: String(salaryDetails.salary ?? ''),
-      salaryDate: salaryDetails.salaryDate
-        ? new Date(salaryDetails.salaryDate)
-        : undefined!,
-      isHourly: false,
-      payDay: '',
+      payDay: salaryDetails.salaryDay ? String(salaryDetails.salaryDay) : '',
     };
 
     form.reset(formData, { keepDefaultValues: false });
@@ -86,13 +75,7 @@ function SalaryConfiguration({ staffId, staffRole }: SalaryConfigurationProps) {
 
   const isDirty = useMemo(() => {
     const { isDirty, dirtyFields } = form.formState;
-    return (
-      isDirty &&
-      (dirtyFields.amount ||
-        dirtyFields.salaryDate ||
-        dirtyFields.isHourly ||
-        dirtyFields.payDay)
-    );
+    return isDirty && (dirtyFields.amount || dirtyFields.payDay);
   }, [form.formState]);
 
   const handleDiscard = () => {
@@ -100,11 +83,7 @@ function SalaryConfiguration({ staffId, staffRole }: SalaryConfigurationProps) {
 
     const formData: SalaryFormData = {
       amount: String(salaryDetails.salary ?? ''),
-      salaryDate: salaryDetails.salaryDate
-        ? new Date(salaryDetails.salaryDate)
-        : undefined!,
-      isHourly: false,
-      payDay: '',
+      payDay: salaryDetails.salaryDay ? String(salaryDetails.salaryDay) : '',
     };
     form.reset(formData);
   };
@@ -113,11 +92,6 @@ function SalaryConfiguration({ staffId, staffRole }: SalaryConfigurationProps) {
     const salaryValue = Number(data.amount);
     if (!data.amount || !Number.isFinite(salaryValue) || salaryValue <= 0) {
       toast.error('Please enter a valid salary amount.');
-      return;
-    }
-
-    if (!data.salaryDate) {
-      toast.error('Please select a salary date.');
       return;
     }
 
@@ -131,7 +105,7 @@ function SalaryConfiguration({ staffId, staffRole }: SalaryConfigurationProps) {
         employeeId: Number(staffId),
         employeeType: staffRole,
         salary: salaryValue,
-        salaryDate: data.salaryDate,
+        salaryDay: data.payDay,
       });
       form.reset(data);
       toast.success('Salary configuration saved.');
@@ -224,69 +198,24 @@ function SalaryConfiguration({ staffId, staffRole }: SalaryConfigurationProps) {
 
           {hasValidSalary && (
             <p className="text-xs text-gray-500 dark:text-secondary-blue-200 -mt-4">
-              {formatCurrency(numericSalary)}{' '}
-              {isHourly ? 'per hour' : 'per month'}
+              {formatCurrency(numericSalary)} per month
             </p>
           )}
 
-          {/* Payment Frequency */}
-          <div className="space-y-3">
-            <div className="flex items-center space-x-2">
-              <Controller
-                control={form.control}
-                name="isHourly"
-                render={({ field }) => (
-                  <Checkbox
-                    id="isHourly"
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                )}
-              />
-              <Label
-                htmlFor="isHourly"
-                className="text-sm font-medium text-gray-700 dark:text-secondary-blue-100 cursor-pointer"
-              >
-                Hourly payment
-              </Label>
-            </div>
-            <p className="text-xs text-gray-500 dark:text-secondary-blue-200">
-              {isHourly
-                ? 'Payment will be calculated based on hours worked'
-                : 'Payment will be a fixed monthly amount'}
-            </p>
-          </div>
-
-          {/* Payment Day (Monthly only) */}
-          {!isHourly && (
-            <>
-              <KFormField
-                fieldType={KFormFieldType.INPUT}
-                control={form.control}
-                name="payDay"
-                label="Payment day of month"
-                placeholder="e.g., 1, 15, 30"
-                className="bg-primary-blue-400"
-                inputType="number"
-              />
-              <InfoBanner
-                variant="info"
-                icon="ℹ️"
-                message="Enter a day between 1 and 31 for monthly salary disbursement"
-              />
-            </>
-          )}
-
-          {/* Salary Date */}
+          {/* Payment Day */}
           <KFormField
-            fieldType={KFormFieldType.UI_DATE_PICKER}
+            fieldType={KFormFieldType.INPUT}
             control={form.control}
-            name="salaryDate"
-            label="Salary date"
-            placeholder="Select salary date"
-            mode="single"
-            floating
-            mandetory
+            name="payDay"
+            label="Payment day of month"
+            placeholder="e.g., 1, 15, 30"
+            className="bg-primary-blue-400"
+            inputType="number"
+          />
+          <InfoBanner
+            variant="info"
+            icon="ℹ️"
+            message="Enter a day between 1 and 31 for monthly salary disbursement"
           />
         </CardContent>
       </Card>
