@@ -1,9 +1,18 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { api } from '@/lib/api';
+import { decrypt } from '@/lib/crypto';
 import { safeParseDate } from '@/lib/utils';
 import { ApiResponse } from '@/types';
 import { Staff, StaffDetails, StaffType } from '@/types/staff';
+
+interface StaffSalaryDetails {
+  employeeId: number;
+  employeeType: 'Staff' | 'Trainer';
+  name: string;
+  salary: number;
+  salaryDate: string;
+}
 
 export const createStaff = async (
   data: FormData,
@@ -123,4 +132,58 @@ export const updateTrainerPassword = async (
       error instanceof Error ? error.message : 'Failed to update password';
     return { error: errorMessage };
   }
+};
+
+export const fetchStaffSalaryDetails = async (
+  employeeId: string | number,
+  role: StaffType
+) => {
+  const employeeType = role === 'trainer' ? 'Trainer' : 'Staff';
+  const endpoint = `/Payroll/${role}/${employeeId}/salary`;
+  let userHeaders: Record<string, string> = {};
+
+  if (typeof window !== 'undefined') {
+    try {
+      const encryptedUser = localStorage.getItem('appUser');
+      if (encryptedUser) {
+        const decryptedData = decrypt(encryptedUser);
+        const userData = JSON.parse(decryptedData) as {
+          userId?: string | number;
+          userRole?: string;
+        };
+
+        userHeaders = {
+          'X-User': String(userData.userId || ''),
+          'X-Role': userData.userRole || '',
+        };
+      }
+    } catch (error) {
+      console.warn('Failed to resolve X-User/X-Role headers:', error);
+    }
+  }
+
+  const response = await api.get<{ status: string; data: StaffSalaryDetails }>(
+    endpoint,
+    {
+      params: {
+        employeeType,
+        employeeId: Number(employeeId),
+      },
+      headers: userHeaders,
+    }
+  );
+
+  return response.data;
+};
+
+export const useStaffSalaryDetails = (
+  employeeId: string | number,
+  role: StaffType
+) => {
+  return useQuery({
+    queryKey: ['staffSalary', employeeId, role],
+    queryFn: () => fetchStaffSalaryDetails(employeeId, role),
+    enabled: !!employeeId && !!role,
+    staleTime: 1000 * 60 * 5,
+  });
 };
