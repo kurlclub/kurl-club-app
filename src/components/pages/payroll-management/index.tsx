@@ -8,10 +8,12 @@ import { StudioLayout } from '@/components/shared/layout';
 import { DataTable, DataTableToolbar } from '@/components/shared/table';
 import { Button } from '@/components/ui/button';
 import { useFilterableList } from '@/hooks/use-filterable-list';
+import { useSheet } from '@/hooks/use-sheet';
 import { FilterConfig } from '@/lib/filters';
 import { searchItems } from '@/lib/utils';
 import type { PayrollRow } from '@/types/payroll-management';
 
+import AddPayment from './add-payment';
 import CardWrapper from './card-wrapper';
 import PaymentDetails from './payment-details';
 import PaymentSuccess from './payment-success';
@@ -101,6 +103,12 @@ const tableFilters: FilterConfig[] = [
 ];
 
 const PayrollManagement = () => {
+  const {
+    isOpen: isBulkPaymentOpen,
+    openSheet: openBulkPaymentSheet,
+    closeSheet: closeBulkPaymentSheet,
+  } = useSheet();
+
   const { items: searchedRows, search } = useFilterableList<PayrollRow>(
     DUMMY_PAYROLL_DATA,
     (items, term) =>
@@ -175,13 +183,25 @@ const PayrollManagement = () => {
     <StudioLayout
       title="Payroll management"
       headerActions={
-        <Button className="h-10">
+        <Button className="h-10" onClick={openBulkPaymentSheet}>
           <Plus className="h-4 w-4" />
-          Make payment
+          Add payment
         </Button>
       }
     >
       <div className="space-y-4">
+        <AddPayment
+          open={isBulkPaymentOpen}
+          onOpenChange={(open) => {
+            if (open) {
+              openBulkPaymentSheet();
+              return;
+            }
+            closeBulkPaymentSheet();
+          }}
+          members={DUMMY_PAYROLL_DATA}
+        />
+
         <CardWrapper />
         <h2 className="mt-8 mb-7 font-medium text-[20px] leading-normal">
           Staff & trainers
