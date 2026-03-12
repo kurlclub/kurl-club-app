@@ -83,7 +83,7 @@ const RevenueChart = ({ report, className }: RevenueChartProps) => {
             <ResponsiveContainer width="100%" height={288}>
               <PieChart>
                 <Pie
-                  data={report.expenseBreakdown}
+                  data={report.revenueBreakdown}
                   cx="50%"
                   cy="50%"
                   innerRadius={80}
@@ -91,7 +91,7 @@ const RevenueChart = ({ report, className }: RevenueChartProps) => {
                   dataKey="amount"
                   stroke="none"
                 >
-                  {report.expenseBreakdown.map((entry, index) => (
+                  {report.revenueBreakdown.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
 
@@ -126,7 +126,7 @@ const RevenueChart = ({ report, className }: RevenueChartProps) => {
           </div>
 
           <div className="flex-1 flex flex-col gap-3 bg-secondary-blue-700 rounded-[28px] p-4 overflow-y-auto h-72">
-            {report.expenseBreakdown.map((item, index) => (
+            {report.revenueBreakdown.map((item, index) => (
               <div key={index} className="flex justify-between gap-2">
                 <div className="flex items-center gap-2.5">
                   <span

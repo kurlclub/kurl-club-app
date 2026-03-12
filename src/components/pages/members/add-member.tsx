@@ -157,13 +157,23 @@ const PaymentFields = ({
         })}
       />
       {feeStatus !== 'unpaid' && (
-        <KFormField
-          fieldType={KFormFieldType.SELECT}
-          control={form.control}
-          name="modeOfPayment"
-          label="Mode of Payment"
-          options={paymentModeOptions}
-        />
+        <>
+          <KFormField
+            fieldType={KFormFieldType.INPUT}
+            control={form.control}
+            name="joiningFee"
+            label="Joining Fee (Optional)"
+            type="number"
+            maxLength={10}
+          />
+          <KFormField
+            fieldType={KFormFieldType.SELECT}
+            control={form.control}
+            name="modeOfPayment"
+            label="Mode of Payment"
+            options={paymentModeOptions}
+          />
+        </>
       )}
     </div>
   );

@@ -43,7 +43,7 @@ const mapReportData = (data: ReportApiData): ReportsAndExpensesData => ({
   revenueTrendPercentage: data.revenueTrendPercentage,
   expenseTrendPercentage: data.expenseTrendPercentage,
   revenueFlow: data.revenueFlow,
-  expenseBreakdown: data.revenueBreakdown,
+  revenueBreakdown: data.revenueBreakdown,
 });
 
 export const fetchReportsAndExpenses = async (

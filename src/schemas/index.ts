@@ -65,6 +65,7 @@ export const createMemberSchema = z
       .min(1, 'Address is required.')
       .max(250, 'Address must not exceed 250 characters.'),
     amountPaid: z.string().optional(),
+    joiningFee: z.string().optional(),
     workoutPlanId: z.string().min(1, 'Workout plan selection is required'),
     modeOfPayment: z.string().optional(),
     currentPackageStartDate: z

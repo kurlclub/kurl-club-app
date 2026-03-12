@@ -45,10 +45,10 @@ const previewReport: ReportsAndExpensesData = {
   revenueFlow: {
     memberships: 194717,
     perSession: 11528,
-    otherMemberCollections: 52498,
-    otherIncome: 300,
+    joiningFees: 52498,
+    otherCollection: 300,
   },
-  expenseBreakdown: [
+  revenueBreakdown: [
     { name: 'Communication', amount: 524968, color: '#FFD700' },
     { name: 'Insurance', amount: 492101, color: '#FFB6C1' },
     { name: 'Equipment Maintenance', amount: 457836, color: '#90EE90' },
