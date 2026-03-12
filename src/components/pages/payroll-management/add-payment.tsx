@@ -1,12 +1,19 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+
+import { toast } from 'sonner';
 
 import { KSheet } from '@/components/shared/form/k-sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { usePaySalary } from '@/hooks/use-payroll';
 import { getAvatarColor } from '@/lib/avatar-utils';
+import { calculateTotalAmount, getPaymentMonth } from '@/lib/payroll-utils';
 import { getInitials } from '@/lib/utils';
+import { useAuth } from '@/providers/auth-provider';
+import { useGymBranch } from '@/providers/gym-branch-provider';
 import type { PayrollRow } from '@/types/payroll-management';
+import { formatCurrency } from '@/utils/format-currency';
 
 import PaymentDetails from './payment-details';
 import PaymentSuccess from './payment-success';
@@ -17,25 +24,40 @@ interface AddPaymentProps {
   members: PayrollRow[];
 }
 
-const SALARY_PER_MEMBER = 80000;
-
 const AddPayment = ({ open, onOpenChange, members }: AddPaymentProps) => {
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const { gymBranch } = useGymBranch();
+  const { user } = useAuth();
+  const paySalaryMutation = usePaySalary();
   const [isPaymentDetailsOpen, setIsPaymentDetailsOpen] = useState(false);
   const [isPaymentSuccessOpen, setIsPaymentSuccessOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const paymentMonth = useMemo(() => getPaymentMonth(), []);
 
   const unpaidMembers = useMemo(
-    () => members.filter((member) => member.feeStatus === 'Unpaid'),
+    () =>
+      members.filter(
+        (member) =>
+          !member.isPaid && member.isSalaryConfigured && member.salary > 0
+      ),
     [members]
   );
 
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+
+  useEffect(() => {
+    if (open) {
+      setSelectedIds(unpaidMembers.map((member) => member.id));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   const allSelected =
     unpaidMembers.length > 0 && selectedIds.length === unpaidMembers.length;
-  const selectedCount = selectedIds.length;
-  const totalAmountToPay = selectedCount * SALARY_PER_MEMBER;
   const selectedMembers = unpaidMembers.filter((member) =>
-    selectedIds.includes(member.staffId)
+    selectedIds.includes(member.id)
   );
+  const selectedCount = selectedMembers.length;
+  const totalAmountToPay = calculateTotalAmount(selectedMembers);
 
   const selectAllState: boolean | 'indeterminate' = allSelected
     ? true
@@ -43,7 +65,7 @@ const AddPayment = ({ open, onOpenChange, members }: AddPaymentProps) => {
       ? 'indeterminate'
       : false;
 
-  const handleToggleMember = (staffId: string) => {
+  const handleToggleMember = (staffId: number) => {
     setSelectedIds((prev) =>
       prev.includes(staffId)
         ? prev.filter((id) => id !== staffId)
@@ -57,7 +79,7 @@ const AddPayment = ({ open, onOpenChange, members }: AddPaymentProps) => {
       return;
     }
 
-    setSelectedIds(unpaidMembers.map((member) => member.staffId));
+    setSelectedIds(unpaidMembers.map((member) => member.id));
   };
 
   const handleCloseSheet = () => {
@@ -71,7 +93,56 @@ const AddPayment = ({ open, onOpenChange, members }: AddPaymentProps) => {
     setIsPaymentDetailsOpen(true);
   };
 
-  const handlePayNow = () => {
+  const handlePayNow = async () => {
+    if (!gymBranch?.gymId) {
+      toast.error('Gym branch not found.');
+      return;
+    }
+
+    const paidBy = user?.userId;
+    if (!paidBy) {
+      toast.error('User not authenticated.');
+      return;
+    }
+
+    if (selectedMembers.length === 0) {
+      toast.error('No staff selected.');
+      return;
+    }
+
+    setIsProcessing(true);
+    const failures: { id: number; name: string; error: string }[] = [];
+    const paymentDate = new Date();
+
+    for (const member of selectedMembers) {
+      try {
+        await paySalaryMutation.mutateAsync({
+          gymId: gymBranch.gymId,
+          employeeType: member.roleKey,
+          employeeId: member.id,
+          amount: member.salary,
+          paymentDate,
+          paymentMonth,
+          paidBy,
+        });
+      } catch (error) {
+        failures.push({
+          id: member.id,
+          name: member.name,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    }
+
+    setIsProcessing(false);
+
+    if (failures.length > 0) {
+      toast.error(
+        `Paid ${selectedMembers.length - failures.length}/${selectedMembers.length}. Failed: ${failures[0].name} - ${failures[0].error}`
+      );
+      return;
+    }
+
     setIsPaymentDetailsOpen(false);
     setIsPaymentSuccessOpen(true);
   };
@@ -84,8 +155,7 @@ const AddPayment = ({ open, onOpenChange, members }: AddPaymentProps) => {
     }
   };
 
-  const formattedMemberSalary = `₹${SALARY_PER_MEMBER.toLocaleString('en-IN')}`;
-  const formattedTotal = `₹${totalAmountToPay.toLocaleString('en-IN')}`;
+  const formattedTotal = formatCurrency(totalAmountToPay);
 
   return (
     <>
@@ -137,20 +207,18 @@ const AddPayment = ({ open, onOpenChange, members }: AddPaymentProps) => {
                 </div>
               ) : (
                 unpaidMembers.map((member) => {
-                  const isSelected = selectedIds.includes(member.staffId);
+                  const isSelected = selectedIds.includes(member.id);
                   const avatarStyle = getAvatarColor(member.name);
 
                   return (
                     <label
-                      key={member.staffId}
+                      key={member.id}
                       className="flex cursor-pointer items-center justify-between rounded-lg border border-transparent px-3 py-2.5 transition-colors hover:border-primary-blue-400 hover:bg-primary-blue-400/20"
                     >
                       <div className="flex items-center gap-3">
                         <Checkbox
                           checked={isSelected}
-                          onCheckedChange={() =>
-                            handleToggleMember(member.staffId)
-                          }
+                          onCheckedChange={() => handleToggleMember(member.id)}
                         />
                         <Avatar className="h-9 w-9">
                           <AvatarFallback style={avatarStyle}>
@@ -174,7 +242,7 @@ const AddPayment = ({ open, onOpenChange, members }: AddPaymentProps) => {
                       </div>
 
                       <span className="text-sm font-medium text-white">
-                        {formattedMemberSalary}
+                        {formatCurrency(member.salary)}
                       </span>
                     </label>
                   );
@@ -197,17 +265,17 @@ const AddPayment = ({ open, onOpenChange, members }: AddPaymentProps) => {
         details={null}
         selectedMembers={selectedMembers}
         totalAmount={totalAmountToPay}
-        salaryAmount={SALARY_PER_MEMBER}
         open={isPaymentDetailsOpen}
         onOpenChange={setIsPaymentDetailsOpen}
         onPayNow={handlePayNow}
+        paymentMonth={paymentMonth}
+        isProcessing={isProcessing}
       />
 
       <PaymentSuccess
         details={null}
         selectedMembers={selectedMembers}
         totalAmount={totalAmountToPay}
-        salaryAmount={SALARY_PER_MEMBER}
         open={isPaymentSuccessOpen}
         onOpenChange={handleCloseSuccess}
       />

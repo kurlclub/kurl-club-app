@@ -8,8 +8,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { getAvatarColor } from '@/lib/avatar-utils';
-import { getInitials } from '@/lib/utils';
+import { getInitials, safeFormatDate } from '@/lib/utils';
 import type { PayrollRow } from '@/types/payroll-management';
+import { formatCurrency } from '@/utils/format-currency';
 
 interface PayRollDetailsProps {
   details: PayrollRow | null;
@@ -27,8 +28,13 @@ const PayRollDetails = ({
   if (!details) return null;
 
   const avatarStyle = getAvatarColor(details.name);
-  const currentDate = new Intl.DateTimeFormat('en-GB').format(new Date());
-  const paymentAmount = '₹80,000';
+  const paymentAmount = formatCurrency(details.salary || 0);
+  const totalPaidValue =
+    details.paidTotal ?? (details.isPaid ? details.salary : 0);
+  const totalPaidAmount = formatCurrency(totalPaidValue || 0);
+  const paymentDate = details.lastPaidDate
+    ? safeFormatDate(details.lastPaidDate, 'en-GB')
+    : 'Not paid yet';
 
   return (
     <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
@@ -84,7 +90,7 @@ const PayRollDetails = ({
                   Total paid up
                 </span>
                 <span className="text-[20px] font-medium leading-normal text-primary-green-500">
-                  {paymentAmount}
+                  {totalPaidAmount}
                 </span>
               </div>
             </div>
@@ -95,7 +101,7 @@ const PayRollDetails = ({
                   Payment date
                 </span>
                 <span className="text-base font-semibold leading-normal text-white">
-                  {currentDate}
+                  {paymentDate}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-3 pt-3">
@@ -110,13 +116,17 @@ const PayRollDetails = ({
           </div>
 
           <Button
-            disabled={details.feeStatus === 'Paid'}
+            disabled={
+              details.feeStatus === 'Paid' || !details.isSalaryConfigured
+            }
             className="mt-5 w-full"
             onClick={onMakePayment}
           >
             {details.feeStatus === 'Paid'
               ? 'Payment Completed'
-              : 'Make Payment'}
+              : details.isSalaryConfigured
+                ? 'Make Payment'
+                : 'Salary not configured'}
           </Button>
         </div>
       </DialogContent>

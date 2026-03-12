@@ -7,18 +7,25 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { getAvatarColor } from '@/lib/avatar-utils';
+import {
+  calculateTotalAmount,
+  formatPaymentDateTime,
+  formatPaymentMonthLabel,
+} from '@/lib/payroll-utils';
 import { getInitials } from '@/lib/utils';
-import type { PayrollRow } from '@/types/payroll-management';
+import type { PaymentItem } from '@/types/payroll-management';
+import { formatCurrency } from '@/utils/format-currency';
 
 interface PaymentDetailsProps {
-  details: PayrollRow | null;
+  details: PaymentItem | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onPayNow: () => void;
-  selectedMembers?: PayrollRow[];
+  selectedMembers?: PaymentItem[];
   totalAmount?: number;
-  salaryAmount?: number;
   paymentMethod?: string;
+  paymentMonth?: string;
+  isProcessing?: boolean;
 }
 
 const PaymentDetails = ({
@@ -28,8 +35,9 @@ const PaymentDetails = ({
   onPayNow,
   selectedMembers,
   totalAmount,
-  salaryAmount = 80000,
   paymentMethod = 'Cash',
+  paymentMonth,
+  isProcessing = false,
 }: PaymentDetailsProps) => {
   const members = selectedMembers?.length
     ? selectedMembers
@@ -40,10 +48,10 @@ const PaymentDetails = ({
   if (members.length === 0) return null;
 
   const isBulkPayment = members.length > 1;
-  const amount = totalAmount ?? members.length * salaryAmount;
-  const currentDate = new Intl.DateTimeFormat('en-GB').format(new Date());
-  const formattedSalary = `₹${salaryAmount.toLocaleString('en-IN')}`;
-  const formattedTotal = `₹${amount.toLocaleString('en-IN')}`;
+  const amount = totalAmount ?? calculateTotalAmount(members);
+  const { formattedDate, formattedTime } = formatPaymentDateTime();
+  const formattedTotal = formatCurrency(amount);
+  const payrollMonthLabel = formatPaymentMonthLabel(paymentMonth);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -69,11 +77,17 @@ const PaymentDetails = ({
           <div className="space-y-3 rounded-xl border border-white/20 bg-primary-blue-400/25 p-4">
             <div className="flex items-center justify-between text-sm">
               <span className="text-secondary-blue-200">Payroll month</span>
-              <span className="font-medium text-white">March 2026</span>
+              <span className="font-medium text-white">
+                {payrollMonthLabel}
+              </span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-secondary-blue-200">Payment date</span>
-              <span className="font-medium text-white">{currentDate}</span>
+              <span className="font-medium text-white">{formattedDate}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-secondary-blue-200">Payment time</span>
+              <span className="font-medium text-white">{formattedTime}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-secondary-blue-200">Payment method</span>
@@ -93,7 +107,7 @@ const PaymentDetails = ({
 
               return (
                 <div
-                  key={member.staffId}
+                  key={member.id}
                   className="flex items-center justify-between rounded-lg bg-primary-blue-400/20 px-3 py-2"
                 >
                   <div className="flex items-center gap-3">
@@ -116,15 +130,17 @@ const PaymentDetails = ({
                   </div>
 
                   <p className="text-sm font-medium text-white">
-                    {formattedSalary}
+                    {formatCurrency(member.salary)}
                   </p>
                 </div>
               );
             })}
           </div>
 
-          <Button className="w-full" onClick={onPayNow}>
-            {isBulkPayment ? 'Pay now' : 'Pay now'} {formattedTotal}
+          <Button className="w-full" onClick={onPayNow} disabled={isProcessing}>
+            {isProcessing
+              ? 'Processing...'
+              : `${isBulkPayment ? 'Pay now' : 'Pay now'} ${formattedTotal}`}
           </Button>
         </div>
       </DialogContent>

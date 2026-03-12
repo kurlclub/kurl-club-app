@@ -137,7 +137,7 @@ export const updateTrainerPassword = async (
 export const fetchStaffSalaryDetails = async (
   employeeId: string | number,
   role: StaffType
-) => {
+): Promise<StaffSalaryDetails | null> => {
   const employeeType = role === 'trainer' ? 'Trainer' : 'Staff';
   const endpoint = `/Payroll/${role}/${employeeId}/salary`;
   let userHeaders: Record<string, string> = {};
@@ -162,18 +162,26 @@ export const fetchStaffSalaryDetails = async (
     }
   }
 
-  const response = await api.get<{ status: string; data: StaffSalaryDetails }>(
-    endpoint,
-    {
+  try {
+    const response = await api.get<{
+      status: string;
+      data: StaffSalaryDetails;
+    }>(endpoint, {
       params: {
         employeeType,
         employeeId: Number(employeeId),
       },
       headers: userHeaders,
-    }
-  );
+    });
 
-  return response.data;
+    return response.data;
+  } catch (error) {
+    const maybeError = error as Error & { response?: { status?: number } };
+    if (maybeError.response?.status === 404) {
+      return null;
+    }
+    throw error;
+  }
 };
 
 export const useStaffSalaryDetails = (

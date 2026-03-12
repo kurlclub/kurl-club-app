@@ -1,3 +1,6 @@
+import type { PayrollSummary } from '@/types/payroll-management';
+import { formatCurrency } from '@/utils/format-currency';
+
 const InfoCard = ({
   amount,
   paidCount,
@@ -24,17 +27,41 @@ bg-linear-to-l from-[#90A8ED]/30 to-[#11141C] relative"
       </div>
       <span className="text-[40px] leading-normal mt-1">{amount}</span>
       <span className="text-secondary-blue-200/70 text-[14px] leading-normal mt-3">
-        {paidCount}/{totalCount} people paid
+        {paidCount}/{totalCount} people {isPaid ? 'paid' : 'pending'}
       </span>
     </div>
   );
 };
 
-const CardWrapper = () => {
+const CardWrapper = ({
+  summary,
+  isLoading,
+}: {
+  summary: PayrollSummary;
+  isLoading?: boolean;
+}) => {
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-3 gap-4">
+        <InfoCard amount="₹0" paidCount={0} totalCount={0} isPaid />
+        <InfoCard amount="₹0" paidCount={0} totalCount={0} />
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-3 gap-4">
-      <InfoCard amount="₹1,13,000" paidCount={5} totalCount={10} isPaid />
-      <InfoCard amount="₹1,13,000" paidCount={5} totalCount={10} />
+      <InfoCard
+        amount={formatCurrency(summary.totalPaid)}
+        paidCount={summary.paidCount}
+        totalCount={summary.totalEmployees}
+        isPaid
+      />
+      <InfoCard
+        amount={formatCurrency(summary.totalUnpaid)}
+        paidCount={summary.unpaidCount}
+        totalCount={summary.totalEmployees}
+      />
     </div>
   );
 };

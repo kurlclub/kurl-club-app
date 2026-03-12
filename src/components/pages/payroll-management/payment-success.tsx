@@ -7,15 +7,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import type { PayrollRow } from '@/types/payroll-management';
+import { formatPaymentDateTime } from '@/lib/payroll-utils';
+import type { PaymentItem } from '@/types/payroll-management';
+import { formatCurrency } from '@/utils/format-currency';
 
 interface PaymentSuccessProps {
-  details: PayrollRow | null;
+  details: PaymentItem | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  selectedMembers?: PayrollRow[];
+  selectedMembers?: PaymentItem[];
   totalAmount?: number;
-  salaryAmount?: number;
   paymentMethod?: string;
 }
 
@@ -25,7 +26,6 @@ const PaymentSuccess = ({
   onOpenChange,
   selectedMembers,
   totalAmount,
-  salaryAmount = 80000,
   paymentMethod = 'Cash',
 }: PaymentSuccessProps) => {
   const members = selectedMembers?.length
@@ -37,9 +37,10 @@ const PaymentSuccess = ({
   if (members.length === 0) return null;
 
   const isBulkPayment = members.length > 1;
-  const paidAmountValue = totalAmount ?? members.length * salaryAmount;
-  const paidAmount = `₹${paidAmountValue.toLocaleString('en-IN')}`;
-  const currentDate = new Intl.DateTimeFormat('en-GB').format(new Date());
+  const paidAmountValue =
+    totalAmount ?? members.reduce((sum, item) => sum + (item.salary || 0), 0);
+  const paidAmount = formatCurrency(paidAmountValue);
+  const { formattedDate, formattedTime } = formatPaymentDateTime();
   const primaryMember = members[0];
 
   return (
@@ -88,7 +89,11 @@ const PaymentSuccess = ({
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-secondary-blue-200">Paid on</span>
-              <span className="font-medium text-white">{currentDate}</span>
+              <span className="font-medium text-white">{formattedDate}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-secondary-blue-200">Paid at</span>
+              <span className="font-medium text-white">{formattedTime}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-secondary-blue-200">Method</span>

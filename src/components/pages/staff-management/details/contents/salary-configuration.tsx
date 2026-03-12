@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { format } from 'date-fns';
 import { Calendar, IndianRupee, Pencil } from 'lucide-react';
@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { KDatePicker } from '@/components/shared/form/k-datepicker';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useUpsertStaffSalary } from '@/hooks/use-payroll';
 import { useStaffSalaryDetails } from '@/services/staff';
 import { StaffType } from '@/types/staff';
 
@@ -21,31 +22,28 @@ function SalaryConfiguration({ staffId, staffRole }: SalaryConfigurationProps) {
     isLoading,
     isError,
   } = useStaffSalaryDetails(staffId, staffRole);
+  const upsertSalaryMutation = useUpsertStaffSalary();
+  const isSaving = upsertSalaryMutation.isPending;
 
   const [isEditing, setIsEditing] = useState(false);
-  const [savedAmount, setSavedAmount] = useState('');
-  const [savedDate, setSavedDate] = useState<Date | undefined>(undefined);
 
-  const [draftAmount, setDraftAmount] = useState(savedAmount);
-  const [draftDate, setDraftDate] = useState<Date | undefined>(savedDate);
+  const initialSalaryData = useMemo(() => {
+    if (!salaryDetails) return { amount: '', date: undefined };
+    return {
+      amount: String(salaryDetails.salary ?? ''),
+      date: salaryDetails.salaryDate
+        ? new Date(salaryDetails.salaryDate)
+        : undefined,
+    };
+  }, [salaryDetails]);
 
-  useEffect(() => {
-    if (!salaryDetails) return;
+  const [draftAmount, setDraftAmount] = useState(initialSalaryData.amount);
+  const [draftDate, setDraftDate] = useState<Date | undefined>(
+    initialSalaryData.date
+  );
 
-    setSavedAmount(String(salaryDetails.salary ?? ''));
-    setSavedDate(
-      salaryDetails.salaryDate ? new Date(salaryDetails.salaryDate) : undefined
-    );
-
-    if (!isEditing) {
-      setDraftAmount(String(salaryDetails.salary ?? ''));
-      setDraftDate(
-        salaryDetails.salaryDate
-          ? new Date(salaryDetails.salaryDate)
-          : undefined
-      );
-    }
-  }, [isEditing, salaryDetails]);
+  const savedAmount = initialSalaryData.amount;
+  const savedDate = initialSalaryData.date;
 
   const isDirty = useMemo(
     () =>
@@ -66,8 +64,9 @@ function SalaryConfiguration({ staffId, staffRole }: SalaryConfigurationProps) {
     setIsEditing(false);
   };
 
-  const handleSave = () => {
-    if (!draftAmount || Number(draftAmount) <= 0) {
+  const handleSave = async () => {
+    const salaryValue = Number(draftAmount);
+    if (!draftAmount || !Number.isFinite(salaryValue) || salaryValue <= 0) {
       toast.error('Please enter a valid salary amount.');
       return;
     }
@@ -77,10 +76,27 @@ function SalaryConfiguration({ staffId, staffRole }: SalaryConfigurationProps) {
       return;
     }
 
-    setSavedAmount(draftAmount);
-    setSavedDate(draftDate);
-    setIsEditing(false);
-    toast.success('Salary configuration saved.');
+    if (!staffId) {
+      toast.error('Staff not found.');
+      return;
+    }
+
+    try {
+      await upsertSalaryMutation.mutateAsync({
+        employeeId: Number(staffId),
+        employeeType: staffRole,
+        salary: salaryValue,
+        salaryDate: draftDate,
+      });
+      setIsEditing(false);
+      toast.success('Salary configuration saved.');
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to save salary configuration.'
+      );
+    }
   };
 
   if (isLoading) {
@@ -163,11 +179,20 @@ function SalaryConfiguration({ staffId, staffRole }: SalaryConfigurationProps) {
 
       {isEditing && (
         <div className="flex items-center justify-end gap-2 border-t border-primary-blue-300 pt-4">
-          <Button type="button" variant="secondary" onClick={handleDiscard}>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleDiscard}
+            disabled={isSaving}
+          >
             Discard
           </Button>
-          <Button type="button" onClick={handleSave} disabled={!isDirty}>
-            Save Changes
+          <Button
+            type="button"
+            onClick={handleSave}
+            disabled={!isDirty || isSaving}
+          >
+            {isSaving ? 'Saving...' : 'Save Changes'}
           </Button>
         </div>
       )}
