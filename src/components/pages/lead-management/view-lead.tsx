@@ -2,15 +2,18 @@ import { useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { Button } from '@kurlclub/ui-components';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { NotepadText, Pencil, Phone, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { FeeStatusBadge, SourceBadge } from '@/components/shared/badges';
 import { KSheet } from '@/components/shared/form/k-sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAppDialog } from '@/hooks/use-app-dialog';
 import { getAvatarColor } from '@/lib/avatar-utils';
 import { getInitials, safeFormatDate } from '@/lib/utils';
+import { useGymBranch } from '@/providers/gym-branch-provider';
+import { deleteLead } from '@/services/lead';
 import { Lead } from '@/types/lead';
 
 interface ViewLeadProps {
@@ -24,6 +27,23 @@ const ViewLead = ({ closeSheet, isOpen, lead, onEdit }: ViewLeadProps) => {
   const avatarStyle = getAvatarColor(lead?.leadName || '');
   const initials = getInitials(lead?.leadName || '');
   const { showConfirm } = useAppDialog();
+  const { gymBranch } = useGymBranch();
+  const queryClient = useQueryClient();
+
+  const deleteLeadMutation = useMutation({
+    mutationFn: ({ gymId, leadId }: { gymId: number; leadId: number }) =>
+      deleteLead(gymId, leadId),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['leads', gymBranch?.gymId] });
+      toast.success(result.message || 'Lead deleted successfully');
+      closeSheet();
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to delete lead'
+      );
+    },
+  });
 
   // react-hook-form to manage the interest status and notes for the lead
   const form = useForm<{ interest: 'interested' | 'contacted'; note: string }>({
@@ -51,14 +71,21 @@ const ViewLead = ({ closeSheet, isOpen, lead, onEdit }: ViewLeadProps) => {
       confirmLabel: 'Delete',
       cancelLabel: 'Cancel',
       onConfirm: () => {
-        closeSheet();
+        if (!gymBranch?.gymId || !lead?.id) {
+          toast.error(
+            'Unable to delete lead. Missing gym or lead information.'
+          );
+          return;
+        }
+
+        deleteLeadMutation.mutate({ gymId: gymBranch.gymId, leadId: lead.id });
       },
     });
   };
 
   return (
     <KSheet
-      className="w-[582px]"
+      className="w-112.5"
       title="View Lead"
       isOpen={isOpen}
       onClose={closeSheet}
@@ -66,14 +93,6 @@ const ViewLead = ({ closeSheet, isOpen, lead, onEdit }: ViewLeadProps) => {
         closeSheet();
       }}
       position="right"
-      footer={
-        <div className="flex items-center gap-3 w-full">
-          <Button variant="secondary" onClick={closeSheet}>
-            Close
-          </Button>
-          <Button onClick={closeSheet}>Save changes</Button>
-        </div>
-      }
     >
       {lead ? (
         <FormProvider {...form}>
@@ -105,12 +124,12 @@ const ViewLead = ({ closeSheet, isOpen, lead, onEdit }: ViewLeadProps) => {
             <div className="p-3 rounded-lg border border-primary-blue-100/10 flex justify-between gap-4 items-start">
               <div className="flex items-center gap-3 ">
                 {/* avatar */}
-                <Avatar className="w-[54px] h-[54px]">
+                <Avatar className="w-11.5 h-11.5">
                   {lead?.photoPath ? (
                     <AvatarImage src={lead.photoPath} alt={lead.leadName} />
                   ) : (
                     <AvatarFallback
-                      className="text-[25px] font-medium"
+                      className="text-[20px] font-medium"
                       style={avatarStyle}
                     >
                       {initials}
@@ -118,11 +137,11 @@ const ViewLead = ({ closeSheet, isOpen, lead, onEdit }: ViewLeadProps) => {
                   )}
                 </Avatar>
                 <div className="flex flex-col gap-2">
-                  <span className="font-medium text-[20px] leading-normal text-white">
+                  <span className="font-medium text-[16px] leading-normal text-white">
                     {lead.leadName}
                   </span>
-                  <span className="text-[15px] leading-normal text-white flex items-center gap-1">
-                    <Phone className="text-secondary-blue-100" size={20} />
+                  <span className="text-[14px] leading-normal text-white flex items-center gap-1">
+                    <Phone className="text-secondary-blue-100" size={15} />
                     {lead.phone}
                   </span>
                 </div>
@@ -152,44 +171,12 @@ const ViewLead = ({ closeSheet, isOpen, lead, onEdit }: ViewLeadProps) => {
                   Assigned To
                 </span>
                 <span className="text-sm text-white font-medium">
-                  {lead.assignedTo || 'Unassigned'}
+                  {lead.assignedTo || 'Unassigned'}{' '}
+                  {lead.assignedToUserType &&
+                    `(${lead.assignedToUserType.charAt(0).toUpperCase() + lead.assignedToUserType.slice(1)})`}
                 </span>
               </div>
             </div>
-
-            {/* interest radio group */}
-            <RadioGroup
-              value={form.watch('interest')}
-              onValueChange={(value) =>
-                form.setValue('interest', value as 'interested' | 'contacted')
-              }
-              className="flex items-center gap-4 mt-2"
-            >
-              <div className="flex items-center gap-2">
-                <RadioGroupItem value="interested" id="interested" />
-                <label
-                  htmlFor="interested"
-                  className="text-white cursor-pointer"
-                >
-                  Mark as interested
-                </label>
-              </div>
-              <div className="flex items-center gap-2">
-                <RadioGroupItem value="contacted" id="contacted" />
-                <label
-                  htmlFor="contacted"
-                  className="text-white cursor-pointer"
-                >
-                  Mark as contacted
-                </label>
-              </div>
-              <div className="flex items-center gap-2">
-                <RadioGroupItem value="lost" id="lost" />
-                <label htmlFor="lost" className="text-white cursor-pointer">
-                  Mark as Lost
-                </label>
-              </div>
-            </RadioGroup>
 
             {/* notes */}
             <div className="rounded-lg flex flex-col gap-2 bg-secondary-blue-500 p-5">

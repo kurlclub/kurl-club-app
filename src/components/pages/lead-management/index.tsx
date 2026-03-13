@@ -2,14 +2,18 @@
 
 import { useMemo, useState } from 'react';
 
+import { Plus } from 'lucide-react';
+
 import { StudioLayout } from '@/components/shared/layout';
 import { DataTable, DataTableToolbar } from '@/components/shared/table';
+import { Button } from '@/components/ui/button';
 import { useFilterableList } from '@/hooks/use-filterable-list';
 import { useSheet } from '@/hooks/use-sheet';
 import { searchItems } from '@/lib/utils';
+import { useGymBranch } from '@/providers/gym-branch-provider';
+import { useLeads } from '@/services/lead';
 import { Lead } from '@/types/lead';
 
-import { StaffsHeader } from '../staff-management/staff-header';
 import AddLead from './add-lead';
 import { getLeadColumns } from './table/lead-list-columns';
 import ViewLead from './view-lead';
@@ -37,130 +41,6 @@ const tableFilters = [
   },
 ];
 
-// Dummy leads data
-export const dummyLeads: Lead[] = [
-  {
-    id: 1,
-    leadNo: '001',
-    leadName: 'Rajesh Kumar',
-    createdAt: '2025-02-20T10:30:00',
-    phone: '+919876543210',
-    interest: 'new',
-    source: 'walk_in',
-    note: 'Interested in premium membership. Follow up next week.',
-    followUpDate: '2025-02-25',
-    assignedTo: 'Rahul (Sales)',
-  },
-  {
-    id: 2,
-    leadNo: '002',
-    leadName: 'Priya Singh',
-    createdAt: '2025-02-19T14:45:00',
-    phone: '+919812345678',
-    interest: 'interested',
-    source: 'online',
-    note: 'Asked for online training plans. Shared brochure.',
-    followUpDate: '2025-02-24',
-    assignedTo: 'Anita (Support)',
-  },
-  {
-    id: 3,
-    leadNo: '003',
-    leadName: 'Amit Patel',
-    createdAt: '2025-02-18T09:15:00',
-    phone: '+919823456789',
-    interest: 'contacted',
-    source: 'ads',
-    note: 'Responded to Facebook ad. Needs follow-up call.',
-    followUpDate: '2025-02-23',
-    assignedTo: 'Rohit (Marketing)',
-  },
-  {
-    id: 4,
-    leadNo: '004',
-    leadName: 'Anjali Reddy',
-    createdAt: '2025-02-17T16:20:00',
-    phone: '+919834567890',
-    interest: 'new',
-    source: 'walk_in',
-    note: 'Walk-in inquiry. Interested in group classes.',
-    followUpDate: '2025-02-26',
-    assignedTo: 'Rahul (Sales)',
-  },
-  {
-    id: 5,
-    leadNo: '005',
-    leadName: 'Vikram Rao',
-    createdAt: '2025-02-16T11:00:00',
-    phone: '+919845678901',
-    interest: 'lost',
-    source: 'online',
-    note: 'Not interested due to pricing.',
-    followUpDate: '2025-02-22',
-    assignedTo: 'Anita (Support)',
-  },
-  {
-    id: 6,
-    leadNo: '006',
-    leadName: 'Neha Gupta',
-    createdAt: '2025-02-15T13:30:00',
-    phone: '+919856789012',
-    interest: 'interested',
-    source: 'ads',
-    note: 'Interested in personal training. Requested callback.',
-    followUpDate: '2025-02-27',
-    assignedTo: 'Rohit (Marketing)',
-  },
-  {
-    id: 7,
-    leadNo: '007',
-    leadName: 'Suresh Joshi',
-    createdAt: '2025-02-14T10:45:00',
-    phone: '+919867890123',
-    interest: 'contacted',
-    source: 'walk_in',
-    note: 'Visited gym. Considering annual membership.',
-    followUpDate: '2025-02-21',
-    assignedTo: 'Rahul (Sales)',
-  },
-  {
-    id: 8,
-    leadNo: '008',
-    leadName: 'Divya Nair',
-    createdAt: '2025-02-13T15:15:00',
-    phone: '+919878901234',
-    interest: 'new',
-    source: 'online',
-    note: 'Submitted inquiry form via website.',
-    followUpDate: '2025-02-28',
-    assignedTo: 'Anita (Support)',
-  },
-  {
-    id: 9,
-    leadNo: '009',
-    leadName: 'Arjun Verma',
-    createdAt: '2025-02-12T12:00:00',
-    phone: '+919889012345',
-    interest: 'interested',
-    source: 'ads',
-    note: 'Clicked Google Ad. Asked about trial session.',
-    followUpDate: '2025-02-24',
-    assignedTo: 'Rohit (Marketing)',
-  },
-  {
-    id: 10,
-    leadNo: '010',
-    leadName: 'Sneha Chopra',
-    createdAt: '2025-02-11T09:30:00',
-    phone: '+919890123456',
-    interest: 'new',
-    source: 'walk_in',
-    note: 'Referred by existing member.',
-    followUpDate: '2025-02-26',
-    assignedTo: 'Rahul (Sales)',
-  },
-];
-
 export default function LeadManagement() {
   const { isOpen, openSheet, closeSheet } = useSheet();
   const {
@@ -168,6 +48,52 @@ export default function LeadManagement() {
     openSheet: openViewSheet,
     closeSheet: closeViewSheet,
   } = useSheet();
+  const { gymBranch } = useGymBranch();
+  const { data: leadApiData = [], isLoading } = useLeads(gymBranch?.gymId);
+
+  const leads = useMemo<Lead[]>(() => {
+    const normalizeSource = (source?: string): Lead['source'] => {
+      const normalized = (source || '').toLowerCase();
+      if (normalized === 'walk in' || normalized === 'walkin') {
+        return 'walk_in';
+      }
+      if (normalized === 'online' || normalized === 'ads') {
+        return normalized;
+      }
+      return 'online';
+    };
+
+    const normalizeInterest = (status?: string): Lead['interest'] => {
+      const normalized = (status || '').toLowerCase();
+      if (
+        normalized === 'lost' ||
+        normalized === 'new' ||
+        normalized === 'interested' ||
+        normalized === 'contacted'
+      ) {
+        return normalized;
+      }
+      return 'new';
+    };
+
+    return leadApiData.map((lead) => ({
+      id: lead.id,
+      leadNo: String(lead.id).padStart(3, '0'),
+      leadName: lead.name,
+      createdAt: lead.createdAt,
+      phone: lead.phone,
+      interest: normalizeInterest(lead.status),
+      source: normalizeSource(lead.source),
+      note: lead.notes,
+      followUpDate: lead.followUpDate,
+      assignedToUserId: lead.assignedToUserId,
+      assignedToUserType: lead.assignedToUserType,
+      assignedToID: lead.assignedToUserId
+        ? `User #${lead.assignedToUserId}`
+        : undefined,
+      assignedTo: lead.assignedToUserName,
+    }));
+  }, [leadApiData]);
 
   // lead being edited via AddLead
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
@@ -178,7 +104,7 @@ export default function LeadManagement() {
 
   // search + filter logic
   const { items: searchedLeads, search } = useFilterableList<Lead>(
-    dummyLeads,
+    leads,
     // searchItems requires T extends Record so we cast for Lead
     searchItems as unknown as (items: Lead[], term: string) => Lead[]
   );
@@ -234,14 +160,16 @@ export default function LeadManagement() {
     <StudioLayout
       title="Lead Management"
       headerActions={
-        <StaffsHeader
-          onAddNewClick={() => {
+        <Button
+          className="h-10"
+          onClick={() => {
             setEditingLead(null);
             openSheet();
           }}
-          isOpen={isOpen}
-          closeSheet={closeSheet}
-        />
+        >
+          <Plus className="h-4 w-4" />
+          Add new
+        </Button>
       }
     >
       <AddLead
@@ -268,6 +196,7 @@ export default function LeadManagement() {
       <DataTable
         columns={columns}
         data={paginatedLeads}
+        isLoading={isLoading}
         totalCount={totalCount}
         pageSize={leadFilters.pageSize}
         currentPage={leadFilters.page}
