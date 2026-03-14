@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
+import { FormProvider, useForm, useWatch } from 'react-hook-form';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@kurlclub/ui-components';
@@ -31,23 +31,38 @@ import {
 } from '@/services/lead';
 import { useGymStaffs } from '@/services/staff';
 import { Lead } from '@/types/lead';
+import type { StaffType } from '@/types/staff';
 
 const leadFormSchema = z.object({
   leadName: z.string().min(1, 'Lead name is required'),
   phone: z.string().min(1, 'Phone number is required'),
   followUpDate: z
     .string()
-    .min(1, 'Follow-up date is required')
+    .optional()
     .refine((val) => !val || !isNaN(Date.parse(val)), {
       message: 'Please select a valid date.',
     }),
-  assignedTo: z.string().min(1, 'Assigned to is required'),
+  assignedTo: z.string().optional(),
   source: z.enum(['walk_in', 'online', 'ads']),
-  status: z.enum(['interested', 'contacted', 'lost']),
+  status: z.enum(['new', 'interested', 'contacted', 'lost']),
   note: z.string().optional(),
 });
 
 type LeadFormValues = z.infer<typeof leadFormSchema>;
+
+const normalizeLeadStatus = (status?: string): LeadFormValues['status'] => {
+  const normalized = (status || '').toLowerCase();
+  if (
+    normalized === 'new' ||
+    normalized === 'interested' ||
+    normalized === 'contacted' ||
+    normalized === 'lost'
+  ) {
+    return normalized;
+  }
+
+  return 'new';
+};
 
 interface AddLeadProps {
   closeSheet: () => void;
@@ -106,12 +121,8 @@ const AddLead: React.FC<AddLeadProps> = ({
       return `${initialData.assignedToUserType.toLowerCase()}:${initialData.assignedToUserId}`;
     }
 
-    return initialData?.assignedTo || '';
-  }, [
-    initialData?.assignedTo,
-    initialData?.assignedToUserId,
-    initialData?.assignedToUserType,
-  ]);
+    return '';
+  }, [initialData]);
 
   const assignedToOptions = useMemo(() => {
     const options = gymStaffs
@@ -121,26 +132,8 @@ const AddLead: React.FC<AddLeadProps> = ({
         value: `${staff.role.toLowerCase()}:${staff.id}`,
       }));
 
-    if (
-      initialAssignedToValue &&
-      !options.some((option) => option.value === initialAssignedToValue)
-    ) {
-      const fallbackRole = initialData?.assignedToUserType
-        ? ` (${initialData.assignedToUserType.charAt(0).toUpperCase()}${initialData.assignedToUserType.slice(1).toLowerCase()})`
-        : '';
-      options.unshift({
-        label: `${initialData?.assignedTo || 'Unknown'}${fallbackRole}`,
-        value: initialAssignedToValue,
-      });
-    }
-
     return options;
-  }, [
-    gymStaffs,
-    initialAssignedToValue,
-    initialData?.assignedTo,
-    initialData?.assignedToUserType,
-  ]);
+  }, [gymStaffs]);
 
   const defaultFormValues = useMemo<LeadFormValues>(
     () => ({
@@ -150,9 +143,7 @@ const AddLead: React.FC<AddLeadProps> = ({
       assignedTo: initialAssignedToValue,
       source:
         (initialData?.source as 'walk_in' | 'online' | 'ads') || 'walk_in',
-      status:
-        (initialData?.interest as 'interested' | 'contacted' | 'lost') ||
-        'interested',
+      status: normalizeLeadStatus(initialData?.interest),
       note: initialData?.note || '',
     }),
     [initialAssignedToValue, initialData]
@@ -167,28 +158,51 @@ const AddLead: React.FC<AddLeadProps> = ({
     form.reset(defaultFormValues);
   };
 
+  const parseAssignedTo = (value?: string) => {
+    if (!value) return null;
+
+    const [role, id] = value.split(':');
+    if (!role || !id) return null;
+
+    if (role !== 'staff' && role !== 'trainer') return null;
+
+    const numericId = Number(id);
+    if (!Number.isFinite(numericId)) return null;
+
+    return { role: role as StaffType, id: numericId };
+  };
+
   const onSubmit = async (data: LeadFormValues) => {
     if (!gymBranch?.gymId) {
       toast.error('Gym not selected. Please select a gym and try again.');
       return;
     }
 
-    const [selectedRole, selectedId] = data.assignedTo
-      ? data.assignedTo.split(':')
-      : ['', '0'];
-
-    const payload = {
+    const payload: CreateLeadPayload = {
       name: data.leadName,
       phone: data.phone,
       source: data.source,
       status: data.status,
       notes: data.note || '',
-      followUpDate: data.followUpDate
-        ? toUtcDateOnlyISOString(data.followUpDate)
-        : new Date().toISOString(),
-      assignedToUserId: Number(selectedId) || 0,
-      assignedToUserType: selectedRole.toLocaleLowerCase(),
     };
+
+    if (data.followUpDate) {
+      const normalizedDate = toUtcDateOnlyISOString(data.followUpDate);
+      if (normalizedDate) {
+        payload.followUpDate = normalizedDate;
+      }
+    }
+
+    const assignee = parseAssignedTo(data.assignedTo);
+    if (data.assignedTo && !assignee) {
+      toast.error('Please select a valid assignee.');
+      return;
+    }
+
+    if (assignee) {
+      payload.assignedToUserId = assignee.id;
+      payload.assignedToUserType = assignee.role;
+    }
 
     if (initialData?.id) {
       await updateLeadMutation.mutateAsync({ leadId: initialData.id, payload });
@@ -204,6 +218,16 @@ const AddLead: React.FC<AddLeadProps> = ({
       form.reset(defaultFormValues);
     }
   }, [defaultFormValues, isOpen, form]);
+
+  const selectedSource = useWatch({
+    control: form.control,
+    name: 'source',
+  });
+
+  const selectedStatus = useWatch({
+    control: form.control,
+    name: 'status',
+  });
 
   return (
     <FormProvider {...form}>
@@ -304,7 +328,7 @@ const AddLead: React.FC<AddLeadProps> = ({
 
             <FormControl>
               <RadioGroup
-                value={form.watch('source')}
+                value={selectedSource}
                 onValueChange={(value) =>
                   form.setValue('source', value as 'walk_in' | 'online' | 'ads')
                 }
@@ -345,15 +369,23 @@ const AddLead: React.FC<AddLeadProps> = ({
 
             <FormControl>
               <RadioGroup
-                value={form.watch('status')}
+                value={selectedStatus}
                 onValueChange={(value) =>
                   form.setValue(
                     'status',
-                    value as 'interested' | 'contacted' | 'lost'
+                    value as 'new' | 'interested' | 'contacted' | 'lost'
                   )
                 }
-                className="grid grid-cols-3 gap-3"
+                className="grid grid-cols-2 gap-3"
               >
+                <label
+                  htmlFor="new"
+                  className="flex items-center gap-2 border rounded-md p-2 cursor-pointer"
+                >
+                  <RadioGroupItem value="new" id="new" />
+                  New
+                </label>
+
                 <label
                   htmlFor="interested"
                   className="flex items-center gap-2 border rounded-md p-2 cursor-pointer"

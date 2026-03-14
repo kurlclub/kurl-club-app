@@ -88,9 +88,6 @@ export default function LeadManagement() {
       followUpDate: lead.followUpDate,
       assignedToUserId: lead.assignedToUserId,
       assignedToUserType: lead.assignedToUserType,
-      assignedToID: lead.assignedToUserId
-        ? `User #${lead.assignedToUserId}`
-        : undefined,
       assignedTo: lead.assignedToUserName,
     }));
   }, [leadApiData]);

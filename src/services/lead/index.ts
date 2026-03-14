@@ -2,16 +2,18 @@ import { useQuery } from '@tanstack/react-query';
 
 import { api } from '@/lib/api';
 import { ApiResponse } from '@/types';
+import type { InterestStatus, LeadSource } from '@/types/lead';
+import type { StaffType } from '@/types/staff';
 
 export type CreateLeadPayload = {
   name: string;
   phone: string;
-  source: string;
-  status: string;
+  source: LeadSource;
+  status: InterestStatus;
   notes: string;
-  followUpDate: string;
-  assignedToUserId: number;
-  assignedToUserType: string;
+  followUpDate?: string;
+  assignedToUserId?: number;
+  assignedToUserType?: StaffType;
 };
 
 export type LeadApiItem = {
