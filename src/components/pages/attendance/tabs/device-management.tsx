@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FingerprintPattern, Plus, Wifi, WifiOff } from 'lucide-react';
+import { toast } from 'sonner';
 import { z } from 'zod/v4';
 
 import InfoCard from '@/components/shared/cards/info-card';
@@ -17,6 +18,14 @@ import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { useAppDialog } from '@/hooks/use-app-dialog';
 import { FilterConfig } from '@/lib/filters';
+import { useGymBranch } from '@/providers/gym-branch-provider';
+import {
+  type BiometricDeviceResponse,
+  useBiometricDevices,
+  useCreateBiometricDevice,
+  useDeleteBiometricDevice,
+  useUpdateBiometricDevice,
+} from '@/services/attendance';
 import type { BiometricDevice } from '@/types/attendance';
 
 import { DeviceTableView } from '../table';
@@ -28,48 +37,6 @@ type DeviceWithMeta = BiometricDevice & {
   direction?: 'IN' | 'OUT' | 'INOUT' | 'DEVICE';
   activationCode?: string;
 };
-
-const mockDevices: DeviceWithMeta[] = [
-  {
-    id: 'DEV001',
-    name: 'Main Entrance',
-    deviceProvider: 'eSSL',
-    deviceSerialNumber: 'ESL-ME-001',
-    direction: 'IN',
-    activationCode: 'ACT-ESL-101',
-    ipAddress: '192.168.1.100',
-    port: 4370,
-    status: 'online',
-    lastSeen: new Date().toISOString(),
-    location: 'Reception Area',
-  },
-  {
-    id: 'DEV002',
-    name: 'Gym Floor',
-    deviceProvider: 'Matrix',
-    deviceSerialNumber: 'MTR-GF-002',
-    direction: 'OUT',
-    activationCode: '',
-    ipAddress: '192.168.1.101',
-    port: 4370,
-    status: 'offline',
-    lastSeen: new Date(Date.now() - 300000).toISOString(),
-    location: 'Main Gym Area',
-  },
-  {
-    id: 'DEV003',
-    name: 'Locker Room',
-    deviceProvider: 'eSSL',
-    deviceSerialNumber: 'ESL-LR-003',
-    direction: 'INOUT',
-    activationCode: 'LOCK-AC-55',
-    ipAddress: '192.168.1.102',
-    port: 4370,
-    status: 'online',
-    lastSeen: new Date(Date.now() - 60000).toISOString(),
-    location: 'Changing Area',
-  },
-];
 
 const DEVICE_PROVIDER_OPTIONS = [
   { label: 'Hikvision', value: 'Hikvision' },
@@ -149,9 +116,52 @@ const deviceSchema = z.object({
 
 type DeviceFormValues = z.infer<typeof deviceSchema>;
 
+const normalizeDirection = (
+  direction?: string
+): DeviceWithMeta['direction'] => {
+  const normalized = (direction || '').trim().toUpperCase();
+  if (
+    normalized === 'IN' ||
+    normalized === 'OUT' ||
+    normalized === 'INOUT' ||
+    normalized === 'DEVICE'
+  ) {
+    return normalized;
+  }
+
+  return 'DEVICE';
+};
+
+const mapApiDeviceToViewModel = (
+  device: BiometricDeviceResponse
+): DeviceWithMeta => ({
+  id: String(device.id),
+  name: device.deviceName,
+  deviceProvider: normalizeProviderValue(device.manufacturer),
+  deviceSerialNumber: device.serialNumber,
+  direction: normalizeDirection(device.direction),
+  activationCode: device.activationCode || '',
+  ipAddress: 'N/A',
+  port: 0,
+  status: 'online',
+  lastSeen: device.modifiedAt || device.createdAt || new Date().toISOString(),
+  location: device.manufacturer,
+});
+
 export default function DeviceManagement() {
+  const { gymBranch } = useGymBranch();
   const { showConfirm } = useAppDialog();
-  const [devices, setDevices] = useState<DeviceWithMeta[]>(mockDevices);
+  const { data: biometricDevicesResponse } = useBiometricDevices(
+    gymBranch?.gymId
+  );
+  const createBiometricDeviceMutation = useCreateBiometricDevice();
+  const deleteBiometricDeviceMutation = useDeleteBiometricDevice();
+  const updateBiometricDeviceMutation = useUpdateBiometricDevice();
+  // const [devices, setDevices] = useState<DeviceWithMeta[]>([]);
+  const devices = useMemo(() => {
+    const apiDevices = biometricDevicesResponse?.data || [];
+    return apiDevices.map(mapApiDeviceToViewModel);
+  }, [biometricDevicesResponse?.data]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingDeviceId, setEditingDeviceId] = useState<string | null>(null);
   const form = useForm<DeviceFormValues>({
@@ -183,42 +193,60 @@ export default function DeviceManagement() {
     }
   };
 
-  const handleSaveDevice = (values: DeviceFormValues) => {
+  const handleSaveDevice = async (values: DeviceFormValues) => {
     if (editingDeviceId) {
-      setDevices((prev) =>
-        prev.map((device) =>
-          device.id === editingDeviceId
-            ? {
-                ...device,
-                name: values.deviceName.trim(),
-                deviceProvider: normalizeProviderValue(values.deviceProvider),
-                deviceSerialNumber: values.deviceSerialNumber.trim(),
-                direction: values.direction as
-                  | 'IN'
-                  | 'OUT'
-                  | 'INOUT'
-                  | 'DEVICE',
-                activationCode: values.activationCode?.trim() || '',
-                location: values.deviceProvider,
-              }
-            : device
-        )
-      );
+      if (!gymBranch?.gymId) {
+        toast.error('Gym not selected. Please select a gym and try again.');
+        return;
+      }
+
+      const parsedDeviceId = Number(editingDeviceId);
+      if (!Number.isFinite(parsedDeviceId)) {
+        toast.error('Invalid device id. Please refresh and try again.');
+        return;
+      }
+
+      try {
+        const result = await updateBiometricDeviceMutation.mutateAsync({
+          gymId: gymBranch.gymId,
+          deviceId: parsedDeviceId,
+          payload: {
+            deviceName: values.deviceName.trim(),
+            serialNumber: values.deviceSerialNumber.trim(),
+            direction: values.direction.trim().toLowerCase(),
+            activationCode: values.activationCode?.trim() || '',
+            manufacturer: values.deviceProvider.trim().toLowerCase(),
+          },
+        });
+        toast.success(result.message || 'Device updated successfully');
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : 'Failed to update device'
+        );
+        return;
+      }
     } else {
-      const device: DeviceWithMeta = {
-        id: `DEV${String(devices.length + 1).padStart(3, '0')}`,
-        name: values.deviceName.trim(),
-        deviceProvider: normalizeProviderValue(values.deviceProvider),
-        deviceSerialNumber: values.deviceSerialNumber.trim(),
-        direction: values.direction as 'IN' | 'OUT' | 'INOUT' | 'DEVICE',
-        activationCode: values.activationCode?.trim() || '',
-        ipAddress: 'N/A',
-        port: 4370,
-        location: values.deviceProvider,
-        status: 'offline',
-        lastSeen: new Date().toISOString(),
-      };
-      setDevices([...devices, device]);
+      if (!gymBranch?.gymId) {
+        toast.error('Gym not selected. Please select a gym and try again.');
+        return;
+      }
+
+      try {
+        const result = await createBiometricDeviceMutation.mutateAsync({
+          gymId: gymBranch.gymId,
+          deviceName: values.deviceName.trim(),
+          serialNumber: values.deviceSerialNumber.trim(),
+          direction: values.direction.trim().toLowerCase(),
+          activationCode: values.activationCode?.trim() || '',
+          manufacturer: values.deviceProvider.trim().toLowerCase(),
+        });
+        toast.success(result.message || 'Device added successfully');
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : 'Failed to add device'
+        );
+        return;
+      }
     }
 
     setEditingDeviceId(null);
@@ -243,14 +271,36 @@ export default function DeviceManagement() {
   };
 
   const handleDeleteDevice = (device: BiometricDevice) => {
+    const deviceId = Number(device.id);
+
+    if (!Number.isFinite(deviceId)) {
+      toast.error('Invalid device id. Please refresh and try again.');
+      return;
+    }
+
     showConfirm({
       title: 'Delete Device',
       description: `Are you sure you want to delete ${device.name}? This action cannot be undone.`,
       variant: 'destructive',
       confirmLabel: 'Delete',
       cancelLabel: 'Cancel',
-      onConfirm: () => {
-        setDevices((prev) => prev.filter((d) => d.id !== device.id));
+      onConfirm: async () => {
+        if (!gymBranch?.gymId) {
+          toast.error('Gym not selected. Please select a gym and try again.');
+          return;
+        }
+
+        try {
+          const result = await deleteBiometricDeviceMutation.mutateAsync({
+            gymId: gymBranch.gymId,
+            deviceId,
+          });
+          toast.success(result.message || 'Device deleted successfully');
+        } catch (error) {
+          toast.error(
+            error instanceof Error ? error.message : 'Failed to delete device'
+          );
+        }
       },
     });
   };
@@ -301,9 +351,10 @@ export default function DeviceManagement() {
           open={isAddDialogOpen}
           onOpenChange={handleDialogChange}
           title={editingDeviceId ? 'Edit Device' : 'Add New Device'}
-          className="max-w-[500px]"
+          className="max-w-125"
           trigger={
             <Button
+              disabled={devices.length >= 1}
               className="bg-primary-green-500 text-black hover:bg-primary-green-600"
               onClick={() => {
                 setEditingDeviceId(null);
@@ -318,6 +369,10 @@ export default function DeviceManagement() {
             <Button
               onClick={form.handleSubmit(handleSaveDevice)}
               className="w-full bg-primary-green-500 text-black mt-2"
+              disabled={
+                createBiometricDeviceMutation.isPending ||
+                updateBiometricDeviceMutation.isPending
+              }
             >
               {editingDeviceId ? 'Save Changes' : 'Add Device'}
             </Button>

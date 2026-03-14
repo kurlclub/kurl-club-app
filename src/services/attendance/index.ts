@@ -108,6 +108,57 @@ export type AttendanceApiResponse = {
   summary?: unknown;
 };
 
+export type BiometricDeviceResponse = {
+  id: number;
+  gymId: number;
+  deviceName: string;
+  serialNumber: string;
+  direction: string;
+  activationCode: string;
+  manufacturer: string;
+  createdAt: string;
+  modifiedAt: string;
+};
+
+export type BiometricDevicesApiResponse = {
+  status: string;
+  data: BiometricDeviceResponse[];
+};
+
+export type CreateBiometricDevicePayload = {
+  gymId: number;
+  deviceName: string;
+  serialNumber: string;
+  direction: string;
+  activationCode: string;
+  manufacturer: string;
+};
+
+export type UpdateBiometricDevicePayload = {
+  deviceName: string;
+  serialNumber: string;
+  direction: string;
+  activationCode: string;
+  manufacturer: string;
+};
+
+export type CreateBiometricDeviceResponse = {
+  status: string;
+  message?: string;
+  data?: BiometricDeviceResponse;
+};
+
+export type DeleteBiometricDeviceResponse = {
+  status: string;
+  message?: string;
+};
+
+export type UpdateBiometricDeviceResponse = {
+  status: string;
+  message?: string;
+  data?: BiometricDeviceResponse;
+};
+
 const FALLBACK_POLLING_INTERVAL_MS = 30 * 1000;
 const SAFETY_REFRESH_INTERVAL_MS = 10 * 60 * 1000;
 
@@ -127,6 +178,37 @@ export const fetchAttendanceRecords = async (gymId: number) => {
   return await api.get<AttendanceApiResponse>(
     `/Attendance/${gymId}/attendance`
   );
+};
+
+export const fetchBiometricDevices = async (gymId: number) => {
+  return await api.get<BiometricDevicesApiResponse>(
+    `/Gym/${gymId}/BiometricDevices`
+  );
+};
+
+export const createBiometricDevice = async (
+  payload: CreateBiometricDevicePayload
+) => {
+  return await api.post<CreateBiometricDeviceResponse>(
+    '/Gym/BiometricDevices',
+    payload
+  );
+};
+
+export const updateBiometricDevice = async (
+  deviceId: number,
+  payload: UpdateBiometricDevicePayload
+) => {
+  return await api.put<UpdateBiometricDeviceResponse>(
+    `/Gym/BiometricDevices/${deviceId}`,
+    payload
+  );
+};
+
+export const deleteBiometricDevice = async (deviceId: number) => {
+  return (await api.delete(
+    `/Gym/BiometricDevices/${deviceId}`
+  )) as unknown as DeleteBiometricDeviceResponse;
 };
 
 export const checkInMember = async (data: CheckInRequest) => {
@@ -170,6 +252,62 @@ export const useAttendanceRecords = (
     enabled: enabled && !!gymId,
     refetchInterval,
     refetchIntervalInBackground: false,
+  });
+};
+
+export const useBiometricDevices = (gymId: number | undefined) => {
+  return useQuery({
+    queryKey: ['biometric-devices', gymId],
+    queryFn: () => fetchBiometricDevices(gymId!),
+    enabled: !!gymId,
+  });
+};
+
+export const useCreateBiometricDevice = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: createBiometricDevice,
+    onSuccess: (_result, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['biometric-devices', variables.gymId],
+      });
+    },
+  });
+};
+
+export const useDeleteBiometricDevice = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ deviceId }: { gymId: number; deviceId: number }) =>
+      deleteBiometricDevice(deviceId),
+    onSuccess: (_result, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['biometric-devices', variables.gymId],
+      });
+    },
+  });
+};
+
+export const useUpdateBiometricDevice = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      gymId,
+      deviceId,
+      payload,
+    }: {
+      gymId: number;
+      deviceId: number;
+      payload: UpdateBiometricDevicePayload;
+    }) => updateBiometricDevice(deviceId, payload),
+    onSuccess: (_result, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ['biometric-devices', variables.gymId],
+      });
+    },
   });
 };
 
