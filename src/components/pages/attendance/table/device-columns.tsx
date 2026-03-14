@@ -4,7 +4,6 @@ import { ColumnDef } from '@tanstack/react-table';
 import {
   Edit,
   MoreHorizontal,
-  Settings,
   Trash2,
   Wifi,
   WifiOff,
@@ -41,7 +40,20 @@ const StatusIndicator = ({ status }: { status: 'online' | 'offline' }) => (
   </div>
 );
 
-const ActionsCell = () => (
+type DeviceActionHandlers = {
+  onEdit?: (device: BiometricDevice) => void;
+  onDelete?: (device: BiometricDevice) => void;
+};
+
+const ActionsCell = ({
+  device,
+  onEdit,
+  onDelete,
+}: {
+  device: BiometricDevice;
+  onEdit?: (device: BiometricDevice) => void;
+  onDelete?: (device: BiometricDevice) => void;
+}) => (
   <DropdownMenu>
     <DropdownMenuTrigger asChild>
       <Button variant="ghost" className="h-8 w-8 p-0">
@@ -49,15 +61,17 @@ const ActionsCell = () => (
       </Button>
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end" className="shad-select-content">
-      <DropdownMenuItem className="shad-select-item">
-        <Settings className="h-4 w-4 mr-2" />
-        Configure
-      </DropdownMenuItem>
-      <DropdownMenuItem className="shad-select-item">
+      <DropdownMenuItem
+        className="shad-select-item"
+        onClick={() => onEdit?.(device)}
+      >
         <Edit className="h-4 w-4 mr-2" />
         Edit Device
       </DropdownMenuItem>
-      <DropdownMenuItem className="shad-select-item text-red-400">
+      <DropdownMenuItem
+        className="shad-select-item text-red-400"
+        onClick={() => onDelete?.(device)}
+      >
         <Trash2 className="h-4 w-4 mr-2" />
         Delete
       </DropdownMenuItem>
@@ -65,7 +79,9 @@ const ActionsCell = () => (
   </DropdownMenu>
 );
 
-export const deviceColumns: ColumnDef<BiometricDevice>[] = [
+export const createDeviceColumns = (
+  handlers?: DeviceActionHandlers
+): ColumnDef<BiometricDevice>[] => [
   {
     accessorKey: 'name',
     header: 'Device Name',
@@ -146,6 +162,15 @@ export const deviceColumns: ColumnDef<BiometricDevice>[] = [
   },
   {
     id: 'actions',
-    cell: () => <ActionsCell />,
+    cell: ({ row }) => (
+      <ActionsCell
+        device={row.original}
+        onEdit={handlers?.onEdit}
+        onDelete={handlers?.onDelete}
+      />
+    ),
   },
 ];
+
+export const deviceColumns: ColumnDef<BiometricDevice>[] =
+  createDeviceColumns();

@@ -1,15 +1,26 @@
 'use client';
 
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Wifi } from 'lucide-react';
+import { z } from 'zod/v4';
 
+import InfoCard from '@/components/shared/cards/info-card';
 import KDialog from '@/components/shared/form/k-dialog';
-import { KInput } from '@/components/shared/form/k-input';
+import {
+  KFormField,
+  KFormFieldType,
+} from '@/components/shared/form/k-formfield';
 import { Button } from '@/components/ui/button';
+import { Form } from '@/components/ui/form';
+import { useAppDialog } from '@/hooks/use-app-dialog';
+import { FilterConfig } from '@/lib/filters';
 import type { BiometricDevice } from '@/types/attendance';
 
-import { DeviceTableView, deviceColumns } from '../table';
+import { DeviceTableView } from '../table';
+import { createDeviceColumns } from '../table/device-columns';
 
 const mockDevices: BiometricDevice[] = [
   {
@@ -41,48 +52,163 @@ const mockDevices: BiometricDevice[] = [
   },
 ];
 
+const deviceFilters: FilterConfig[] = [
+  {
+    columnId: 'status',
+    title: 'Status',
+    options: [
+      { label: 'Online', value: 'online' },
+      { label: 'Offline', value: 'offline' },
+    ],
+  },
+];
+
+const ipAddressRegex =
+  /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
+
+const deviceSchema = z.object({
+  name: z.string().trim().min(2, 'Device name must be at least 2 characters'),
+  ipAddress: z
+    .string()
+    .trim()
+    .min(1, 'IP address is required')
+    .regex(ipAddressRegex, 'Enter a valid IPv4 address'),
+  port: z
+    .string()
+    .trim()
+    .min(1, 'Port is required')
+    .regex(/^\d+$/, 'Port must be a number')
+    .refine((value) => {
+      const port = Number(value);
+      return port >= 1 && port <= 65535;
+    }, 'Port must be between 1 and 65535'),
+  location: z.string().trim().min(2, 'Location must be at least 2 characters'),
+});
+
+type DeviceFormValues = z.infer<typeof deviceSchema>;
+
 export default function DeviceManagement() {
+  const { showConfirm } = useAppDialog();
   const [devices, setDevices] = useState(mockDevices);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [newDevice, setNewDevice] = useState({
-    name: '',
-    ipAddress: '',
-    port: 4370,
-    location: '',
+  const [editingDeviceId, setEditingDeviceId] = useState<string | null>(null);
+  const form = useForm<DeviceFormValues>({
+    resolver: zodResolver(deviceSchema),
+    defaultValues: {
+      name: '',
+      ipAddress: '',
+      port: '',
+      location: '',
+    },
   });
 
-  const handleAddDevice = () => {
-    const device: BiometricDevice = {
-      id: `DEV${String(devices.length + 1).padStart(3, '0')}`,
-      ...newDevice,
-      status: 'offline',
-      lastSeen: new Date().toISOString(),
-    };
-    setDevices([...devices, device]);
-    setNewDevice({ name: '', ipAddress: '', port: 4370, location: '' });
+  const defaultDeviceValues: DeviceFormValues = {
+    name: '',
+    ipAddress: '',
+    port: '',
+    location: '',
+  };
+
+  const handleDialogChange = () => {
+    const nextOpenState = !isAddDialogOpen;
+    setIsAddDialogOpen(nextOpenState);
+
+    if (!nextOpenState) {
+      setEditingDeviceId(null);
+      form.reset(defaultDeviceValues);
+    }
+  };
+
+  const handleSaveDevice = (values: DeviceFormValues) => {
+    if (editingDeviceId) {
+      setDevices((prev) =>
+        prev.map((device) =>
+          device.id === editingDeviceId
+            ? {
+                ...device,
+                name: values.name.trim(),
+                ipAddress: values.ipAddress.trim(),
+                port: Number(values.port),
+                location: values.location.trim(),
+              }
+            : device
+        )
+      );
+    } else {
+      const device: BiometricDevice = {
+        id: `DEV${String(devices.length + 1).padStart(3, '0')}`,
+        name: values.name.trim(),
+        ipAddress: values.ipAddress.trim(),
+        port: Number(values.port),
+        location: values.location.trim(),
+        status: 'offline',
+        lastSeen: new Date().toISOString(),
+      };
+      setDevices([...devices, device]);
+    }
+
+    setEditingDeviceId(null);
+    form.reset(defaultDeviceValues);
     setIsAddDialogOpen(false);
   };
 
+  const handleEditDevice = (device: BiometricDevice) => {
+    setEditingDeviceId(device.id);
+    form.reset({
+      name: device.name,
+      ipAddress: device.ipAddress,
+      port: String(device.port),
+      location: device.location || '',
+    });
+    setIsAddDialogOpen(true);
+  };
+
+  const handleDeleteDevice = (device: BiometricDevice) => {
+    showConfirm({
+      title: 'Delete Device',
+      description: `Are you sure you want to delete ${device.name}? This action cannot be undone.`,
+      variant: 'destructive',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      onConfirm: () => {
+        setDevices((prev) => prev.filter((d) => d.id !== device.id));
+      },
+    });
+  };
+
+  const columns = createDeviceColumns({
+    onEdit: handleEditDevice,
+    onDelete: handleDeleteDevice,
+  });
+
   const onlineDevices = devices.filter((d) => d.status === 'online').length;
   const offlineDevices = devices.filter((d) => d.status === 'offline').length;
+  const stats = [
+    {
+      id: 1,
+      icon: <Wifi size={20} strokeWidth={1.75} color="#151821" />,
+      color: 'semantic-blue-500',
+      title: 'Total Devices',
+      count: devices.length,
+    },
+    {
+      id: 2,
+      icon: <Wifi size={20} strokeWidth={1.75} color="#151821" />,
+      color: 'primary-green-500',
+      title: 'Online',
+      count: onlineDevices,
+    },
+    {
+      id: 3,
+      icon: <Wifi size={20} strokeWidth={1.75} color="#151821" />,
+      color: 'alert-red-400',
+      title: 'Offline',
+      count: offlineDevices,
+    },
+  ];
 
   return (
     <div className="flex flex-col gap-6 relative">
-      <div className="absolute inset-0 bg-secondary-blue-500/30 backdrop-blur-[2px] rounded-lg z-50 flex items-center justify-center">
-        <div className="bg-secondary-blue-500 border border-secondary-blue-400 rounded-lg p-8 max-w-md text-center">
-          <div className="mb-4">
-            <Wifi size={48} className="mx-auto text-primary-green-500" />
-          </div>
-          <h3 className="text-xl font-semibold text-white mb-2">
-            Coming Soon!
-          </h3>
-          <p className="text-gray-400 text-sm">
-            We&apos;re working on biometric device integration to make
-            attendance tracking even easier. Stay tuned for this exciting
-            feature!
-          </p>
-        </div>
-      </div>
       <div className="flex items-center justify-between flex-wrap gap-y-3">
         <div>
           <h3 className="text-gray-900 dark:text-white text-lg font-medium">
@@ -94,103 +220,73 @@ export default function DeviceManagement() {
         </div>
         <KDialog
           open={isAddDialogOpen}
-          onOpenChange={() => setIsAddDialogOpen(!isAddDialogOpen)}
-          title="Add New Device"
+          onOpenChange={handleDialogChange}
+          title={editingDeviceId ? 'Edit Device' : 'Add New Device'}
+          className="max-w-[500px]"
           trigger={
-            <Button className="bg-primary-green-500 text-black hover:bg-primary-green-600">
+            <Button
+              className="bg-primary-green-500 text-black hover:bg-primary-green-600"
+              onClick={() => {
+                setEditingDeviceId(null);
+                form.reset(defaultDeviceValues);
+              }}
+            >
               <Plus size={16} className="mr-2" />
               Add Device
             </Button>
           }
           footer={
             <Button
-              onClick={handleAddDevice}
-              className="w-full bg-primary-green-500 text-black"
+              onClick={form.handleSubmit(handleSaveDevice)}
+              className="w-full bg-primary-green-500 text-black mt-2"
             >
-              Add Device
+              {editingDeviceId ? 'Save Changes' : 'Add Device'}
             </Button>
           }
         >
-          <div className="space-y-4">
-            <KInput
-              label="Device Name"
-              value={newDevice.name}
-              onChange={(e) =>
-                setNewDevice({ ...newDevice, name: e.target.value })
-              }
-            />
-            <KInput
-              label="IP Address"
-              value={newDevice.ipAddress}
-              onChange={(e) =>
-                setNewDevice({ ...newDevice, ipAddress: e.target.value })
-              }
-            />
-            <KInput
-              label="Port"
-              type="number"
-              value={newDevice.port.toString()}
-              onChange={(e) =>
-                setNewDevice({
-                  ...newDevice,
-                  port: parseInt(e.target.value) || 0,
-                })
-              }
-            />
-            <KInput
-              label="Location"
-              value={newDevice.location}
-              onChange={(e) =>
-                setNewDevice({ ...newDevice, location: e.target.value })
-              }
-            />
-          </div>
+          <Form {...form}>
+            <form className="space-y-4">
+              <KFormField
+                fieldType={KFormFieldType.INPUT}
+                control={form.control}
+                name="name"
+                label="Device Name"
+              />
+              <KFormField
+                fieldType={KFormFieldType.INPUT}
+                control={form.control}
+                name="ipAddress"
+                label="IP Address"
+              />
+              <KFormField
+                fieldType={KFormFieldType.INPUT}
+                control={form.control}
+                name="port"
+                label="Port"
+                type="number"
+              />
+              <KFormField
+                fieldType={KFormFieldType.INPUT}
+                control={form.control}
+                name="location"
+                label="Location"
+              />
+            </form>
+          </Form>
         </KDialog>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:h-[74px]">
-        <div className="bg-white dark:bg-secondary-blue-500 rounded-lg flex gap-4 items-center p-3">
-          <span className="md:rounded-[18px] rounded-[12px] min-w-[40px] min-h-[40px] max-w-[40px] max-h-[40px] md:min-w-[48px] md:min-h-[48px] md:max-w-[48px] md:max-h-[48px] flex items-center justify-center bg-semantic-blue-500">
-            <Wifi size={20} strokeWidth={1.75} color="#151821" />
-          </span>
-          <div className="flex flex-col gap-1">
-            <h6 className="text-gray-900 dark:text-white font-normal text-[15px] leading-normal">
-              Total Devices
-            </h6>
-            <h4 className="text-gray-900 dark:text-white font-bold text-xl leading-normal">
-              {devices.length}
-            </h4>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-secondary-blue-500 rounded-lg flex gap-4 items-center p-3">
-          <span className="md:rounded-[18px] rounded-[12px] min-w-[40px] min-h-[40px] max-w-[40px] max-h-[40px] md:min-w-[48px] md:min-h-[48px] md:max-w-[48px] md:max-h-[48px] flex items-center justify-center bg-primary-green-500">
-            <Wifi size={20} strokeWidth={1.75} color="#151821" />
-          </span>
-          <div className="flex flex-col gap-1">
-            <h6 className="text-gray-900 dark:text-white font-normal text-[15px] leading-normal">
-              Online
-            </h6>
-            <h4 className="text-gray-900 dark:text-white font-bold text-xl leading-normal">
-              {onlineDevices}
-            </h4>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-secondary-blue-500 rounded-lg flex gap-4 items-center p-3">
-          <span className="md:rounded-[18px] rounded-[12px] min-w-[40px] min-h-[40px] max-w-[40px] max-h-[40px] md:min-w-[48px] md:min-h-[48px] md:max-w-[48px] md:max-h-[48px] flex items-center justify-center bg-alert-red-400">
-            <Wifi size={20} strokeWidth={1.75} color="#151821" />
-          </span>
-          <div className="flex flex-col gap-1">
-            <h6 className="text-gray-900 dark:text-white font-normal text-[15px] leading-normal">
-              Offline
-            </h6>
-            <h4 className="text-gray-900 dark:text-white font-bold text-xl leading-normal">
-              {offlineDevices}
-            </h4>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        {stats.map((stat) => (
+          <InfoCard item={stat} key={stat.id} />
+        ))}
       </div>
 
-      <DeviceTableView devices={devices} columns={deviceColumns} />
+      <DeviceTableView
+        devices={devices}
+        columns={columns}
+        filters={deviceFilters}
+      />
     </div>
   );
 }
