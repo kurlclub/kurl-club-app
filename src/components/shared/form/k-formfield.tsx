@@ -277,6 +277,7 @@ const RenderField = <T extends FieldValues>({
             floating={floating}
             showPresets={showPresets}
             showYearSelector={showYearSelector}
+            disabledDates={props.disabledDates}
             onDateChange={(date) => {
               if (mode === 'single' && date instanceof Date) {
                 field.onChange(toUtcDateOnlyISOString(date));

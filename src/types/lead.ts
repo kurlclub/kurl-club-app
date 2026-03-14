@@ -14,6 +14,8 @@ export interface Lead {
   note?: string;
   followUpDate?: string;
   assignedTo?: string;
+  assignedToUserId?: number;
+  assignedToUserType?: string;
 }
 
 export type LeadListItem = Lead;
