@@ -28,6 +28,11 @@ type CustomTooltipProps = {
   total: number;
 };
 
+interface PaymentsProps {
+  fromDate?: string;
+  toDate?: string;
+}
+
 function CustomTooltip({ active, payload, total }: CustomTooltipProps) {
   if (active && payload?.[0]) {
     const data = payload[0].payload;
@@ -57,19 +62,26 @@ function CustomTooltip({ active, payload, total }: CustomTooltipProps) {
   return null;
 }
 
-function Payments() {
+function Payments({ fromDate, toDate }: PaymentsProps) {
   const { gymBranch } = useGymBranch();
-  const { data: dashboardData } = useDashboardData(gymBranch?.gymId || 0);
+  const { data: dashboardData } = useDashboardData(
+    gymBranch?.gymId || 0,
+    fromDate,
+    toDate
+  );
+
+  const totalOutstanding = dashboardData?.payments.totalOutstanding || 0;
+  const totalPaid = dashboardData?.payments.totalPaid || 0;
 
   const chartData = [
     {
       name: 'Unpaid',
-      amount: dashboardData?.payments.totalOutstanding || 0,
+      amount: totalOutstanding,
       color: PAYMENT_CHART_COLORS.UNPAID,
     },
     {
       name: 'Paid',
-      amount: dashboardData?.payments.totalPaid || 0,
+      amount: totalPaid,
       color: PAYMENT_CHART_COLORS.PAID,
     },
   ];
@@ -83,7 +95,7 @@ function Payments() {
     },
     {
       label: 'Total outstanding',
-      value: `₹${(dashboardData?.payments.totalOutstanding || 0).toLocaleString()}`,
+      value: `₹${totalOutstanding.toLocaleString()}`,
       color: PAYMENT_CHART_COLORS.UNPAID,
     },
     {
@@ -93,10 +105,12 @@ function Payments() {
     },
     {
       label: 'Total paid',
-      value: `₹${(dashboardData?.payments.totalPaid || 0).toLocaleString()}`,
+      value: `₹${totalPaid.toLocaleString()}`,
       color: PAYMENT_CHART_COLORS.PAID,
     },
   ];
+
+  const isEmpty = totalPayments === 0;
 
   return (
     <Card className="border-none bg-secondary-blue-500 rounded-lg w-full">
@@ -106,63 +120,67 @@ function Payments() {
             Payments
           </CardTitle>
           {/* Pie Chart */}
-          <div className="w-[240px] h-[240px] relative mx-auto">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Tooltip
-                  content={<CustomTooltip total={totalPayments} />}
-                  cursor={{ fill: 'rgba(255, 255, 255, 0.08)' }}
-                />
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={85}
-                  outerRadius={120}
-                  dataKey="amount"
-                  stroke="none"
-                >
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-
-                  <Label
-                    position="center"
-                    content={() => (
-                      <text
-                        x="50%"
-                        y="50%"
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                        fill="white"
-                      >
-                        <tspan
-                          x="50%"
-                          dy="0.4em"
-                          fontSize={32}
-                          fontWeight="bold"
-                        >
-                          {formatAmount(
-                            dashboardData?.payments.totalOutstanding || 0
-                          )}
-                        </tspan>
-                        <tspan x="50%" dy="-2.4em" fontSize={15}>
-                          Unpaid
-                        </tspan>
-                      </text>
-                    )}
-                  />
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
-
-            {/* Center Label */}
-            {/* <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-center leading-normal">
-              <div className="text-[32px] font-medium">
-                {formatAmount(dashboardData?.payments.totalOutstanding || 0)}
+          <div className="w-[240px] h-[240px] relative mx-auto flex items-center justify-center">
+            {isEmpty ? (
+              <div className="w-[220px] h-[220px] rounded-full border border-secondary-blue-400/70 bg-linear-to-br from-secondary-blue-400/20 via-secondary-blue-600/10 to-secondary-blue-700/20 flex flex-col items-center justify-center text-center px-6">
+                <div className="w-14 h-14 rounded-full bg-secondary-blue-400/30 border border-secondary-blue-300/40 mb-3 flex items-center justify-center">
+                  <span className="text-xl text-secondary-blue-100">₹</span>
+                </div>
+                <p className="text-white text-sm font-medium">
+                  No payment activity
+                </p>
+                <p className="text-secondary-blue-200 text-xs mt-1">
+                  Select another date range or wait for new transactions.
+                </p>
               </div>
-              <div className="text-[15px]">Unpaid</div>
-            </div> */}
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Tooltip
+                    content={<CustomTooltip total={totalPayments} />}
+                    cursor={{ fill: 'rgba(255, 255, 255, 0.08)' }}
+                  />
+                  <Pie
+                    data={chartData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={85}
+                    outerRadius={120}
+                    dataKey="amount"
+                    stroke="none"
+                  >
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+
+                    <Label
+                      position="center"
+                      content={() => (
+                        <text
+                          x="50%"
+                          y="50%"
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          fill="white"
+                        >
+                          <tspan
+                            x="50%"
+                            dy="0.4em"
+                            fontSize={32}
+                            fontWeight="bold"
+                          >
+                            {formatAmount(totalOutstanding)}
+                          </tspan>
+                          <tspan x="50%" dy="-2.4em" fontSize={15}>
+                            Unpaid
+                          </tspan>
+                        </text>
+                      )}
+                    />
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
 

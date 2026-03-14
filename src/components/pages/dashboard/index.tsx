@@ -86,10 +86,19 @@ function Dashboard() {
           </Form>
         </div>
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          <Payments />
-          <OutstandingPayment />
-          <SkipperStats />
-          <AttendanceStats />
+          <Payments fromDate={dateRange.fromDate} toDate={dateRange.toDate} />
+          <OutstandingPayment
+            fromDate={dateRange.fromDate}
+            toDate={dateRange.toDate}
+          />
+          <SkipperStats
+            fromDate={dateRange.fromDate}
+            toDate={dateRange.toDate}
+          />
+          <AttendanceStats
+            fromDate={dateRange.fromDate}
+            toDate={dateRange.toDate}
+          />
         </div>
       </div>
     </div>
