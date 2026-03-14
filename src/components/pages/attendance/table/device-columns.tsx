@@ -1,16 +1,8 @@
 'use client';
 
 import { ColumnDef } from '@tanstack/react-table';
-import {
-  Edit,
-  MoreHorizontal,
-  Settings,
-  Trash2,
-  Wifi,
-  WifiOff,
-} from 'lucide-react';
+import { Edit, MoreHorizontal, Trash2 } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -18,30 +10,22 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { safeParseDate } from '@/lib/utils';
 import type { BiometricDevice } from '@/types/attendance';
 
-const StatusIndicator = ({ status }: { status: 'online' | 'offline' }) => (
-  <div className="flex items-center gap-2">
-    {status === 'online' ? (
-      <Wifi size={16} className="text-primary-green-500" />
-    ) : (
-      <WifiOff size={16} className="text-alert-red-400" />
-    )}
-    <Badge
-      variant="outline"
-      className={
-        status === 'online'
-          ? 'bg-neutral-green-500/10 border-neutral-green-500 text-neutral-green-500 rounded-[35px] h-[30px]'
-          : 'bg-alert-red-500/10 border-alert-red-500 text-alert-red-500 rounded-[35px] h-[30px]'
-      }
-    >
-      {status}
-    </Badge>
-  </div>
-);
+type DeviceActionHandlers = {
+  onEdit?: (device: BiometricDevice) => void;
+  onDelete?: (device: BiometricDevice) => void;
+};
 
-const ActionsCell = () => (
+const ActionsCell = ({
+  device,
+  onEdit,
+  onDelete,
+}: {
+  device: BiometricDevice;
+  onEdit?: (device: BiometricDevice) => void;
+  onDelete?: (device: BiometricDevice) => void;
+}) => (
   <DropdownMenu>
     <DropdownMenuTrigger asChild>
       <Button variant="ghost" className="h-8 w-8 p-0">
@@ -49,15 +33,17 @@ const ActionsCell = () => (
       </Button>
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end" className="shad-select-content">
-      <DropdownMenuItem className="shad-select-item">
-        <Settings className="h-4 w-4 mr-2" />
-        Configure
-      </DropdownMenuItem>
-      <DropdownMenuItem className="shad-select-item">
+      <DropdownMenuItem
+        className="shad-select-item"
+        onClick={() => onEdit?.(device)}
+      >
         <Edit className="h-4 w-4 mr-2" />
         Edit Device
       </DropdownMenuItem>
-      <DropdownMenuItem className="shad-select-item text-red-400">
+      <DropdownMenuItem
+        className="shad-select-item text-red-400"
+        onClick={() => onDelete?.(device)}
+      >
         <Trash2 className="h-4 w-4 mr-2" />
         Delete
       </DropdownMenuItem>
@@ -65,87 +51,42 @@ const ActionsCell = () => (
   </DropdownMenu>
 );
 
-export const deviceColumns: ColumnDef<BiometricDevice>[] = [
+export const createDeviceColumns = (
+  handlers?: DeviceActionHandlers
+): ColumnDef<BiometricDevice>[] => [
   {
     accessorKey: 'name',
     header: 'Device Name',
-    cell: ({ row }) => (
-      <div className="w-[150px]">
-        <div className="text-gray-900 dark:text-white font-medium">
-          {row.getValue('name')}
-        </div>
-        <div className="text-xs text-gray-600 dark:text-primary-blue-200">
-          {row.original.location}
-        </div>
-      </div>
-    ),
+    cell: ({ row }) => <span>{row.original.name || '--'}</span>,
     enableSorting: false,
     enableHiding: false,
   },
   {
-    accessorKey: 'ipAddress',
-    header: 'IP Address',
-    cell: ({ row }) => (
-      <div className="min-w-[120px]">
-        <span className="text-gray-600 dark:text-primary-blue-200 font-mono text-sm">
-          {row.getValue('ipAddress')}
-        </span>
-      </div>
-    ),
+    accessorKey: 'deviceProvider',
+    header: 'Device Provider',
+    cell: ({ row }) => <span>{row.original.deviceProvider || '--'}</span>,
   },
   {
-    accessorKey: 'port',
-    header: 'Port',
-    cell: ({ row }) => (
-      <div className="min-w-[80px]">
-        <span className="text-gray-900 dark:text-white">
-          {row.getValue('port')}
-        </span>
-      </div>
-    ),
+    accessorKey: 'deviceSerialNumber',
+    header: 'Device Serial Number',
+    cell: ({ row }) => <span>{row.original.deviceSerialNumber || '--'}</span>,
   },
   {
-    accessorKey: 'status',
-    header: 'Status',
-    cell: ({ row }) => (
-      <div className="min-w-[120px]">
-        <StatusIndicator status={row.getValue('status')} />
-      </div>
-    ),
-  },
-  {
-    accessorKey: 'lastSeen',
-    header: 'Last Seen',
-    cell: ({ row }) => {
-      const lastSeen = safeParseDate(row.getValue<string>('lastSeen'));
-      const now = new Date();
-      const diffMinutes = lastSeen
-        ? Math.floor((now.getTime() - lastSeen.getTime()) / (1000 * 60))
-        : null;
-
-      return (
-        <div className="min-w-[120px]">
-          <div className="text-gray-900 dark:text-white text-sm">
-            {lastSeen
-              ? lastSeen.toLocaleTimeString('en-US', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })
-              : '--'}
-          </div>
-          <div className="text-xs text-gray-600 dark:text-gray-400">
-            {diffMinutes === null
-              ? 'Unknown'
-              : diffMinutes < 1
-                ? 'Just now'
-                : `${diffMinutes}m ago`}
-          </div>
-        </div>
-      );
-    },
+    accessorKey: 'direction',
+    header: 'Direction',
+    cell: ({ row }) => <span>{row.original.direction || '--'}</span>,
   },
   {
     id: 'actions',
-    cell: () => <ActionsCell />,
+    cell: ({ row }) => (
+      <ActionsCell
+        device={row.original}
+        onEdit={handlers?.onEdit}
+        onDelete={handlers?.onDelete}
+      />
+    ),
   },
 ];
+
+export const deviceColumns: ColumnDef<BiometricDevice>[] =
+  createDeviceColumns();
