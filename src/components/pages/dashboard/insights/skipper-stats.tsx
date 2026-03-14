@@ -9,9 +9,18 @@ import { useDashboardData } from '@/services/dashboard';
 import { SkipperColumns } from './table/skipper-column';
 import { SkipperTable } from './table/skipper-table';
 
-function SkipperStats() {
+interface SkipperStatsProps {
+  fromDate?: string;
+  toDate?: string;
+}
+
+function SkipperStats({ fromDate, toDate }: SkipperStatsProps) {
   const { gymBranch } = useGymBranch();
-  const { data: dashboardData } = useDashboardData(gymBranch?.gymId || 0);
+  const { data: dashboardData } = useDashboardData(
+    gymBranch?.gymId || 0,
+    fromDate,
+    toDate
+  );
 
   const skipperData =
     dashboardData?.skipperStats?.map((skipper) => ({

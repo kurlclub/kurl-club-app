@@ -9,9 +9,18 @@ import { useDashboardData } from '@/services/dashboard';
 import { paymentColumns } from './table/payment-column';
 import { PaymentTable } from './table/payment-table';
 
-function OutstandingPayment() {
+interface OutstandingPaymentProps {
+  fromDate?: string;
+  toDate?: string;
+}
+
+function OutstandingPayment({ fromDate, toDate }: OutstandingPaymentProps) {
   const { gymBranch } = useGymBranch();
-  const { data: dashboardData } = useDashboardData(gymBranch?.gymId || 0);
+  const { data: dashboardData } = useDashboardData(
+    gymBranch?.gymId || 0,
+    fromDate,
+    toDate
+  );
 
   const outstandingPayments = dashboardData?.outstandingPayments || [];
 

@@ -22,9 +22,18 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function AttendanceStats() {
+interface AttendanceStatsProps {
+  fromDate?: string;
+  toDate?: string;
+}
+
+export function AttendanceStats({ fromDate, toDate }: AttendanceStatsProps) {
   const { gymBranch } = useGymBranch();
-  const { data: dashboardData } = useDashboardData(gymBranch?.gymId || 0);
+  const { data: dashboardData } = useDashboardData(
+    gymBranch?.gymId || 0,
+    fromDate,
+    toDate
+  );
 
   const chartData =
     dashboardData?.attendanceStats?.map((stat) => ({
