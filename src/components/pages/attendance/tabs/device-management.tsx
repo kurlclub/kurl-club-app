@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Wifi } from 'lucide-react';
+import { FingerprintPattern, Plus, Wifi, WifiOff } from 'lucide-react';
 import { z } from 'zod/v4';
 
 import InfoCard from '@/components/shared/cards/info-card';
@@ -22,10 +22,21 @@ import type { BiometricDevice } from '@/types/attendance';
 import { DeviceTableView } from '../table';
 import { createDeviceColumns } from '../table/device-columns';
 
-const mockDevices: BiometricDevice[] = [
+type DeviceWithMeta = BiometricDevice & {
+  deviceProvider?: string;
+  deviceSerialNumber?: string;
+  direction?: 'IN' | 'OUT' | 'INOUT' | 'DEVICE';
+  activationCode?: string;
+};
+
+const mockDevices: DeviceWithMeta[] = [
   {
     id: 'DEV001',
     name: 'Main Entrance',
+    deviceProvider: 'eSSL',
+    deviceSerialNumber: 'ESL-ME-001',
+    direction: 'IN',
+    activationCode: 'ACT-ESL-101',
     ipAddress: '192.168.1.100',
     port: 4370,
     status: 'online',
@@ -35,6 +46,10 @@ const mockDevices: BiometricDevice[] = [
   {
     id: 'DEV002',
     name: 'Gym Floor',
+    deviceProvider: 'Matrix',
+    deviceSerialNumber: 'MTR-GF-002',
+    direction: 'OUT',
+    activationCode: '',
     ipAddress: '192.168.1.101',
     port: 4370,
     status: 'offline',
@@ -44,6 +59,10 @@ const mockDevices: BiometricDevice[] = [
   {
     id: 'DEV003',
     name: 'Locker Room',
+    deviceProvider: 'eSSL',
+    deviceSerialNumber: 'ESL-LR-003',
+    direction: 'INOUT',
+    activationCode: 'LOCK-AC-55',
     ipAddress: '192.168.1.102',
     port: 4370,
     status: 'online',
@@ -52,61 +71,106 @@ const mockDevices: BiometricDevice[] = [
   },
 ];
 
+const DEVICE_PROVIDER_OPTIONS = [
+  { label: 'Hikvision', value: 'Hikvision' },
+  { label: 'eSSL', value: 'eSSL' },
+  { label: 'Matrix', value: 'Matrix' },
+  { label: 'Realtime', value: 'Realtime' },
+  { label: 'ZKTeco', value: 'ZKTeco' },
+  { label: 'Suprema', value: 'Suprema' },
+  { label: 'Anviz', value: 'Anviz' },
+  { label: 'Virdi', value: 'Virdi' },
+] as const;
+
 const deviceFilters: FilterConfig[] = [
   {
-    columnId: 'status',
-    title: 'Status',
+    columnId: 'deviceProvider',
+    title: 'Device Provider',
+    options: [...DEVICE_PROVIDER_OPTIONS],
+  },
+  {
+    columnId: 'direction',
+    title: 'Direction',
     options: [
-      { label: 'Online', value: 'online' },
-      { label: 'Offline', value: 'offline' },
+      { label: 'IN', value: 'IN' },
+      { label: 'OUT', value: 'OUT' },
+      { label: 'INOUT', value: 'INOUT' },
+      { label: 'DEVICE', value: 'DEVICE' },
     ],
   },
 ];
 
-const ipAddressRegex =
-  /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
+const normalizeProviderValue = (value: string) => {
+  const normalized = value.trim().toLowerCase();
+  const matched = DEVICE_PROVIDER_OPTIONS.find(
+    (option) => option.value.toLowerCase() === normalized
+  );
+
+  if (matched) return matched.value;
+
+  const labelMatched = DEVICE_PROVIDER_OPTIONS.find(
+    (option) => option.label.toLowerCase() === normalized
+  );
+
+  return labelMatched?.value || '';
+};
 
 const deviceSchema = z.object({
-  name: z.string().trim().min(2, 'Device name must be at least 2 characters'),
-  ipAddress: z
+  deviceName: z
     .string()
     .trim()
-    .min(1, 'IP address is required')
-    .regex(ipAddressRegex, 'Enter a valid IPv4 address'),
-  port: z
+    .min(1, 'Device name is required')
+    .min(2, 'Device name must be at least 2 characters'),
+  deviceProvider: z
     .string()
     .trim()
-    .min(1, 'Port is required')
-    .regex(/^\d+$/, 'Port must be a number')
-    .refine((value) => {
-      const port = Number(value);
-      return port >= 1 && port <= 65535;
-    }, 'Port must be between 1 and 65535'),
-  location: z.string().trim().min(2, 'Location must be at least 2 characters'),
+    .min(1, 'Device provider is required')
+    .refine(
+      (value) =>
+        DEVICE_PROVIDER_OPTIONS.some((option) => option.value === value),
+      {
+        message: 'Select a valid device provider',
+      }
+    ),
+  deviceSerialNumber: z
+    .string()
+    .trim()
+    .min(1, 'Device serial number is required')
+    .min(3, 'Device serial number must be at least 3 characters'),
+  direction: z
+    .string()
+    .trim()
+    .min(1, 'Direction is required')
+    .refine((value) => ['IN', 'OUT', 'INOUT', 'DEVICE'].includes(value), {
+      message: 'Select a valid direction',
+    }),
+  activationCode: z.string().trim().optional(),
 });
 
 type DeviceFormValues = z.infer<typeof deviceSchema>;
 
 export default function DeviceManagement() {
   const { showConfirm } = useAppDialog();
-  const [devices, setDevices] = useState(mockDevices);
+  const [devices, setDevices] = useState<DeviceWithMeta[]>(mockDevices);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingDeviceId, setEditingDeviceId] = useState<string | null>(null);
   const form = useForm<DeviceFormValues>({
     resolver: zodResolver(deviceSchema),
     defaultValues: {
-      name: '',
-      ipAddress: '',
-      port: '',
-      location: '',
+      deviceName: '',
+      deviceProvider: '',
+      deviceSerialNumber: '',
+      direction: '',
+      activationCode: '',
     },
   });
 
   const defaultDeviceValues: DeviceFormValues = {
-    name: '',
-    ipAddress: '',
-    port: '',
-    location: '',
+    deviceName: '',
+    deviceProvider: '',
+    deviceSerialNumber: '',
+    direction: '',
+    activationCode: '',
   };
 
   const handleDialogChange = () => {
@@ -126,21 +190,31 @@ export default function DeviceManagement() {
           device.id === editingDeviceId
             ? {
                 ...device,
-                name: values.name.trim(),
-                ipAddress: values.ipAddress.trim(),
-                port: Number(values.port),
-                location: values.location.trim(),
+                name: values.deviceName.trim(),
+                deviceProvider: normalizeProviderValue(values.deviceProvider),
+                deviceSerialNumber: values.deviceSerialNumber.trim(),
+                direction: values.direction as
+                  | 'IN'
+                  | 'OUT'
+                  | 'INOUT'
+                  | 'DEVICE',
+                activationCode: values.activationCode?.trim() || '',
+                location: values.deviceProvider,
               }
             : device
         )
       );
     } else {
-      const device: BiometricDevice = {
+      const device: DeviceWithMeta = {
         id: `DEV${String(devices.length + 1).padStart(3, '0')}`,
-        name: values.name.trim(),
-        ipAddress: values.ipAddress.trim(),
-        port: Number(values.port),
-        location: values.location.trim(),
+        name: values.deviceName.trim(),
+        deviceProvider: normalizeProviderValue(values.deviceProvider),
+        deviceSerialNumber: values.deviceSerialNumber.trim(),
+        direction: values.direction as 'IN' | 'OUT' | 'INOUT' | 'DEVICE',
+        activationCode: values.activationCode?.trim() || '',
+        ipAddress: 'N/A',
+        port: 4370,
+        location: values.deviceProvider,
         status: 'offline',
         lastSeen: new Date().toISOString(),
       };
@@ -153,12 +227,17 @@ export default function DeviceManagement() {
   };
 
   const handleEditDevice = (device: BiometricDevice) => {
+    const selectedDevice = device as DeviceWithMeta;
     setEditingDeviceId(device.id);
+    const normalizedProvider = normalizeProviderValue(
+      selectedDevice.deviceProvider || device.location || ''
+    );
     form.reset({
-      name: device.name,
-      ipAddress: device.ipAddress,
-      port: String(device.port),
-      location: device.location || '',
+      deviceName: device.name,
+      deviceProvider: normalizedProvider,
+      deviceSerialNumber: selectedDevice.deviceSerialNumber || device.name,
+      direction: selectedDevice.direction || '',
+      activationCode: selectedDevice.activationCode || '',
     });
     setIsAddDialogOpen(true);
   };
@@ -186,7 +265,7 @@ export default function DeviceManagement() {
   const stats = [
     {
       id: 1,
-      icon: <Wifi size={20} strokeWidth={1.75} color="#151821" />,
+      icon: <FingerprintPattern size={20} strokeWidth={1.75} color="#151821" />,
       color: 'semantic-blue-500',
       title: 'Total Devices',
       count: devices.length,
@@ -200,7 +279,7 @@ export default function DeviceManagement() {
     },
     {
       id: 3,
-      icon: <Wifi size={20} strokeWidth={1.75} color="#151821" />,
+      icon: <WifiOff size={20} strokeWidth={1.75} color="#151821" />,
       color: 'alert-red-400',
       title: 'Offline',
       count: offlineDevices,
@@ -249,27 +328,39 @@ export default function DeviceManagement() {
               <KFormField
                 fieldType={KFormFieldType.INPUT}
                 control={form.control}
-                name="name"
+                name="deviceName"
                 label="Device Name"
               />
               <KFormField
-                fieldType={KFormFieldType.INPUT}
+                fieldType={KFormFieldType.SELECT}
                 control={form.control}
-                name="ipAddress"
-                label="IP Address"
+                name="deviceProvider"
+                label="Device Provider"
+                options={[...DEVICE_PROVIDER_OPTIONS]}
               />
               <KFormField
                 fieldType={KFormFieldType.INPUT}
                 control={form.control}
-                name="port"
-                label="Port"
-                type="number"
+                name="deviceSerialNumber"
+                label="Device Serial Number"
+              />
+              <KFormField
+                fieldType={KFormFieldType.SELECT}
+                control={form.control}
+                name="direction"
+                label="Direction"
+                options={[
+                  { label: 'IN', value: 'IN' },
+                  { label: 'OUT', value: 'OUT' },
+                  { label: 'INOUT', value: 'INOUT' },
+                  { label: 'DEVICE', value: 'DEVICE' },
+                ]}
               />
               <KFormField
                 fieldType={KFormFieldType.INPUT}
                 control={form.control}
-                name="location"
-                label="Location"
+                name="activationCode"
+                label="Activation Code"
               />
             </form>
           </Form>
