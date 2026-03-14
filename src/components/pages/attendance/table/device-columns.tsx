@@ -1,13 +1,7 @@
 'use client';
 
 import { ColumnDef } from '@tanstack/react-table';
-import {
-  Edit,
-  MoreHorizontal,
-  Trash2,
-  Wifi,
-  WifiOff,
-} from 'lucide-react';
+import { Edit, MoreHorizontal, Trash2, Wifi, WifiOff } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

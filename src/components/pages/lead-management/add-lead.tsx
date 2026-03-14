@@ -14,15 +14,10 @@ import {
   KFormFieldType,
 } from '@/components/shared/form/k-formfield';
 import { KSheet } from '@/components/shared/form/k-sheet';
-import {
-  KBadgeAds,
-  KBadgeOnline,
-  KBadgeWalkIn,
-} from '@/components/shared/icons';
 import { FormControl } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { toUtcDateOnlyISOString } from '@/lib/utils';
+import { cn, toUtcDateOnlyISOString } from '@/lib/utils';
 import { useGymBranch } from '@/providers/gym-branch-provider';
 import {
   type CreateLeadPayload,
@@ -219,11 +214,6 @@ const AddLead: React.FC<AddLeadProps> = ({
     }
   }, [defaultFormValues, isOpen, form]);
 
-  const selectedSource = useWatch({
-    control: form.control,
-    name: 'source',
-  });
-
   const selectedStatus = useWatch({
     control: form.control,
     name: 'status',
@@ -322,47 +312,19 @@ const AddLead: React.FC<AddLeadProps> = ({
             />
           </div>
 
-          {/* Source Radio Buttons */}
-          <div className="flex flex-col gap-2">
-            <Label className="text-sm leading-normal mb-1">Source</Label>
-
-            <FormControl>
-              <RadioGroup
-                value={selectedSource}
-                onValueChange={(value) =>
-                  form.setValue('source', value as 'walk_in' | 'online' | 'ads')
-                }
-                className="grid grid-cols-3 gap-3"
-              >
-                <label
-                  htmlFor="walk_in"
-                  className="flex items-center gap-2 border rounded-md p-2 cursor-pointer"
-                >
-                  <RadioGroupItem value="walk_in" id="walk_in" />
-                  <KBadgeWalkIn />
-                  Walk In
-                </label>
-
-                <label
-                  htmlFor="online"
-                  className="flex items-center gap-2 border rounded-md p-2 cursor-pointer"
-                >
-                  <RadioGroupItem value="online" id="online" />
-                  <KBadgeOnline />
-                  Online
-                </label>
-
-                <label
-                  htmlFor="ads"
-                  className="flex items-center gap-2 border rounded-md p-2 cursor-pointer"
-                >
-                  <RadioGroupItem value="ads" id="ads" />
-                  <KBadgeAds />
-                  Ads
-                </label>
-              </RadioGroup>
-            </FormControl>
-          </div>
+          {/* Source Select */}
+          <KFormField
+            control={form.control}
+            name="source"
+            fieldType={KFormFieldType.SELECT}
+            label="Source"
+            placeholder="Select source"
+            options={[
+              { label: 'Walk In', value: 'walk_in' },
+              { label: 'Online', value: 'online' },
+              { label: 'Ads', value: 'ads' },
+            ]}
+          />
 
           <div className="flex flex-col gap-2">
             <Label className="text-sm leading-normal mb-1">Status</Label>
@@ -378,37 +340,59 @@ const AddLead: React.FC<AddLeadProps> = ({
                 }
                 className="grid grid-cols-2 gap-3"
               >
-                <label
-                  htmlFor="new"
-                  className="flex items-center gap-2 border rounded-md p-2 cursor-pointer"
-                >
-                  <RadioGroupItem value="new" id="new" />
-                  New
-                </label>
-
-                <label
-                  htmlFor="interested"
-                  className="flex items-center gap-2 border rounded-md p-2 cursor-pointer"
-                >
-                  <RadioGroupItem value="interested" id="interested" />
-                  Interested
-                </label>
-
-                <label
-                  htmlFor="contacted"
-                  className="flex items-center gap-2 border rounded-md p-2 cursor-pointer"
-                >
-                  <RadioGroupItem value="contacted" id="contacted" />
-                  Contacted
-                </label>
-
-                <label
-                  htmlFor="lost"
-                  className="flex items-center gap-2 border rounded-md p-2 cursor-pointer"
-                >
-                  <RadioGroupItem value="lost" id="lost" />
-                  Mark Lost
-                </label>
+                {(
+                  [
+                    {
+                      value: 'new',
+                      label: 'New',
+                      dot: 'bg-secondary-yellow-500',
+                      activeBorder: 'border-secondary-yellow-500',
+                      activeBg: 'bg-secondary-yellow-500/10',
+                    },
+                    {
+                      value: 'interested',
+                      label: 'Interested',
+                      dot: 'bg-neutral-green-500',
+                      activeBorder: 'border-neutral-green-500',
+                      activeBg: 'bg-neutral-green-500/10',
+                    },
+                    {
+                      value: 'contacted',
+                      label: 'Contacted',
+                      dot: 'bg-semantic-blue-500',
+                      activeBorder: 'border-semantic-blue-500',
+                      activeBg: 'bg-semantic-blue-500/10',
+                    },
+                    {
+                      value: 'lost',
+                      label: 'Mark Lost',
+                      dot: 'bg-alert-red-500',
+                      activeBorder: 'border-alert-red-500',
+                      activeBg: 'bg-alert-red-500/10',
+                    },
+                  ] as const
+                ).map(({ value, label, dot, activeBorder, activeBg }) => (
+                  <label
+                    key={value}
+                    htmlFor={value}
+                    className={cn(
+                      'flex items-center gap-2.5 border rounded-lg px-3 py-2.5 cursor-pointer transition-all',
+                      selectedStatus === value
+                        ? `${activeBorder} ${activeBg}`
+                        : 'border-white/40 hover:border-white/80 k-transition'
+                    )}
+                  >
+                    <RadioGroupItem
+                      value={value}
+                      id={value}
+                      className="sr-only"
+                    />
+                    <span
+                      className={cn('size-2.5 rounded-full shrink-0', dot)}
+                    />
+                    <span className="text-sm font-medium">{label}</span>
+                  </label>
+                ))}
               </RadioGroup>
             </FormControl>
           </div>
