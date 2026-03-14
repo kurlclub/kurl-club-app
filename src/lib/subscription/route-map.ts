@@ -60,6 +60,13 @@ export const ROUTE_FEATURE_GATES: RouteFeatureGate[] = [
     title: 'Reports require a higher plan',
     message: 'Upgrade your subscription to unlock Basic Reports.',
   },
+  {
+    prefix: '/lead-management',
+    feature: 'leadManagement',
+    mode: 'block',
+    title: 'Lead management requires a higher plan',
+    message: 'Upgrade your subscription to manage leads.',
+  },
 ];
 
 export const EXPIRED_ALLOWED_PREFIXES = ['/account-settings', '/auth'];

@@ -126,6 +126,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: 'Lead Management',
       url: '/lead-management',
       icon: Goal,
+      requiredFeature: 'leadManagement',
     },
     {
       title: 'Settings',
