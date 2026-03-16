@@ -25,10 +25,12 @@ export const AttendanceTableView = ({
 export const DeviceTableView = ({
   devices,
   columns,
+  filters,
 }: {
   devices: BiometricDevice[];
   columns: ColumnDef<BiometricDevice, unknown>[];
-}) => <BaseTable data={devices} columns={columns} />;
+  filters?: FilterConfig[];
+}) => <BaseTable data={devices} columns={columns} filters={filters} />;
 
 export const InsightsTableView = ({
   insights,
