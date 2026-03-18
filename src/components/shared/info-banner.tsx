@@ -4,9 +4,10 @@ type InfoBannerVariant = 'info' | 'warning' | 'success' | 'error';
 
 interface InfoBannerProps {
   variant?: InfoBannerVariant;
-  icon?: string;
+  icon?: React.ReactNode;
   title?: string;
   message: string;
+  action?: React.ReactNode;
 }
 
 const variantStyles: Record<InfoBannerVariant, string> = {
@@ -21,15 +22,22 @@ export const InfoBanner: React.FC<InfoBannerProps> = ({
   icon,
   title,
   message,
+  action,
 }) => {
   return (
-    <div className={`p-2 border rounded-md ${variantStyles[variant]}`}>
-      <p className="text-xs">
-        {icon && <span>{icon} </span>}
-        {title && <strong>{title}</strong>}
-        {title && ' '}
-        {message}
-      </p>
+    <div
+      className={`p-3 border rounded-md flex items-center justify-between gap-4 ${variantStyles[variant]}`}
+    >
+      <div className="flex items-center gap-2">
+        {icon && <span className="flex items-center">{icon}</span>}
+
+        <p className="text-xs">
+          {title && <strong>{title} </strong>}
+          {message}
+        </p>
+      </div>
+
+      {action}
     </div>
   );
 };
