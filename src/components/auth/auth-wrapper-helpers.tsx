@@ -27,12 +27,14 @@ interface AuthFooterProps {
   footerLink?: string;
   isLogin?: boolean;
   onFooterClick?: () => void;
+  linkBtnText?: string;
 }
 
 export const AuthFooter = ({
   footerDesc,
   footerLink,
   onFooterClick,
+  linkBtnText,
 }: AuthFooterProps) => {
   if (!footerLink && !onFooterClick) return null;
 
@@ -45,7 +47,7 @@ export const AuthFooter = ({
         className="text-sm font-normal leading-normal underline cursor-pointer text-semantic-blue-500 underline-offset-2 hover:no-underline k-transition"
         href={footerLink!}
       >
-        Login
+        {linkBtnText || 'Login'}
       </Link>
     </div>
   );

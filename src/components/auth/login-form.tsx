@@ -53,6 +53,12 @@ export function LoginForm() {
         title: 'Login',
         description: "Welcome back! Let's get started.",
       }}
+      footer={{
+        linkUrl: '/auth/register',
+        linkText: 'Don’t have an account?',
+        isLogin: true,
+        linkBtnText: 'Register',
+      }}
     >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col">
