@@ -2,11 +2,12 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import {  Mail, Sparkles } from 'lucide-react';
+import { Mail, Sparkles } from 'lucide-react';
+import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { AuthWrapper } from '@/components/auth/auth-wrapper';
@@ -22,6 +23,19 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Form } from '@/components/ui/form';
+import { submitSelfOnboarding } from '@/services/auth/auth';
+
+const regionOptions = [
+  { label: 'India', value: 'India' },
+  { label: 'Middle East', value: 'Middle East' },
+  { label: 'Southeast Asia', value: 'Southeast Asia' },
+  { label: 'Europe', value: 'Europe' },
+  { label: 'North America', value: 'North America' },
+  { label: 'South America', value: 'South America' },
+  { label: 'Africa', value: 'Africa' },
+  { label: 'Australia & New Zealand', value: 'Australia & New Zealand' },
+  { label: 'Other', value: 'Other' },
+];
 
 const registerSchema = z.object({
   name: z.string().trim().min(2, 'Enter your name'),
@@ -32,12 +46,15 @@ const registerSchema = z.object({
     .trim()
     .min(10, 'Enter a valid phone number')
     .regex(/^[0-9+()\-\s]+$/, 'Phone number contains invalid characters'),
+  location: z.string().trim().min(2, 'Enter gym location'),
+  region: z.string().trim().min(1, 'Select your region'),
 });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
 function RegisterForm() {
-  const [isSuccessOpen, setIsSuccessOpen] = useState(true);
+  const [isPending, startTransition] = useTransition();
+  const [isSuccessOpen, setIsSuccessOpen] = useState(false);
 
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -46,13 +63,36 @@ function RegisterForm() {
       gymName: '',
       email: '',
       phoneNumber: '',
+      location: '',
+      region: '',
     },
   });
 
   const onSubmit = (data: RegisterFormData) => {
-    void data;
-    setIsSuccessOpen(true);
-    form.reset();
+    startTransition(async () => {
+      try {
+        const response = await submitSelfOnboarding({
+          contactName: data.name,
+          email: data.email,
+          phoneNumber: data.phoneNumber,
+          gymName: data.gymName,
+          gymLocation: data.location,
+          region: data.region,
+        });
+
+        toast.success(
+          response.message || 'Registration submitted successfully'
+        );
+        setIsSuccessOpen(true);
+        form.reset();
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : 'Failed to submit registration request'
+        );
+      }
+    });
   };
 
   return (
@@ -77,18 +117,39 @@ function RegisterForm() {
             <KFormField
               fieldType={KFormFieldType.INPUT}
               control={form.control}
+              disabled={isPending}
               name="name"
               label="Enter name"
             />
+            <div className="flex items-center gap-2">
+              <KFormField
+                fieldType={KFormFieldType.INPUT}
+                control={form.control}
+                disabled={isPending}
+                name="gymName"
+                label="Gym name"
+              />
+              <KFormField
+                fieldType={KFormFieldType.INPUT}
+                control={form.control}
+                disabled={isPending}
+                name="location"
+                label="Location"
+                type="text"
+              />
+            </div>
             <KFormField
-              fieldType={KFormFieldType.INPUT}
+              fieldType={KFormFieldType.SELECT}
               control={form.control}
-              name="gymName"
-              label="Gym name"
+              disabled={isPending}
+              name="region"
+              label="Region"
+              options={regionOptions}
             />
             <KFormField
               fieldType={KFormFieldType.INPUT}
               control={form.control}
+              disabled={isPending}
               name="email"
               label="Email"
               type="email"
@@ -96,13 +157,18 @@ function RegisterForm() {
             <KFormField
               fieldType={KFormFieldType.PHONE_INPUT}
               control={form.control}
+              disabled={isPending}
               name="phoneNumber"
               label="Phone number"
               type="tel"
             />
 
-            <Button type="submit" className="px-3 py-4 h-11.5">
-              Submit
+            <Button
+              type="submit"
+              disabled={isPending}
+              className="px-3 py-4 h-11.5"
+            >
+              {isPending ? 'Submitting...' : 'Submit'}
             </Button>
           </form>
         </Form>
