@@ -165,11 +165,11 @@ const AddPayment = ({ open, onOpenChange, members }: AddPaymentProps) => {
         title="Bulk salary payment"
         className="w-140"
       >
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4 h-full">
           <div className="rounded-xl border border-primary-blue-400 bg-secondary-blue-500 p-4">
             <p className="text-sm text-secondary-blue-200">Total selected</p>
             <p className="mt-1 text-2xl font-semibold text-white">
-              {selectedCount} member{selectedCount === 1 ? '' : 's'}
+              {selectedCount} staff{selectedCount === 1 ? '' : 's'}
             </p>
             <div className="mt-3 flex items-center justify-between rounded-lg bg-primary-blue-400/35 p-3">
               <span className="text-sm text-secondary-blue-200">
@@ -191,7 +191,7 @@ const AddPayment = ({ open, onOpenChange, members }: AddPaymentProps) => {
                 <div>
                   <p className="text-sm font-medium text-white">Select all</p>
                   <p className="text-xs text-secondary-blue-200">
-                    {unpaidMembers.length} unpaid members
+                    {unpaidMembers.length} unpaid staffs
                   </p>
                 </div>
               </div>
@@ -203,7 +203,7 @@ const AddPayment = ({ open, onOpenChange, members }: AddPaymentProps) => {
             <div className="max-h-90 space-y-1 overflow-y-auto p-2">
               {unpaidMembers.length === 0 ? (
                 <div className="rounded-lg bg-primary-blue-400/25 px-3 py-4 text-center text-sm text-secondary-blue-100">
-                  No unpaid members available.
+                  No unpaid staffs available.
                 </div>
               ) : (
                 unpaidMembers.map((member) => {
@@ -252,7 +252,7 @@ const AddPayment = ({ open, onOpenChange, members }: AddPaymentProps) => {
           </div>
 
           <Button
-            className="w-full"
+            className="mt-auto w-full"
             disabled={selectedCount === 0}
             onClick={handleOpenPaymentDetails}
           >

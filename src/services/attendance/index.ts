@@ -295,7 +295,6 @@ export const useUpdateBiometricDevice = () => {
 
   return useMutation({
     mutationFn: ({
-      gymId,
       deviceId,
       payload,
     }: {
