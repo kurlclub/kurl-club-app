@@ -46,6 +46,7 @@
   --color-secondary-blue-400: #53555b;
   --color-secondary-blue-500: #282b32;
   --color-secondary-blue-600: #24272e;
+  --color-secondary-blue-650: #23262d;
   --color-secondary-blue-700: #1c1f24;
   --color-secondary-blue-800: #16181c;
   --color-secondary-blue-900: #111215;
@@ -133,6 +134,7 @@
   --color-background-dark: #11141c;
 
   --color-card-bg: #212633;
+  --color-open-badge-color: #308adc;
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;

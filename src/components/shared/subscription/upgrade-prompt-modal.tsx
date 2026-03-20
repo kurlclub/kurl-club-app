@@ -58,7 +58,7 @@ export function UpgradePromptModal({
               {ctaLabel}
             </Button>
           ) : (
-            <Button onClick={onCancel} asChild className="h-11">
+            <Button asChild className="h-11" onClick={onCancel}>
               <Link href="/account-settings?tab=subscription">{ctaLabel}</Link>
             </Button>
           )}
