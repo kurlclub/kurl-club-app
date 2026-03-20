@@ -6,104 +6,75 @@ import { ArrowUpRight, LockKeyhole } from 'lucide-react';
 
 import { StudioLayout } from '@/components/shared/layout';
 import { Button } from '@/components/ui/button';
+import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
+import { useSupportTickets } from '@/hooks/use-support';
+import { useGymBranch } from '@/providers/gym-branch-provider';
 
 import AddSupport from './add-support';
 import EmptyState from './empty-state';
 import Requests from './requests';
 
-const requestData = [
-  {
-    id: '1',
-    subject: 'Issue with login',
-    description:
-      'I am unable to login to my account using my credentials. It keeps showing an error message.',
-    category: 'Authentication',
-    priority: 'high',
-    status: 'open',
-    createdAt: '2026-03-01T10:00:00Z',
-    dueAt: '2026-03-05T10:00:00Z',
-    timeline: [
-      {
-        id: '1',
-        type: 'Ticket created',
-        message: 'We started to look into your issue',
-        user: 'support@kurlclub.com',
-        role: 'support-agent',
-        updatedAt: '2026-03-01T10:00:00Z',
-      },
-      {
-        id: '2',
-        type: 'Ticket updated',
-        message: 'We are still investigating your issue',
-        user: 'support@kurlclub.com',
-        role: 'support-agent',
-        updatedAt: '2026-03-02T10:00:00Z',
-      },
-      {
-        id: '3',
-        type: 'Ticket updated',
-        message: 'We have identified the issue and are working on a fix',
-        user: 'support@kurlclub.com',
-        role: 'support-agent',
-        updatedAt: '2026-03-03T10:00:00Z',
-      },
-    ],
-  },
-  {
-    id: '2',
-    subject: 'Feature request: Dark mode',
-    description:
-      'It would be great to have a dark mode option in the application for better usability at night.',
-    category: 'Feature Request',
-    priority: 'medium',
-    status: 'closed',
-    createdAt: '2026-02-15T14:30:00Z',
-    dueAt: '2026-02-20T14:30:00Z',
-    timeline: [
-      {
-        id: '1',
-        type: 'Ticket created',
-        message: 'We have received your feature request and are reviewing it',
-        user: 'support@kurlclub.com',
-        role: 'support-agent',
-        updatedAt: '2026-02-15T14:30:00Z',
-      },
-      {
-        id: '2',
-        type: 'Ticket updated',
-        message:
-          'We have decided to implement this feature in a future release',
-        user: 'support@kurlclub.com',
-        role: 'support-agent',
-        updatedAt: '2026-02-20T14:30:00Z',
-      },
-      {
-        id: '3',
-        type: 'Ticket closed',
-        message: 'The feature has been implemented and released',
-        user: 'support@kurlclub.com',
-        role: 'support-agent',
-        updatedAt: '2026-02-25T14:30:00Z',
-      },
-    ],
-  },
-];
-
 function HelpAndSupport() {
   const [isAddSupportOpen, setIsAddSupportOpen] = useState(false);
+  const { gymBranch } = useGymBranch();
+  const { hasFeatureAccess, requireFeatureAccess } = useSubscriptionAccess();
+  const {
+    data: tickets,
+    isLoading,
+    error,
+  } = useSupportTickets(gymBranch?.gymId);
+
+  const isChatSupportLocked = !hasFeatureAccess('chatSupport');
+  const isEmailSupportLocked = !hasFeatureAccess('emailSupport');
+
+  const handleWhatsappSupport = () => {
+    const hasAccess = requireFeatureAccess('chatSupport', {
+      title: 'Upgrade required',
+      message: 'Upgrade required',
+    });
+
+    if (!hasAccess) return;
+
+    window.open('https://wa.me/7994990230', '_blank', 'noopener,noreferrer');
+  };
+
+  const handleEmailSupport = () => {
+    const hasAccess = requireFeatureAccess('emailSupport', {
+      title: 'Upgrade required',
+      message: 'Upgrade required',
+    });
+
+    if (!hasAccess) return;
+
+    window.location.href = 'mailto:support@kurlclub.com';
+  };
 
   const headerAction = (
     <div className="flex items-center gap-2">
       <Button className="gap-1" onClick={() => setIsAddSupportOpen(true)}>
         Request support <ArrowUpRight size={18} />
       </Button>
-      <Button className="bg-primary-blue-400 text-primary-blue-50! hover:bg-primary-blue-400/70 gap-1">
+      <Button
+        className={`bg-primary-blue-400 text-primary-blue-50! hover:bg-primary-blue-400/70 gap-1 ${isChatSupportLocked ? 'opacity-80' : ''}`}
+        onClick={handleWhatsappSupport}
+      >
         Whatsapp support{' '}
-        <LockKeyhole size={18} className="text-primary-green-500" />
+        {isChatSupportLocked ? (
+          <LockKeyhole size={18} className="text-primary-green-500" />
+        ) : (
+          <ArrowUpRight size={18} className="text-primary-green-500" />
+        )}
       </Button>
-      <Button className="bg-primary-blue-400 text-primary-blue-50! hover:bg-primary-blue-400/70 gap-1">
+      <Button
+        className={`bg-primary-blue-400 text-primary-blue-50! hover:bg-primary-blue-400/70 gap-1 ${isEmailSupportLocked ? 'opacity-80' : ''}`}
+        onClick={handleEmailSupport}
+      >
         Email support{' '}
-        <LockKeyhole size={18} className="text-primary-green-500" />
+        {isEmailSupportLocked ? (
+          <LockKeyhole size={18} className="text-primary-green-500" />
+        ) : (
+          <ArrowUpRight size={18} className="text-primary-green-500" />
+        )}
       </Button>
     </div>
   );
@@ -118,8 +89,16 @@ function HelpAndSupport() {
         <h1 className="text-[20px] font-medium leading-normal">
           Recent requests
         </h1>
-        {requestData.length > 0 ? (
-          <Requests data={requestData} />
+        {isLoading ? (
+          <div className="flex items-center justify-center h-96">
+            <p className="text-secondary-blue-200">Loading tickets...</p>
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center h-96">
+            <p className="text-alert-red-500">Failed to load support tickets</p>
+          </div>
+        ) : tickets && tickets.length > 0 ? (
+          <Requests data={tickets} gymId={gymBranch?.gymId} />
         ) : (
           <EmptyState onRequestSupport={() => setIsAddSupportOpen(true)} />
         )}

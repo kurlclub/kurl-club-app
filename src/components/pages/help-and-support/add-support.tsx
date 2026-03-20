@@ -16,6 +16,7 @@ import { KSheet } from '@/components/shared/form/k-sheet';
 import { FormControl } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useSupport } from '@/hooks/use-support';
 import { cn } from '@/lib/utils';
 
 const supportFormSchema = z.object({
@@ -44,6 +45,8 @@ const AddSupport: React.FC<AddSupportProps> = ({
   closeSheet,
   initialData,
 }) => {
+  const { submitSupportTicket, isSubmitting } = useSupport();
+
   const defaultFormValues = useMemo<SupportFormValues>(
     () => ({
       subject: initialData?.subject || '',
@@ -66,13 +69,27 @@ const AddSupport: React.FC<AddSupportProps> = ({
 
   const onSubmit = async (data: SupportFormValues) => {
     try {
-      // TODO: Add API call to submit support request
-      console.log('Support Request:', data);
-      toast.success('Support request submitted successfully');
+      const result = await submitSupportTicket({
+        subject: data.subject,
+        description: data.description,
+        category: data.category || 'general',
+        priority: data.priority,
+      });
+
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+
+      toast.success(result.success);
       closeSheet();
       handleReset();
     } catch (error) {
-      toast.error('Failed to submit support request');
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to submit support request'
+      );
     }
   };
 
@@ -106,13 +123,18 @@ const AddSupport: React.FC<AddSupportProps> = ({
         footer={
           <div className="flex items-center gap-3 justify-between w-full">
             {!initialData && (
-              <Button variant="secondary" onClick={handleReset}>
+              <Button
+                variant="secondary"
+                onClick={handleReset}
+                disabled={isSubmitting}
+              >
                 Reset
               </Button>
             )}
             <div className="flex items-center gap-2">
               <Button
                 variant="secondary"
+                disabled={isSubmitting}
                 onClick={() => {
                   handleReset();
                   closeSheet();
@@ -120,8 +142,12 @@ const AddSupport: React.FC<AddSupportProps> = ({
               >
                 Cancel
               </Button>
-              <Button type="submit" form="support-form">
-                {initialData ? 'Save Changes' : 'Submit Request'}
+              <Button type="submit" form="support-form" disabled={isSubmitting}>
+                {isSubmitting
+                  ? 'Submitting...'
+                  : initialData
+                    ? 'Save Changes'
+                    : 'Submit Request'}
               </Button>
             </div>
           </div>

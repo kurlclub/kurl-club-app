@@ -4,17 +4,22 @@ import { CalendarRange } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 
 import { Badge } from '@/components/ui/badge';
+import { useSupportTicketDetail } from '@/hooks/use-support';
+import { SupportTicket } from '@/services/support';
 
 interface RequestsProps {
-  data: RequestItem[];
+  data: SupportTicket[];
+  gymId?: number;
 }
+
 interface ListCardProps {
-  data: RequestItem;
+  data: SupportTicket;
   isActive?: boolean;
   onClick: () => void;
 }
+
 interface TimelineItem {
-  id?: string;
+  id?: string | number;
   type: string;
   message: string;
   user: string;
@@ -23,7 +28,7 @@ interface TimelineItem {
 }
 
 interface RequestItem {
-  id: string;
+  id: string | number;
   subject: string;
   description: string;
   status: string;
@@ -62,6 +67,27 @@ const formatDate = (value: string) => {
     day: '2-digit',
     year: 'numeric',
   });
+};
+
+const convertTicketToRequestItem = (ticket: SupportTicket): RequestItem => {
+  const timeline: TimelineItem[] =
+    ticket.activities?.map((activity) => ({
+      id: activity.id,
+      type: activity.activityType,
+      message: activity.message,
+      user: activity.createdByUserName || 'Unknown',
+      role: activity.createdByRole || 'user',
+      updatedAt: activity.createdAt,
+    })) || [];
+
+  return {
+    id: ticket.id,
+    subject: ticket.subject,
+    description: ticket.description,
+    status: ticket.status,
+    dueAt: ticket.dueAt,
+    timeline,
+  };
 };
 
 const ListCard = ({ data, isActive, onClick }: ListCardProps) => {
@@ -105,41 +131,71 @@ const ListCard = ({ data, isActive, onClick }: ListCardProps) => {
 
 const Timeline = ({ timelineData }: { timelineData: TimelineItem[] }) => {
   return (
-    <div className="relative pl-5 mt-6 flex flex-col gap-3.5">
-      {/* Vertical line */}
-      <div className="absolute left-1 top-12.5 h-[71%] w-px my-auto bg-primary-blue-300" />
+    <div className="flex flex-col gap-2 mt-6">
+      {timelineData.map((item, index) => {
+        return (
+          <div
+            key={item.id ?? index}
+            className="group flex items-start gap-3 rounded-xl border border-white/10 bg-secondary-blue-700 p-4 transition-all"
+          >
+            {/* Content */}
+            <div className="flex flex-col gap-1 flex-1">
+              <div className="flex justify-between items-start gap-2">
+                <p className="text-sm font-semibold text-white capitalize">
+                  {item.type}
+                </p>
 
-      {timelineData.map((item, index) => (
-        <div
-          key={item.id ?? index}
-          className="bg-secondary-blue-700 rounded-lg p-3 flex justify-between gap-4 relative"
-        >
-          {/* Dot */}
-          <span className="absolute -left-5 top-[50%] transform -translate-y-1/2 h-2.5 w-2.5 rounded-full bg-primary-blue-300" />
+                <span className="text-[11px] text-secondary-blue-200 whitespace-nowrap">
+                  {item.updatedAt}
+                </span>
+              </div>
 
-          <div className="flex flex-col gap-2">
-            <p className="text-[15px] font-bold text-secondary-blue-50">
-              {item.type}
-            </p>
-            <p className="text-sm text-gray-300">{item.message}</p>
-            <p className="text-[11px] text-secondary-blue-200 flex items-center gap-1">
-              <span>{item.user}</span>
-              <span className="w-1 h-1 rounded-full bg-secondary-blue-200 inline-block" />
-              <span>{item.role}</span>
-            </p>
+              <p className="text-sm text-gray-300">{item.message}</p>
+
+              <p className="text-[11px] text-secondary-blue-300 flex items-center gap-1.5">
+                <span className="truncate max-w-[150px]">{item.user}</span>
+              </p>
+            </div>
           </div>
-          <p className="text-[11px] text-secondary-blue-200 whitespace-nowrap">
-            {item.updatedAt}
-          </p>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };
 
-const DetailsCard = ({ data }: { data?: RequestItem }) => {
-  if (!data) return null;
+const DetailsCard = ({
+  ticketId,
+  gymId,
+}: {
+  ticketId?: number | string;
+  gymId?: number;
+}) => {
+  const {
+    data: ticket,
+    isLoading,
+    error,
+  } = useSupportTicketDetail(
+    gymId,
+    typeof ticketId === 'string' ? parseInt(ticketId, 10) : ticketId
+  );
 
+  if (isLoading) {
+    return (
+      <motion.div
+        className="bg-secondary-blue-650 rounded-lg px-4 py-5 w-full border border-white/40 flex items-center justify-center h-96"
+        initial={{ opacity: 0, x: 20, scale: 0.98 }}
+        animate={{ opacity: 1, x: 0, scale: 1 }}
+        exit={{ opacity: 0, x: -12, scale: 0.98 }}
+        transition={{ duration: 0.22, ease: 'easeOut' }}
+      >
+        <p className="text-secondary-blue-200">Loading ticket details...</p>
+      </motion.div>
+    );
+  }
+
+  if (error || !ticket) return null;
+
+  const data = convertTicketToRequestItem(ticket);
   const lastTimelineItem = data.timeline[data.timeline.length - 1];
 
   return (
@@ -173,11 +229,12 @@ const DetailsCard = ({ data }: { data?: RequestItem }) => {
   );
 };
 
-function Requests({ data }: RequestsProps) {
-  const [selectedRequestId, setSelectedRequestId] = useState(data[0]?.id ?? '');
+function Requests({ data, gymId }: RequestsProps) {
+  const [selectedTicketId, setSelectedTicketId] = useState<string | number>(
+    data[0]?.id ?? ''
+  );
 
-  const selectedRequest =
-    data.find((item) => item.id === selectedRequestId) ?? data[0];
+  const selectedTicket = data.find((item) => item.id === selectedTicketId);
 
   return (
     <div className="flex gap-3 mt-5">
@@ -186,13 +243,13 @@ function Requests({ data }: RequestsProps) {
           <ListCard
             key={item.id}
             data={item}
-            isActive={item.id === selectedRequest?.id}
-            onClick={() => setSelectedRequestId(item.id)}
+            isActive={item.id === selectedTicket?.id}
+            onClick={() => setSelectedTicketId(item.id)}
           />
         ))}
       </div>
       <AnimatePresence mode="wait" initial={false}>
-        <DetailsCard data={selectedRequest} />
+        <DetailsCard ticketId={selectedTicketId} gymId={gymId} />
       </AnimatePresence>
     </div>
   );
