@@ -150,7 +150,7 @@ export function Pricing({
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.3, delay: index * 0.05 }}
               className={cn(
-                'relative p-5 rounded-xl border bg-secondary-blue-500 transition-all duration-300 hover:shadow-lg',
+                'relative p-5 rounded-xl border flex flex-col h-full bg-secondary-blue-500 transition-all duration-300 hover:shadow-lg',
                 plan.popular
                   ? 'border-primary-green-500 shadow-lg scale-[1.02] bg-linear-to-br from-secondary-blue-500 to-secondary-blue-600'
                   : 'border-secondary-blue-400 hover:border-primary-green-300'
@@ -216,7 +216,7 @@ export function Pricing({
               <Link
                 href="/signup"
                 className={cn(
-                  'w-full h-10 font-semibold text-sm transition-all duration-300 rounded-lg flex items-center justify-center',
+                  'w-full h-10 font-semibold text-sm transition-all duration-300 rounded-lg flex items-center justify-center mt-auto',
                   plan.popular
                     ? 'bg-primary-green-500 hover:bg-primary-green-600 text-white shadow-md hover:shadow-lg'
                     : 'border-2 border-primary-green-500 text-primary-green-500 hover:bg-primary-green-500 hover:text-white'
