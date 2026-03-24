@@ -843,3 +843,74 @@ export const KBadgeAds: React.FC<SVGProps<SVGSVGElement>> = () => (
     </g>
   </svg>
 );
+
+export const KCalender: React.FC<SVGProps<SVGSVGElement>> = () => (
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 20 20"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M6.25004 2.5V5"
+      stroke="#929397"
+      strokeWidth="1.25"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M13.75 2.5V5"
+      stroke="#929397"
+      strokeWidth="1.25"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <rect
+      x="2.5"
+      y="3.75"
+      width="15"
+      height="13.75"
+      rx="2.5"
+      stroke="#929397"
+      strokeWidth="1.25"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M13.7917 8.33459C13.7917 8.31159 13.773 8.29296 13.75 8.29297C13.727 8.29298 13.7084 8.31162 13.7084 8.33462C13.7084 8.35762 13.727 8.37627 13.75 8.3763C13.7611 8.37632 13.7717 8.37192 13.7795 8.3641C13.7873 8.35627 13.7917 8.34565 13.7917 8.33459"
+      stroke="#929397"
+      strokeWidth="1.25"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M10.0417 8.33459C10.0417 8.31159 10.023 8.29296 10 8.29297C9.97703 8.29298 9.95838 8.31162 9.95837 8.33462C9.95836 8.35762 9.97699 8.37627 9.99999 8.3763C10.0111 8.37632 10.0217 8.37192 10.0295 8.3641C10.0373 8.35627 10.0417 8.34565 10.0417 8.33459"
+      stroke="#929397"
+      strokeWidth="1.25"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M13.3333 13.0108V11.3438H11.6666"
+      stroke="#929397"
+      strokeWidth="1.25"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M6.66663 12.0004C7.93887 13.3908 9.9946 13.736 11.6512 12.8373C12.2725 12.499 12.783 11.9885 13.1213 11.3672"
+      stroke="#929397"
+      strokeWidth="1.25"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M6.29171 8.33459C6.29168 8.31159 6.27302 8.29296 6.25002 8.29297C6.22703 8.29298 6.20838 8.31162 6.20837 8.33462C6.20836 8.35762 6.22699 8.37627 6.24999 8.3763C6.26106 8.37632 6.27168 8.37192 6.2795 8.3641C6.28733 8.35627 6.29172 8.34565 6.29171 8.33459"
+      stroke="#929397"
+      strokeWidth="1.25"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </svg>
+);
