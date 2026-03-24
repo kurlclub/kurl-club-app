@@ -5,7 +5,7 @@ export function proxy(request: NextRequest) {
   const accessToken = request.cookies.get('accessToken')?.value;
 
   // List of public paths that don't require authentication
-  const publicPaths = ['/auth/login', '/auth/reset'];
+  const publicPaths = ['/auth/login', '/auth/register', '/auth/reset'];
 
   const isPublicPath = publicPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path)
