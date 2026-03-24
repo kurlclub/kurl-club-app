@@ -19,6 +19,7 @@ export type Staff = {
 export type StaffDetails = {
   id: number;
   name?: string; // for staff
+  staffId?: string; // for staff
   trainerName?: string; // for trainer
   trainerId?: string; // for trainer
   email: string;
