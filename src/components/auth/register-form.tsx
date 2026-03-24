@@ -6,6 +6,7 @@ import { useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery } from '@tanstack/react-query';
 import { Mail, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -24,18 +25,6 @@ import {
 } from '@/components/ui/dialog';
 import { Form } from '@/components/ui/form';
 import { submitSelfOnboarding } from '@/services/auth/auth';
-
-const regionOptions = [
-  { label: 'India', value: 'India' },
-  { label: 'Middle East', value: 'Middle East' },
-  { label: 'Southeast Asia', value: 'Southeast Asia' },
-  { label: 'Europe', value: 'Europe' },
-  { label: 'North America', value: 'North America' },
-  { label: 'South America', value: 'South America' },
-  { label: 'Africa', value: 'Africa' },
-  { label: 'Australia & New Zealand', value: 'Australia & New Zealand' },
-  { label: 'Other', value: 'Other' },
-];
 
 const registerSchema = z.object({
   name: z.string().trim().min(2, 'Enter your name'),
@@ -62,6 +51,26 @@ function RegisterForm() {
   const [isPending, startTransition] = useTransition();
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState<1 | 2>(1);
+
+  const { data: countryOptions = [], isLoading: isLoadingCountries } = useQuery(
+    {
+      queryKey: ['countries'],
+      queryFn: async () => {
+        const res = await fetch(
+          'https://restcountries.com/v3.1/all?fields=name'
+        );
+        if (!res.ok) throw new Error('Failed to fetch countries');
+        const data: { name: { common: string } }[] = await res.json();
+        return data
+          .map((country) => ({
+            label: country.name.common,
+            value: country.name.common,
+          }))
+          .sort((a, b) => a.label.localeCompare(b.label));
+      },
+      staleTime: Infinity,
+    }
+  );
 
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -241,10 +250,10 @@ function RegisterForm() {
               <KFormField
                 fieldType={KFormFieldType.SELECT}
                 control={form.control}
-                disabled={isPending}
+                disabled={isPending || isLoadingCountries}
                 name="region"
                 label="Region"
-                options={regionOptions}
+                options={countryOptions}
                 enableSearch
               />
             </div>
