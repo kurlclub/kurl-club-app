@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 
 import { KCalender } from '@/components/shared/icons';
+import { Spinner } from '@/components/shared/loader';
 import { Badge } from '@/components/ui/badge';
 import { useSupportTicketDetail } from '@/hooks/use-support';
 import { SupportTicket } from '@/services/support';
@@ -69,6 +70,42 @@ const formatDate = (value: string) => {
   });
 };
 
+const formatDateTime = (value: string) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+const getTimelineDotStyles = (type: string) => {
+  const activityType = type.toLowerCase();
+
+  if (activityType.includes('close') || activityType.includes('resolve')) {
+    return {
+      wrapper: 'bg-primary-green-500/20 border-primary-green-500/40',
+      dot: 'bg-primary-green-500',
+    };
+  }
+
+  if (activityType.includes('open') || activityType.includes('create')) {
+    return {
+      wrapper: 'bg-open-badge-color/20 border-open-badge-color/40',
+      dot: 'bg-open-badge-color',
+    };
+  }
+
+  return {
+    wrapper: 'bg-secondary-blue-500 border-secondary-blue-300',
+    dot: 'bg-secondary-blue-300',
+  };
+};
+
 const convertTicketToRequestItem = (ticket: SupportTicket): RequestItem => {
   const timeline: TimelineItem[] =
     ticket.activities?.map((activity) => ({
@@ -126,30 +163,47 @@ const ListCard = ({ data, isActive, onClick }: ListCardProps) => {
 };
 
 const Timeline = ({ timelineData }: { timelineData: TimelineItem[] }) => {
+  if (timelineData.length === 0) {
+    return (
+      <div className="mt-6 rounded-xl border border-dashed border-secondary-blue-300/50 bg-secondary-blue-700/60 px-4 py-5 text-sm text-secondary-blue-200">
+        No timeline activity yet.
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col gap-2 mt-6">
+    <div className="mt-4">
       {timelineData.map((item, index) => {
+        const { wrapper, dot } = getTimelineDotStyles(item.type);
+        const isLastItem = index === timelineData.length - 1;
+
         return (
-          <div
-            key={item.id ?? index}
-            className="group flex items-start gap-3 rounded-xl border border-white/10 bg-secondary-blue-700 p-4 transition-all"
-          >
-            {/* Content */}
-            <div className="flex flex-col gap-1 flex-1">
+          <div key={item.id ?? index} className="relative pl-7 pb-4 last:pb-0">
+            {!isLastItem && (
+              <span className="absolute left-2.75 top-12 h-[calc(100%-8px)] w-px bg-secondary-blue-300" />
+            )}
+
+            <span
+              className={`absolute left-[1px] top-7 flex size-5 items-center justify-center rounded-full border ${wrapper}`}
+            >
+              <span className={`size-2 rounded-full ${dot}`} />
+            </span>
+
+            <div className="group flex flex-col gap-1 rounded-xl border border-white/10 bg-secondary-blue-700 px-4 py-3 transition-all hover:border-secondary-blue-200/30">
               <div className="flex justify-between items-start gap-2">
                 <p className="text-sm font-semibold text-white capitalize">
                   {item.type}
                 </p>
 
                 <span className="text-[11px] text-secondary-blue-200 whitespace-nowrap">
-                  {item.updatedAt}
+                  {formatDateTime(item.updatedAt)}
                 </span>
               </div>
 
               <p className="text-sm text-gray-300">{item.message}</p>
 
               <p className="text-[11px] text-secondary-blue-300 flex items-center gap-1.5">
-                <span className="truncate max-w-[150px]">{item.user}</span>
+                <span className="truncate max-w-37.5">{item.user}</span>
               </p>
             </div>
           </div>
@@ -184,7 +238,7 @@ const DetailsCard = ({
         exit={{ opacity: 0, x: -12, scale: 0.98 }}
         transition={{ duration: 0.22, ease: 'easeOut' }}
       >
-        <p className="text-secondary-blue-200">Loading ticket details...</p>
+        <Spinner />
       </motion.div>
     );
   }
