@@ -229,19 +229,23 @@ const PayrollManagement = () => {
           members={payrollRows}
         />
 
-        <InfoBanner
-          variant="info"
-          icon={<Info size={18} />}
-          message="No staff members found. Add your first staff member to get started."
-          action={
-            <Button
-              className="w-full sm:w-auto px-4 py-2 h-auto"
-              onClick={() => router.push('/staff-management?openAddStaff=true')}
-            >
-              <ArrowRight />
-            </Button>
-          }
-        />
+        {!isLoading && payrollRows.length === 0 && (
+          <InfoBanner
+            variant="info"
+            icon={<Info size={18} />}
+            message="No staff members found. Add your first staff member to get started."
+            action={
+              <Button
+                className="w-full sm:w-auto px-4 py-2 h-auto"
+                onClick={() =>
+                  router.push('/staff-management?openAddStaff=true')
+                }
+              >
+                <ArrowRight />
+              </Button>
+            }
+          />
+        )}
 
         <CardWrapper
           summary={

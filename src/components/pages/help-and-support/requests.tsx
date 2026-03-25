@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
-import { CalendarRange } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 
+import { KCalender } from '@/components/shared/icons';
 import { Badge } from '@/components/ui/badge';
 import { useSupportTicketDetail } from '@/hooks/use-support';
 import { SupportTicket } from '@/services/support';
@@ -98,18 +98,14 @@ const ListCard = ({ data, isActive, onClick }: ListCardProps) => {
       whileHover={{ y: -4, scale: 1.01 }}
       whileTap={{ scale: 0.99 }}
       transition={{ duration: 0.18, ease: 'easeOut' }}
-      className={`group relative overflow-hidden p-3 rounded-lg flex flex-col gap-3 text-left bg-secondary-blue-650 border border-white/5 border-l-2 transition-colors duration-200 ${isActive ? 'border-primary-green-50 bg-secondary-blue-700 shadow-[0_18px_40px_rgba(4,14,33,0.24)]' : 'border-transparent hover:border-primary-blue-300/60 hover:bg-secondary-blue-700/80'}`}
+      className={`group relative overflow-hidden p-3 rounded-lg flex flex-col gap-3 text-left bg-secondary-blue-650 border-l-2 border-transparent cursor-pointer transition-colors duration-200 ${isActive ? ' border-l-primary-green-50 bg-secondary-blue-700 shadow-[0_18px_40px_rgba(4,14,33,0.24)]' : ''}`}
     >
-      <motion.span
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.12),transparent_55%)] opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-      />
       <div className="flex items-center gap-2 justify-between">
         <BadgeComp text={data.status} />
         <span
           className={`flex items-center gap-1 text-xs font-medium transition-colors duration-200 ${isActive ? 'text-secondary-blue-50' : 'text-secondary-blue-200 group-hover:text-secondary-blue-50'}`}
         >
-          <CalendarRange className="text-secondary-blue-200" size={20} />
+          <KCalender />
           Due: {formatDate(data.dueAt)}
         </span>
       </div>
@@ -221,7 +217,7 @@ const DetailsCard = ({
         {data.description}
       </p>
       <span className="flex items-center gap-1 text-xs font-medium mt-4.5">
-        <CalendarRange className="text-secondary-blue-200" size={20} />
+        <KCalender />
         Due: {formatDate(data.dueAt)}
       </span>
       <Timeline timelineData={data.timeline} />
