@@ -25,6 +25,7 @@ export default function StaffManagement() {
   const searchParams = useSearchParams();
   const returnUrl = searchParams.get('return');
   const isFromSetup = searchParams.get('setup') === 'true';
+  const shouldOpenAddStaff = searchParams.get('openAddStaff') === 'true';
 
   const { data: gymStaffs = [], isLoading } = useGymStaffs(gymId!);
   const { items: searchedStaffs, search } = useFilterableList<Staff>(
@@ -68,6 +69,19 @@ export default function StaffManagement() {
       router.push(`${returnUrl}?setup=true`);
     }
   }, [isFromSetup, returnUrl, gymStaffs.length, router]);
+
+  useEffect(() => {
+    if (!shouldOpenAddStaff) return;
+
+    openSheet();
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('openAddStaff');
+    const nextQuery = params.toString();
+    router.replace(
+      nextQuery ? `/staff-management?${nextQuery}` : '/staff-management'
+    );
+  }, [shouldOpenAddStaff, openSheet, router, searchParams]);
 
   return (
     <FeatureAccessGuard

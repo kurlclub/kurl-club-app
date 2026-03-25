@@ -20,6 +20,7 @@ export const KSelect = React.forwardRef<
     options?: Option[];
     className?: string;
     size?: 'sm' | 'default';
+    enableSearch?: boolean;
   }
 >(
   (
@@ -30,11 +31,24 @@ export const KSelect = React.forwardRef<
       options = [],
       className,
       size = 'default',
+      enableSearch = false,
       ...props
     },
     ref
   ) => {
     const [hasValue, setHasValue] = React.useState(false);
+    const [searchTerm, setSearchTerm] = React.useState('');
+
+    const filteredOptions = React.useMemo(() => {
+      if (!enableSearch || !searchTerm.trim()) {
+        return options;
+      }
+
+      const normalizedSearch = searchTerm.trim().toLowerCase();
+      return options.filter((option) =>
+        option.label.toLowerCase().includes(normalizedSearch)
+      );
+    }, [enableSearch, options, searchTerm]);
 
     React.useEffect(() => {
       setHasValue(!!value);
@@ -49,6 +63,12 @@ export const KSelect = React.forwardRef<
             setHasValue(!!val);
             if (onValueChange) onValueChange(val);
           }}
+          onOpenChange={(open) => {
+            if (!open) {
+              setSearchTerm('');
+            }
+            props.onOpenChange?.(open);
+          }}
         >
           <SelectTrigger
             className={`peer ${className?.includes('bg-') ? 'shad-select-trigger-custom' : 'shad-select-trigger'}
@@ -58,7 +78,19 @@ export const KSelect = React.forwardRef<
             <SelectValue placeholder="" />
           </SelectTrigger>
           <SelectContent className="shad-select-content">
-            {options.map((option) => (
+            {enableSearch && (
+              <div className="sticky top-0 z-10 px-2 py-2 bg-secondary-blue-700 border-b border-primary-blue-400">
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  onKeyDown={(event) => event.stopPropagation()}
+                  placeholder="Search..."
+                  className="w-full h-9 px-3 rounded-md border border-primary-blue-400 bg-secondary-blue-500 text-sm text-white placeholder:text-primary-blue-100 outline-none focus:border-primary-green-700"
+                />
+              </div>
+            )}
+            {filteredOptions.map((option) => (
               <SelectItem
                 className="shad-select-item"
                 key={option.value}
@@ -67,6 +99,11 @@ export const KSelect = React.forwardRef<
                 {option.label}
               </SelectItem>
             ))}
+            {filteredOptions.length === 0 && (
+              <div className="px-3 py-2 text-sm text-primary-blue-100">
+                No results found.
+              </div>
+            )}
           </SelectContent>
         </Select>
         {label && (

@@ -3,9 +3,10 @@
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
-import { Plus } from 'lucide-react';
+import { ArrowRight, Info, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { InfoBanner } from '@/components/shared/info-banner';
 import { StudioLayout } from '@/components/shared/layout';
 import { DataTable, DataTableToolbar } from '@/components/shared/table';
 import { Button } from '@/components/ui/button';
@@ -205,7 +206,11 @@ const PayrollManagement = () => {
     <StudioLayout
       title="Payroll management"
       headerActions={
-        <Button className="h-10" onClick={openBulkPaymentSheet}>
+        <Button
+          disabled={payrollRows.length === 0}
+          className="h-10"
+          onClick={openBulkPaymentSheet}
+        >
           <Plus className="h-4 w-4" />
           Add payment
         </Button>
@@ -223,6 +228,24 @@ const PayrollManagement = () => {
           }}
           members={payrollRows}
         />
+
+        {!isLoading && payrollRows.length === 0 && (
+          <InfoBanner
+            variant="info"
+            icon={<Info size={18} />}
+            message="No staff members found. Add your first staff member to get started."
+            action={
+              <Button
+                className="w-full sm:w-auto px-4 py-2 h-auto"
+                onClick={() =>
+                  router.push('/staff-management?openAddStaff=true')
+                }
+              >
+                <ArrowRight />
+              </Button>
+            }
+          />
+        )}
 
         <CardWrapper
           summary={

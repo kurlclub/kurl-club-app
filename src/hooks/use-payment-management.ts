@@ -17,13 +17,23 @@ import {
 export function usePaymentManagement() {
   const queryClient = useQueryClient();
 
+  const refreshPaymentQueries = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['gymPayments'] }),
+      queryClient.invalidateQueries({ queryKey: ['paymentHistory'] }),
+      queryClient.invalidateQueries({ queryKey: ['memberPaymentDetails'] }),
+      queryClient.invalidateQueries({ queryKey: ['current-due-payments'] }),
+      queryClient.invalidateQueries({ queryKey: ['overdue-payments'] }),
+      queryClient.invalidateQueries({ queryKey: ['completed-payments'] }),
+      queryClient.invalidateQueries({ queryKey: ['payment-history'] }),
+    ]);
+  };
+
   const partialPaymentMutation = useMutation({
     mutationFn: (data: PaymentRequest) => partialPayment(data),
-    onSuccess: (result) => {
+    onSuccess: async (result) => {
       if (result.success) {
-        queryClient.invalidateQueries({ queryKey: ['gymPayments'] });
-        queryClient.invalidateQueries({ queryKey: ['paymentHistory'] });
-        queryClient.invalidateQueries({ queryKey: ['memberPaymentDetails'] });
+        await refreshPaymentQueries();
         toast.success(result.success);
       } else if (result.error) {
         toast.error(result.error);
@@ -40,11 +50,9 @@ export function usePaymentManagement() {
 
   const fullPaymentMutation = useMutation({
     mutationFn: (data: PaymentRequest) => fullPayment(data),
-    onSuccess: (result) => {
+    onSuccess: async (result) => {
       if (result.success) {
-        queryClient.invalidateQueries({ queryKey: ['gymPayments'] });
-        queryClient.invalidateQueries({ queryKey: ['paymentHistory'] });
-        queryClient.invalidateQueries({ queryKey: ['memberPaymentDetails'] });
+        await refreshPaymentQueries();
         toast.success(result.success);
       } else if (result.error) {
         toast.error(result.error);
@@ -59,10 +67,9 @@ export function usePaymentManagement() {
 
   const extendBufferMutation = useMutation({
     mutationFn: (data: ExtendBufferRequest) => extendBuffer(data),
-    onSuccess: (result) => {
+    onSuccess: async (result) => {
       if (result.success) {
-        queryClient.invalidateQueries({ queryKey: ['gymPayments'] });
-        queryClient.invalidateQueries({ queryKey: ['memberPaymentDetails'] });
+        await refreshPaymentQueries();
         toast.success(result.success);
       } else if (result.error) {
         toast.error(result.error);

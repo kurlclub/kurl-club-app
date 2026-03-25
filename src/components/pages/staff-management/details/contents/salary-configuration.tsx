@@ -32,7 +32,15 @@ interface SalaryConfigurationProps {
 
 const salarySchema = z.object({
   amount: z.string().min(1, 'Salary amount is required'),
-  payDay: z.string().optional(),
+  payDay: z
+    .string()
+    .trim()
+    .optional()
+    .refine((value) => {
+      if (!value) return true;
+      const day = Number(value);
+      return Number.isInteger(day) && day >= 1 && day <= 31;
+    }, 'Payment day must be between 1 and 31'),
 });
 
 type SalaryFormData = z.infer<typeof salarySchema>;
@@ -210,7 +218,7 @@ function SalaryConfiguration({ staffId, staffRole }: SalaryConfigurationProps) {
             label="Payment day of month"
             placeholder="e.g., 1, 15, 30"
             className="bg-primary-blue-400"
-            inputType="number"
+            type="number"
           />
           <InfoBanner
             variant="info"

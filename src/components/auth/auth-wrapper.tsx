@@ -11,6 +11,7 @@ interface AuthWrapperProps {
     linkText?: string;
     isLogin?: boolean;
     onFooterClick?: () => void;
+    linkBtnText?: string;
   };
 }
 
@@ -24,6 +25,7 @@ export const AuthWrapper = ({
     linkText = '',
     isLogin = false,
     onFooterClick,
+    linkBtnText,
   } = footer;
   const { title = '', description = '' } = header;
 
@@ -37,6 +39,7 @@ export const AuthWrapper = ({
           footerDesc={linkText}
           isLogin={isLogin}
           onFooterClick={onFooterClick}
+          linkBtnText={linkBtnText}
         />
       )}
     </div>
