@@ -69,6 +69,8 @@ export const AddStaff: React.FC<CreateStaffDetailsProps> = ({
       Gender: '',
       AddressLine: '',
       Doj: toUtcDateOnlyISOString(new Date()),
+      Username: '',
+      Password: '',
     },
   });
 
@@ -103,6 +105,11 @@ export const AddStaff: React.FC<CreateStaffDetailsProps> = ({
         formData.append(key, JSON.stringify(labels));
       } else if (key === 'Email' && (!value || value === '')) {
         // Skip empty email - don't append to FormData
+      } else if (
+        (key === 'Username' || key === 'Password') &&
+        (!value || value === '')
+      ) {
+        // Staff credentials are optional - skip if empty
       } else {
         formData.append(key, String(value));
       }
