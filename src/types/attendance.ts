@@ -31,6 +31,9 @@ export type AttendanceRecord = {
 export type BiometricDevice = {
   id: string;
   name: string;
+  deviceProvider?: string;
+  deviceSerialNumber?: string;
+  direction?: 'IN' | 'OUT' | 'INOUT' | 'DEVICE';
   ipAddress: string;
   port: number;
   status: DeviceStatus;

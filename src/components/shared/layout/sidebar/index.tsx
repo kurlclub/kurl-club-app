@@ -10,6 +10,7 @@ import {
   CreditCard,
   Dumbbell,
   Goal,
+  HelpCircle,
   type LucideIcon,
   Settings,
   UserCheck,
@@ -132,6 +133,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: 'Settings',
       url: '/account-settings',
       icon: Settings,
+    },
+    {
+      title: 'Help and Support',
+      url: '/help-and-support',
+      icon: HelpCircle,
     },
   ];
 

@@ -26,6 +26,11 @@ export function StaffHeader({
 }: EditableSectionProps) {
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const isTrainer = details?.trainerId !== undefined;
+  const displayId =
+    details?.trainerId ??
+    (details && 'staffId' in details
+      ? (details.staffId as string | undefined)
+      : undefined);
 
   return (
     <>
@@ -108,10 +113,7 @@ export function StaffHeader({
       </div>
       <div className="space-y-3">
         <Badge className="bg-neutral-ochre-500 flex items-center w-fit justify-center text-sm rounded-full h-[30px] py-[8.5px] px-4 border border-neutral-ochre-800 bg-opacity-10">
-          Staff ID:{' '}
-          <span className="uppercase ml-1">
-            {details?.trainerId || details?.memberIdentifier}
-          </span>
+          Staff ID: <span className="uppercase ml-1">{displayId}</span>
         </Badge>
 
         {isTrainer && details?.username && (

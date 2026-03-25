@@ -98,6 +98,7 @@ interface CustomProps<T extends FieldValues> {
   maxLength?: number;
   mandetory?: boolean;
   options?: Option[];
+  enableSearch?: boolean;
   size?: 'sm' | 'default';
   renderSkeleton?: (
     field: ControllerRenderProps<T, FieldPath<T>>
@@ -226,6 +227,7 @@ const RenderField = <T extends FieldValues>({
             label={label}
             options={props.options}
             className={className}
+            enableSearch={props.enableSearch}
             size={size}
           >
             {children}

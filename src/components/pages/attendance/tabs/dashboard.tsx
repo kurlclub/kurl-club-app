@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { format } from 'date-fns';
+import { format, formatDistanceToNowStrict } from 'date-fns';
 import {
   Activity,
   Clock,
@@ -16,7 +16,7 @@ import { Pie, PieChart } from 'recharts';
 
 import { InfoBadge } from '@/components/shared/badges';
 import InfoCard from '@/components/shared/cards/info-card';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   ChartConfig,
@@ -26,7 +26,11 @@ import {
 } from '@/components/ui/chart';
 import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
 import { useGymBranch } from '@/providers/gym-branch-provider';
-import { useAttendanceDashboard } from '@/services/attendance';
+import {
+  AttendanceRecordResponse,
+  useAttendanceDashboard,
+  useAttendanceRecords,
+} from '@/services/attendance';
 
 // WIDGETS
 function LiveStatusHeader({ currentTime }: { currentTime: Date }) {
@@ -207,24 +211,39 @@ function TodaysSummary({
   );
 }
 
-function LiveActivityFeed() {
-  const placeholderActivity = [
-    {
-      memberName: 'Sample User',
-      action: 'checked-in',
-      time: '2 min ago',
-      duration: null,
-    },
-  ];
+function LiveActivityFeed({
+  activityRecords,
+  isLoading,
+}: {
+  activityRecords: AttendanceRecordResponse[];
+  isLoading: boolean;
+}) {
+  const topFiveActivities = activityRecords.slice(0, 5);
+
+  const formatDuration = (durationInSeconds: number | null) => {
+    if (!durationInSeconds || durationInSeconds <= 0) return null;
+    const hours = Math.floor(durationInSeconds / 3600);
+    const minutes = Math.floor((durationInSeconds % 3600) / 60);
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    return `${minutes}m`;
+  };
+
+  const getActivityTime = (activity: AttendanceRecordResponse) => {
+    const timestamp =
+      activity.checkOutTime || activity.checkInTime || activity.date;
+    const date = new Date(timestamp);
+    if (Number.isNaN(date.getTime())) {
+      return { primary: '--', secondary: 'Invalid time' };
+    }
+
+    return {
+      primary: format(date, 'HH:mm'),
+      secondary: `${formatDistanceToNowStrict(date, { addSuffix: true })}`,
+    };
+  };
+
   return (
     <Card className="relative border-none bg-secondary-blue-500 rounded-lg overflow-hidden">
-      <div className="absolute inset-0 backdrop-blur-[2px] bg-secondary-blue-500/15 z-20 flex items-center justify-center">
-        <div className="bg-white dark:bg-secondary-blue-400 rounded-lg px-6 py-3 shadow-lg">
-          <p className="text-sm font-medium text-gray-900 dark:text-white">
-            Coming Soon
-          </p>
-        </div>
-      </div>
       <CardHeader className="p-5 pb-5">
         <CardTitle className="text-white text-base font-normal leading-normal flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -239,70 +258,94 @@ function LiveActivityFeed() {
       <CardContent className="p-5 pt-0">
         <div className="relative max-h-[200px] overflow-y-auto pr-2">
           <div className="absolute left-[15px] top-0 bottom-0 w-[2px] bg-gradient-to-b from-gray-200 via-gray-300 to-transparent dark:from-secondary-blue-400 dark:via-secondary-blue-400" />
-          <div className="space-y-3">
-            {placeholderActivity.map((activity, index) => {
-              const avatarStyle = getAvatarColor(activity.memberName);
-              const initials = getInitials(activity.memberName);
-              const isCheckIn = activity.action === 'checked-in';
-              return (
+          {isLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, index) => (
                 <div
                   key={index}
-                  className="relative flex items-start justify-between gap-3 pl-1"
-                >
-                  <div className="flex items-start gap-3 flex-1 min-w-0">
-                    <div className="relative z-10 flex-shrink-0">
-                      <Avatar className="h-7 w-7 ring-2 ring-white dark:ring-secondary-blue-500">
-                        <AvatarFallback
-                          className="text-[10px] font-semibold"
-                          style={avatarStyle}
-                        >
-                          {initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div
-                        className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white dark:border-secondary-blue-500 ${
-                          isCheckIn
-                            ? 'bg-primary-green-500'
-                            : 'bg-semantic-blue-500'
-                        }`}
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0 pt-0.5">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-gray-900 dark:text-white text-sm font-medium truncate">
-                          {activity.memberName}
-                        </span>
-                        <span
-                          className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                  className="h-10 rounded-md bg-primary-blue-400/70 animate-pulse"
+                />
+              ))}
+            </div>
+          ) : topFiveActivities.length === 0 ? (
+            <div className="py-6 text-center text-sm text-gray-300">
+              No attendance activity found.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {topFiveActivities.map((activity) => {
+                const avatarStyle = getAvatarColor(activity.memberName);
+                const initials = getInitials(activity.memberName);
+                const isCheckIn = activity.status === 'checked_in';
+                const duration = formatDuration(activity.duration ?? null);
+                const time = getActivityTime(activity);
+                return (
+                  <div
+                    key={activity.id}
+                    className="relative flex items-start justify-between gap-3 pl-1"
+                  >
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <div className="relative z-10 flex-shrink-0">
+                        <Avatar className="h-7 w-7 ring-2 ring-white dark:ring-secondary-blue-500">
+                          <AvatarImage
+                            src={
+                              activity.photoPath ||
+                              activity.profilePicture ||
+                              undefined
+                            }
+                            alt={activity.memberName}
+                          />
+                          <AvatarFallback
+                            className="text-[10px] font-semibold"
+                            style={avatarStyle}
+                          >
+                            {initials}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div
+                          className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white dark:border-secondary-blue-500 ${
                             isCheckIn
-                              ? 'bg-primary-green-500/15 text-primary-green-600 dark:text-primary-green-400'
-                              : 'bg-semantic-blue-500/15 text-semantic-blue-600 dark:text-semantic-blue-400'
+                              ? 'bg-primary-green-500'
+                              : 'bg-semantic-blue-500'
                           }`}
-                        >
-                          {isCheckIn ? 'CHECKED IN' : 'CHECKED OUT'}
-                        </span>
+                        />
                       </div>
-                      {activity.duration && (
-                        <div className="flex items-center gap-1.5 text-[11px] text-gray-500 dark:text-gray-400">
-                          <Clock size={10} />
-                          <span>Session: {activity.duration}</span>
+                      <div className="flex-1 min-w-0 pt-0.5">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-gray-900 dark:text-white text-sm font-medium truncate">
+                            {activity.memberName}
+                          </span>
+                          <span
+                            className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${
+                              isCheckIn
+                                ? 'bg-primary-green-500/15 text-primary-green-600 dark:text-primary-green-400'
+                                : 'bg-semantic-blue-500/15 text-semantic-blue-600 dark:text-semantic-blue-400'
+                            }`}
+                          >
+                            {isCheckIn ? 'CHECKED IN' : 'CHECKED OUT'}
+                          </span>
                         </div>
-                      )}
+                        {duration && (
+                          <div className="flex items-center gap-1.5 text-[11px] text-gray-500 dark:text-gray-400">
+                            <Clock size={10} />
+                            <span>Session: {duration}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex-shrink-0 text-right pt-0.5">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                        {time.primary}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {time.secondary}
+                      </div>
                     </div>
                   </div>
-                  <div className="flex-shrink-0 text-right pt-0.5">
-                    <div className="text-sm font-medium text-gray-900 dark:text-white">
-                      {activity.time.split(' ')[0]}
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {activity.time.split(' ')[1]}{' '}
-                      {activity.time.split(' ')[2]}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </CardContent>
       <div className="absolute bottom-0 left-0 w-full h-20 bg-linear-to-t from-secondary-blue-500 via-secondary-blue-500/70 to-transparent rounded-b-lg pointer-events-none z-10" />
@@ -402,6 +445,8 @@ function PeakHoursAnalysis({
 export default function Dashboard() {
   const { gymBranch } = useGymBranch();
   const { data: dashboardData } = useAttendanceDashboard(gymBranch?.gymId);
+  const { data: attendanceRecords, isLoading: isAttendanceLoading } =
+    useAttendanceRecords(gymBranch?.gymId);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -415,7 +460,10 @@ export default function Dashboard() {
       <StatsCards dashboardData={dashboardData} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <TodaysSummary dashboardData={dashboardData} />
-        <LiveActivityFeed />
+        <LiveActivityFeed
+          activityRecords={attendanceRecords?.data || []}
+          isLoading={isAttendanceLoading}
+        />
       </div>
       <PeakHoursAnalysis dashboardData={dashboardData} />
     </div>

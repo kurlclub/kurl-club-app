@@ -71,6 +71,25 @@ interface UserDetailsResponse {
   };
 }
 
+interface SelfOnboardingRequest {
+  contactName: string;
+  email: string;
+  phoneNumber: string;
+  gymName: string;
+  gymLocation: string;
+  region: string;
+}
+
+interface SelfOnboardingResponse {
+  status: string;
+  message: string;
+  data: {
+    email: string;
+    contactName: string;
+    phoneNumber: string;
+  };
+}
+
 export const login = async (credentials: LoginRequest) => {
   try {
     const response = await api.post<LoginResponse>('/Auth/login', credentials, {
@@ -183,5 +202,15 @@ export const resetPassword = async (
     { email, otp, newPassword },
     { skipAuth: true }
   );
+  return response;
+};
+
+export const submitSelfOnboarding = async (payload: SelfOnboardingRequest) => {
+  const response = await api.post<SelfOnboardingResponse>(
+    '/User/SelfOnboarding',
+    payload,
+    { skipAuth: true }
+  );
+
   return response;
 };
