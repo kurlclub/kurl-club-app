@@ -4,15 +4,19 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 import { Badge } from '@kurlclub/ui-components';
 import { motion } from 'framer-motion';
-import { Building2, Check, User } from 'lucide-react';
+import { Building2, Check, Plus, User } from 'lucide-react';
 
 import { BusinessProfileTab } from '@/components/pages/account-settings/tabs/business-profile-tab';
 import OperationsTab from '@/components/pages/account-settings/tabs/operations-tab';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
 import { useAuth } from '@/providers/auth-provider';
 import { useGymBranch } from '@/providers/gym-branch-provider';
+
+import AddGym from './add-gym';
 
 // Context to override gym ID for viewing only (not switching)
 const ViewGymContext = createContext<{ viewGymId: number | null }>({
@@ -26,15 +30,31 @@ export const useViewGymId = () => {
 
 export function ProfileAndGymsTab() {
   const { user } = useAuth();
+  const { requireLimitAccess, usageLimits } = useSubscriptionAccess();
   const { gymBranch } = useGymBranch();
-  const isMultiClub = user?.isMultiClub ?? false;
+  const [isAddGymSheetOpen, setIsAddGymSheetOpen] = useState(false);
   const [selectedGymId, setSelectedGymId] = useState<number | null>(
     () => gymBranch?.gymId || user?.clubs?.[0]?.gymId || null
   );
+  const clubCount = user?.clubs?.length ?? 0;
+  const maxClubs = usageLimits.maxClubs;
+  const hasFiniteClubLimit = Number.isFinite(maxClubs) && maxClubs > 0;
+  const isClubLimitReached = hasFiniteClubLimit && clubCount >= maxClubs;
 
   const handleSelectGym = (gymId: number) => {
     setSelectedGymId(gymId);
   };
+
+  const handleOpenAddGym = () => {
+    const allowed = requireLimitAccess('maxClubs', clubCount, {
+      title: 'Club limit reached',
+      message: 'Upgrade your plan to add more clubs.',
+    });
+
+    if (!allowed) return;
+    setIsAddGymSheetOpen(true);
+  };
+
   // Only sync with global gym on initial mount
   useEffect(() => {
     if (gymBranch?.gymId) {
@@ -48,38 +68,12 @@ export function ProfileAndGymsTab() {
     [selectedGymId]
   );
 
-  // Single gym layout
-  if (!isMultiClub) {
-    return (
-      <ViewGymContext.Provider value={contextValue}>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <Tabs defaultValue="business" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="business">Business Profile</TabsTrigger>
-              <TabsTrigger value="operations">Operations</TabsTrigger>
-            </TabsList>
-            <TabsContent value="business">
-              <BusinessProfileTab />
-            </TabsContent>
-            <TabsContent value="operations">
-              <OperationsTab />
-            </TabsContent>
-          </Tabs>
-        </motion.div>
-      </ViewGymContext.Provider>
-    );
-  }
-
   // Multi-gym layout
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       {/* Left Sidebar - Combined Profile & Gym Card */}
       <motion.div
-        className="lg:col-span-4 lg:sticky lg:top-[88px] self-start"
+        className="lg:col-span-4 lg:sticky lg:top-22 self-start"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
@@ -117,9 +111,9 @@ export function ProfileAndGymsTab() {
 
           {/* Gym List Section */}
           {user?.clubs && user.clubs.length > 0 && (
-            <div className="px-4 py-2 border-t border-secondary-blue-400">
+            <div className="px-4 py-2 pb-3 border-t border-secondary-blue-400">
               <p className="text-xs font-medium uppercase tracking-wider text-secondary-blue-300 px-1 mb-1">
-                {user.clubs.length === 1 ? 'Home Gym' : 'Your Gyms'}
+                {user.clubs.length === 1 ? 'Your Club' : 'Your Clubs'}
               </p>
               <div className="space-y-1.5">
                 {user.clubs.map((club, index) => {
@@ -182,11 +176,47 @@ export function ProfileAndGymsTab() {
               </div>
             </div>
           )}
+
+          <div className="border-t border-secondary-blue-400 px-4 py-3 bg-secondary-blue-600/40">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[11px] text-secondary-blue-200 uppercase tracking-wider font-semibold">
+                Club Usage
+              </p>
+              <span className="text-[11px] text-white/90 font-semibold">
+                {hasFiniteClubLimit
+                  ? `${clubCount}/${maxClubs}`
+                  : `${clubCount}/Unlimited`}
+              </span>
+            </div>
+            <Button type="button" className="w-full" onClick={handleOpenAddGym}>
+              <Plus className="size-4" />
+              {isClubLimitReached ? 'Upgrade Plan' : 'Add Gym'}
+            </Button>
+          </div>
         </Card>
       </motion.div>
 
       {/* Right Panel - Gym Details */}
       <div className="lg:col-span-8">
+        <Card className="mb-4 bg-secondary-blue-500 border-secondary-blue-400">
+          <CardContent className="py-4 px-4 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-white text-sm font-semibold">
+                Need another location?
+              </p>
+              <p className="text-xs text-secondary-blue-200 mt-0.5">
+                {hasFiniteClubLimit
+                  ? `You are using ${clubCount} out of ${maxClubs} clubs in your current plan.`
+                  : `You currently manage ${clubCount} clubs.`}
+              </p>
+            </div>
+            <Button type="button" onClick={handleOpenAddGym}>
+              <Plus className="size-4" />
+              {isClubLimitReached ? 'Upgrade Plan' : 'Add Gym'}
+            </Button>
+          </CardContent>
+        </Card>
+
         {selectedGymId ? (
           <ViewGymContext.Provider value={contextValue}>
             <motion.div
@@ -230,6 +260,16 @@ export function ProfileAndGymsTab() {
           </motion.div>
         )}
       </div>
+
+      <AddGym
+        isOpen={isAddGymSheetOpen}
+        closeSheet={() => setIsAddGymSheetOpen(false)}
+        onGymAdded={(gymId) => {
+          if (gymId) {
+            setSelectedGymId(gymId);
+          }
+        }}
+      />
     </div>
   );
 }
