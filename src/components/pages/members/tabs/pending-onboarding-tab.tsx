@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
+import { Spinner } from '@/components/shared/loader';
 import { DataTable, DataTableToolbar } from '@/components/shared/table';
 import { useAppDialog } from '@/hooks/use-app-dialog';
 import { useFilterableList } from '@/hooks/use-filterable-list';
@@ -118,9 +119,7 @@ export function PendingOnboardingTab() {
   const columns = createPendingOnboardingColumns(handleAccept, handleReject);
 
   if (isLoading) {
-    return (
-      <div className="text-center py-8 text-primary-blue-200">Loading...</div>
-    );
+    return <Spinner />;
   }
 
   return (

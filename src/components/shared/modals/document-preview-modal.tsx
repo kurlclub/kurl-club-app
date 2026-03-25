@@ -5,6 +5,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
+import { Spinner } from '../loader';
+
 interface DocumentPreviewModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -33,7 +35,7 @@ export function DocumentPreviewModal({
         <div className="flex-1 overflow-auto bg-gray-50 dark:bg-secondary-blue-700 rounded-lg p-2">
           {isLoading ? (
             <div className="w-full h-[calc(90vh-120px)] rounded-lg bg-white flex items-center justify-center text-sm text-gray-600 dark:text-gray-300">
-              Loading preview...
+              <Spinner />
             </div>
           ) : documentUrl ? (
             <iframe

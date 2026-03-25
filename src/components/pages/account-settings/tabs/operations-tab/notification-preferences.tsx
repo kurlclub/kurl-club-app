@@ -10,6 +10,7 @@ import {
   KFormField,
   KFormFieldType,
 } from '@/components/shared/form/k-formfield';
+import { AppLoader } from '@/components/shared/loaders';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -146,7 +147,7 @@ export default function NotificationPreferences() {
       <Card className="bg-secondary-blue-500/80 backdrop-blur-sm border-secondary-blue-400 relative overflow-hidden">
         <CardContent className="p-8">
           <div className="flex items-center justify-center">
-            <p className="text-gray-400">Loading notification settings...</p>
+            <AppLoader />
           </div>
         </CardContent>
       </Card>

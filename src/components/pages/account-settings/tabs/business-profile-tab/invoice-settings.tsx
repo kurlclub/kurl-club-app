@@ -10,6 +10,7 @@ import {
   KFormField,
   KFormFieldType,
 } from '@/components/shared/form/k-formfield';
+import { Spinner } from '@/components/shared/loader';
 import { DocumentPreviewModal } from '@/components/shared/modals/document-preview-modal';
 import { Button } from '@/components/ui/button';
 import {
@@ -359,9 +360,7 @@ export default function InvoiceSettings() {
               </label>
               {isLoadingTemplates ? (
                 <div className="flex items-center justify-center py-8">
-                  <p className="text-gray-500 dark:text-gray-400">
-                    Loading templates...
-                  </p>
+                  <Spinner />
                 </div>
               ) : templates.length === 0 ? (
                 <div className="flex items-center justify-center py-8">
@@ -427,11 +426,13 @@ export default function InvoiceSettings() {
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-xs text-gray-600 dark:text-gray-300 px-3 text-center">
-                                {isTemplatePreviewLoading
-                                  ? 'Loading preview...'
-                                  : hasTemplatePreviewError
-                                    ? 'Preview unavailable'
-                                    : 'Preparing preview...'}
+                                {isTemplatePreviewLoading ? (
+                                  <Spinner />
+                                ) : hasTemplatePreviewError ? (
+                                  'Preview unavailable'
+                                ) : (
+                                  'Preparing preview...'
+                                )}
                               </div>
                             )}
                             {/* Preview Overlay */}
