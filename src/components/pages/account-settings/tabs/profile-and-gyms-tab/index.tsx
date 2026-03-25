@@ -68,7 +68,6 @@ export function ProfileAndGymsTab() {
     [selectedGymId]
   );
 
-  // Multi-gym layout
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       {/* Left Sidebar - Combined Profile & Gym Card */}

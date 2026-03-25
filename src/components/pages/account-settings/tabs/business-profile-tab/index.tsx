@@ -34,6 +34,7 @@ import { useGymDetails, useGymManagement } from '@/hooks/use-gym-management';
 import { useAuth } from '@/providers/auth-provider';
 import { GymDataDetailsSchema } from '@/schemas';
 
+import DangerZone from './danger-zone';
 import RegionalSettings from './regional-settings';
 
 type BusinessProfile = z.infer<typeof GymDataDetailsSchema>;
@@ -474,6 +475,9 @@ export function BusinessProfileTab() {
 
         {/* Regional Settings */}
         <RegionalSettings />
+
+        {/* Delete */}
+        <DangerZone />
       </div>
     </FormProvider>
   );
