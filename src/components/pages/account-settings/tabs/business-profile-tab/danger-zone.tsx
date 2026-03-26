@@ -37,6 +37,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/providers/auth-provider';
 import { DeleteCheckData, checkGymDelete, hardDeleteGym } from '@/services/gym';
 
 const blockersToLabel: Record<string, string> = {
@@ -66,6 +67,7 @@ const toBlockerRows = (blockers: DeleteCheckData['blockers']) =>
 
 export default function DangerZone() {
   const gymId = useViewGymId();
+  const { refreshUser } = useAuth();
   const [isLoadingCheck, setIsLoadingCheck] = useState(false);
   const [deleteCheckData, setDeleteCheckData] =
     useState<DeleteCheckData | null>(null);
@@ -111,6 +113,7 @@ export default function DangerZone() {
     setIsConfirmAlertOpen(false);
     setIsDeleteDialogOpen(false);
     toast.success(result.success ?? 'Club deleted successfully.');
+    await refreshUser();
   };
 
   return (

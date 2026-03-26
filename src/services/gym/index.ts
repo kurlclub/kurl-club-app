@@ -76,9 +76,7 @@ export const checkGymDelete = async (gymId: number) => {
 
 export const hardDeleteGym = async (gymId: number) => {
   try {
-    const response = (await api.delete(`/Gym/${gymId}/hard`, {
-      confirm: 'true',
-    })) as {
+    const response = (await api.delete(`/Gym/${gymId}/hard?confirm=true`)) as {
       message?: string;
     };
     return { success: response?.message || 'Club deleted successfully.' };

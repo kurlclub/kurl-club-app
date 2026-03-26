@@ -5,7 +5,7 @@ export interface GymDetails {
   contactNumber1: string;
   contactNumber2?: string | null;
   email: string;
-  socialLinks?: string | null;
+  socialLinks?: string | Array<string | { url?: string | null }> | null;
   gymAdminId: number;
   status: string;
   gymIdentifier: string;
