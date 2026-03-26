@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { ArrowUpRight, LockKeyhole } from 'lucide-react';
 
 import { StudioLayout } from '@/components/shared/layout';
+import { AppLoader } from '@/components/shared/loaders';
 import { Button } from '@/components/ui/button';
 import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
 import { useSupportTickets } from '@/hooks/use-support';
@@ -90,9 +91,7 @@ function HelpAndSupport() {
           Recent requests
         </h1>
         {isLoading ? (
-          <div className="flex items-center justify-center h-96">
-            <p className="text-secondary-blue-200">Loading tickets...</p>
-          </div>
+          <AppLoader />
         ) : error ? (
           <div className="flex items-center justify-center h-96">
             <p className="text-alert-red-500">Failed to load support tickets</p>
