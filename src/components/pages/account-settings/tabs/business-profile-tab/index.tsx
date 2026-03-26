@@ -34,9 +34,14 @@ import { useGymDetails, useGymManagement } from '@/hooks/use-gym-management';
 import { useAuth } from '@/providers/auth-provider';
 import { GymDataDetailsSchema } from '@/schemas';
 
+import DangerZone from './danger-zone';
 import RegionalSettings from './regional-settings';
 
 type BusinessProfile = z.infer<typeof GymDataDetailsSchema>;
+
+type SocialLinkValue = { url?: string | null } | string;
+
+const DEFAULT_SOCIAL_LINKS = [{ url: '' }];
 
 const DEFAULT_PROFILE: BusinessProfile = {
   ProfilePicture: null,
@@ -44,17 +49,52 @@ const DEFAULT_PROFILE: BusinessProfile = {
   Phone: '',
   Email: '',
   Address: '',
-  socialLinks: [{ url: '' }],
+  socialLinks: DEFAULT_SOCIAL_LINKS,
 } as const;
 
 // Utility functions
-const parseSocialLinks = (socialLinks?: string | null) => {
-  if (!socialLinks) return [{ url: '' }];
-  const links = socialLinks
+const normalizeSocialLinks = (
+  socialLinks?: string | SocialLinkValue[] | null
+) => {
+  if (!socialLinks) return [] as string[];
+
+  if (Array.isArray(socialLinks)) {
+    return socialLinks
+      .map((link) =>
+        typeof link === 'string' ? link.trim() : link.url?.trim() || ''
+      )
+      .filter(Boolean);
+  }
+
+  const trimmedLinks = socialLinks.trim();
+  if (!trimmedLinks) return [] as string[];
+
+  try {
+    const parsedLinks = JSON.parse(trimmedLinks) as unknown;
+    if (Array.isArray(parsedLinks)) {
+      return parsedLinks
+        .map((link) => {
+          if (typeof link === 'string') return link.trim();
+          if (link && typeof link === 'object' && 'url' in link) {
+            return String(link.url ?? '').trim();
+          }
+          return '';
+        })
+        .filter(Boolean);
+    }
+  } catch {
+    // Fallback to comma-separated values.
+  }
+
+  return trimmedLinks
     .split(',')
-    .filter((link) => link.trim())
-    .map((url) => ({ url: url.trim() }));
-  return links.length > 0 ? links : [{ url: '' }];
+    .map((link) => link.trim())
+    .filter(Boolean);
+};
+
+const parseSocialLinks = (socialLinks?: string | SocialLinkValue[] | null) => {
+  const links = normalizeSocialLinks(socialLinks).map((url) => ({ url }));
+  return links.length > 0 ? links : DEFAULT_SOCIAL_LINKS;
 };
 
 const transformToApiData = (
@@ -107,7 +147,7 @@ export function BusinessProfileTab() {
           contactNumber1: string;
           contactNumber2: string | null;
           email: string;
-          socialLinks: string;
+          socialLinks: string | SocialLinkValue[] | null;
           gymAdminId: number;
         };
         return {
@@ -170,9 +210,7 @@ export function BusinessProfileTab() {
     if (!gymDetails?.id) return;
 
     const socialLinksArray = parseSocialLinks(gymDetails.socialLinks);
-    const originalLinks = gymDetails.socialLinks
-      ? gymDetails.socialLinks.split(',').filter((link: string) => link.trim())
-      : [];
+    const originalLinks = normalizeSocialLinks(gymDetails.socialLinks);
 
     setOriginalSocialLinks(originalLinks);
 
@@ -474,6 +512,9 @@ export function BusinessProfileTab() {
 
         {/* Regional Settings */}
         <RegionalSettings />
+
+        {/* Delete */}
+        <DangerZone />
       </div>
     </FormProvider>
   );
