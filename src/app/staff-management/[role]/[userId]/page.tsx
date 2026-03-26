@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 
 import Contents from '@/components/pages/staff-management/details/contents';
 import { Sidebar } from '@/components/pages/staff-management/details/sidebar';
+import { AppLoader } from '@/components/shared/loaders';
 import { useStaffDetails } from '@/hooks/use-staff-details';
 import { StaffType } from '@/types/staff';
 
@@ -32,7 +33,7 @@ export default function StaffDetailsPage({ params }: StaffDetailsPageProps) {
     updateStaffDetail,
   } = useStaffDetails(staffId, staffRole);
 
-  if (loading) return <p>Loading staff details...</p>;
+  if (loading) return <AppLoader />;
   if (error) return <p>Error: {error}</p>;
 
   return (

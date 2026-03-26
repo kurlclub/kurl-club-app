@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
-import { CircleUser, Plus, User } from 'lucide-react';
+import { CircleUser, Loader2, Plus, User } from 'lucide-react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -28,6 +28,8 @@ export default function ProfilePictureUploader({
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [tempImage, setTempImage] = useState<string | null>(null);
   const [currentFile, setCurrentFile] = useState<File | null>(null);
+  const [isImageLoading, setIsImageLoading] = useState(false);
+  const [isImageError, setIsImageError] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const filePreviewUrl = useMemo(
     () => (files ? URL.createObjectURL(files) : null),
@@ -95,19 +97,51 @@ export default function ProfilePictureUploader({
     <div className="flex flex-col">
       {image ? (
         <Avatar
-          className={`${isSmall ? 'size-16' : 'size-[92px]'} cursor-pointer rounded-lg`}
+          className={`${isSmall ? 'size-16' : 'size-23'} cursor-pointer rounded-lg`}
           onClick={() => setPreviewModalOpen(true)}
         >
-          <AvatarImage src={image} alt="Profile picture" />
+          <AvatarImage
+            key={image}
+            src={image}
+            alt="Profile picture"
+            className={isImageLoading ? 'opacity-0' : 'opacity-100'}
+            onLoadingStatusChange={(status) => {
+              if (status === 'loading') {
+                setIsImageLoading(true);
+                setIsImageError(false);
+                return;
+              }
+
+              if (status === 'loaded') {
+                setIsImageLoading(false);
+                setIsImageError(false);
+                return;
+              }
+
+              if (status === 'error') {
+                setIsImageLoading(false);
+                setIsImageError(true);
+              }
+            }}
+          />
+          {isImageLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-secondary-blue-500/70">
+              <Loader2 className="h-5 w-5 animate-spin text-white/80" />
+            </div>
+          )}
           <AvatarFallback>
-            <User className="w-16 h-16" />
+            {isImageError ? (
+              <User className="w-16 h-16" />
+            ) : (
+              <Loader2 className="h-5 w-5 animate-spin text-white/80" />
+            )}
           </AvatarFallback>
         </Avatar>
       ) : (
         <Button
           variant="outline"
           size="icon"
-          className={`${isSmall ? 'size-16' : 'size-[92px]'} bg-secondary-blue-400 rounded-lg hover:bg-secondary-blue-500 relative`}
+          className={`${isSmall ? 'size-16' : 'size-23'} bg-secondary-blue-400 rounded-lg hover:bg-secondary-blue-500 relative`}
           onClick={() => fileInputRef.current?.click()}
         >
           <CircleUser

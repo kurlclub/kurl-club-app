@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Calendar, IndianRupee, Users } from 'lucide-react';
 
 import InfoCard from '@/components/shared/cards/info-card';
+import { Spinner } from '@/components/shared/loader';
 import { api } from '@/lib/api';
 import { SessionPaymentMember, SessionPaymentResponse } from '@/types/payment';
 
@@ -60,7 +61,7 @@ export function SessionPaymentTab({ gymId }: Props) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-primary-green-500 border-t-transparent rounded-full animate-spin" />
+        <Spinner />
       </div>
     );
   }

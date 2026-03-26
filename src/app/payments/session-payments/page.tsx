@@ -2,6 +2,7 @@
 
 import { SessionPaymentTab } from '@/components/pages/payments/per-session';
 import { StudioLayout } from '@/components/shared/layout';
+import { Spinner } from '@/components/shared/loader';
 import { FeatureAccessGuard } from '@/components/shared/subscription';
 import { useGymBranch } from '@/providers/gym-branch-provider';
 
@@ -16,9 +17,7 @@ export default function SessionPaymentsPage() {
       >
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <p className="text-gray-600 dark:text-gray-400">
-              Loading gym information...
-            </p>
+            <Spinner />
           </div>
         </div>
       </StudioLayout>
