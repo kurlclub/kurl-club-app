@@ -1,6 +1,8 @@
 import { api } from '@/lib/api';
 import { SubscriptionCatalogPlan } from '@/types/subscription';
 
+export * from './payment';
+
 type SubscriptionCatalogResponse = {
   status: string;
   data: SubscriptionCatalogPlan[];
