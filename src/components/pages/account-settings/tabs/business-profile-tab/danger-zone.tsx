@@ -12,8 +12,6 @@ import { toast } from 'sonner';
 import { useViewGymId } from '@/components/pages/account-settings/tabs/profile-and-gyms-tab';
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,

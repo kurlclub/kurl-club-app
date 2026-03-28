@@ -175,23 +175,6 @@ export function ProfileAndGymsTab() {
               </div>
             </div>
           )}
-
-          <div className="border-t border-secondary-blue-400 px-4 py-3 bg-secondary-blue-600/40">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-[11px] text-secondary-blue-200 uppercase tracking-wider font-semibold">
-                Club Usage
-              </p>
-              <span className="text-[11px] text-white/90 font-semibold">
-                {hasFiniteClubLimit
-                  ? `${clubCount}/${maxClubs}`
-                  : `${clubCount}/Unlimited`}
-              </span>
-            </div>
-            <Button type="button" className="w-full" onClick={handleOpenAddGym}>
-              <Plus className="size-4" />
-              {isClubLimitReached ? 'Upgrade Plan' : 'Add Gym'}
-            </Button>
-          </div>
         </Card>
       </motion.div>
 
@@ -211,7 +194,7 @@ export function ProfileAndGymsTab() {
             </div>
             <Button type="button" onClick={handleOpenAddGym}>
               <Plus className="size-4" />
-              {isClubLimitReached ? 'Upgrade Plan' : 'Add Gym'}
+              {isClubLimitReached ? 'Upgrade Plan' : 'Add Club'}
             </Button>
           </CardContent>
         </Card>
