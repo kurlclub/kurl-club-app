@@ -3,10 +3,9 @@
 import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 
-import { Check, ChevronsUpDown, LogOut, Plus, User } from 'lucide-react';
+import { Check, ChevronsUpDown, LogOut, User } from 'lucide-react';
 import { toast } from 'sonner';
 
-import AddGym from '@/components/pages/account-settings/tabs/profile-and-gyms-tab/add-gym';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,7 +24,6 @@ import {
 } from '@/components/ui/sidebar';
 import { useAppDialog } from '@/hooks/use-app-dialog';
 import { useGymDetails } from '@/hooks/use-gym-management';
-import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
 import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
 import { useAuth } from '@/providers/auth-provider';
 
@@ -33,12 +31,10 @@ export function NavUser() {
   const router = useRouter();
   const { logout, user, switchClub } = useAuth();
   const { data: gymDetails } = useGymDetails();
-  const { requireLimitAccess, usageLimits } = useSubscriptionAccess();
 
   const profilePictureUrl = gymDetails?.photoPath || null;
 
   const [isPending, startTransition] = useTransition();
-  const [isAddGymSheetOpen, setIsAddGymSheetOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { showConfirm } = useAppDialog();
   const { state, isMobile, setOpenMobile } = useSidebar();
@@ -74,23 +70,7 @@ export function NavUser() {
       }
     : null;
 
-  const clubCount = user?.clubs?.length || 0;
-  const maxClubs = usageLimits.maxClubs;
-  const hasFiniteClubLimit = Number.isFinite(maxClubs) && maxClubs > 0;
-  const isClubLimitReached = hasFiniteClubLimit && clubCount >= maxClubs;
   const avatarStyle = getAvatarColor(currentGym?.gymName || 'KC');
-
-  const handleOpenAddGym = () => {
-    const allowed = requireLimitAccess('maxClubs', clubCount, {
-      title: 'Club limit reached',
-      message: 'Upgrade your plan to add more clubs.',
-    });
-
-    if (!allowed) return;
-
-    setIsDropdownOpen(false);
-    setIsAddGymSheetOpen(true);
-  };
 
   if (state === 'collapsed') {
     return (
@@ -172,16 +152,6 @@ export function NavUser() {
                           key={club.gymId}
                           onClick={() => {
                             if (!isActive) {
-                              const allowed = requireLimitAccess(
-                                'maxClubs',
-                                clubCount,
-                                {
-                                  title: 'Upgrade required',
-                                  message:
-                                    'Upgrade your subscription to access multiple clubs.',
-                                }
-                              );
-                              if (!allowed) return;
                               switchClub(club.gymId);
                               closeMobileSidebar();
                             }
@@ -233,26 +203,6 @@ export function NavUser() {
                   <DropdownMenuSeparator className="mx-2 my-2 bg-white/10" />
                 </>
               )}
-              <div className="mx-2 my-1 rounded-lg border border-white/10 bg-white/5 p-2">
-                <div className="mb-2 flex items-center justify-between">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-primary-green-300">
-                    Club Usage
-                  </p>
-                  <span className="text-[10px] font-semibold text-white/90">
-                    {hasFiniteClubLimit
-                      ? `${clubCount}/${maxClubs}`
-                      : `${clubCount}/Unlimited`}
-                  </span>
-                </div>
-                <Button
-                  type="button"
-                  className="h-auto w-full gap-1 py-1.5 text-sm"
-                  onClick={handleOpenAddGym}
-                >
-                  <Plus className="size-3" />
-                  {isClubLimitReached ? 'Upgrade Plan' : 'Add Club'}
-                </Button>
-              </div>
               <div className="p-2 space-y-1">
                 <DropdownMenuItem
                   onClick={() => {
@@ -388,26 +338,6 @@ export function NavUser() {
                     );
                   })}
                 </div>
-                <div className="mt-2 rounded-lg border border-white/10 bg-white/5 p-2">
-                  <div className="mb-2 flex items-center justify-between">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-primary-green-300">
-                      Club Usage
-                    </p>
-                    <span className="text-[10px] font-semibold text-white/90">
-                      {hasFiniteClubLimit
-                        ? `${clubCount}/${maxClubs}`
-                        : `${clubCount}/Unlimited`}
-                    </span>
-                  </div>
-                  <Button
-                    type="button"
-                    className="w-full rounded-lg h-auto py-1.5 text-sm gap-1"
-                    onClick={handleOpenAddGym}
-                  >
-                    <Plus className="size-3" />
-                    {isClubLimitReached ? 'Upgrade Plan' : 'Add Club'}
-                  </Button>
-                </div>
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -446,11 +376,6 @@ export function NavUser() {
           <div className="absolute top-0 left-0 w-full h-px bg-linear-to-r from-transparent via-primary-blue-200/50 to-transparent" />
         </div>
       </SidebarMenuItem>
-
-      <AddGym
-        isOpen={isAddGymSheetOpen}
-        closeSheet={() => setIsAddGymSheetOpen(false)}
-      />
     </SidebarMenu>
   );
 }
