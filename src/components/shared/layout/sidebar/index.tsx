@@ -40,6 +40,11 @@ type NavItem = {
   items?: { title: string; url: string }[];
 };
 
+type NavGroup = {
+  label: string;
+  items: NavItem[];
+};
+
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const { gymBranch } = useGymBranch();
@@ -81,78 +86,103 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
   };
 
-  const navMain: NavItem[] = [
+  const navGroups: NavGroup[] = [
     {
-      title: 'Dashboard',
-      url: '/dashboard',
-      icon: BarChart3,
+      label: 'GENERAL',
+      items: [
+        {
+          title: 'Dashboard',
+          url: '/dashboard',
+          icon: BarChart3,
+        },
+        {
+          title: 'Members',
+          url: '/members',
+          icon: Users,
+          requiredFeature: 'memberManagement',
+        },
+        getPaymentsNavItem(),
+        {
+          title: 'Attendance',
+          url: '/attendance',
+          icon: Calendar,
+          requiredFeature: 'attendanceTracking',
+        },
+      ],
     },
     {
-      title: 'Members',
-      url: '/members',
-      icon: Users,
-      requiredFeature: 'memberManagement',
-    },
-    getPaymentsNavItem(),
-    {
-      title: 'Attendance',
-      url: '/attendance',
-      icon: Calendar,
-      requiredFeature: 'attendanceTracking',
-    },
-    {
-      title: 'Staff Management',
-      url: '/staff-management',
-      icon: UserCheck,
-      requiredFeature: 'staffManagement',
-    },
-    {
-      title: 'Payroll management',
-      url: '/payroll-management',
-      icon: Wallet,
-    },
-    {
-      title: 'Plans & Workouts',
-      url: '/plans-and-workouts',
-      icon: Dumbbell,
-      requiredFeature: 'membershipManagement',
+      label: 'BUSINESS',
+      items: [
+        {
+          title: 'Lead Management',
+          url: '/lead-management',
+          icon: Goal,
+          requiredFeature: 'leadManagement',
+        },
+        {
+          title: 'Plans & Workouts',
+          url: '/plans-and-workouts',
+          icon: Dumbbell,
+          requiredFeature: 'membershipManagement',
+        },
+        {
+          title: 'Staff Management',
+          url: '/staff-management',
+          icon: UserCheck,
+          requiredFeature: 'staffManagement',
+        },
+        {
+          title: 'Payroll Management',
+          url: '/payroll-management',
+          icon: Wallet,
+        },
+      ],
     },
     {
-      title: 'Reports & expenses',
-      url: '/reports-and-expenses',
-      icon: ChartColumnIncreasing,
-      requiredFeature: 'basicReports',
+      label: 'FINANCE',
+      items: [
+        {
+          title: 'Reports & Expenses',
+          url: '/reports-and-expenses',
+          icon: ChartColumnIncreasing,
+          requiredFeature: 'basicReports',
+        },
+      ],
     },
     {
-      title: 'Lead Management',
-      url: '/lead-management',
-      icon: Goal,
-      requiredFeature: 'leadManagement',
-    },
-    {
-      title: 'Settings',
-      url: '/account-settings',
-      icon: Settings,
-    },
-    {
-      title: 'Help and Support',
-      url: '/help-and-support',
-      icon: HelpCircle,
+      label: 'SYSTEM',
+      items: [
+        {
+          title: 'Settings',
+          url: '/account-settings',
+          icon: Settings,
+        },
+        {
+          title: 'Help & Support',
+          url: '/help-and-support',
+          icon: HelpCircle,
+        },
+      ],
     },
   ];
 
-  const navItems = navMain.map((item) => ({
-    ...item,
-    isActive:
-      pathname === item.url ||
-      (item.url !== '/' && item.url !== '#' && pathname.startsWith(item.url)) ||
-      ('items' in item &&
-        item.items &&
-        item.items.some(
-          (subItem: { title: string; url: string }) =>
-            pathname === subItem.url ||
-            (subItem.url !== '/' && pathname.startsWith(subItem.url))
-        )),
+  const groupedNavItems = navGroups.map((group) => ({
+    ...group,
+    items: group.items.map((item) => ({
+      ...item,
+      isActive:
+        pathname === item.url ||
+        (item.url !== '/' &&
+          item.url !== '#' &&
+          pathname.startsWith(item.url)) ||
+        ('items' in item &&
+          item.items &&
+          item.items.some(
+            (subItem: { title: string; url: string }) =>
+              pathname === subItem.url ||
+              (subItem.url !== '/' && pathname.startsWith(subItem.url))
+          )),
+    })),
   }));
 
   return (
@@ -165,7 +195,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <TeamSwitcher />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={navItems} />
+        {groupedNavItems.map((group) => (
+          <NavMain key={group.label} label={group.label} items={group.items} />
+        ))}
       </SidebarContent>
       <SidebarSeparator />
       <SidebarFooter>
