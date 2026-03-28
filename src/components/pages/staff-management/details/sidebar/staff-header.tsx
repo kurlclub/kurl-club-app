@@ -17,6 +17,7 @@ import {
 } from '@/lib/utils';
 import { EditableSectionProps } from '@/types/staff';
 
+import { StaffCredentialsDialog } from './staff-credentials-dialog';
 import { UpdatePasswordDialog } from './update-password-dialog';
 
 export function StaffHeader({
@@ -25,7 +26,10 @@ export function StaffHeader({
   onUpdate,
 }: EditableSectionProps) {
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [showStaffCredentialsDialog, setShowStaffCredentialsDialog] =
+    useState(false);
   const isTrainer = details?.trainerId !== undefined;
+  const hasUsername = Boolean(details?.username?.trim());
   const displayId =
     details?.trainerId ??
     (details && 'staffId' in details
@@ -112,24 +116,42 @@ export function StaffHeader({
         </div>
       </div>
       <div className="space-y-3">
-        <Badge className="bg-neutral-ochre-500 flex items-center w-fit justify-center text-sm rounded-full h-[30px] py-[8.5px] px-4 border border-neutral-ochre-800 bg-opacity-10">
+        <Badge className="bg-neutral-ochre-500 flex items-center w-fit justify-center text-sm rounded-full h-7.5 py-[8.5px] px-4 border border-neutral-ochre-800 bg-opacity-10">
           Staff ID: <span className="uppercase ml-1">{displayId}</span>
         </Badge>
 
-        {isTrainer && details?.username && (
+        {(isTrainer || hasUsername) && details?.username && (
           <div className="space-y-2">
             <p className="text-xs text-primary-blue-100">Username</p>
             <p className="text-sm text-white">{details.username}</p>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setShowPasswordDialog(true)}
+              onClick={() => {
+                if (isTrainer) {
+                  setShowPasswordDialog(true);
+                } else {
+                  setShowStaffCredentialsDialog(true);
+                }
+              }}
               className="h-8 text-xs"
             >
               <Key className="h-3 w-3 mr-1" />
-              Update Password
+              {isTrainer ? 'Update Password' : 'Reset Password'}
             </Button>
           </div>
+        )}
+
+        {!isTrainer && !hasUsername && details?.id && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowStaffCredentialsDialog(true)}
+            className="h-8 text-xs"
+          >
+            <Key className="h-3 w-3 mr-1" />
+            Add Username
+          </Button>
         )}
       </div>
 
@@ -138,6 +160,17 @@ export function StaffHeader({
           open={showPasswordDialog}
           onOpenChange={setShowPasswordDialog}
           id={details.id}
+        />
+      )}
+
+      {!isTrainer && details?.id && (
+        <StaffCredentialsDialog
+          open={showStaffCredentialsDialog}
+          onOpenChange={setShowStaffCredentialsDialog}
+          id={details.id}
+          details={details}
+          currentUsername={details.username ?? null}
+          onSuccess={(username) => onUpdate('username', username)}
         />
       )}
     </>
