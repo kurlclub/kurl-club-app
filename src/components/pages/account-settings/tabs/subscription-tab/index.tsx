@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { CreditCard, Loader2 } from 'lucide-react';
+import {  Loader2 } from 'lucide-react';
 
 import { Pricing } from '@/components/pages/account-settings/tabs/subscription-tab/pricing';
 import { SubscriptionCard } from '@/components/shared/cards/subscription-card';
@@ -74,29 +74,8 @@ export function SubscriptionTab() {
         transition={{ duration: 0.5, delay: 0.2 }}
       >
         <Card className="bg-secondary-blue-500 border-secondary-blue-400">
-          <CardContent className="space-y-6">
-            <div className="p-4 bg-linear-to-r from-secondary-blue-600 to-secondary-blue-700 rounded-xl border border-secondary-blue-400">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-secondary-blue-500 rounded-lg shadow-sm">
-                    <CreditCard className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-white">
-                      •••• •••• •••• 4242
-                    </p>
-                    <p className="text-sm text-secondary-blue-200">
-                      Expires 12/2025 • Visa
-                    </p>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm" className="font-medium">
-                  Update Card
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <CardContent className="space-y-6 p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="p-4 bg-secondary-blue-600 rounded-lg">
                 <p className="font-medium text-white mb-1">Next billing date</p>
                 <p className="text-sm text-secondary-blue-200">
@@ -118,7 +97,7 @@ export function SubscriptionTab() {
                   View and download your invoices
                 </p>
               </div>
-              <Button variant="outline" size="sm">
+              <Button variant="default" size="sm">
                 View Invoices
               </Button>
             </div>

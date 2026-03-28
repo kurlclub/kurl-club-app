@@ -82,7 +82,7 @@ export function PlanDetailsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl border-secondary-blue-400 bg-secondary-blue-500 text-white">
+      <DialogContent className="max-w-2xl border-secondary-blue-400 bg-secondary-blue-500 text-white gap-1">
         <DialogHeader className="text-left">
           <DialogTitle className="text-xl">{selectedPlan.name}</DialogTitle>
           <DialogDescription className="text-secondary-blue-200">
@@ -90,7 +90,7 @@ export function PlanDetailsDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-2">
           <div className="rounded-xl border border-secondary-blue-400/70 bg-secondary-blue-700/50 p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
