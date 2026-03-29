@@ -84,7 +84,9 @@ export function PlanDetailsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl border-secondary-blue-400 bg-secondary-blue-500 text-white gap-1">
         <DialogHeader className="text-left">
-          <DialogTitle className="text-xl">{selectedPlan.name}</DialogTitle>
+          <DialogTitle className="text-xl mb-0">
+            {selectedPlan.name}
+          </DialogTitle>
           <DialogDescription className="text-secondary-blue-200">
             {selectedPlan.subtitle}
           </DialogDescription>
@@ -131,9 +133,11 @@ export function PlanDetailsDialog({
 
           {description && (
             <div className="rounded-xl border border-secondary-blue-400/70 bg-secondary-blue-700/50 p-4">
-              <p className="text-sm leading-relaxed text-secondary-blue-100">
-                {description}
-              </p>
+              <div className="max-h-20 overflow-auto">
+                <p className="text-sm leading-relaxed text-secondary-blue-100">
+                  {description}
+                </p>
+              </div>
             </div>
           )}
 
@@ -159,13 +163,15 @@ export function PlanDetailsDialog({
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-secondary-blue-200">
               Included Features
             </p>
-            <ul className="grid max-h-52 grid-cols-1 gap-2 overflow-y-auto pr-1 md:grid-cols-2">
+            <ul className="grid max-h-38 grid-cols-1 gap-2 overflow-y-auto pr-1 md:grid-cols-2">
               {selectedPlan.features.map((feature, idx) => (
                 <li
                   key={`${selectedPlan.id}-feature-${idx}`}
-                  className="flex items-start gap-2"
+                  className="flex items-center gap-2"
                 >
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary-green-400" />
+                  <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-green-500/15 ring-1 ring-primary-green-500/20">
+                    <Check className="h-2.5 w-2.5 text-primary-green-500" />
+                  </div>
                   <span className="text-xs text-secondary-blue-100">
                     {feature}
                   </span>
@@ -185,7 +191,7 @@ export function PlanDetailsDialog({
           )}
         </div>
 
-        <DialogFooter className="gap-2 sm:justify-end">
+        <DialogFooter className="gap-2 sm:justify-end mt-2">
           <Button
             variant="outline"
             className="border-secondary-blue-300/40 bg-transparent hover:bg-secondary-blue-600"
@@ -211,7 +217,7 @@ export function PlanDetailsDialog({
             ) : isPaying ? (
               <span className="inline-flex items-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Opening Razorpay...
+                Loading...
               </span>
             ) : (
               'Pay Now'

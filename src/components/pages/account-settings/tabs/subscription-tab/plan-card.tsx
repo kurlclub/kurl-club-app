@@ -41,7 +41,7 @@ const getPlainText = (value?: string) => {
     .trim();
 };
 
-export function PanCard({
+export function PlanCard({
   plan,
   index,
   billingCycle,
@@ -71,23 +71,12 @@ export function PanCard({
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
       className={cn(
-        'group relative flex h-full flex-col overflow-visible rounded-2xl border p-5 transition-all duration-300',
+        'group relative flex h-full flex-col overflow-visible rounded-lg border p-5 transition-all duration-300',
         plan.popular
           ? 'scale-[1.015] border-primary-green-400 bg-linear-to-br from-secondary-blue-500 via-secondary-blue-600 to-primary-blue-600 pt-7 shadow-[0_18px_50px_rgba(211,247,2,0.2)]'
           : 'border-secondary-blue-400 bg-linear-to-b from-secondary-blue-500 to-secondary-blue-650 hover:border-primary-green-300 hover:shadow-[0_14px_38px_rgba(0,0,0,0.35)]'
       )}
     >
-      <div className="pointer-events-none absolute inset-0">
-        <div
-          className={cn(
-            'absolute -right-12 -top-12 h-36 w-36 rounded-full blur-2xl transition-opacity duration-300',
-            plan.popular
-              ? 'bg-primary-green-500/20 opacity-100'
-              : 'bg-semantic-blue-500/20 opacity-70 group-hover:opacity-100'
-          )}
-        />
-      </div>
-
       {plan.popular && (
         <div className="absolute left-1/2 top-0 z-30 -translate-x-1/2 -translate-y-1/2">
           <span className="inline-flex items-center gap-1 rounded-full bg-linear-to-r from-primary-green-300 to-primary-green-600 px-3.5 py-1 text-xs font-bold text-secondary-blue-700 shadow-lg">
@@ -153,7 +142,7 @@ export function PanCard({
 
       <ul className="relative z-10 mb-5 space-y-2">
         {previewFeatures.map((feature, idx) => (
-          <li key={idx} className="flex items-start gap-2.5">
+          <li key={idx} className="flex items-center gap-2.5">
             <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-green-500/15 ring-1 ring-primary-green-500/20">
               <Check className="h-2.5 w-2.5 text-primary-green-500" />
             </div>

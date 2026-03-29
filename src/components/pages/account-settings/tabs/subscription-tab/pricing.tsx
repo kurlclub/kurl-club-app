@@ -6,7 +6,6 @@ import confetti from 'canvas-confetti';
 import { Star } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { PanCard } from '@/components/pages/account-settings/tabs/subscription-tab/pan-card';
 import { PlanDetailsDialog } from '@/components/pages/account-settings/tabs/subscription-tab/plan-details-dialog';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,6 +22,8 @@ import {
   createSubscriptionPaymentOrder,
   verifyAndRenewSubscription,
 } from '@/services/subscription';
+
+import { PlanCard } from './plan-card';
 
 type BillingCycle = 'monthly' | '6months' | 'yearly';
 
@@ -330,7 +331,7 @@ export function Pricing({
 
       <div className="mx-auto grid max-w-5xl grid-cols-1 gap-5 lg:grid-cols-2">
         {plans.map((plan, index) => (
-          <PanCard
+          <PlanCard
             key={plan.id}
             plan={plan}
             index={index}
