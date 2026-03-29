@@ -7,15 +7,6 @@ import { Star } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { PlanDetailsDialog } from '@/components/pages/account-settings/tabs/subscription-tab/plan-details-dialog';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import type { PricingData, PricingPlan } from '@/services/pricing';
 import {
@@ -23,6 +14,10 @@ import {
   verifyAndRenewSubscription,
 } from '@/services/subscription';
 
+import {
+  PaymentFailureDialog,
+  PaymentSuccessDialog,
+} from './payment-status-dialogs';
 import { PlanCard } from './plan-card';
 
 type BillingCycle = 'monthly' | '6months' | 'yearly';
@@ -31,13 +26,6 @@ type RazorpaySuccessResponse = {
   razorpay_payment_id: string;
   razorpay_order_id: string;
   razorpay_signature: string;
-};
-
-type PaymentResultState = {
-  open: boolean;
-  success: boolean;
-  title: string;
-  message: string;
 };
 
 type RazorpayCheckoutOptions = {
@@ -150,11 +138,15 @@ export function Pricing({
   const [selectedPlan, setSelectedPlan] = useState<PricingPlan | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
-  const [paymentResult, setPaymentResult] = useState<PaymentResultState>({
+  const [paymentSuccess, setPaymentSuccess] = useState({
     open: false,
-    success: false,
-    title: '',
-    message: '',
+    title: 'title',
+    message: 'message',
+  });
+  const [paymentFailure, setPaymentFailure] = useState({
+    open: false,
+    title: 'title',
+    message: 'message',
   });
   const switchRef = useRef<HTMLButtonElement>(null);
 
@@ -230,18 +222,25 @@ export function Pricing({
               const isSuccess =
                 verifyResponse.status?.toLowerCase() === 'success';
 
-              setPaymentResult({
-                open: true,
-                success: isSuccess,
-                title: isSuccess
-                  ? 'Subscription Updated'
-                  : 'Payment Verification Failed',
-                message:
-                  verifyResponse.message ||
-                  (isSuccess
-                    ? 'Subscription has been renewed successfully.'
-                    : 'Payment was received but verification failed.'),
-              });
+              const paymentMessage =
+                verifyResponse.message ||
+                (isSuccess
+                  ? 'Subscription has been renewed successfully.'
+                  : 'Payment was received but verification failed.');
+
+              if (isSuccess) {
+                setPaymentSuccess({
+                  open: true,
+                  title: 'Subscription Updated',
+                  message: paymentMessage,
+                });
+              } else {
+                setPaymentFailure({
+                  open: true,
+                  title: 'Payment Verification Failed',
+                  message: paymentMessage,
+                });
+              }
 
               if (isSuccess) {
                 toast.success('Payment verified and subscription updated.');
@@ -254,9 +253,8 @@ export function Pricing({
                   ? error.message
                   : 'Failed to verify payment. Please contact support.';
 
-              setPaymentResult({
+              setPaymentFailure({
                 open: true,
-                success: false,
                 title: 'Payment Verification Failed',
                 message: errorMessage,
               });
@@ -350,45 +348,29 @@ export function Pricing({
         isPaying={isPaying}
       />
 
-      <Dialog
-        open={paymentResult.open}
+      <PaymentSuccessDialog
+        open={paymentSuccess.open}
         onOpenChange={(open) =>
-          setPaymentResult((prev) => ({
+          setPaymentSuccess((prev) => ({
             ...prev,
             open,
           }))
         }
-      >
-        <DialogContent className="max-w-md border-secondary-blue-400 bg-secondary-blue-500 text-white">
-          <DialogHeader>
-            <DialogTitle
-              className={cn(
-                paymentResult.success
-                  ? 'text-primary-green-300'
-                  : 'text-red-400'
-              )}
-            >
-              {paymentResult.title}
-            </DialogTitle>
-            <DialogDescription className="text-secondary-blue-200">
-              {paymentResult.message}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              onClick={() =>
-                setPaymentResult((prev) => ({
-                  ...prev,
-                  open: false,
-                }))
-              }
-              className="bg-primary-green-400 text-primary-blue-800 hover:bg-primary-green-300"
-            >
-              OK
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        title={paymentSuccess.title}
+        message={paymentSuccess.message}
+      />
+
+      <PaymentFailureDialog
+        open={paymentFailure.open}
+        onOpenChange={(open) =>
+          setPaymentFailure((prev) => ({
+            ...prev,
+            open,
+          }))
+        }
+        title={paymentFailure.title}
+        message={paymentFailure.message}
+      />
 
       {offer?.enabled && (
         <div className="mt-5 text-center">
