@@ -1,5 +1,5 @@
 'use client';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,6 +10,8 @@ import { AttendanceStats } from '@/components/pages/dashboard/insights/attendanc
 import OutstandingPayment from '@/components/pages/dashboard/insights/outstanding-payment';
 import Payments from '@/components/pages/dashboard/insights/payments';
 import SkipperStats from '@/components/pages/dashboard/insights/skipper-stats';
+import { TrainerPortal } from '@/components/pages/trainer-portal';
+import { KTabs } from '@/components/shared/form/k-tabs';
 import { MultiStepLoader } from '@/components/shared/loaders/multi-step-loader';
 import { toUtcDateOnlyISOString } from '@/lib/utils';
 import { useAuth } from '@/providers/auth-provider';
@@ -27,9 +29,7 @@ const DashboardDateRangeSchema = z.object({
     .optional(),
 });
 
-function Dashboard() {
-  const { isLoading } = useAuth();
-
+function AdminDashboard() {
   const form = useForm<z.infer<typeof DashboardDateRangeSchema>>({
     resolver: zodResolver(DashboardDateRangeSchema),
     defaultValues: {
@@ -51,17 +51,6 @@ function Dashboard() {
       toDate: toUtcDateOnlyISOString(watchedDateRange.to),
     };
   }, [watchedDateRange]);
-
-  if (isLoading) {
-    return (
-      <MultiStepLoader
-        loadingStates={dashboardLoadingStates}
-        loading={isLoading}
-        duration={2500}
-        loop={false}
-      />
-    );
-  }
 
   return (
     <div className="p-5 md:p-8 bg-background-dark">
@@ -101,6 +90,46 @@ function Dashboard() {
           />
         </div>
       </div>
+    </div>
+  );
+}
+
+const DASHBOARD_TABS = [
+  { id: 'dashboard', label: 'Dashboard' },
+  { id: 'my-portal', label: 'Trainer Portal' },
+];
+
+function Dashboard() {
+  const { isLoading, user } = useAuth();
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const isTrainer = user?.userRole?.toLowerCase() === 'trainer';
+
+  if (isLoading) {
+    return (
+      <MultiStepLoader
+        loadingStates={dashboardLoadingStates}
+        loading={isLoading}
+        duration={2500}
+        loop={false}
+      />
+    );
+  }
+
+  if (!isTrainer) {
+    return <AdminDashboard />;
+  }
+
+  return (
+    <div className="bg-background-dark">
+      <div className="px-5 md:px-8 pt-5 md:pt-6">
+        <KTabs
+          items={DASHBOARD_TABS}
+          variant="underline"
+          value={activeTab}
+          onTabChange={setActiveTab}
+        />
+      </div>
+      {activeTab === 'dashboard' ? <AdminDashboard /> : <TrainerPortal />}
     </div>
   );
 }
