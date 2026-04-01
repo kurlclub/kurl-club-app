@@ -28,14 +28,18 @@ export default function ProfilePictureUploader({
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [tempImage, setTempImage] = useState<string | null>(null);
   const [currentFile, setCurrentFile] = useState<File | null>(null);
-  const [isImageLoading, setIsImageLoading] = useState(false);
-  const [isImageError, setIsImageError] = useState(false);
+  const [loadedImageSrc, setLoadedImageSrc] = useState<string | null>(null);
+  const [erroredImageSrc, setErroredImageSrc] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const filePreviewUrl = useMemo(
     () => (files ? URL.createObjectURL(files) : null),
     [files]
   );
   const image = filePreviewUrl || existingImageUrl || null;
+  const isImageError = Boolean(image && erroredImageSrc === image);
+  const isImageLoading = Boolean(
+    image && !isImageError && loadedImageSrc !== image
+  );
 
   useEffect(() => {
     return () => {
@@ -44,17 +48,6 @@ export default function ProfilePictureUploader({
       }
     };
   }, [filePreviewUrl]);
-
-  useEffect(() => {
-    if (!image) {
-      setIsImageLoading(false);
-      setIsImageError(false);
-      return;
-    }
-
-    setIsImageLoading(true);
-    setIsImageError(false);
-  }, [image]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -112,13 +105,18 @@ export default function ProfilePictureUploader({
           onClick={() => setPreviewModalOpen(true)}
         >
           <AvatarImage
+            key={image}
             src={image}
             alt="Profile picture"
             className={isImageLoading ? 'opacity-0' : 'opacity-100'}
-            onLoad={() => setIsImageLoading(false)}
+            onLoad={() => {
+              if (!image) return;
+              setLoadedImageSrc(image);
+              setErroredImageSrc((prev) => (prev === image ? null : prev));
+            }}
             onError={() => {
-              setIsImageLoading(false);
-              setIsImageError(true);
+              if (!image) return;
+              setErroredImageSrc(image);
             }}
           />
           {isImageLoading && (

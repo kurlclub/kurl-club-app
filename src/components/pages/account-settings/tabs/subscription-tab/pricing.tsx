@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 
 import { PlanDetailsDialog } from '@/components/pages/account-settings/tabs/subscription-tab/plan-details-dialog';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/providers/auth-provider';
 import type { PricingData, PricingPlan } from '@/services/pricing';
 import {
   createSubscriptionPaymentOrder,
@@ -134,6 +135,7 @@ export function Pricing({
   description,
   pricingData,
 }: PricingProps) {
+  const { refreshUser } = useAuth();
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('yearly');
   const [selectedPlan, setSelectedPlan] = useState<PricingPlan | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -227,6 +229,18 @@ export function Pricing({
                 (isSuccess
                   ? 'Subscription has been renewed successfully.'
                   : 'Payment was received but verification failed.');
+
+              if (isSuccess) {
+                // Sync latest subscription from backend for immediate UI updates.
+                try {
+                  await refreshUser();
+                } catch (refreshError) {
+                  console.warn(
+                    'Failed to refresh user after payment:',
+                    refreshError
+                  );
+                }
+              }
 
               if (isSuccess) {
                 setPaymentSuccess({
