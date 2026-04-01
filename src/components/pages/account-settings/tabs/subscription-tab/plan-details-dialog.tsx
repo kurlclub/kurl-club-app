@@ -14,12 +14,14 @@ import { cn } from '@/lib/utils';
 import type { PricingPlan } from '@/services/pricing';
 
 type BillingCycle = 'monthly' | '6months' | 'yearly';
+type PlanChangeType = 'same' | 'different';
 
 interface PlanDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   selectedPlan: PricingPlan | null;
   billingCycle: BillingCycle;
+  planChangeType?: PlanChangeType | null;
   onPayNow?: (plan: PricingPlan, billingCycle: BillingCycle) => Promise<void>;
   isPaying?: boolean;
 }
@@ -70,6 +72,7 @@ export function PlanDetailsDialog({
   onOpenChange,
   selectedPlan,
   billingCycle,
+  planChangeType = null,
   onPayNow,
   isPaying = false,
 }: PlanDetailsDialogProps) {
@@ -186,6 +189,27 @@ export function PlanDetailsDialog({
               <p className="text-xs leading-relaxed">
                 Free trial is already used on your first package while adding
                 gym. This plan cannot be selected again.
+              </p>
+            </div>
+          )}
+
+          {planChangeType === 'same' && !isFreePlan && (
+            <div className="flex items-start gap-2 rounded-xl border border-primary-green-500/40 bg-primary-green-500/10 p-3 text-primary-green-200">
+              <Info className="mt-0.5 h-4 w-4 shrink-0" />
+              <p className="text-xs leading-relaxed">
+                You are renewing the same plan. Your remaining time will be
+                stacked, and your current plan end date will be extended.
+              </p>
+            </div>
+          )}
+
+          {planChangeType === 'different' && !isFreePlan && (
+            <div className="flex items-start gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-amber-200">
+              <Info className="mt-0.5 h-4 w-4 shrink-0" />
+              <p className="text-xs leading-relaxed">
+                You are switching plans. Your current plan&apos;s remaining time
+                will be forfeited, and the new plan will start immediately
+                after payment.
               </p>
             </div>
           )}

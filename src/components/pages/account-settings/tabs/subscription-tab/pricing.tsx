@@ -7,6 +7,7 @@ import { Star } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { PlanDetailsDialog } from '@/components/pages/account-settings/tabs/subscription-tab/plan-details-dialog';
+import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/providers/auth-provider';
 import type { PricingData, PricingPlan } from '@/services/pricing';
@@ -136,6 +137,7 @@ export function Pricing({
   pricingData,
 }: PricingProps) {
   const { refreshUser } = useAuth();
+  const { subscription } = useSubscriptionAccess();
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('yearly');
   const [selectedPlan, setSelectedPlan] = useState<PricingPlan | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -166,6 +168,13 @@ export function Pricing({
     description ||
     offer?.description ||
     'Start with 2 months free trial • All plans include full access';
+  const currentPlanId = subscription?.plan?.id;
+  const planChangeType =
+    !!selectedPlan &&
+    typeof currentPlanId === 'number' &&
+    Number(selectedPlan.id) === currentPlanId
+      ? 'same'
+      : 'different';
 
   const handleChoosePlan = (plan: PricingPlan) => {
     setSelectedPlan(plan);
@@ -175,6 +184,8 @@ export function Pricing({
   const handlePayNow = async (plan: PricingPlan, cycle: BillingCycle) => {
     try {
       setIsPaying(true);
+      const isSamePlanRenewal =
+        typeof currentPlanId === 'number' && Number(plan.id) === currentPlanId;
 
       const orderData = await createSubscriptionPaymentOrder({
         planId: Number(plan.id),
@@ -224,11 +235,16 @@ export function Pricing({
               const isSuccess =
                 verifyResponse.status?.toLowerCase() === 'success';
 
-              const paymentMessage =
-                verifyResponse.message ||
-                (isSuccess
-                  ? 'Subscription has been renewed successfully.'
-                  : 'Payment was received but verification failed.');
+              const fallbackSuccessMessage = isSamePlanRenewal
+                ? 'Your current plan has been extended. Remaining time is stacked on your existing plan.'
+                : 'Plan switched successfully. Your new plan starts immediately, and previous remaining time is forfeited.';
+
+              const paymentMessage = isSuccess
+                ? verifyResponse.message
+                  ? `${verifyResponse.message} ${fallbackSuccessMessage}`
+                  : fallbackSuccessMessage
+                : verifyResponse.message ||
+                  'Payment was received but verification failed.';
 
               if (isSuccess) {
                 // Sync latest subscription from backend for immediate UI updates.
@@ -358,6 +374,7 @@ export function Pricing({
         onOpenChange={setIsDetailsOpen}
         selectedPlan={selectedPlan}
         billingCycle={billingCycle}
+        planChangeType={planChangeType || null}
         onPayNow={handlePayNow}
         isPaying={isPaying}
       />
