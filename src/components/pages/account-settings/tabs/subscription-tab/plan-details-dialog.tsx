@@ -208,8 +208,8 @@ export function PlanDetailsDialog({
               <Info className="mt-0.5 h-4 w-4 shrink-0" />
               <p className="text-xs leading-relaxed">
                 You are switching plans. Your current plan&apos;s remaining time
-                will be forfeited, and the new plan will start immediately
-                after payment.
+                will be forfeited, and the new plan will start immediately after
+                payment.
               </p>
             </div>
           )}
