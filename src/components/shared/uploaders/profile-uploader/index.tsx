@@ -49,6 +49,10 @@ export default function ProfilePictureUploader({
     };
   }, [filePreviewUrl]);
 
+  // Set loading state when image changes
+
+  // No effect needed: isImageLoading and isImageError are managed by AvatarImage onLoad/onError handlers below.
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
