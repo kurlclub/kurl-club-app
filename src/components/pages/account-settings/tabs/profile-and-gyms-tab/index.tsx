@@ -38,8 +38,13 @@ export function ProfileAndGymsTab() {
   );
   const clubCount = user?.clubs?.length ?? 0;
   const maxClubs = usageLimits.maxClubs;
-  const hasFiniteClubLimit = Number.isFinite(maxClubs) && maxClubs > 0;
-  const isClubLimitReached = hasFiniteClubLimit && clubCount >= maxClubs;
+  const finiteMaxClubs =
+    typeof maxClubs === 'number' && Number.isFinite(maxClubs) && maxClubs > 0
+      ? maxClubs
+      : null;
+  const hasFiniteClubLimit = finiteMaxClubs !== null;
+  const isClubLimitReached =
+    finiteMaxClubs !== null && clubCount >= finiteMaxClubs;
 
   const handleSelectGym = (gymId: number) => {
     setSelectedGymId(gymId);
@@ -84,7 +89,10 @@ export function ProfileAndGymsTab() {
             <div className="flex items-center gap-3">
               <div className="relative shrink-0">
                 <Avatar className="relative size-10 border-2 border-white/50 rounded-lg">
-                  <AvatarImage src={user?.photoURL} alt={user?.userName} />
+                  <AvatarImage
+                    src={user?.photoURL || undefined}
+                    alt={user?.userName}
+                  />
                   <AvatarFallback className="">
                     <User className="w-5 h-5 text-white/50" />
                   </AvatarFallback>
@@ -188,7 +196,7 @@ export function ProfileAndGymsTab() {
               </p>
               <p className="text-xs text-secondary-blue-200 mt-0.5">
                 {hasFiniteClubLimit
-                  ? `You are using ${clubCount} out of ${maxClubs} clubs in your current plan.`
+                  ? `You are using ${clubCount} out of ${finiteMaxClubs} clubs in your current plan.`
                   : `You currently manage ${clubCount} clubs.`}
               </p>
             </div>
