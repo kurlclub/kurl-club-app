@@ -4,10 +4,10 @@ import React from 'react';
 
 import { FeatureLockOverlay } from '@/components/shared/subscription/feature-lock-overlay';
 import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
-import { SubscriptionFeatureKey } from '@/types/subscription';
+import type { SubscriptionAccessKey } from '@/types/subscription';
 
 type FeatureAccessGuardProps = {
-  feature: SubscriptionFeatureKey;
+  feature: SubscriptionAccessKey;
   title?: string;
   message?: string;
   mode?: 'block' | 'overlay';

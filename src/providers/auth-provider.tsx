@@ -3,60 +3,28 @@
 import { useRouter } from 'next/navigation';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-import { decrypt, encrypt } from '@/lib/crypto';
 import {
-  getUserByUid,
+  APP_SESSION_STORAGE_KEY,
+  LEGACY_GYM_DETAILS_STORAGE_KEY,
+  LEGACY_USER_STORAGE_KEY,
+  resolveStoredAppSession,
+  serializeStoredAppSession,
+} from '@/lib/auth-session';
+import {
+  fetchAppSession,
   login,
   logout as logoutApi,
   switchClub as switchClubApi,
 } from '@/services/auth/auth';
-import { GymDetails } from '@/types/gym';
-
-interface AppUser {
-  userId: number;
-  userName: string;
-  userEmail: string;
-  userRole: string;
-  uid: string;
-  photoURL?: string;
-  isMultiClub: boolean;
-  subscription?: {
-    plan: {
-      id: number;
-      name: string;
-      tier: string;
-      status: 'active' | 'expired' | 'cancelled';
-    };
-    subscriptionId: number;
-    billingCycle: 'monthly' | 'sixMonths' | 'yearly';
-    startDate: string;
-    endDate: string;
-    usageLimits: {
-      maxClubs: number;
-      maxMembers: number;
-      maxTrainers: number;
-      maxStaffs: number;
-    };
-    features: Record<string, boolean | number>;
-  };
-  gyms: Array<{
-    gymId: number;
-    gymName: string;
-    gymLocation: string;
-  }>;
-  clubs: Array<{
-    gymId: number;
-    gymName: string;
-    location: string;
-    status: number;
-    gymIdentifier: string;
-    photoPath: string | null;
-  }>;
-}
+import type { AppSession, AppUser, AuthEntitlements } from '@/types/access';
+import type { GymDetails } from '@/types/gym';
+import type { SubscriptionLifecycle } from '@/types/subscription';
 
 interface AuthContextType {
   user: AppUser | null;
   gymDetails: GymDetails | null;
+  entitlements: AuthEntitlements | null;
+  subscriptionLifecycle: SubscriptionLifecycle | null;
   isLoading: boolean;
   login: (
     email: string,
@@ -70,88 +38,126 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const clearSessionStorage = () => {
+  try {
+    localStorage.removeItem(APP_SESSION_STORAGE_KEY);
+    localStorage.removeItem(LEGACY_USER_STORAGE_KEY);
+    localStorage.removeItem(LEGACY_GYM_DETAILS_STORAGE_KEY);
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+  } catch (error) {
+    console.error('Failed to clear session storage:', error);
+  }
+};
+
+const persistCurrentGymBranch = (session: AppSession | null) => {
+  if (typeof window === 'undefined') return;
+  if (session?.user?.gyms?.length) {
+    localStorage.setItem('gymBranch', JSON.stringify(session.user.gyms[0]));
+    return;
+  }
+  if (!session?.user) {
+    localStorage.removeItem('gymBranch');
+  }
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<AppUser | null>(null);
   const [gymDetails, setGymDetails] = useState<GymDetails | null>(null);
+  const [entitlements, setEntitlements] = useState<AuthEntitlements | null>(
+    null
+  );
+  const [subscriptionLifecycle, setSubscriptionLifecycle] =
+    useState<SubscriptionLifecycle | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  // Load cached user on mount
+  const persistSession = React.useCallback((session: AppSession | null) => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      if (session) {
+        localStorage.setItem(
+          APP_SESSION_STORAGE_KEY,
+          serializeStoredAppSession(session)
+        );
+        localStorage.removeItem(LEGACY_USER_STORAGE_KEY);
+        localStorage.removeItem(LEGACY_GYM_DETAILS_STORAGE_KEY);
+      } else {
+        localStorage.removeItem(APP_SESSION_STORAGE_KEY);
+        localStorage.removeItem(LEGACY_USER_STORAGE_KEY);
+        localStorage.removeItem(LEGACY_GYM_DETAILS_STORAGE_KEY);
+      }
+      persistCurrentGymBranch(session);
+    } catch (storageError) {
+      console.error('Failed to store app session:', storageError);
+    }
+  }, []);
+
+  const applySession = React.useCallback((session: AppSession | null) => {
+    setUser(session?.user ?? null);
+    setGymDetails(session?.gymDetails ?? null);
+    setEntitlements(session?.entitlements ?? null);
+    setSubscriptionLifecycle(session?.subscriptionLifecycle ?? null);
+  }, []);
+
+  const refreshSession = React.useCallback(
+    async (uid: string, currentGymId?: number) => {
+      const result = await fetchAppSession(uid, currentGymId);
+      applySession(result.session);
+      persistSession(result.session);
+      return result.session;
+    },
+    [applySession, persistSession]
+  );
+
   useEffect(() => {
-    const loadCachedUser = async () => {
+    const hydrateSession = async () => {
       try {
-        const token = localStorage.getItem('accessToken');
-        const encryptedUser = localStorage.getItem('appUser');
-        const encryptedGymDetails = localStorage.getItem('gymDetails');
+        const accessToken = localStorage.getItem('accessToken');
+        const resolvedSession = resolveStoredAppSession({
+          encryptedSession: localStorage.getItem(APP_SESSION_STORAGE_KEY),
+          encryptedLegacyUser: localStorage.getItem(LEGACY_USER_STORAGE_KEY),
+          encryptedLegacyGymDetails: localStorage.getItem(
+            LEGACY_GYM_DETAILS_STORAGE_KEY
+          ),
+        });
 
-        if (token && encryptedUser) {
-          const decryptedData = decrypt(encryptedUser);
-          if (decryptedData) {
-            const userData = JSON.parse(decryptedData) as AppUser;
-            setUser(userData);
-
-            if (encryptedGymDetails) {
-              const decryptedGymDetails = decrypt(encryptedGymDetails);
-              if (decryptedGymDetails) {
-                setGymDetails(JSON.parse(decryptedGymDetails));
-              }
-            }
-
-            if (userData.gyms?.length > 0) {
-              localStorage.setItem(
-                'gymBranch',
-                JSON.stringify(userData.gyms[0])
-              );
-            }
+        if (resolvedSession.session) {
+          applySession(resolvedSession.session);
+          if (resolvedSession.didMigrateLegacyState) {
+            persistSession(resolvedSession.session);
           }
         }
-      } catch (error) {
-        console.warn('Failed to load cached user:', error);
-        try {
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          localStorage.removeItem('appUser');
-          localStorage.removeItem('gymBranch');
-        } catch (e) {
-          console.error('Failed to clear storage:', e);
+
+        if (!accessToken) {
+          setIsLoading(false);
+          return;
         }
+
+        const uid = resolvedSession.session?.user?.uid;
+        if (!uid) {
+          clearSessionStorage();
+          applySession(null);
+          setIsLoading(false);
+          return;
+        }
+
+        const currentGymId = resolvedSession.session?.user?.gyms?.[0]?.gymId;
+        await refreshSession(uid, currentGymId);
+      } catch (error) {
+        console.warn('Failed to hydrate session:', error);
+        clearSessionStorage();
+        applySession(null);
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadCachedUser();
-  }, []);
-
-  const fetchGymDetailsInternal = async () => {
-    if (!user?.uid) return;
-
-    try {
-      const currentGymId = user.gyms?.[0]?.gymId;
-      const userResult = await getUserByUid(user.uid, currentGymId);
-      if (userResult.success && userResult.activeGymDetails) {
-        const gymDetails: GymDetails = {
-          id: userResult.activeGymDetails.gymId,
-          gymName: userResult.activeGymDetails.gymName,
-          location: userResult.activeGymDetails.location,
-          contactNumber1: userResult.activeGymDetails.contactNumber1,
-          contactNumber2: userResult.activeGymDetails.contactNumber2,
-          email: userResult.activeGymDetails.email,
-          socialLinks: userResult.activeGymDetails.socialLinks,
-          gymIdentifier: userResult.activeGymDetails.gymIdentifier,
-          gymAdminId: userResult.activeGymDetails.gymAdminId,
-          status: String(userResult.activeGymDetails.status),
-          photoPath: userResult.activeGymDetails.photoPath,
-        };
-        setGymDetails(gymDetails);
-        localStorage.setItem('gymDetails', encrypt(JSON.stringify(gymDetails)));
-      }
-    } catch (error) {
-      console.error('Failed to fetch gym details:', error);
-    }
-  };
+    void hydrateSession();
+  }, [applySession, persistSession, refreshSession]);
 
   const handleLogin = async (email: string, password: string) => {
     try {
@@ -167,12 +173,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         return { success: false, error: 'Invalid login response' };
       }
 
-      // Store tokens in both localStorage and cookies
       try {
         localStorage.setItem('accessToken', accessToken);
         localStorage.setItem('refreshToken', refreshToken);
-
-        // Set cookies for middleware
         document.cookie = `accessToken=${accessToken}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Strict`;
         document.cookie = `refreshToken=${refreshToken}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Strict`;
       } catch (storageError) {
@@ -180,51 +183,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         return { success: false, error: 'Failed to save session' };
       }
 
-      // Fetch full user details
-      const userResult = await getUserByUid(loginUser.uid);
-
-      if (!userResult.success || !userResult.data) {
+      const session = await refreshSession(loginUser.uid);
+      if (!session.user) {
         return { success: false, error: 'Failed to fetch user details' };
-      }
-
-      const fullUser: AppUser = {
-        ...userResult.data,
-        uid: loginUser.uid,
-        photoURL: loginUser.photoURL,
-        clubs: userResult.allClubs || [],
-      };
-
-      setUser(fullUser);
-
-      try {
-        localStorage.setItem('appUser', encrypt(JSON.stringify(fullUser)));
-
-        if (fullUser.gyms?.length > 0) {
-          localStorage.setItem('gymBranch', JSON.stringify(fullUser.gyms[0]));
-        }
-
-        if (userResult.activeGymDetails) {
-          const gymDetails: GymDetails = {
-            id: userResult.activeGymDetails.gymId,
-            gymName: userResult.activeGymDetails.gymName,
-            location: userResult.activeGymDetails.location,
-            contactNumber1: userResult.activeGymDetails.contactNumber1,
-            contactNumber2: userResult.activeGymDetails.contactNumber2,
-            email: userResult.activeGymDetails.email,
-            socialLinks: userResult.activeGymDetails.socialLinks,
-            gymIdentifier: userResult.activeGymDetails.gymIdentifier,
-            gymAdminId: userResult.activeGymDetails.gymAdminId,
-            status: String(userResult.activeGymDetails.status),
-            photoPath: userResult.activeGymDetails.photoPath,
-          };
-          setGymDetails(gymDetails);
-          localStorage.setItem(
-            'gymDetails',
-            encrypt(JSON.stringify(gymDetails))
-          );
-        }
-      } catch (storageError) {
-        console.error('Failed to store user data:', storageError);
       }
 
       return { success: true };
@@ -236,15 +197,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const handleLogout = () => {
     logoutApi();
-
-    // Clear cookies
     document.cookie = 'accessToken=; path=/; max-age=0';
     document.cookie = 'refreshToken=; path=/; max-age=0';
-
-    localStorage.removeItem('gymDetails');
-
-    setUser(null);
-    setGymDetails(null);
+    applySession(null);
+    localStorage.removeItem('gymBranch');
     router.push('/auth/login');
   };
 
@@ -256,7 +212,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const result = await switchClubApi(user.uid, gymId);
       if (result.success) {
-        await refreshUser();
+        await refreshSession(user.uid, gymId);
         return { success: true };
       }
       return { success: false, error: result.error };
@@ -266,54 +222,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const refreshUser = async () => {
-    if (user?.uid) {
-      const currentGymId = user.gyms?.[0]?.gymId;
-      const result = await getUserByUid(user.uid, currentGymId);
-      if (result.success && result.data) {
-        const updatedUser: AppUser = {
-          ...result.data,
-          uid: user.uid,
-          photoURL: user.photoURL,
-          clubs: result.allClubs || [],
-        };
-        setUser(updatedUser);
-        localStorage.setItem('appUser', encrypt(JSON.stringify(updatedUser)));
+  const refreshUser = React.useCallback(async () => {
+    if (!user?.uid) return;
+    const currentGymId = user.gyms?.[0]?.gymId;
+    await refreshSession(user.uid, currentGymId);
+  }, [refreshSession, user]);
 
-        if (result.activeGymDetails) {
-          const gymDetails: GymDetails = {
-            id: result.activeGymDetails.gymId,
-            gymName: result.activeGymDetails.gymName,
-            location: result.activeGymDetails.location,
-            contactNumber1: result.activeGymDetails.contactNumber1,
-            contactNumber2: result.activeGymDetails.contactNumber2,
-            email: result.activeGymDetails.email,
-            socialLinks: result.activeGymDetails.socialLinks,
-            gymIdentifier: result.activeGymDetails.gymIdentifier,
-            gymAdminId: result.activeGymDetails.gymAdminId,
-            status: String(result.activeGymDetails.status),
-            photoPath: result.activeGymDetails.photoPath,
-          };
-          setGymDetails(gymDetails);
-          localStorage.setItem(
-            'gymDetails',
-            encrypt(JSON.stringify(gymDetails))
-          );
-        }
-      }
-    }
-  };
+  const refreshGymDetails = React.useCallback(async () => {
+    if (!user?.uid) return;
+    const currentGymId = user.gyms?.[0]?.gymId;
+    await refreshSession(user.uid, currentGymId);
+  }, [refreshSession, user]);
 
   return (
     <AuthContext.Provider
       value={{
         user,
         gymDetails,
+        entitlements,
+        subscriptionLifecycle,
         isLoading,
         login: handleLogin,
         logout: handleLogout,
         refreshUser,
-        refreshGymDetails: fetchGymDetailsInternal,
+        refreshGymDetails,
         switchClub: handleSwitchClub,
       }}
     >

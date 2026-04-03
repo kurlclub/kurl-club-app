@@ -13,43 +13,60 @@ import {
   SubscriptionExpiringModal,
   UpgradePromptModal,
 } from '@/components/shared/subscription';
-import { safeFormatDate, safeParseDate } from '@/lib/utils';
-import { useAuth } from '@/providers/auth-provider';
 import {
-  DEFAULT_SUBSCRIPTION_FEATURES,
-  DEFAULT_USAGE_LIMITS,
-  SubscriptionFeatureKey,
-  SubscriptionFeatures,
-  UsageLimits,
-  UserSubscription,
+  getEnabledSubscriptionCapabilities,
+  hasPermissionAccess,
+  hasSubscriptionAccess,
+  isSubscriptionLimitExceeded,
+} from '@/lib/subscription/access-policy';
+import {
+  type SubscriptionRuntimeStatus,
+  getSubscriptionStatusState,
+  mergeCurrentSubscription,
+} from '@/lib/subscription/subscription-state';
+import { safeFormatDate } from '@/lib/utils';
+import { useAuth } from '@/providers/auth-provider';
+import type { PermissionModuleKey } from '@/types/access';
+import type {
+  CurrentSubscription,
+  SubscriptionAccessKey,
+  SubscriptionLifecycle,
+  SubscriptionLimitKey,
+  SubscriptionLimits,
+  SubscriptionPlanEntitlement,
 } from '@/types/subscription';
+import { DEFAULT_SUBSCRIPTION_LIMITS } from '@/types/subscription';
 
 type UpgradeModalState = {
   title: string;
   message: string;
 };
 
-type SubscriptionStatus = 'active' | 'expiring' | 'expired' | 'none';
-
 type SubscriptionContextValue = {
-  subscription: UserSubscription | null;
-  features: SubscriptionFeatures;
-  usageLimits: UsageLimits;
-  status: SubscriptionStatus;
+  subscription: CurrentSubscription | null;
+  subscriptionPlan: SubscriptionPlanEntitlement | null;
+  subscriptionLifecycle: SubscriptionLifecycle | null;
+  usageLimits: SubscriptionLimits;
+  enabledCapabilities: SubscriptionAccessKey[];
+  status: SubscriptionRuntimeStatus;
   daysRemaining: number | null;
   isExpired: boolean;
   isExpiring: boolean;
-  hasFeatureAccess: (feature: SubscriptionFeatureKey) => boolean;
+  hasFeatureAccess: (feature: SubscriptionAccessKey) => boolean;
   requireFeatureAccess: (
-    feature: SubscriptionFeatureKey,
+    feature: SubscriptionAccessKey,
     context?: { title?: string; message?: string }
   ) => boolean;
+  hasPermissionAccess: (
+    moduleKey: PermissionModuleKey,
+    action?: 'canView' | 'canCreate' | 'canEdit' | 'canDelete'
+  ) => boolean;
   isLimitExceeded: (
-    limitKey: keyof UsageLimits,
+    limitKey: SubscriptionLimitKey,
     currentCount: number
   ) => boolean;
   requireLimitAccess: (
-    limitKey: keyof UsageLimits,
+    limitKey: SubscriptionLimitKey,
     currentCount: number,
     context?: { title?: string; message?: string }
   ) => boolean;
@@ -62,62 +79,38 @@ const SubscriptionContext = createContext<SubscriptionContextValue | null>(
   null
 );
 
-const MS_PER_DAY = 1000 * 60 * 60 * 24;
-
-const getDaysRemaining = (endDate: Date | undefined, now: Date) => {
-  if (!endDate) return null;
-  const diff = endDate.getTime() - now.getTime();
-  return Math.ceil(diff / MS_PER_DAY);
-};
-
 export function SubscriptionProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { user, isLoading } = useAuth();
-  const subscription =
-    (user?.subscription as UserSubscription | undefined) || null;
-
-  const features = useMemo(
-    () => ({
-      ...DEFAULT_SUBSCRIPTION_FEATURES,
-      ...(subscription?.features || {}),
-    }),
-    [subscription?.features]
+  const { user, entitlements, subscriptionLifecycle, isLoading } = useAuth();
+  const subscriptionPlan = entitlements?.subscriptionPlan ?? null;
+  const subscription = useMemo(
+    () => mergeCurrentSubscription({ subscriptionPlan, subscriptionLifecycle }),
+    [subscriptionLifecycle, subscriptionPlan]
   );
+
   const usageLimits = useMemo(
-    () => ({
-      ...DEFAULT_USAGE_LIMITS,
-      ...(subscription?.usageLimits || {}),
-    }),
-    [subscription?.usageLimits]
+    () => subscriptionPlan?.limits ?? DEFAULT_SUBSCRIPTION_LIMITS,
+    [subscriptionPlan]
   );
-  const endDate = safeParseDate(subscription?.endDate);
-  const now = new Date();
-  const daysRemaining = getDaysRemaining(endDate, now);
-  const endDateLabel = safeFormatDate(subscription?.endDate, 'en-GB', 'N/A');
-
-  const isExpired =
-    !!subscription &&
-    (subscription.plan?.status === 'expired' ||
-      subscription.plan?.status === 'cancelled' ||
-      (endDate ? endDate.getTime() < now.getTime() : false));
-
-  const isExpiring =
-    !!subscription &&
-    !isExpired &&
-    typeof daysRemaining === 'number' &&
-    daysRemaining <= 7 &&
-    daysRemaining >= 0;
-
-  const status: SubscriptionStatus = subscription
-    ? isExpired
-      ? 'expired'
-      : isExpiring
-        ? 'expiring'
-        : 'active'
-    : 'none';
+  const enabledCapabilities = useMemo(
+    () => getEnabledSubscriptionCapabilities(subscriptionPlan),
+    [subscriptionPlan]
+  );
+  const { daysRemaining, isExpired, isExpiring, status } = useMemo(
+    () =>
+      getSubscriptionStatusState({
+        subscriptionLifecycle,
+      }),
+    [subscriptionLifecycle]
+  );
+  const endDateLabel = safeFormatDate(
+    subscriptionLifecycle?.endDate,
+    'en-GB',
+    'N/A'
+  );
 
   const [upgradeModal, setUpgradeModal] = useState<UpgradeModalState | null>(
     null
@@ -135,19 +128,14 @@ export function SubscriptionProvider({
   }, []);
 
   const hasFeatureAccess = useCallback(
-    (feature: SubscriptionFeatureKey) => {
-      const value = features[feature];
-      if (typeof value === 'number') {
-        return value > 0;
-      }
-      return value === true;
-    },
-    [features]
+    (feature: SubscriptionAccessKey) =>
+      hasSubscriptionAccess(subscriptionPlan, feature),
+    [subscriptionPlan]
   );
 
   const requireFeatureAccess = useCallback(
     (
-      feature: SubscriptionFeatureKey,
+      feature: SubscriptionAccessKey,
       context?: { title?: string; message?: string }
     ) => {
       if (hasFeatureAccess(feature)) return true;
@@ -163,18 +151,23 @@ export function SubscriptionProvider({
     [hasFeatureAccess, openUpgradeModal]
   );
 
+  const hasPermissionAccessForModule = useCallback(
+    (
+      moduleKey: PermissionModuleKey,
+      action: 'canView' | 'canCreate' | 'canEdit' | 'canDelete' = 'canView'
+    ) => hasPermissionAccess(entitlements, moduleKey, action),
+    [entitlements]
+  );
+
   const isLimitExceeded = useCallback(
-    (limitKey: keyof UsageLimits, currentCount: number) => {
-      const limit = usageLimits[limitKey];
-      if (!Number.isFinite(limit) || limit <= 0) return false;
-      return currentCount >= limit;
-    },
-    [usageLimits]
+    (limitKey: SubscriptionLimitKey, currentCount: number) =>
+      isSubscriptionLimitExceeded(subscriptionPlan, limitKey, currentCount),
+    [subscriptionPlan]
   );
 
   const requireLimitAccess = useCallback(
     (
-      limitKey: keyof UsageLimits,
+      limitKey: SubscriptionLimitKey,
       currentCount: number,
       context?: { title?: string; message?: string }
     ) => {
@@ -198,7 +191,9 @@ export function SubscriptionProvider({
   const expiringTodayKey = new Date().toISOString().slice(0, 10);
 
   const hasShownExpiringToday = useMemo(() => {
-    if (isLoading || !isExpiring || !subscription?.subscriptionId) return true;
+    if (isLoading || !isExpiring || !subscriptionLifecycle?.subscriptionId) {
+      return true;
+    }
     if (typeof window === 'undefined') return true;
     try {
       return localStorage.getItem(expiringStorageKey) === expiringTodayKey;
@@ -210,13 +205,13 @@ export function SubscriptionProvider({
     expiringTodayKey,
     isExpiring,
     isLoading,
-    subscription?.subscriptionId,
+    subscriptionLifecycle?.subscriptionId,
   ]);
 
   const expiringModalOpen =
     !isLoading &&
     isExpiring &&
-    !!subscription?.subscriptionId &&
+    !!subscriptionLifecycle?.subscriptionId &&
     !hasShownExpiringToday &&
     dismissedExpiringKey !== expiringTodayKey;
 
@@ -247,14 +242,17 @@ export function SubscriptionProvider({
   const contextValue = useMemo<SubscriptionContextValue>(
     () => ({
       subscription,
-      features,
+      subscriptionPlan,
+      subscriptionLifecycle,
       usageLimits,
+      enabledCapabilities,
       status,
       daysRemaining,
       isExpired,
       isExpiring,
       hasFeatureAccess,
       requireFeatureAccess,
+      hasPermissionAccess: hasPermissionAccessForModule,
       isLimitExceeded,
       requireLimitAccess,
       openUpgradeModal,
@@ -262,20 +260,23 @@ export function SubscriptionProvider({
       endDateLabel,
     }),
     [
-      subscription,
-      features,
-      usageLimits,
-      status,
+      closeUpgradeModal,
       daysRemaining,
+      enabledCapabilities,
+      endDateLabel,
+      hasFeatureAccess,
+      hasPermissionAccessForModule,
       isExpired,
       isExpiring,
-      hasFeatureAccess,
-      requireFeatureAccess,
       isLimitExceeded,
-      requireLimitAccess,
       openUpgradeModal,
-      closeUpgradeModal,
-      endDateLabel,
+      requireFeatureAccess,
+      requireLimitAccess,
+      status,
+      subscription,
+      subscriptionLifecycle,
+      subscriptionPlan,
+      usageLimits,
     ]
   );
 
@@ -294,7 +295,7 @@ export function SubscriptionProvider({
       <SubscriptionExpiringModal
         open={expiringModalOpen}
         onOpenChange={handleExpiringModalChange}
-        planName={subscription?.plan?.name}
+        planName={subscription?.name}
         endDateLabel={endDateLabel}
         daysRemaining={daysRemaining}
       />
