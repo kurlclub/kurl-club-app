@@ -87,6 +87,17 @@ export const deleteProgressLog = async (logId: number): Promise<void> => {
   await api.delete(`/ProgressLog/${logId}`);
 };
 
+const invalidateProgressQueries = async (
+  queryClient: ReturnType<typeof useQueryClient>,
+  memberId: number | string
+) => {
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: ['progressLogs', memberId] }),
+    queryClient.invalidateQueries({ queryKey: ['trainerTodayLogs'] }),
+    queryClient.invalidateQueries({ queryKey: ['trainerActivity'] }),
+  ]);
+};
+
 // ----------------------------------------------------------------------------
 // REACT QUERY HOOKS — MUTATIONS
 // ----------------------------------------------------------------------------
@@ -96,9 +107,9 @@ export const useCreateProgressLog = (memberId: number | string) => {
 
   return useMutation({
     mutationFn: createProgressLog,
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success('Progress log added');
-      queryClient.invalidateQueries({ queryKey: ['progressLogs', memberId] });
+      await invalidateProgressQueries(queryClient, memberId);
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to add progress log');
@@ -117,9 +128,9 @@ export const useUpdateProgressLog = (memberId: number | string) => {
       logId: number;
       data: Omit<UpdateProgressLogPayload, 'logId'>;
     }) => updateProgressLog(logId, data),
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success('Progress log updated');
-      queryClient.invalidateQueries({ queryKey: ['progressLogs', memberId] });
+      await invalidateProgressQueries(queryClient, memberId);
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to update progress log');
@@ -132,9 +143,9 @@ export const useDeleteProgressLog = (memberId: number | string) => {
 
   return useMutation({
     mutationFn: deleteProgressLog,
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success('Progress log deleted');
-      queryClient.invalidateQueries({ queryKey: ['progressLogs', memberId] });
+      await invalidateProgressQueries(queryClient, memberId);
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to delete progress log');

@@ -4,11 +4,6 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 import { ClipboardList, Users } from 'lucide-react';
-// ---------------------------------------------------------------------------
-// Inline recent activity feed (reuses Phase 2 service, avoids extra file)
-// ---------------------------------------------------------------------------
-
-import { ClipboardList as CLIcon } from 'lucide-react';
 
 import { ProgressLogForm } from '@/components/pages/members/details/progress/progress-log-form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -78,7 +73,6 @@ export function TrainerPortal() {
   return (
     <>
       <div className="p-5 md:p-8 bg-background-dark space-y-6">
-        {/* Greeting Header */}
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-2xl font-normal text-white leading-snug">
@@ -94,24 +88,18 @@ export function TrainerPortal() {
           </div>
         </div>
 
-        {/* Stats Bar */}
         <TrainerStatsBar trainerId={trainerId} />
 
-        {/* Two-column grid: Pending Today + Recent Activity feed */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Pending Today */}
           <PendingTodayCard
             allMembers={allMembers}
             loggedMemberIds={loggedMemberIds}
             isLoading={isLoading}
             onQuickLog={handleQuickLog}
           />
-
-          {/* Recent Activity Feed — compact timeline */}
           <RecentActivityFeed trainerId={trainerId} />
         </div>
 
-        {/* My Members Table */}
         <div>
           <div className="flex items-center gap-2 mb-3">
             <ClipboardList className="w-4 h-4 text-primary-blue-200" />
@@ -126,7 +114,6 @@ export function TrainerPortal() {
         </div>
       </div>
 
-      {/* Quick-log form sheet — rendered once, memberId swaps */}
       {activeMemberId !== null && (
         <ProgressLogForm
           open={isOpen}
@@ -146,7 +133,7 @@ function RecentActivityFeed({ trainerId }: { trainerId: number | string }) {
     <Card className="border-none bg-secondary-blue-500 rounded-lg h-fit">
       <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between">
         <CardTitle className="text-sm font-normal text-white flex items-center gap-2">
-          <CLIcon className="w-4 h-4 text-primary-blue-200" />
+          <ClipboardList className="w-4 h-4 text-primary-blue-200" />
           Recent activity
         </CardTitle>
         {!isLoading && recent.length > 0 && (
@@ -184,7 +171,7 @@ function RecentActivityFeed({ trainerId }: { trainerId: number | string }) {
                     Progress logged
                   </p>
                 </div>
-                <span className="text-[10px] text-primary-blue-200 flex-shrink-0">
+                <span className="text-[10px] text-primary-blue-200 shrink-0">
                   {formatDateTime(log.activityDate, 'date')}
                 </span>
               </div>

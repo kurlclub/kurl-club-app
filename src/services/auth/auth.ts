@@ -191,7 +191,7 @@ export const login = async (credentials: LoginRequest) => {
 export const googleLogin = async (idToken: string) => {
   try {
     const response = await api.post<LoginResponse>(
-      '/auth/google-login',
+      '/Auth/google-login',
       { idToken },
       { skipAuth: true }
     );

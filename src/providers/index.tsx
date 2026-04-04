@@ -11,27 +11,37 @@ import { SubscriptionProvider } from '@/providers/subscription-provider';
 import { ThemeProvider } from '@/providers/theme-provider';
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+  const appTree = (
+    <QueryProvider>
+      <AuthProvider>
+        <SubscriptionProvider>
+          <GymBranchProvider>
+            <DialogProvider>
+              <ThemeProvider
+                attribute="class"
+                defaultTheme="dark"
+                enableSystem
+                disableTransitionOnChange
+              >
+                <Toaster richColors position="top-right" />
+                {children}
+              </ThemeProvider>
+            </DialogProvider>
+          </GymBranchProvider>
+        </SubscriptionProvider>
+      </AuthProvider>
+    </QueryProvider>
+  );
+
+  if (!googleClientId) {
+    return appTree;
+  }
+
   return (
-    <GoogleOAuthProvider clientId="163293700424-iri3mrus6a48fb27ln14adfqoe6aiclq.apps.googleusercontent.com">
-      <QueryProvider>
-        <AuthProvider>
-          <SubscriptionProvider>
-            <GymBranchProvider>
-              <DialogProvider>
-                <ThemeProvider
-                  attribute="class"
-                  defaultTheme="dark"
-                  enableSystem
-                  disableTransitionOnChange
-                >
-                  <Toaster richColors position="top-right" />
-                  {children}
-                </ThemeProvider>
-              </DialogProvider>
-            </GymBranchProvider>
-          </SubscriptionProvider>
-        </AuthProvider>
-      </QueryProvider>
+    <GoogleOAuthProvider clientId={googleClientId}>
+      {appTree}
     </GoogleOAuthProvider>
   );
 }

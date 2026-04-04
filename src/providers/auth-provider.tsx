@@ -4,7 +4,14 @@ import { useRouter } from 'next/navigation';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 import {
-  getUserByUid,
+  APP_SESSION_STORAGE_KEY,
+  LEGACY_GYM_DETAILS_STORAGE_KEY,
+  LEGACY_USER_STORAGE_KEY,
+  resolveStoredAppSession,
+  serializeStoredAppSession,
+} from '@/lib/auth-session';
+import {
+  fetchAppSession,
   googleLogin,
   login,
   logout as logoutApi,
@@ -209,7 +216,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       try {
         localStorage.setItem('accessToken', accessToken);
         localStorage.setItem('refreshToken', refreshToken);
-
         document.cookie = `accessToken=${accessToken}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Strict`;
         document.cookie = `refreshToken=${refreshToken}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Strict`;
       } catch (storageError) {
@@ -217,50 +223,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         return { success: false, error: 'Failed to save session' };
       }
 
-      const userResult = await getUserByUid(loginUser.uid);
-
-      if (!userResult.success || !userResult.data) {
+      const session = await refreshSession(loginUser.uid);
+      if (!session.user) {
         return { success: false, error: 'Failed to fetch user details' };
-      }
-
-      const fullUser: AppUser = {
-        ...userResult.data,
-        uid: loginUser.uid,
-        photoURL: loginUser.photoURL,
-        clubs: userResult.allClubs || [],
-      };
-
-      setUser(fullUser);
-
-      try {
-        localStorage.setItem('appUser', encrypt(JSON.stringify(fullUser)));
-
-        if (fullUser.gyms?.length > 0) {
-          localStorage.setItem('gymBranch', JSON.stringify(fullUser.gyms[0]));
-        }
-
-        if (userResult.activeGymDetails) {
-          const gymDetails: GymDetails = {
-            id: userResult.activeGymDetails.gymId,
-            gymName: userResult.activeGymDetails.gymName,
-            location: userResult.activeGymDetails.location,
-            contactNumber1: userResult.activeGymDetails.contactNumber1,
-            contactNumber2: userResult.activeGymDetails.contactNumber2,
-            email: userResult.activeGymDetails.email,
-            socialLinks: userResult.activeGymDetails.socialLinks,
-            gymIdentifier: userResult.activeGymDetails.gymIdentifier,
-            gymAdminId: userResult.activeGymDetails.gymAdminId,
-            status: String(userResult.activeGymDetails.status),
-            photoPath: userResult.activeGymDetails.photoPath,
-          };
-          setGymDetails(gymDetails);
-          localStorage.setItem(
-            'gymDetails',
-            encrypt(JSON.stringify(gymDetails))
-          );
-        }
-      } catch (storageError) {
-        console.error('Failed to store user data:', storageError);
       }
 
       return { success: true };

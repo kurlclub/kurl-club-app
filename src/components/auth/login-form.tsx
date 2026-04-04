@@ -49,6 +49,9 @@ export function LoginForm() {
   const [isPending, startTransition] = useTransition();
   const { login, loginWithGoogle } = useAuth();
   const router = useRouter();
+  const isGoogleLoginEnabled = Boolean(
+    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
+  );
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -72,12 +75,14 @@ export function LoginForm() {
   };
 
   const onGoogleSuccess = (credentialResponse: { credential?: string }) => {
-    if (!credentialResponse.credential) {
+    const credential = credentialResponse.credential;
+    if (!credential) {
       toast.error('Google login failed: no credential received');
       return;
     }
+
     startTransition(async () => {
-      const result = await loginWithGoogle(credentialResponse.credential!);
+      const result = await loginWithGoogle(credential);
       if (result.success) {
         toast.success('Login successful!');
         router.push('/dashboard');
@@ -131,31 +136,33 @@ export function LoginForm() {
           <Button
             type="submit"
             disabled={isPending}
-            className="px-3 py-4 h-[46px]"
+            className="px-3 py-4 h-11.5"
           >
             {isPending ? 'Logging in...' : 'Login'}
           </Button>
-          <div className="relative my-4 flex items-center">
-            <div className="flex-1 border-t border-muted" />
-            <span className="mx-3 text-xs text-muted-foreground">or</span>
-            <div className="flex-1 border-t border-muted" />
-          </div>
-          <div className="group relative w-full overflow-hidden rounded-xl">
-            {/* Styled visual button — pointer-events-none so the iframe overlay captures clicks */}
-            <div className="pointer-events-none flex w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-[13px] text-sm font-medium text-white/90 transition-colors group-hover:border-white/20 group-hover:bg-white/10 group-active:bg-white/15">
-              <GoogleColorIcon />
-              Continue with Google
-            </div>
-            {/* Transparent Google iframe — sits on top and captures all click events */}
-            <div className="absolute inset-0 overflow-hidden opacity-0 [&>div]:h-full [&>div>div]:h-full [&_iframe]:h-full">
-              <GoogleLogin
-                onSuccess={onGoogleSuccess}
-                onError={() => toast.error('Google login failed')}
-                useOneTap={false}
-                width="99999"
-              />
-            </div>
-          </div>
+          {isGoogleLoginEnabled && (
+            <>
+              <div className="relative my-4 flex items-center">
+                <div className="flex-1 border-t border-muted" />
+                <span className="mx-3 text-xs text-muted-foreground">or</span>
+                <div className="flex-1 border-t border-muted" />
+              </div>
+              <div className="group relative w-full overflow-hidden rounded-xl">
+                <div className="pointer-events-none flex w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3.25 text-sm font-medium text-white/90 transition-colors group-hover:border-white/20 group-hover:bg-white/10 group-active:bg-white/15">
+                  <GoogleColorIcon />
+                  Continue with Google
+                </div>
+                <div className="absolute inset-0 overflow-hidden opacity-0 [&>div]:h-full [&>div>div]:h-full [&_iframe]:h-full">
+                  <GoogleLogin
+                    onSuccess={onGoogleSuccess}
+                    onError={() => toast.error('Google login failed')}
+                    useOneTap={false}
+                    width="99999"
+                  />
+                </div>
+              </div>
+            </>
+          )}
         </form>
       </Form>
     </AuthWrapper>

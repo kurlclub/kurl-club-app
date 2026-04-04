@@ -168,7 +168,7 @@ export function Pricing({
     description ||
     offer?.description ||
     'Start with 2 months free trial • All plans include full access';
-  const currentPlanId = subscription?.plan?.id;
+  const currentPlanId = subscription?.id;
   const planChangeType =
     !!selectedPlan &&
     typeof currentPlanId === 'number' &&

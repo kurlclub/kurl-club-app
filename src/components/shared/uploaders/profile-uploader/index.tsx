@@ -28,18 +28,12 @@ export default function ProfilePictureUploader({
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [tempImage, setTempImage] = useState<string | null>(null);
   const [currentFile, setCurrentFile] = useState<File | null>(null);
-  const [loadedImageSrc, setLoadedImageSrc] = useState<string | null>(null);
-  const [erroredImageSrc, setErroredImageSrc] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const filePreviewUrl = useMemo(
     () => (files ? URL.createObjectURL(files) : null),
     [files]
   );
   const image = filePreviewUrl || existingImageUrl || null;
-  const isImageError = Boolean(image && erroredImageSrc === image);
-  const isImageLoading = Boolean(
-    image && !isImageError && loadedImageSrc !== image
-  );
 
   useEffect(() => {
     return () => {
@@ -48,10 +42,6 @@ export default function ProfilePictureUploader({
       }
     };
   }, [filePreviewUrl]);
-
-  // Set loading state when image changes
-
-  // No effect needed: isImageLoading and isImageError are managed by AvatarImage onLoad/onError handlers below.
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -109,35 +99,7 @@ export default function ProfilePictureUploader({
           image={image}
           isSmall={isSmall}
           onClick={() => setPreviewModalOpen(true)}
-        >
-          <AvatarImage
-            key={image}
-            src={image}
-            alt="Profile picture"
-            className={isImageLoading ? 'opacity-0' : 'opacity-100'}
-            onLoad={() => {
-              if (!image) return;
-              setLoadedImageSrc(image);
-              setErroredImageSrc((prev) => (prev === image ? null : prev));
-            }}
-            onError={() => {
-              if (!image) return;
-              setErroredImageSrc(image);
-            }}
-          />
-          {isImageLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-secondary-blue-500/70">
-              <Loader2 className="h-5 w-5 animate-spin text-white/80" />
-            </div>
-          )}
-          <AvatarFallback>
-            {isImageError ? (
-              <User className="w-16 h-16" />
-            ) : (
-              <Loader2 className="h-5 w-5 animate-spin text-white/80" />
-            )}
-          </AvatarFallback>
-        </Avatar>
+        />
       ) : (
         <Button
           variant="outline"
