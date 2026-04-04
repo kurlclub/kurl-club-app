@@ -6,7 +6,10 @@ export const suppressGoogleOneTapOnce = () => {
   try {
     window.sessionStorage.setItem(GOOGLE_ONE_TAP_SUPPRESSION_KEY, '1');
   } catch (error) {
-    console.warn('Failed to suppress Google One Tap for the next visit:', error);
+    console.warn(
+      'Failed to suppress Google One Tap for the next visit:',
+      error
+    );
   }
 };
 
@@ -14,7 +17,9 @@ export const isGoogleOneTapSuppressed = () => {
   if (typeof window === 'undefined') return false;
 
   try {
-    return window.sessionStorage.getItem(GOOGLE_ONE_TAP_SUPPRESSION_KEY) === '1';
+    return (
+      window.sessionStorage.getItem(GOOGLE_ONE_TAP_SUPPRESSION_KEY) === '1'
+    );
   } catch (error) {
     console.warn('Failed to read Google One Tap suppression state:', error);
     return false;

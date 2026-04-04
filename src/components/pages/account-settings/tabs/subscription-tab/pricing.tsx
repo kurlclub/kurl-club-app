@@ -6,11 +6,11 @@ import confetti from 'canvas-confetti';
 import { Star } from 'lucide-react';
 
 import { PlanDetailsDialog } from '@/components/pages/account-settings/tabs/subscription-tab/plan-details-dialog';
+import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
 import {
   type SubscriptionBillingCycle,
   useSubscriptionPayment,
 } from '@/hooks/use-subscription-payment';
-import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/providers/auth-provider';
 import type { PricingData, PricingPlan } from '@/services/pricing';
@@ -204,8 +204,6 @@ export function Pricing({
         onOpenChange={(open) => {
           if (!open) closePaymentSuccess();
         }}
-        title={paymentSuccess.title}
-        message={paymentSuccess.message}
       />
 
       <PaymentFailureDialog
@@ -213,8 +211,6 @@ export function Pricing({
         onOpenChange={(open) => {
           if (!open) closePaymentFailure();
         }}
-        title={paymentFailure.title}
-        message={paymentFailure.message}
       />
 
       {offer?.enabled && (
