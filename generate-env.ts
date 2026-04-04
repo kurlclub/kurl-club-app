@@ -8,10 +8,15 @@ interface EnvVariables {
 
 const envVariables: EnvVariables = {
   common: {
-    NEXT_PUBLIC_BASE_URL: 'http://localhost:3000',
+    NEXT_PUBLIC_API_BASE_URL: 'https://devapi.kurlclub.com/api',
+    NEXT_PUBLIC_GOOGLE_CLIENT_ID:
+      '163293700424-iri3mrus6a48fb27ln14adfqoe6aiclq.apps.googleusercontent.com',
+    NEXT_PUBLIC_ENABLE_LOCALHOST_FEDCM: 'false',
   },
   sensitive: {
-    AUTH_SECRET: '',
+    GEMINI_API_KEY: '',
+    NPM_FLAGS: '--legacy-peer-deps',
+    NPM_TOKEN: '',
   },
 };
 

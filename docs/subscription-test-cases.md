@@ -82,12 +82,36 @@ Scope: Web subscription access control, limits, and lifecycle UX.
     Steps: Open Subscription tab with `/SubscriptionPlan` returning features and limits.
     Expected: Pricing cards display normalized pricing and feature list.
 
+17. Razorpay checkout script reuse.
+    Steps: Open Subscription tab, start payment, cancel, then start payment again.
+    Expected: Checkout opens again without duplicate script issues or app errors.
+
+18. Same plan renewal messaging.
+    Steps: Pick the currently active plan and complete payment successfully.
+    Expected: Success dialog says the current plan is extended and remaining time is stacked.
+
+19. Different plan switch messaging.
+    Steps: Pick a different plan and complete payment successfully.
+    Expected: Success dialog says the new plan starts immediately and previous remaining time is forfeited.
+
+20. Checkout cancellation.
+    Steps: Open Razorpay and dismiss it before paying.
+    Expected: Cancellation toast appears, no success dialog, no failure dialog, no subscription refresh.
+
+21. Checkout failure event.
+    Steps: Force a Razorpay-side payment failure.
+    Expected: Failure dialog appears with a meaningful error message and no subscription refresh.
+
+22. Verification failure after successful checkout.
+    Steps: Force `/SubscriptionPayment/verify-and-renew` to fail after Razorpay success.
+    Expected: Failure dialog appears and subscription state stays unchanged.
+
 ## Regression Checks
 
-17. Reports API errors.
+23. Reports API errors.
     Steps: Force a reports API error (non-subscription error).
     Expected: Standard error state shows, no upgrade prompt.
 
-18. Auth persistence.
+24. Auth persistence.
     Steps: Login, refresh page, verify subscription gating still works.
     Expected: Subscription data persists and gating is consistent across reloads.

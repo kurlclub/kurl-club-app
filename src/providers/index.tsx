@@ -1,5 +1,6 @@
 'use client';
 
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { Toaster } from 'sonner';
 
 import { AuthProvider } from '@/providers/auth-provider';
@@ -10,7 +11,9 @@ import { SubscriptionProvider } from '@/providers/subscription-provider';
 import { ThemeProvider } from '@/providers/theme-provider';
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
-  return (
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+  const appTree = (
     <QueryProvider>
       <AuthProvider>
         <SubscriptionProvider>
@@ -30,5 +33,15 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         </SubscriptionProvider>
       </AuthProvider>
     </QueryProvider>
+  );
+
+  if (!googleClientId) {
+    return appTree;
+  }
+
+  return (
+    <GoogleOAuthProvider clientId={googleClientId}>
+      {appTree}
+    </GoogleOAuthProvider>
   );
 }

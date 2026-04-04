@@ -3,6 +3,8 @@
 import { useRouter } from 'next/navigation';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
+import { googleLogout } from '@react-oauth/google';
+
 import {
   APP_SESSION_STORAGE_KEY,
   LEGACY_GYM_DETAILS_STORAGE_KEY,
@@ -10,8 +12,10 @@ import {
   resolveStoredAppSession,
   serializeStoredAppSession,
 } from '@/lib/auth-session';
+import { suppressGoogleOneTapOnce } from '@/lib/google-one-tap';
 import {
   fetchAppSession,
+  googleLogin,
   login,
   logout as logoutApi,
   switchClub as switchClubApi,
@@ -29,6 +33,9 @@ interface AuthContextType {
   login: (
     email: string,
     password: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  loginWithGoogle: (
+    idToken: string
   ) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   refreshUser: () => Promise<void>;
@@ -195,7 +202,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  const handleGoogleLogin = async (idToken: string) => {
+    try {
+      const result = await googleLogin(idToken);
+
+      if (!result.success || !result.data) {
+        return { success: false, error: result.error || 'Google login failed' };
+      }
+
+      const { accessToken, refreshToken, user: loginUser } = result.data;
+
+      if (!accessToken || !refreshToken || !loginUser?.uid) {
+        return { success: false, error: 'Invalid login response' };
+      }
+
+      try {
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+        document.cookie = `accessToken=${accessToken}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Strict`;
+        document.cookie = `refreshToken=${refreshToken}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Strict`;
+      } catch (storageError) {
+        console.error('Failed to store tokens:', storageError);
+        return { success: false, error: 'Failed to save session' };
+      }
+
+      const session = await refreshSession(loginUser.uid);
+      if (!session.user) {
+        return { success: false, error: 'Failed to fetch user details' };
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('Google login error:', error);
+      return { success: false, error: 'An unexpected error occurred' };
+    }
+  };
+
   const handleLogout = () => {
+    suppressGoogleOneTapOnce();
+    googleLogout();
     logoutApi();
     document.cookie = 'accessToken=; path=/; max-age=0';
     document.cookie = 'refreshToken=; path=/; max-age=0';
@@ -243,6 +288,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         subscriptionLifecycle,
         isLoading,
         login: handleLogin,
+        loginWithGoogle: handleGoogleLogin,
         logout: handleLogout,
         refreshUser,
         refreshGymDetails,
