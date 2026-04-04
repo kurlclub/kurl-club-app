@@ -1,75 +1,135 @@
 export type SubscriptionPlanStatus = 'active' | 'expired' | 'cancelled';
 export type BillingCycle = 'monthly' | 'sixMonths' | 'yearly';
 
-export type SubscriptionFeatures = {
-  emailNotifications: boolean;
-  whatsAppNotifications: boolean;
-  manualAttendance: boolean;
-  liveAttendance: boolean;
-  doorAccessAttendance: boolean;
-  devicesPerUserLimit: number;
-  staffLoginLimit: number;
-  trainerLoginLimit: number;
+export interface SubscriptionLimits {
+  maxClubs: number | null;
+  maxMembers: number | null;
+  maxTrainers: number | null;
+  maxStaffs: number | null;
+  maxMembershipPlans: number | null;
+  maxWorkoutPlans: number | null;
+  maxLeadsPerMonth: number | null;
+}
+
+export interface SubscriptionStudioDashboardFeatures {
+  enabled: boolean;
+  paymentInsights: boolean;
+  skipperStats: boolean;
+  attendanceStats: boolean;
+}
+
+export interface SubscriptionAttendanceFeatures {
+  manual: boolean;
+  automatic: boolean;
+  memberInsights: boolean;
+  deviceManagement: boolean;
+}
+
+export interface SubscriptionProgramsFeatures {
+  membershipPlans: boolean;
+  workoutPlans: boolean;
+}
+
+export interface SubscriptionStaffManagementFeatures {
+  activityTracking: boolean;
+  staffLogin: boolean;
+}
+
+export interface SubscriptionExpensesFeatures {
+  reportsDashboard: boolean;
+  expenseManagement: boolean;
+}
+
+export interface SubscriptionHelpAndSupportFeatures {
+  ticketingPortal: boolean;
+  whatsApp: boolean;
+  email: boolean;
+  call: boolean;
+}
+
+export interface SubscriptionWhatsAppNotificationFeatures {
+  paymentReminders: boolean;
+  membershipExpiry: boolean;
+  lowAttendance: boolean;
+  specialDays: boolean;
+}
+
+export interface SubscriptionInvoiceFeatures {
+  customTemplates: boolean;
+}
+
+export interface SubscriptionNotificationFeatures {
+  realtime: boolean;
+  whatsApp: boolean;
+  email: boolean;
+  push: boolean;
+}
+
+export interface SubscriptionPlanFeatures {
+  studioDashboard: SubscriptionStudioDashboardFeatures;
   memberManagement: boolean;
-  trainerManagement: boolean;
-  staffManagement: boolean;
-  membershipManagement: boolean;
-  paymentTracking: boolean;
-  memberPortal: boolean;
-  qrCodeCheckIn: boolean;
-  basicDashboard: boolean;
-  invoiceGeneration: boolean;
-  expenseTracker: boolean;
-  leadManagement: boolean;
-  attendanceTracking: boolean;
-  offersDiscounts: boolean;
-  roleBasedAccess: boolean;
-  trainerPortal: boolean;
-  ptCollections: boolean;
-  commissionTracking: boolean;
-  basicReports: boolean;
-  revenueAnalytics: boolean;
-  advancedAnalytics: boolean;
-  exportToExcel: boolean;
-  customReports: boolean;
-  emailSupport: boolean;
-  chatSupport: boolean;
-  phoneSupport: boolean;
-  prioritySupport: boolean;
-  prioritySupport24x7: boolean;
-  reportsAnalytics: boolean;
-  classScheduling: boolean;
-  mobileAppAccess: boolean;
-  customBranding: boolean;
-  realTimeNotifications: boolean;
-  paymentRecording: boolean;
-};
+  paymentManagement: boolean;
+  attendance: SubscriptionAttendanceFeatures;
+  leadsManagement: boolean;
+  programs: SubscriptionProgramsFeatures;
+  staffManagement: SubscriptionStaffManagementFeatures;
+  payrollManagement: boolean;
+  expenses: SubscriptionExpensesFeatures;
+  helpAndSupport: SubscriptionHelpAndSupportFeatures;
+  whatsAppNotifications: SubscriptionWhatsAppNotificationFeatures;
+  invoice: SubscriptionInvoiceFeatures;
+  notifications: SubscriptionNotificationFeatures;
+}
 
-export type SubscriptionFeatureKey = keyof SubscriptionFeatures;
-
-export type UsageLimits = {
-  maxClubs: number;
-  maxMembers: number;
-  maxTrainers: number;
-  maxStaffs: number;
-};
-
-export type SubscriptionPlanInfo = {
+export interface SubscriptionPlanEntitlement {
   id: number;
   name: string;
-  tier: string;
-  status: SubscriptionPlanStatus;
-};
+  subtitle: string;
+  description: string;
+  monthlyPrice: number;
+  sixMonthsPrice: number;
+  yearlyPrice: number;
+  badge?: string | null;
+  subscriptionDate?: string | null;
+  limits: SubscriptionLimits;
+  features: SubscriptionPlanFeatures;
+}
 
-export type UserSubscription = {
-  plan: SubscriptionPlanInfo;
+export interface SubscriptionLifecycle {
   subscriptionId: number;
   billingCycle: BillingCycle;
   startDate: string;
   endDate: string;
-  usageLimits: UsageLimits;
-  features: SubscriptionFeatures;
-};
+  status: SubscriptionPlanStatus;
+}
+
+export interface CurrentSubscription
+  extends SubscriptionPlanEntitlement, SubscriptionLifecycle {}
+
+export type SubscriptionAccessKey =
+  | 'memberManagement'
+  | 'paymentTracking'
+  | 'attendanceTracking'
+  | 'manualAttendance'
+  | 'liveAttendance'
+  | 'staffManagement'
+  | 'membershipManagement'
+  | 'basicReports'
+  | 'leadManagement'
+  | 'emailSupport'
+  | 'chatSupport'
+  | 'phoneSupport'
+  | 'reportsAnalytics'
+  | 'realTimeNotifications'
+  | 'whatsAppNotifications';
+
+// Compatibility alias while the app migrates away from the old flat feature vocabulary.
+export type SubscriptionFeatureKey = SubscriptionAccessKey;
+
+export type SubscriptionLimitKey = keyof SubscriptionLimits;
+export type UsageLimits = SubscriptionLimits;
+
+export type SubscriptionCatalogFeatures = Record<string, boolean | number>;
 
 export type SubscriptionCatalogPlan = {
   id: number;
@@ -81,59 +141,75 @@ export type SubscriptionCatalogPlan = {
   yearlyPrice: number;
   isPopular?: boolean;
   badge?: string;
-  limits: UsageLimits;
-  features: SubscriptionFeatures;
+  limits: {
+    maxClubs: number;
+    maxMembers: number;
+    maxTrainers: number;
+    maxStaffs: number;
+  };
+  features: SubscriptionCatalogFeatures;
   tier?: string;
   status?: SubscriptionPlanStatus;
 };
 
-export const DEFAULT_SUBSCRIPTION_FEATURES: SubscriptionFeatures = {
-  emailNotifications: false,
-  whatsAppNotifications: false,
-  manualAttendance: false,
-  liveAttendance: false,
-  doorAccessAttendance: false,
-  devicesPerUserLimit: 0,
-  staffLoginLimit: 0,
-  trainerLoginLimit: 0,
-  memberManagement: false,
-  trainerManagement: false,
-  staffManagement: false,
-  membershipManagement: false,
-  paymentTracking: false,
-  memberPortal: false,
-  qrCodeCheckIn: false,
-  basicDashboard: false,
-  invoiceGeneration: false,
-  expenseTracker: false,
-  leadManagement: false,
-  attendanceTracking: false,
-  offersDiscounts: false,
-  roleBasedAccess: false,
-  trainerPortal: false,
-  ptCollections: false,
-  commissionTracking: false,
-  basicReports: false,
-  revenueAnalytics: false,
-  advancedAnalytics: false,
-  exportToExcel: false,
-  customReports: false,
-  emailSupport: false,
-  chatSupport: false,
-  phoneSupport: false,
-  prioritySupport: false,
-  prioritySupport24x7: false,
-  reportsAnalytics: false,
-  classScheduling: false,
-  mobileAppAccess: false,
-  customBranding: false,
-  realTimeNotifications: false,
-  paymentRecording: false,
+export const DEFAULT_SUBSCRIPTION_LIMITS: SubscriptionLimits = {
+  maxClubs: null,
+  maxMembers: null,
+  maxTrainers: null,
+  maxStaffs: null,
+  maxMembershipPlans: null,
+  maxWorkoutPlans: null,
+  maxLeadsPerMonth: null,
 };
 
-export const DEFAULT_USAGE_LIMITS: UsageLimits = {
-  maxClubs: 0,
-  maxMembers: 0,
-  maxTrainers: 0,
-  maxStaffs: 0,
+export const DEFAULT_SUBSCRIPTION_PLAN_FEATURES: SubscriptionPlanFeatures = {
+  studioDashboard: {
+    enabled: false,
+    paymentInsights: false,
+    skipperStats: false,
+    attendanceStats: false,
+  },
+  memberManagement: false,
+  paymentManagement: false,
+  attendance: {
+    manual: false,
+    automatic: false,
+    memberInsights: false,
+    deviceManagement: false,
+  },
+  leadsManagement: false,
+  programs: {
+    membershipPlans: false,
+    workoutPlans: false,
+  },
+  staffManagement: {
+    activityTracking: false,
+    staffLogin: false,
+  },
+  payrollManagement: false,
+  expenses: {
+    reportsDashboard: false,
+    expenseManagement: false,
+  },
+  helpAndSupport: {
+    ticketingPortal: false,
+    whatsApp: false,
+    email: false,
+    call: false,
+  },
+  whatsAppNotifications: {
+    paymentReminders: false,
+    membershipExpiry: false,
+    lowAttendance: false,
+    specialDays: false,
+  },
+  invoice: {
+    customTemplates: false,
+  },
+  notifications: {
+    realtime: false,
+    whatsApp: false,
+    email: false,
+    push: false,
+  },
 };

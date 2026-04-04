@@ -29,7 +29,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
-import { SubscriptionFeatureKey } from '@/types/subscription';
+import type { SubscriptionAccessKey } from '@/types/subscription';
 
 export function NavMain({
   label,
@@ -41,11 +41,11 @@ export function NavMain({
     url: string;
     icon?: LucideIcon;
     isActive?: boolean;
-    requiredFeature?: SubscriptionFeatureKey;
+    requiredFeature?: SubscriptionAccessKey;
     items?: {
       title: string;
       url: string;
-      requiredFeature?: SubscriptionFeatureKey;
+      requiredFeature?: SubscriptionAccessKey;
     }[];
   }[];
 }) {

@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
-import { SUBSCRIPTION_FEATURE_LABELS } from '@/lib/subscription/feature-labels';
+import { SUBSCRIPTION_ACCESS_LABELS } from '@/lib/subscription/feature-labels';
 import { safeFormatDate } from '@/lib/utils';
 
 import { Button } from '../../ui/button';
@@ -20,8 +20,9 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
   variant,
   onSubmit,
 }) => {
-  const { subscription, status, daysRemaining } = useSubscriptionAccess();
-  const planName = subscription?.plan?.name || 'No active plan';
+  const { subscription, status, daysRemaining, enabledCapabilities } =
+    useSubscriptionAccess();
+  const planName = subscription?.name || 'No active plan';
   const endDateLabel = safeFormatDate(subscription?.endDate, 'en-GB', 'N/A');
   const billingCycle = subscription?.billingCycle || 'monthly';
   const effectiveVariant =
@@ -53,19 +54,10 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
             : ''
         }`;
 
-  const enabledFeatures = subscription?.features
-    ? (
-        Object.entries(subscription.features) as Array<
-          [keyof typeof subscription.features, boolean | number]
-        >
-      )
-        .filter(([, value]) =>
-          typeof value === 'number' ? value > 0 : value === true
-        )
-        .map(([key]) => SUBSCRIPTION_FEATURE_LABELS[key])
-        .filter(Boolean)
-        .slice(0, 4)
-    : [];
+  const enabledFeatures = enabledCapabilities
+    .map((capability) => SUBSCRIPTION_ACCESS_LABELS[capability])
+    .filter(Boolean)
+    .slice(0, 4);
 
   const renderButtons = () => {
     if (effectiveVariant === 'expired') {

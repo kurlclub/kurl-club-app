@@ -1,4 +1,4 @@
-import { SUBSCRIPTION_FEATURE_LABELS } from '@/lib/subscription/feature-labels';
+import { getCatalogPlanFeatureLabels } from '@/lib/subscription/access-policy';
 import { getSubscriptionCatalogPlans } from '@/services/subscription';
 import { SubscriptionCatalogPlan } from '@/types/subscription';
 
@@ -51,18 +51,7 @@ export const getSubscriptionPlans = async (): Promise<PricingData> => {
 };
 
 const normalizeCatalogPlan = (plan: SubscriptionCatalogPlan): PricingPlan => {
-  const featureEntries = Object.entries(plan.features || {});
-  const enabledFeatures = featureEntries
-    .filter(([, value]) =>
-      typeof value === 'number' ? value > 0 : value === true
-    )
-    .map(
-      ([key]) =>
-        SUBSCRIPTION_FEATURE_LABELS[
-          key as keyof typeof SUBSCRIPTION_FEATURE_LABELS
-        ]
-    )
-    .filter(Boolean);
+  const enabledFeatures = getCatalogPlanFeatureLabels(plan.features);
 
   const limits = plan.limits
     ? [

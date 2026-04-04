@@ -1,3 +1,9 @@
+import {
+  APP_SESSION_STORAGE_KEY,
+  LEGACY_GYM_DETAILS_STORAGE_KEY,
+  LEGACY_USER_STORAGE_KEY,
+  resolveStoredAppSession,
+} from './auth-session';
 import { API_BASE_URL } from './utils/index';
 
 type Params = Record<string, string | number | boolean>;
@@ -28,7 +34,11 @@ const clearStorage = (): void => {
   try {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
+    localStorage.removeItem(APP_SESSION_STORAGE_KEY);
     localStorage.removeItem('appUser');
+    localStorage.removeItem('gymDetails');
+    localStorage.removeItem(LEGACY_GYM_DETAILS_STORAGE_KEY);
+    localStorage.removeItem(LEGACY_USER_STORAGE_KEY);
     localStorage.removeItem('gymBranch');
   } catch (error) {
     console.error('Failed to clear storage:', error);
@@ -120,18 +130,15 @@ const baseFetch: typeof fetch = async (url, options = {}) => {
   const accessToken = getStorageItem('accessToken');
 
   // Get user data for X-User and X-Role headers
-  let userData = null;
+  let sessionData = null;
   try {
-    const encryptedUser = getStorageItem('appUser');
-    if (encryptedUser) {
-      const { decrypt } = await import('@/lib/crypto');
-      const decryptedData = decrypt(encryptedUser);
-      if (decryptedData) {
-        userData = JSON.parse(decryptedData);
-      }
-    }
+    sessionData = resolveStoredAppSession({
+      encryptedSession: getStorageItem(APP_SESSION_STORAGE_KEY),
+      encryptedLegacyUser: getStorageItem(LEGACY_USER_STORAGE_KEY),
+      encryptedLegacyGymDetails: getStorageItem(LEGACY_GYM_DETAILS_STORAGE_KEY),
+    }).session;
   } catch (error) {
-    console.warn('Failed to get user data for headers:', error);
+    console.warn('Failed to get auth session for headers:', error);
   }
 
   const headers: HeadersInit = {
@@ -139,10 +146,11 @@ const baseFetch: typeof fetch = async (url, options = {}) => {
     ...(accessToken && !skipAuth
       ? { Authorization: `Bearer ${accessToken}` }
       : {}),
-    ...(userData && !skipAuth
+    ...(sessionData && !skipAuth
       ? {
-          'X-User': String(userData.userId || ''),
-          'X-Role': userData.userRole || '',
+          'X-User': String(sessionData.user?.userId || ''),
+          'X-Role':
+            sessionData.entitlements?.role || sessionData.user?.userRole || '',
         }
       : {}),
     ...(restOptions.headers || {}),

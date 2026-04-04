@@ -28,7 +28,7 @@ export function SubscriptionRouteGuard({ children }: { children: ReactNode }) {
     if (!isAllowed) {
       return (
         <SubscriptionExpiredScreen
-          planName={subscription?.plan?.name}
+          planName={subscription?.name}
           endDateLabel={endDateLabel}
         />
       );

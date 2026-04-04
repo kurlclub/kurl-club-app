@@ -30,13 +30,13 @@ import {
 } from '@/components/ui/sidebar';
 import { useGymFormOptions } from '@/hooks/use-gymform-options';
 import { useGymBranch } from '@/providers/gym-branch-provider';
-import { SubscriptionFeatureKey } from '@/types/subscription';
+import type { SubscriptionAccessKey } from '@/types/subscription';
 
 type NavItem = {
   title: string;
   url: string;
   icon: LucideIcon;
-  requiredFeature?: SubscriptionFeatureKey;
+  requiredFeature?: SubscriptionAccessKey;
   items?: { title: string; url: string }[];
 };
 

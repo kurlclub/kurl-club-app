@@ -104,8 +104,10 @@ export default function ProfilePictureUploader({
   return (
     <div className="flex flex-col">
       {image ? (
-        <Avatar
-          className={`${isSmall ? 'size-16' : 'size-23'} cursor-pointer rounded-lg`}
+        <ProfileImageAvatar
+          key={image}
+          image={image}
+          isSmall={isSmall}
           onClick={() => setPreviewModalOpen(true)}
         >
           <AvatarImage
@@ -176,5 +178,48 @@ export default function ProfilePictureUploader({
         onReupload={handleReupload}
       />
     </div>
+  );
+}
+
+function ProfileImageAvatar({
+  image,
+  isSmall,
+  onClick,
+}: {
+  image: string;
+  isSmall?: boolean;
+  onClick: () => void;
+}) {
+  const [isImageLoading, setIsImageLoading] = useState(true);
+  const [isImageError, setIsImageError] = useState(false);
+
+  return (
+    <Avatar
+      className={`${isSmall ? 'size-16' : 'size-23'} cursor-pointer rounded-lg`}
+      onClick={onClick}
+    >
+      <AvatarImage
+        src={image}
+        alt="Profile picture"
+        className={isImageLoading ? 'opacity-0' : 'opacity-100'}
+        onLoad={() => setIsImageLoading(false)}
+        onError={() => {
+          setIsImageLoading(false);
+          setIsImageError(true);
+        }}
+      />
+      {isImageLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-secondary-blue-500/70">
+          <Loader2 className="h-5 w-5 animate-spin text-white/80" />
+        </div>
+      )}
+      <AvatarFallback>
+        {isImageError ? (
+          <User className="w-16 h-16" />
+        ) : (
+          <Loader2 className="h-5 w-5 animate-spin text-white/80" />
+        )}
+      </AvatarFallback>
+    </Avatar>
   );
 }
