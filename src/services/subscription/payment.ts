@@ -5,6 +5,25 @@ export type SubscriptionPaymentBillingCycle =
   | 'sixMonths'
   | 'yearly';
 
+export type SubscriptionPaymentOrder = {
+  subscriptionPaymentId: number;
+  planId: number;
+  planName: string;
+  billingCycle: SubscriptionPaymentBillingCycle;
+  amount: number;
+  currency: string;
+  razorpayKeyId: string;
+  orderId: string;
+  receipt: string;
+  effectiveFrom: string;
+  expiresAt: string;
+  customer: {
+    name: string;
+    email: string;
+    phone: string;
+  };
+};
+
 export type CreateSubscriptionPaymentOrderPayload = {
   planId: number;
   billingCycle: SubscriptionPaymentBillingCycle;
@@ -13,24 +32,7 @@ export type CreateSubscriptionPaymentOrderPayload = {
 export type CreateSubscriptionPaymentOrderResponse = {
   status: string;
   message: string;
-  data: {
-    subscriptionPaymentId: number;
-    planId: number;
-    planName: string;
-    billingCycle: SubscriptionPaymentBillingCycle;
-    amount: number;
-    currency: string;
-    razorpayKeyId: string;
-    orderId: string;
-    receipt: string;
-    effectiveFrom: string;
-    expiresAt: string;
-    customer: {
-      name: string;
-      email: string;
-      phone: string;
-    };
-  };
+  data: SubscriptionPaymentOrder;
 };
 
 export type VerifyAndRenewSubscriptionPayload = {
@@ -46,6 +48,27 @@ export type VerifyAndRenewSubscriptionResponse = {
   data?: unknown;
 };
 
+const assertSubscriptionPaymentOrder = (
+  order: SubscriptionPaymentOrder | undefined
+) => {
+  if (!order) {
+    throw new Error('Subscription payment order response is empty.');
+  }
+
+  if (
+    !order.orderId ||
+    !order.razorpayKeyId ||
+    !Number.isFinite(order.subscriptionPaymentId) ||
+    !Number.isFinite(order.planId) ||
+    !order.planName ||
+    !order.currency ||
+    !Number.isFinite(order.amount) ||
+    !order.customer?.email
+  ) {
+    throw new Error('Subscription payment order response is incomplete.');
+  }
+};
+
 export const createSubscriptionPaymentOrder = async (
   payload: CreateSubscriptionPaymentOrderPayload
 ) => {
@@ -53,6 +76,14 @@ export const createSubscriptionPaymentOrder = async (
     '/SubscriptionPayment/create-order',
     payload
   );
+
+  if (response.status !== 'Success' || !response.data) {
+    throw new Error(
+      response.message || 'Unable to initialize subscription payment.'
+    );
+  }
+
+  assertSubscriptionPaymentOrder(response.data);
   return response.data;
 };
 
@@ -63,5 +94,11 @@ export const verifyAndRenewSubscription = async (
     '/SubscriptionPayment/verify-and-renew',
     payload
   );
-  return response;
+
+  return {
+    status: response.status || 'Error',
+    message:
+      response.message || 'Unable to verify subscription payment at this time.',
+    data: response.data ?? null,
+  };
 };

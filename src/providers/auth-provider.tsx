@@ -3,6 +3,8 @@
 import { useRouter } from 'next/navigation';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
+import { googleLogout } from '@react-oauth/google';
+
 import {
   APP_SESSION_STORAGE_KEY,
   LEGACY_GYM_DETAILS_STORAGE_KEY,
@@ -10,6 +12,7 @@ import {
   resolveStoredAppSession,
   serializeStoredAppSession,
 } from '@/lib/auth-session';
+import { suppressGoogleOneTapOnce } from '@/lib/google-one-tap';
 import {
   fetchAppSession,
   googleLogin,
@@ -236,6 +239,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const handleLogout = () => {
+    suppressGoogleOneTapOnce();
+    googleLogout();
     logoutApi();
     document.cookie = 'accessToken=; path=/; max-age=0';
     document.cookie = 'refreshToken=; path=/; max-age=0';

@@ -11,6 +11,7 @@ const envVariables: EnvVariables = {
     NEXT_PUBLIC_API_BASE_URL: 'https://devapi.kurlclub.com/api',
     NEXT_PUBLIC_GOOGLE_CLIENT_ID:
       '163293700424-iri3mrus6a48fb27ln14adfqoe6aiclq.apps.googleusercontent.com',
+    NEXT_PUBLIC_ENABLE_LOCALHOST_FEDCM: 'false',
   },
   sensitive: {
     GEMINI_API_KEY: '',

@@ -4,17 +4,16 @@ import { useRef, useState } from 'react';
 
 import confetti from 'canvas-confetti';
 import { Star } from 'lucide-react';
-import { toast } from 'sonner';
 
 import { PlanDetailsDialog } from '@/components/pages/account-settings/tabs/subscription-tab/plan-details-dialog';
+import {
+  type SubscriptionBillingCycle,
+  useSubscriptionPayment,
+} from '@/hooks/use-subscription-payment';
 import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/providers/auth-provider';
 import type { PricingData, PricingPlan } from '@/services/pricing';
-import {
-  createSubscriptionPaymentOrder,
-  verifyAndRenewSubscription,
-} from '@/services/subscription';
 
 import {
   PaymentFailureDialog,
@@ -22,39 +21,7 @@ import {
 } from './payment-status-dialogs';
 import { PlanCard } from './plan-card';
 
-type BillingCycle = 'monthly' | '6months' | 'yearly';
-
-type RazorpaySuccessResponse = {
-  razorpay_payment_id: string;
-  razorpay_order_id: string;
-  razorpay_signature: string;
-};
-
-type RazorpayCheckoutOptions = {
-  key: string;
-  name: string;
-  description?: string;
-  order_id: string;
-  prefill?: {
-    name?: string;
-    email?: string;
-    contact?: string;
-  };
-  notes?: Record<string, string>;
-  theme?: {
-    color?: string;
-  };
-  modal?: {
-    ondismiss?: () => void;
-  };
-  handler?: (response: RazorpaySuccessResponse) => void;
-};
-
-declare global {
-  interface Window {
-    Razorpay?: new (options: RazorpayCheckoutOptions) => { open: () => void };
-  }
-}
+type BillingCycle = SubscriptionBillingCycle;
 
 interface PricingProps {
   title?: string;
@@ -98,39 +65,6 @@ const triggerConfetti = () => {
   });
 };
 
-const loadRazorpayScript = async () => {
-  if (typeof window === 'undefined') return false;
-  if (window.Razorpay) return true;
-
-  return new Promise<boolean>((resolve) => {
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.async = true;
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-};
-
-const toApiBillingCycle = (cycle: BillingCycle) => {
-  if (cycle === '6months') return 'sixMonths' as const;
-  return cycle;
-};
-
-const formatBillingCycleLabel = (cycle: string) => {
-  switch (cycle) {
-    case 'monthly':
-      return 'Monthly';
-    case 'sixMonths':
-    case '6months':
-      return '6 Months';
-    case 'yearly':
-      return 'Yearly';
-    default:
-      return cycle;
-  }
-};
-
 export function Pricing({
   title = 'Choose Your Plan',
   description,
@@ -141,17 +75,6 @@ export function Pricing({
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('yearly');
   const [selectedPlan, setSelectedPlan] = useState<PricingPlan | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [isPaying, setIsPaying] = useState(false);
-  const [paymentSuccess, setPaymentSuccess] = useState({
-    open: false,
-    title: 'title',
-    message: 'message',
-  });
-  const [paymentFailure, setPaymentFailure] = useState({
-    open: false,
-    title: 'title',
-    message: 'message',
-  });
   const switchRef = useRef<HTMLButtonElement>(null);
 
   const handleCycleChange = (cycle: BillingCycle) => {
@@ -169,6 +92,17 @@ export function Pricing({
     offer?.description ||
     'Start with 2 months free trial • All plans include full access';
   const currentPlanId = subscription?.id;
+  const {
+    isPaying,
+    paymentSuccess,
+    paymentFailure,
+    closePaymentSuccess,
+    closePaymentFailure,
+    startSubscriptionPayment,
+  } = useSubscriptionPayment({
+    currentPlanId,
+    refreshUser,
+  });
   const planChangeType =
     !!selectedPlan &&
     typeof currentPlanId === 'number' &&
@@ -177,133 +111,17 @@ export function Pricing({
       : 'different';
 
   const handleChoosePlan = (plan: PricingPlan) => {
+    if (isPaying) return;
     setSelectedPlan(plan);
     setIsDetailsOpen(true);
   };
 
   const handlePayNow = async (plan: PricingPlan, cycle: BillingCycle) => {
-    try {
-      setIsPaying(true);
-      const isSamePlanRenewal =
-        typeof currentPlanId === 'number' && Number(plan.id) === currentPlanId;
-
-      const orderData = await createSubscriptionPaymentOrder({
-        planId: Number(plan.id),
-        billingCycle: toApiBillingCycle(cycle),
-      });
-
-      const isRazorpayLoaded = await loadRazorpayScript();
-      if (!isRazorpayLoaded || !window.Razorpay) {
-        toast.error('Unable to load Razorpay. Please try again.');
-        return;
-      }
-
-      const razorpay = new window.Razorpay({
-        key: orderData.razorpayKeyId,
-        name: `KurlClub - ${orderData.planName}`,
-        description: `Billing Cycle: ${formatBillingCycleLabel(orderData.billingCycle)}`,
-        order_id: orderData.orderId,
-        prefill: {
-          name: orderData.customer.name,
-          email: orderData.customer.email,
-          contact: orderData.customer.phone,
-        },
-        notes: {
-          subscriptionPaymentId: String(orderData.subscriptionPaymentId),
-          planId: String(orderData.planId),
-          planName: orderData.planName,
-          billingCycle: orderData.billingCycle,
-        },
-        theme: {
-          color: '#1c1f24',
-        },
-        modal: {
-          ondismiss: () => {
-            toast.message('Payment cancelled.');
-          },
-        },
-        handler: (response) => {
-          void (async () => {
-            try {
-              const verifyResponse = await verifyAndRenewSubscription({
-                subscriptionPaymentId: orderData.subscriptionPaymentId,
-                razorpayOrderId: response.razorpay_order_id,
-                razorpayPaymentId: response.razorpay_payment_id,
-                razorpaySignature: response.razorpay_signature,
-              });
-
-              const isSuccess =
-                verifyResponse.status?.toLowerCase() === 'success';
-
-              const fallbackSuccessMessage = isSamePlanRenewal
-                ? 'Your current plan has been extended. Remaining time is stacked on your existing plan.'
-                : 'Plan switched successfully. Your new plan starts immediately, and previous remaining time is forfeited.';
-
-              const paymentMessage = isSuccess
-                ? verifyResponse.message
-                  ? `${verifyResponse.message} ${fallbackSuccessMessage}`
-                  : fallbackSuccessMessage
-                : verifyResponse.message ||
-                  'Payment was received but verification failed.';
-
-              if (isSuccess) {
-                // Sync latest subscription from backend for immediate UI updates.
-                try {
-                  await refreshUser();
-                } catch (refreshError) {
-                  console.warn(
-                    'Failed to refresh user after payment:',
-                    refreshError
-                  );
-                }
-              }
-
-              if (isSuccess) {
-                setPaymentSuccess({
-                  open: true,
-                  title: 'Subscription Updated',
-                  message: paymentMessage,
-                });
-              } else {
-                setPaymentFailure({
-                  open: true,
-                  title: 'Payment Verification Failed',
-                  message: paymentMessage,
-                });
-              }
-
-              if (isSuccess) {
-                toast.success('Payment verified and subscription updated.');
-              } else {
-                toast.error('Payment verification failed.');
-              }
-            } catch (error) {
-              const errorMessage =
-                error instanceof Error
-                  ? error.message
-                  : 'Failed to verify payment. Please contact support.';
-
-              setPaymentFailure({
-                open: true,
-                title: 'Payment Verification Failed',
-                message: errorMessage,
-              });
-              toast.error(errorMessage);
-            }
-          })();
-        },
-      });
-
-      setIsDetailsOpen(false);
-      window.setTimeout(() => {
-        razorpay.open();
-      }, 60);
-    } catch (error) {
-      console.error('Failed to initialize payment:', error);
-      toast.error(error instanceof Error ? error.message : 'Payment failed');
-    } finally {
-      setIsPaying(false);
-    }
+    await startSubscriptionPayment({
+      plan,
+      billingCycle: cycle,
+      onCheckoutReady: () => setIsDetailsOpen(false),
+    });
   };
 
   return (
@@ -336,9 +154,10 @@ export function Pricing({
             <button
               key={key}
               ref={key === 'yearly' ? switchRef : null}
+              disabled={isPaying}
               onClick={() => handleCycleChange(key)}
               className={cn(
-                'relative rounded-lg px-4 py-2 text-xs font-semibold tracking-wide transition-all duration-250 sm:px-5',
+                'relative rounded-lg px-4 py-2 text-xs font-semibold tracking-wide transition-all duration-250 disabled:cursor-not-allowed disabled:opacity-60 sm:px-5',
                 billingCycle === key
                   ? 'bg-primary-green-300 text-primary-blue-700 shadow-lg shadow-primary-green-500/30'
                   : 'text-secondary-blue-100 hover:bg-secondary-blue-600 hover:text-white'
@@ -365,6 +184,7 @@ export function Pricing({
             index={index}
             billingCycle={billingCycle}
             onChoosePlan={handleChoosePlan}
+            disabled={isPaying}
           />
         ))}
       </div>
@@ -381,24 +201,18 @@ export function Pricing({
 
       <PaymentSuccessDialog
         open={paymentSuccess.open}
-        onOpenChange={(open) =>
-          setPaymentSuccess((prev) => ({
-            ...prev,
-            open,
-          }))
-        }
+        onOpenChange={(open) => {
+          if (!open) closePaymentSuccess();
+        }}
         title={paymentSuccess.title}
         message={paymentSuccess.message}
       />
 
       <PaymentFailureDialog
         open={paymentFailure.open}
-        onOpenChange={(open) =>
-          setPaymentFailure((prev) => ({
-            ...prev,
-            open,
-          }))
-        }
+        onOpenChange={(open) => {
+          if (!open) closePaymentFailure();
+        }}
         title={paymentFailure.title}
         message={paymentFailure.message}
       />

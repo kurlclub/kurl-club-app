@@ -13,6 +13,7 @@ interface PanCardProps {
   index: number;
   billingCycle: BillingCycle;
   onChoosePlan: (plan: PricingPlan) => void;
+  disabled?: boolean;
 }
 
 const getPrice = (plan: PricingPlan, cycle: BillingCycle): number => {
@@ -46,6 +47,7 @@ export function PlanCard({
   index,
   billingCycle,
   onChoosePlan,
+  disabled = false,
 }: PanCardProps) {
   const currentPrice = getPrice(plan, billingCycle);
   const savings = getSavings(plan, billingCycle);
@@ -161,9 +163,11 @@ export function PlanCard({
 
       <Button
         variant={plan.popular ? 'default' : 'outline'}
+        disabled={disabled}
         onClick={() => onChoosePlan(plan)}
         className={cn(
           'relative z-10 mt-auto flex h-11 w-full items-center justify-center rounded-xl text-sm font-semibold transition-all duration-300',
+          disabled && 'cursor-not-allowed opacity-60',
           plan.popular
             ? 'bg-primary-green-400 text-primary-blue-800 shadow-[0_10px_24px_rgba(211,247,2,0.25)] hover:bg-primary-green-300'
             : 'border-2 border-primary-green-500/80 text-primary-green-300 hover:bg-primary-green-500 hover:text-primary-blue-800'
