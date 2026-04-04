@@ -6,6 +6,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { decrypt, encrypt } from '@/lib/crypto';
 import {
   getUserByUid,
+  googleLogin,
   login,
   logout as logoutApi,
   switchClub as switchClubApi,
@@ -61,6 +62,9 @@ interface AuthContextType {
   login: (
     email: string,
     password: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  loginWithGoogle: (
+    idToken: string
   ) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   refreshUser: () => Promise<void>;
@@ -234,6 +238,84 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  const handleGoogleLogin = async (idToken: string) => {
+    try {
+      const result = await googleLogin(idToken);
+
+      if (!result.success || !result.data) {
+        return { success: false, error: result.error || 'Google login failed' };
+      }
+
+      const { accessToken, refreshToken, user: loginUser } = result.data;
+
+      if (!accessToken || !refreshToken || !loginUser?.uid) {
+        return { success: false, error: 'Invalid login response' };
+      }
+
+      try {
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+
+        document.cookie = `accessToken=${accessToken}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Strict`;
+        document.cookie = `refreshToken=${refreshToken}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Strict`;
+      } catch (storageError) {
+        console.error('Failed to store tokens:', storageError);
+        return { success: false, error: 'Failed to save session' };
+      }
+
+      const userResult = await getUserByUid(loginUser.uid);
+
+      if (!userResult.success || !userResult.data) {
+        return { success: false, error: 'Failed to fetch user details' };
+      }
+
+      const fullUser: AppUser = {
+        ...userResult.data,
+        uid: loginUser.uid,
+        photoURL: loginUser.photoURL,
+        clubs: userResult.allClubs || [],
+      };
+
+      setUser(fullUser);
+
+      try {
+        localStorage.setItem('appUser', encrypt(JSON.stringify(fullUser)));
+
+        if (fullUser.gyms?.length > 0) {
+          localStorage.setItem('gymBranch', JSON.stringify(fullUser.gyms[0]));
+        }
+
+        if (userResult.activeGymDetails) {
+          const gymDetails: GymDetails = {
+            id: userResult.activeGymDetails.gymId,
+            gymName: userResult.activeGymDetails.gymName,
+            location: userResult.activeGymDetails.location,
+            contactNumber1: userResult.activeGymDetails.contactNumber1,
+            contactNumber2: userResult.activeGymDetails.contactNumber2,
+            email: userResult.activeGymDetails.email,
+            socialLinks: userResult.activeGymDetails.socialLinks,
+            gymIdentifier: userResult.activeGymDetails.gymIdentifier,
+            gymAdminId: userResult.activeGymDetails.gymAdminId,
+            status: String(userResult.activeGymDetails.status),
+            photoPath: userResult.activeGymDetails.photoPath,
+          };
+          setGymDetails(gymDetails);
+          localStorage.setItem(
+            'gymDetails',
+            encrypt(JSON.stringify(gymDetails))
+          );
+        }
+      } catch (storageError) {
+        console.error('Failed to store user data:', storageError);
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('Google login error:', error);
+      return { success: false, error: 'An unexpected error occurred' };
+    }
+  };
+
   const handleLogout = () => {
     logoutApi();
 
@@ -311,6 +393,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         gymDetails,
         isLoading,
         login: handleLogin,
+        loginWithGoogle: handleGoogleLogin,
         logout: handleLogout,
         refreshUser,
         refreshGymDetails: fetchGymDetailsInternal,

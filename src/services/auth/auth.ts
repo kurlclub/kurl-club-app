@@ -105,6 +105,23 @@ export const login = async (credentials: LoginRequest) => {
   }
 };
 
+export const googleLogin = async (idToken: string) => {
+  try {
+    const response = await api.post<LoginResponse>(
+      '/auth/google-login',
+      { idToken },
+      { skipAuth: true }
+    );
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error('Google login error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Google login failed',
+    };
+  }
+};
+
 export const getUserByUid = async (uid: string, currentGymId?: number) => {
   try {
     const response = await api.get<UserDetailsResponse>(

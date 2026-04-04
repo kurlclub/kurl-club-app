@@ -1,5 +1,6 @@
 'use client';
 
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { Toaster } from 'sonner';
 
 import { AuthProvider } from '@/providers/auth-provider';
@@ -11,24 +12,26 @@ import { ThemeProvider } from '@/providers/theme-provider';
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
-    <QueryProvider>
-      <AuthProvider>
-        <SubscriptionProvider>
-          <GymBranchProvider>
-            <DialogProvider>
-              <ThemeProvider
-                attribute="class"
-                defaultTheme="dark"
-                enableSystem
-                disableTransitionOnChange
-              >
-                <Toaster richColors position="top-right" />
-                {children}
-              </ThemeProvider>
-            </DialogProvider>
-          </GymBranchProvider>
-        </SubscriptionProvider>
-      </AuthProvider>
-    </QueryProvider>
+    <GoogleOAuthProvider clientId="163293700424-iri3mrus6a48fb27ln14adfqoe6aiclq.apps.googleusercontent.com">
+      <QueryProvider>
+        <AuthProvider>
+          <SubscriptionProvider>
+            <GymBranchProvider>
+              <DialogProvider>
+                <ThemeProvider
+                  attribute="class"
+                  defaultTheme="dark"
+                  enableSystem
+                  disableTransitionOnChange
+                >
+                  <Toaster richColors position="top-right" />
+                  {children}
+                </ThemeProvider>
+              </DialogProvider>
+            </GymBranchProvider>
+          </SubscriptionProvider>
+        </AuthProvider>
+      </QueryProvider>
+    </GoogleOAuthProvider>
   );
 }
