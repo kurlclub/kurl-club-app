@@ -129,7 +129,9 @@ export type SubscriptionFeatureKey = SubscriptionAccessKey;
 export type SubscriptionLimitKey = keyof SubscriptionLimits;
 export type UsageLimits = SubscriptionLimits;
 
-export type SubscriptionCatalogFeatures = Record<string, boolean | number>;
+export interface SubscriptionCatalogFeatures {
+  [key: string]: boolean | number | SubscriptionCatalogFeatures;
+}
 
 export type SubscriptionCatalogPlan = {
   id: number;
@@ -141,12 +143,7 @@ export type SubscriptionCatalogPlan = {
   yearlyPrice: number;
   isPopular?: boolean;
   badge?: string;
-  limits: {
-    maxClubs: number;
-    maxMembers: number;
-    maxTrainers: number;
-    maxStaffs: number;
-  };
+  limits: SubscriptionLimits;
   features: SubscriptionCatalogFeatures;
   tier?: string;
   status?: SubscriptionPlanStatus;

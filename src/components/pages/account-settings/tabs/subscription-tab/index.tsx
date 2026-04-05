@@ -1,8 +1,12 @@
-'use client';
+﻿'use client';
+
+import { useState } from 'react';
 
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
+import { InvoicePreviewDialog } from '@/components/pages/account-settings/tabs/subscription-tab/invoice-preview-dialog';
 import { Pricing } from '@/components/pages/account-settings/tabs/subscription-tab/pricing';
 import { SubscriptionCard } from '@/components/shared/cards/subscription-card';
 import { Button } from '@/components/ui/button';
@@ -10,8 +14,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
 import { useSubscriptionPlans } from '@/hooks/use-subscription-plans';
 import { safeFormatDate } from '@/lib/utils';
+import { fetchSubscriptionInvoice } from '@/services/subscription';
 
 export function SubscriptionTab() {
+  const [isInvoicePreviewOpen, setIsInvoicePreviewOpen] = useState(false);
+  const [isInvoiceLoading, setIsInvoiceLoading] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [invoicePdfUrl, setInvoicePdfUrl] = useState<string | null>(null);
   const { data: pricingData, isLoading, error } = useSubscriptionPlans();
   const { subscription } = useSubscriptionAccess();
   const nextBillingDate = safeFormatDate(subscription?.endDate, 'en-GB', 'N/A');
@@ -24,6 +33,51 @@ export function SubscriptionTab() {
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+  };
+
+  const handleViewInvoice = async () => {
+    setIsInvoiceLoading(true);
+    try {
+      const blob = await fetchSubscriptionInvoice(false);
+      const url = URL.createObjectURL(blob);
+      setInvoicePdfUrl(url);
+      setIsInvoicePreviewOpen(true);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to load invoice.';
+      toast.error(message);
+    } finally {
+      setIsInvoiceLoading(false);
+    }
+  };
+
+  const handleDownloadInvoice = async () => {
+    setIsDownloading(true);
+    try {
+      const blob = await fetchSubscriptionInvoice(true);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'invoice.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to download invoice.';
+      toast.error(message);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const handleInvoiceDialogClose = (open: boolean) => {
+    if (!open && invoicePdfUrl) {
+      URL.revokeObjectURL(invoicePdfUrl);
+      setInvoicePdfUrl(null);
+    }
+    setIsInvoicePreviewOpen(open);
   };
 
   return (
@@ -97,13 +151,29 @@ export function SubscriptionTab() {
                   View and download your invoices
                 </p>
               </div>
-              <Button variant="default" size="sm">
-                View Invoices
+              <Button
+                variant="default"
+                size="sm"
+                disabled={isInvoiceLoading}
+                onClick={handleViewInvoice}
+              >
+                {isInvoiceLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : null}
+                {isInvoiceLoading ? 'Loading…' : 'View Invoices'}
               </Button>
             </div>
           </CardContent>
         </Card>
       </motion.div>
+
+      <InvoicePreviewDialog
+        open={isInvoicePreviewOpen}
+        onOpenChange={handleInvoiceDialogClose}
+        pdfUrl={invoicePdfUrl}
+        isDownloading={isDownloading}
+        onDownload={handleDownloadInvoice}
+      />
     </div>
   );
 }
