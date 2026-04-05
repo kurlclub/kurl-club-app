@@ -19,6 +19,7 @@ type InvoicePreviewDialogProps = {
   description?: string;
   downloadFileName?: string;
   isLoading?: boolean;
+  isDownloading?: boolean;
   errorMessage?: string;
   onDownload?: () => void;
 };
@@ -27,10 +28,11 @@ export function InvoicePreviewDialog({
   open,
   onOpenChange,
   pdfUrl,
-  title = 'Sample Invoice Preview',
+  title = 'Invoice Preview',
   description = 'Preview your invoice PDF and download it.',
   downloadFileName = 'invoice.pdf',
   isLoading = false,
+  isDownloading = false,
   errorMessage = 'Unable to load invoice preview.',
   onDownload,
 }: InvoicePreviewDialogProps) {
@@ -63,10 +65,14 @@ export function InvoicePreviewDialog({
               type="button"
               size="sm"
               onClick={handleDownload}
-              disabled={!pdfUrl || isLoading}
+              disabled={!pdfUrl || isLoading || isDownloading}
             >
-              <Download className="h-4 w-4" />
-              Download PDF
+              {isDownloading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+              {isDownloading ? 'Downloading…' : 'Download PDF'}
             </Button>
           </div>
         </DialogHeader>

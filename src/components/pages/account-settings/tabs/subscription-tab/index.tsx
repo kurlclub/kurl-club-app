@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { InvoicePreviewDialog } from '@/components/pages/account-settings/tabs/subscription-tab/invoice-preview-dialog';
 import { Pricing } from '@/components/pages/account-settings/tabs/subscription-tab/pricing';
@@ -13,12 +14,15 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
 import { useSubscriptionPlans } from '@/hooks/use-subscription-plans';
 import { safeFormatDate } from '@/lib/utils';
+import { fetchSubscriptionInvoice } from '@/services/subscription';
 
 export function SubscriptionTab() {
   const [isInvoicePreviewOpen, setIsInvoicePreviewOpen] = useState(false);
+  const [isInvoiceLoading, setIsInvoiceLoading] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [invoicePdfUrl, setInvoicePdfUrl] = useState<string | null>(null);
   const { data: pricingData, isLoading, error } = useSubscriptionPlans();
   const { subscription } = useSubscriptionAccess();
-  const sampleInvoicePdfUrl = '/assets/pdf/sample-invoice.pdf';
   const nextBillingDate = safeFormatDate(subscription?.endDate, 'en-GB', 'N/A');
   const billingCycleLabel = subscription?.billingCycle
     ? `${subscription.billingCycle} billing`
@@ -31,13 +35,49 @@ export function SubscriptionTab() {
     }
   };
 
-  const handleDownloadInvoice = () => {
-    const link = document.createElement('a');
-    link.href = sampleInvoicePdfUrl;
-    link.download = 'sample-invoice.pdf';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleViewInvoice = async () => {
+    setIsInvoiceLoading(true);
+    try {
+      const blob = await fetchSubscriptionInvoice(false);
+      const url = URL.createObjectURL(blob);
+      setInvoicePdfUrl(url);
+      setIsInvoicePreviewOpen(true);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to load invoice.';
+      toast.error(message);
+    } finally {
+      setIsInvoiceLoading(false);
+    }
+  };
+
+  const handleDownloadInvoice = async () => {
+    setIsDownloading(true);
+    try {
+      const blob = await fetchSubscriptionInvoice(true);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'invoice.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to download invoice.';
+      toast.error(message);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const handleInvoiceDialogClose = (open: boolean) => {
+    if (!open && invoicePdfUrl) {
+      URL.revokeObjectURL(invoicePdfUrl);
+      setInvoicePdfUrl(null);
+    }
+    setIsInvoicePreviewOpen(open);
   };
 
   return (
@@ -114,9 +154,13 @@ export function SubscriptionTab() {
               <Button
                 variant="default"
                 size="sm"
-                onClick={() => setIsInvoicePreviewOpen(true)}
+                disabled={isInvoiceLoading}
+                onClick={handleViewInvoice}
               >
-                View Invoices
+                {isInvoiceLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : null}
+                {isInvoiceLoading ? 'Loading…' : 'View Invoices'}
               </Button>
             </div>
           </CardContent>
@@ -125,11 +169,9 @@ export function SubscriptionTab() {
 
       <InvoicePreviewDialog
         open={isInvoicePreviewOpen}
-        onOpenChange={setIsInvoicePreviewOpen}
-        pdfUrl={sampleInvoicePdfUrl}
-        downloadFileName="sample-invoice.pdf"
-        title="Sample Invoice Preview"
-        description="Preview your invoice PDF and download it."
+        onOpenChange={handleInvoiceDialogClose}
+        pdfUrl={invoicePdfUrl}
+        isDownloading={isDownloading}
         onDownload={handleDownloadInvoice}
       />
     </div>
