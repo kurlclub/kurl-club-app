@@ -68,6 +68,75 @@ export const SUBSCRIPTION_FEATURE_LABELS: Record<string, string> = {
   customBranding: 'Custom branding',
   realTimeNotifications: 'Real-time notifications',
   paymentRecording: 'Payment recording',
+  'studioDashboard.enabled': 'Studio dashboard',
+  'studioDashboard.paymentInsights': 'Payment insights',
+  'studioDashboard.skipperStats': 'Skipper stats',
+  'studioDashboard.attendanceStats': 'Attendance stats',
+  paymentManagement: 'Payment management',
+  'attendance.memberInsights': 'Member insights',
+  'attendance.deviceManagement': 'Attendance device management',
+  leadsManagement: 'Leads management',
+  payrollManagement: 'Payroll management',
+  'programs.membershipPlans': 'Membership plans',
+  'programs.workoutPlans': 'Workout plans',
+  'staffManagement.activityTracking': 'Staff activity tracking',
+  'staffManagement.staffLogin': 'Staff login',
+  'expenses.reportsDashboard': 'Reports dashboard',
+  'expenses.expenseManagement': 'Expense management',
+  'helpAndSupport.ticketingPortal': 'Ticketing portal support',
+  'helpAndSupport.whatsApp': 'WhatsApp support',
+  'helpAndSupport.email': 'Email support',
+  'helpAndSupport.call': 'Call support',
+  'whatsAppNotifications.paymentReminders': 'WhatsApp payment reminders',
+  'whatsAppNotifications.membershipExpiry': 'WhatsApp membership expiry alerts',
+  'whatsAppNotifications.lowAttendance': 'WhatsApp low attendance alerts',
+  'whatsAppNotifications.specialDays': 'WhatsApp special day alerts',
+  'invoice.customTemplates': 'Custom invoice templates',
+  'notifications.realtime': 'Realtime notifications',
+  'notifications.whatsApp': 'WhatsApp notifications',
+  'notifications.email': 'Email notifications',
+  'notifications.push': 'Push notifications',
+};
+
+const toTitleCase = (value: string) =>
+  value
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/[._-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/^\w/, (char) => char.toUpperCase());
+
+const collectEnabledFeatureKeys = (
+  features: SubscriptionCatalogFeatures | null | undefined,
+  prefix = ''
+): string[] => {
+  if (!features || typeof features !== 'object') {
+    return [];
+  }
+
+  const keys: string[] = [];
+
+  for (const [key, value] of Object.entries(features)) {
+    const path = prefix ? `${prefix}.${key}` : key;
+
+    if (typeof value === 'boolean') {
+      if (value) {
+        keys.push(path);
+      }
+      continue;
+    }
+
+    if (typeof value === 'number') {
+      if (value > 0) {
+        keys.push(path);
+      }
+      continue;
+    }
+
+    keys.push(...collectEnabledFeatureKeys(value, path));
+  }
+
+  return keys;
 };
 
 const ACCESS_SELECTORS: Record<
@@ -151,7 +220,6 @@ export const isSubscriptionLimitExceeded = (
 export const getCatalogPlanFeatureLabels = (
   features: SubscriptionCatalogFeatures | null | undefined
 ) =>
-  Object.entries(features ?? {})
-    .filter(([, value]) => (typeof value === 'number' ? value > 0 : value))
-    .map(([key]) => SUBSCRIPTION_FEATURE_LABELS[key])
-    .filter(Boolean);
+  Array.from(new Set(collectEnabledFeatureKeys(features))).map(
+    (key) => SUBSCRIPTION_FEATURE_LABELS[key] || toTitleCase(key)
+  );

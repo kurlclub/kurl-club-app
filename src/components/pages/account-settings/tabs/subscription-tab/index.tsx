@@ -1,8 +1,11 @@
-'use client';
+﻿'use client';
+
+import { useState } from 'react';
 
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 
+import { InvoicePreviewDialog } from '@/components/pages/account-settings/tabs/subscription-tab/invoice-preview-dialog';
 import { Pricing } from '@/components/pages/account-settings/tabs/subscription-tab/pricing';
 import { SubscriptionCard } from '@/components/shared/cards/subscription-card';
 import { Button } from '@/components/ui/button';
@@ -12,8 +15,10 @@ import { useSubscriptionPlans } from '@/hooks/use-subscription-plans';
 import { safeFormatDate } from '@/lib/utils';
 
 export function SubscriptionTab() {
+  const [isInvoicePreviewOpen, setIsInvoicePreviewOpen] = useState(false);
   const { data: pricingData, isLoading, error } = useSubscriptionPlans();
   const { subscription } = useSubscriptionAccess();
+  const sampleInvoicePdfUrl = '/assets/pdf/sample-invoice.pdf';
   const nextBillingDate = safeFormatDate(subscription?.endDate, 'en-GB', 'N/A');
   const billingCycleLabel = subscription?.billingCycle
     ? `${subscription.billingCycle} billing`
@@ -24,6 +29,15 @@ export function SubscriptionTab() {
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+  };
+
+  const handleDownloadInvoice = () => {
+    const link = document.createElement('a');
+    link.href = sampleInvoicePdfUrl;
+    link.download = 'sample-invoice.pdf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -97,13 +111,27 @@ export function SubscriptionTab() {
                   View and download your invoices
                 </p>
               </div>
-              <Button variant="default" size="sm">
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => setIsInvoicePreviewOpen(true)}
+              >
                 View Invoices
               </Button>
             </div>
           </CardContent>
         </Card>
       </motion.div>
+
+      <InvoicePreviewDialog
+        open={isInvoicePreviewOpen}
+        onOpenChange={setIsInvoicePreviewOpen}
+        pdfUrl={sampleInvoicePdfUrl}
+        downloadFileName="sample-invoice.pdf"
+        title="Sample Invoice Preview"
+        description="Preview your invoice PDF and download it."
+        onDownload={handleDownloadInvoice}
+      />
     </div>
   );
 }

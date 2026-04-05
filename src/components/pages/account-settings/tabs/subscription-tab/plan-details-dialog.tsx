@@ -16,6 +16,15 @@ import type { PricingPlan } from '@/services/pricing';
 type BillingCycle = 'monthly' | '6months' | 'yearly';
 type PlanChangeType = 'same' | 'different';
 
+type PlanWithFallbackFields = PricingPlan & {
+  monthlyPrice?: number;
+  sixMonthsPrice?: number;
+  yearlyPrice?: number;
+  limits?: Record<string, number | null | undefined>;
+  features?: string[] | Record<string, unknown>;
+  limitations?: string[];
+};
+
 interface PlanDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -27,24 +36,34 @@ interface PlanDetailsDialogProps {
 }
 
 const getPrice = (plan: PricingPlan, cycle: BillingCycle): number => {
+  const safePlan = plan as PlanWithFallbackFields;
+  const monthly = plan.pricing?.monthly ?? safePlan.monthlyPrice ?? 0;
+  const sixMonths = plan.pricing?.sixMonths ?? safePlan.sixMonthsPrice ?? 0;
+  const yearly = plan.pricing?.yearly ?? safePlan.yearlyPrice ?? 0;
+
   switch (cycle) {
     case 'monthly':
-      return plan.pricing.monthly;
+      return monthly;
     case '6months':
-      return Math.round(plan.pricing.sixMonths / 6);
+      return Math.round(sixMonths / 6);
     case 'yearly':
-      return Math.round(plan.pricing.yearly / 12);
+      return Math.round(yearly / 12);
   }
 };
 
 const getBilledAmount = (plan: PricingPlan, cycle: BillingCycle): number => {
+  const safePlan = plan as PlanWithFallbackFields;
+  const monthly = plan.pricing?.monthly ?? safePlan.monthlyPrice ?? 0;
+  const sixMonths = plan.pricing?.sixMonths ?? safePlan.sixMonthsPrice ?? 0;
+  const yearly = plan.pricing?.yearly ?? safePlan.yearlyPrice ?? 0;
+
   switch (cycle) {
     case 'monthly':
-      return plan.pricing.monthly;
+      return monthly;
     case '6months':
-      return plan.pricing.sixMonths;
+      return sixMonths;
     case 'yearly':
-      return plan.pricing.yearly;
+      return yearly;
   }
 };
 
@@ -67,6 +86,127 @@ const getPlainText = (value?: string) => {
     .trim();
 };
 
+const LIMIT_LABELS: Record<string, string> = {
+  maxClubs: 'Clubs up to',
+  maxMembers: 'Members up to',
+  maxTrainers: 'Trainers up to',
+  maxStaffs: 'Staff up to',
+  maxMembershipPlans: 'Membership plans up to',
+  maxWorkoutPlans: 'Workout plans up to',
+  maxLeadsPerMonth: 'Leads per month up to',
+};
+
+const FEATURE_LABELS: Record<string, string> = {
+  studioDashboard: 'Studio dashboard',
+  'studioDashboard.enabled': 'Studio dashboard',
+  'studioDashboard.paymentInsights': 'Payment insights',
+  'studioDashboard.skipperStats': 'Skipper stats',
+  'studioDashboard.attendanceStats': 'Attendance stats',
+  memberManagement: 'Member management',
+  paymentManagement: 'Payment management',
+  'attendance.manual': 'Manual attendance',
+  'attendance.automatic': 'Automatic attendance',
+  'attendance.memberInsights': 'Member insights',
+  'attendance.deviceManagement': 'Attendance device management',
+  leadsManagement: 'Leads management',
+  'programs.membershipPlans': 'Membership plans',
+  'programs.workoutPlans': 'Workout plans',
+  'staffManagement.activityTracking': 'Staff activity tracking',
+  'staffManagement.staffLogin': 'Staff login',
+  payrollManagement: 'Payroll management',
+  'expenses.reportsDashboard': 'Reports dashboard',
+  'expenses.expenseManagement': 'Expense management',
+  'helpAndSupport.ticketingPortal': 'Ticketing portal support',
+  'helpAndSupport.whatsApp': 'WhatsApp support',
+  'helpAndSupport.email': 'Email support',
+  'helpAndSupport.call': 'Call support',
+  'whatsAppNotifications.paymentReminders': 'WhatsApp payment reminders',
+  'whatsAppNotifications.membershipExpiry': 'WhatsApp membership expiry alerts',
+  'whatsAppNotifications.lowAttendance': 'WhatsApp low attendance alerts',
+  'whatsAppNotifications.specialDays': 'WhatsApp special day alerts',
+  'invoice.customTemplates': 'Custom invoice templates',
+  'notifications.realtime': 'Realtime notifications',
+  'notifications.whatsApp': 'WhatsApp notifications',
+  'notifications.email': 'Email notifications',
+  'notifications.push': 'Push notifications',
+};
+
+const toTitle = (value: string) =>
+  value
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/[._-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/^\w/, (char) => char.toUpperCase());
+
+const buildLimitations = (plan: PricingPlan): string[] => {
+  const safePlan = plan as PlanWithFallbackFields;
+  const existing = Array.isArray(safePlan.limitations)
+    ? safePlan.limitations.filter(Boolean)
+    : [];
+  const limits = safePlan.limits;
+
+  if (!limits || typeof limits !== 'object') {
+    return existing;
+  }
+
+  const fromLimits = Object.entries(limits)
+    .filter(([, value]) => typeof value === 'number' && Number.isFinite(value))
+    .map(([key, value]) => `${LIMIT_LABELS[key] || toTitle(key)} ${value}`);
+
+  return Array.from(new Set([...existing, ...fromLimits]));
+};
+
+const collectFeatureLabels = (value: unknown, prefix = ''): string[] => {
+  if (Array.isArray(value)) {
+    return value
+      .filter((item): item is string => typeof item === 'string')
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  if (!value || typeof value !== 'object') {
+    return [];
+  }
+
+  const labels: string[] = [];
+
+  for (const [key, nested] of Object.entries(
+    value as Record<string, unknown>
+  )) {
+    const path = prefix ? `${prefix}.${key}` : key;
+
+    if (typeof nested === 'boolean') {
+      if (nested) {
+        labels.push(
+          FEATURE_LABELS[path] || FEATURE_LABELS[key] || toTitle(path)
+        );
+      }
+      continue;
+    }
+
+    if (typeof nested === 'number') {
+      if (nested > 0) {
+        labels.push(
+          FEATURE_LABELS[path] || FEATURE_LABELS[key] || toTitle(path)
+        );
+      }
+      continue;
+    }
+
+    labels.push(...collectFeatureLabels(nested, path));
+  }
+
+  return labels;
+};
+
+const buildFeatures = (plan: PricingPlan): string[] => {
+  const safePlan = plan as PlanWithFallbackFields;
+  return Array.from(new Set(collectFeatureLabels(safePlan.features))).filter(
+    Boolean
+  );
+};
+
 export function PlanDetailsDialog({
   open,
   onOpenChange,
@@ -82,6 +222,8 @@ export function PlanDetailsDialog({
   const billedAmount = getBilledAmount(selectedPlan, billingCycle);
   const isFreePlan = currentPrice === 0;
   const description = getPlainText(selectedPlan.description);
+  const limitations = buildLimitations(selectedPlan);
+  const features = buildFeatures(selectedPlan);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -144,13 +286,13 @@ export function PlanDetailsDialog({
             </div>
           )}
 
-          {selectedPlan.limitations.length > 0 && (
+          {limitations.length > 0 && (
             <div className="rounded-xl border border-secondary-blue-400/70 bg-secondary-blue-700/50 p-4">
               <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-secondary-blue-200">
                 Plan Limits
               </p>
               <div className="flex flex-wrap gap-2">
-                {selectedPlan.limitations.map((limit, idx) => (
+                {limitations.map((limit, idx) => (
                   <span
                     key={`${selectedPlan.id}-limit-${idx}`}
                     className="rounded-full border border-primary-green-500/30 bg-primary-green-500/10 px-2.5 py-1 text-xs font-medium text-primary-green-200"
@@ -166,8 +308,8 @@ export function PlanDetailsDialog({
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-secondary-blue-200">
               Included Features
             </p>
-            <ul className="grid max-h-38 grid-cols-1 gap-2 overflow-y-auto pr-1 md:grid-cols-2">
-              {selectedPlan.features.map((feature, idx) => (
+            <ul className="grid max-h-30 grid-cols-1 gap-2 overflow-y-auto pl-0.5 pr-1 md:grid-cols-2">
+              {features.map((feature, idx) => (
                 <li
                   key={`${selectedPlan.id}-feature-${idx}`}
                   className="flex items-center gap-2"
