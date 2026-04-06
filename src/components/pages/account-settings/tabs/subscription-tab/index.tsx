@@ -1,6 +1,6 @@
-﻿'use client';
+'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
@@ -21,12 +21,39 @@ export function SubscriptionTab() {
   const [isInvoiceLoading, setIsInvoiceLoading] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [invoicePdfUrl, setInvoicePdfUrl] = useState<string | null>(null);
+  const [invoiceFileName, setInvoiceFileName] = useState('invoice.pdf');
+  const invoicePdfUrlRef = useRef<string | null>(null);
   const { data: pricingData, isLoading, error } = useSubscriptionPlans();
   const { subscription } = useSubscriptionAccess();
   const nextBillingDate = safeFormatDate(subscription?.endDate, 'en-GB', 'N/A');
-  const billingCycleLabel = subscription?.billingCycle
-    ? `${subscription.billingCycle} billing`
-    : 'N/A';
+  const billingCycleLabel =
+    subscription?.billingCycle === 'sixMonths'
+      ? '6 months billing'
+      : subscription?.billingCycle === 'yearly'
+        ? 'Yearly billing'
+        : subscription?.billingCycle === 'monthly'
+          ? 'Monthly billing'
+          : 'N/A';
+
+  const updateInvoicePdfUrl = (nextUrl: string | null) => {
+    const previousUrl = invoicePdfUrlRef.current;
+
+    if (previousUrl && previousUrl !== nextUrl) {
+      URL.revokeObjectURL(previousUrl);
+    }
+
+    invoicePdfUrlRef.current = nextUrl;
+    setInvoicePdfUrl(nextUrl);
+  };
+
+  useEffect(
+    () => () => {
+      if (invoicePdfUrlRef.current) {
+        URL.revokeObjectURL(invoicePdfUrlRef.current);
+      }
+    },
+    []
+  );
 
   const handleScrollToPlans = () => {
     const element = document.getElementById('available-plans');
@@ -38,9 +65,10 @@ export function SubscriptionTab() {
   const handleViewInvoice = async () => {
     setIsInvoiceLoading(true);
     try {
-      const blob = await fetchSubscriptionInvoice(false);
+      const { blob, filename } = await fetchSubscriptionInvoice(false);
       const url = URL.createObjectURL(blob);
-      setInvoicePdfUrl(url);
+      updateInvoicePdfUrl(url);
+      setInvoiceFileName(filename);
       setIsInvoicePreviewOpen(true);
     } catch (err) {
       const message =
@@ -54,15 +82,16 @@ export function SubscriptionTab() {
   const handleDownloadInvoice = async () => {
     setIsDownloading(true);
     try {
-      const blob = await fetchSubscriptionInvoice(true);
+      const { blob, filename } = await fetchSubscriptionInvoice(true);
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'invoice.pdf';
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
+      setInvoiceFileName(filename);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Failed to download invoice.';
@@ -73,9 +102,8 @@ export function SubscriptionTab() {
   };
 
   const handleInvoiceDialogClose = (open: boolean) => {
-    if (!open && invoicePdfUrl) {
-      URL.revokeObjectURL(invoicePdfUrl);
-      setInvoicePdfUrl(null);
+    if (!open) {
+      updateInvoicePdfUrl(null);
     }
     setIsInvoicePreviewOpen(open);
   };
@@ -171,6 +199,8 @@ export function SubscriptionTab() {
         open={isInvoicePreviewOpen}
         onOpenChange={handleInvoiceDialogClose}
         pdfUrl={invoicePdfUrl}
+        downloadFileName={invoiceFileName}
+        isLoading={isInvoiceLoading}
         isDownloading={isDownloading}
         onDownload={handleDownloadInvoice}
       />

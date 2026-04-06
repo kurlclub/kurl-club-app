@@ -40,17 +40,15 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
   const endDateLabel = safeFormatDate(subscription?.endDate, 'en-GB', 'N/A');
   const billingCycle = subscription?.billingCycle || 'monthly';
 
-  const effectiveVariant: SubscriptionVariant = variant
-    ? variant === 'standard'
-      ? 'premium'
-      : variant
-    : status === 'expired'
+  const effectiveVariant: SubscriptionVariant =
+    variant ||
+    (status === 'expired'
       ? 'expired'
       : status === 'expiring'
         ? 'expiring'
         : status === 'none'
           ? 'none'
-          : 'premium';
+          : 'premium');
 
   const billingCycleLabel =
     billingCycle === 'sixMonths'

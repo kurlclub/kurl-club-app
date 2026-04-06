@@ -355,167 +355,162 @@ export function BusinessProfileTab() {
   };
 
   return (
-    <FormProvider {...form}>
-      <form
-        onSubmit={form.handleSubmit(handleSubmit)}
-        className="space-y-6"
-        key={gymDetails?.id}
-      >
-        {/* Basic Details Card */}
-        <Card className="bg-white dark:bg-secondary-blue-500 border-gray-200 dark:border-secondary-blue-400 py-2">
-          <CardHeader className="pb-4">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <CardTitle className="text-gray-900 dark:text-white">
-                  Basic details - {gymDetails?.gymName}
-                </CardTitle>
-                <CardDescription className="text-gray-600 dark:text-secondary-blue-200 text-[15px]">
-                  Manage your gym&apos;s basic information and contact details
-                </CardDescription>
-              </div>
-              {isDirty && initialDataLoaded && (
-                <div
-                  className="flex items-center gap-2 animate-in fade-in zoom-in-95 duration-200"
-                  aria-live="polite"
-                >
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={handleDiscard}
-                    disabled={isUpdating}
-                  >
-                    Discard
-                  </Button>
-                  <Button type="submit" disabled={isUpdating}>
-                    {isUpdating ? 'Saving...' : 'Save Changes'}
-                  </Button>
+    <div className="space-y-6" key={gymDetails?.id}>
+      <FormProvider {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          {/* Basic Details Card */}
+          <Card className="bg-white dark:bg-secondary-blue-500 border-gray-200 dark:border-secondary-blue-400 py-2">
+            <CardHeader className="pb-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <CardTitle className="text-gray-900 dark:text-white">
+                    Basic details - {gymDetails?.gymName}
+                  </CardTitle>
+                  <CardDescription className="text-gray-600 dark:text-secondary-blue-200 text-[15px]">
+                    Manage your gym&apos;s basic information and contact details
+                  </CardDescription>
                 </div>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <KFormField
-              fieldType={KFormFieldType.SKELETON}
-              control={form.control}
-              name="ProfilePicture"
-              renderSkeleton={(field) => (
-                <FormControl>
-                  <ProfilePictureUploader
-                    files={field.value as File | null}
-                    onChange={field.onChange}
-                    existingImageUrl={profilePictureUrl}
-                  />
-                </FormControl>
-              )}
-            />
-
-            <KFormField
-              fieldType={KFormFieldType.INPUT}
-              control={form.control}
-              name="GymName"
-              label="Gym name"
-              className="bg-primary-blue-400"
-              mandetory
-              key={`gymname-${gymDetails?.id}`}
-            />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {isDirty && initialDataLoaded && (
+                  <div
+                    className="flex items-center gap-2 animate-in fade-in zoom-in-95 duration-200"
+                    aria-live="polite"
+                  >
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={handleDiscard}
+                      disabled={isUpdating}
+                    >
+                      Discard
+                    </Button>
+                    <Button type="submit" disabled={isUpdating}>
+                      {isUpdating ? 'Saving...' : 'Save Changes'}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
               <KFormField
-                fieldType={KFormFieldType.PHONE_INPUT}
+                fieldType={KFormFieldType.SKELETON}
                 control={form.control}
-                name="Phone"
-                label="Contact number"
-                placeholder="(555) 123-4567"
-                className="input-phone-primary"
-                mandetory
+                name="ProfilePicture"
+                renderSkeleton={(field) => (
+                  <FormControl>
+                    <ProfilePictureUploader
+                      files={field.value as File | null}
+                      onChange={field.onChange}
+                      existingImageUrl={profilePictureUrl}
+                    />
+                  </FormControl>
+                )}
               />
+
               <KFormField
                 fieldType={KFormFieldType.INPUT}
                 control={form.control}
-                name="Email"
-                label="Enter email"
+                name="GymName"
+                label="Gym name"
+                className="bg-primary-blue-400"
+                mandetory
+                key={`gymname-${gymDetails?.id}`}
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <KFormField
+                  fieldType={KFormFieldType.PHONE_INPUT}
+                  control={form.control}
+                  name="Phone"
+                  label="Contact number"
+                  placeholder="(555) 123-4567"
+                  className="input-phone-primary"
+                  mandetory
+                />
+                <KFormField
+                  fieldType={KFormFieldType.INPUT}
+                  control={form.control}
+                  name="Email"
+                  label="Enter email"
+                  className="bg-primary-blue-400"
+                  mandetory
+                />
+              </div>
+
+              <KFormField
+                fieldType={KFormFieldType.INPUT}
+                control={form.control}
+                name="Address"
+                label="Address"
                 className="bg-primary-blue-400"
                 mandetory
               />
-            </div>
+            </CardContent>
+          </Card>
 
-            <KFormField
-              fieldType={KFormFieldType.INPUT}
-              control={form.control}
-              name="Address"
-              label="Address"
-              className="bg-primary-blue-400"
-              mandetory
-            />
-          </CardContent>
-        </Card>
-
-        {/* Social Links Card */}
-        <Card className="bg-white dark:bg-secondary-blue-500 border-gray-200 dark:border-secondary-blue-400 py-2">
-          <CardHeader>
-            <CardTitle className="text-gray-900 dark:text-white">
-              Social Links
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {fields.map((field, index) => (
-              <div key={field.id} className="flex items-end gap-3">
-                <div className="w-full">
-                  <Controller
-                    control={form.control}
-                    name={`socialLinks.${index}.url`}
-                    render={({ field }) => (
-                      <SocialLinkInput
-                        value={field.value}
-                        onChange={field.onChange}
-                        label="Social Link"
-                        placeholder="https://www.google.com"
-                        className="bg-primary-blue-400"
-                      />
-                    )}
-                  />
-                </div>
-                {(isSocialLinkDirty(index) || isNewSocialLink(index)) && (
+          {/* Social Links Card */}
+          <Card className="bg-white dark:bg-secondary-blue-500 border-gray-200 dark:border-secondary-blue-400 py-2">
+            <CardHeader>
+              <CardTitle className="text-gray-900 dark:text-white">
+                Social Links
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {fields.map((field, index) => (
+                <div key={field.id} className="flex items-end gap-3">
+                  <div className="w-full">
+                    <Controller
+                      control={form.control}
+                      name={`socialLinks.${index}.url`}
+                      render={({ field }) => (
+                        <SocialLinkInput
+                          value={field.value}
+                          onChange={field.onChange}
+                          label="Social Link"
+                          placeholder="https://www.google.com"
+                          className="bg-primary-blue-400"
+                        />
+                      )}
+                    />
+                  </div>
+                  {(isSocialLinkDirty(index) || isNewSocialLink(index)) && (
+                    <Button
+                      type="button"
+                      onClick={handleSaveSocialLink}
+                      className="h-[52px] w-[52px] border border-secondary-blue-400"
+                      variant="secondary"
+                      disabled={isUpdating}
+                    >
+                      <Check className="h-5 w-5" />
+                    </Button>
+                  )}
                   <Button
                     type="button"
-                    onClick={handleSaveSocialLink}
+                    onClick={() => handleDeleteSocialLink(index)}
                     className="h-[52px] w-[52px] border border-secondary-blue-400"
                     variant="secondary"
                     disabled={isUpdating}
                   >
-                    <Check className="h-5 w-5" />
+                    <Trash2 className="h-5 w-5" />
                   </Button>
-                )}
-                <Button
-                  type="button"
-                  onClick={() => handleDeleteSocialLink(index)}
-                  className="h-[52px] w-[52px] border border-secondary-blue-400"
-                  variant="secondary"
-                  disabled={isUpdating}
-                >
-                  <Trash2 className="h-5 w-5" />
-                </Button>
-              </div>
-            ))}
+                </div>
+              ))}
 
-            <Button
-              type="button"
-              variant="secondary"
-              className="hover:bg-primary-blue-500"
-              onClick={() => append({ url: '' })}
-              disabled={isUpdating}
-            >
-              Add Social Link
-            </Button>
-          </CardContent>
-        </Card>
+              <Button
+                type="button"
+                variant="secondary"
+                className="hover:bg-primary-blue-500"
+                onClick={() => append({ url: '' })}
+                disabled={isUpdating}
+              >
+                Add Social Link
+              </Button>
+            </CardContent>
+          </Card>
+        </form>
+      </FormProvider>
 
-        {/* Regional Settings */}
-        <RegionalSettings />
-
-        {/* Delete */}
-        <DangerZone />
-      </form>
-    </FormProvider>
+      <RegionalSettings />
+      <DangerZone />
+    </div>
   );
 }

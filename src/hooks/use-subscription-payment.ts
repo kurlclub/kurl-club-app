@@ -21,6 +21,8 @@ export type SubscriptionBillingCycle = 'monthly' | '6months' | 'yearly';
 
 type PaymentDialogState = {
   open: boolean;
+  title: string;
+  message: string;
 };
 
 type PaymentFlowState = 'idle' | 'initializing' | 'checkout_open' | 'verifying';
@@ -38,6 +40,8 @@ type UseSubscriptionPaymentParams = {
 
 const CLOSED_DIALOG: PaymentDialogState = {
   open: false,
+  title: '',
+  message: '',
 };
 
 const toApiBillingCycle = (
@@ -66,6 +70,27 @@ const formatBillingCycleLabel = (
 const getErrorMessage = (error: unknown, fallback: string) =>
   error instanceof Error ? error.message : fallback;
 
+const buildSuccessTitle = (isSamePlanRenewal: boolean) =>
+  isSamePlanRenewal
+    ? 'Plan renewed successfully'
+    : 'Subscription updated successfully';
+
+const buildSuccessMessage = (
+  isSamePlanRenewal: boolean,
+  verificationMessage?: string
+) => {
+  const fallbackMessage = isSamePlanRenewal
+    ? 'Your current plan has been extended and any remaining time has been stacked onto it.'
+    : 'Your new plan is active now and any remaining time on the previous plan has been replaced.';
+
+  return verificationMessage
+    ? `${verificationMessage} ${fallbackMessage}`.trim()
+    : fallbackMessage;
+};
+
+const buildFailureMessage = (message: string | undefined, fallback: string) =>
+  message?.trim() || fallback;
+
 export function useSubscriptionPayment({
   currentPlanId,
   refreshUser,
@@ -91,21 +116,28 @@ export function useSubscriptionPayment({
     setPaymentFailure(CLOSED_DIALOG);
   };
 
-  const openPaymentSuccess = () => {
+  const openPaymentSuccess = (title: string, message: string) => {
+    setPaymentFailure(CLOSED_DIALOG);
     setPaymentSuccess({
       open: true,
+      title,
+      message,
     });
   };
 
-  const openPaymentFailure = () => {
+  const openPaymentFailure = (title: string, message: string) => {
+    setPaymentSuccess(CLOSED_DIALOG);
     setPaymentFailure({
       open: true,
+      title,
+      message,
     });
   };
 
   const verifyPayment = async ({
     subscriptionPaymentId,
     response,
+    isSamePlanRenewal,
   }: {
     subscriptionPaymentId: number;
     response: RazorpayCheckoutSuccessResponse;
@@ -122,6 +154,12 @@ export function useSubscriptionPayment({
       });
 
       const isSuccess = verification.status?.toLowerCase() === 'success';
+      const paymentMessage = isSuccess
+        ? buildSuccessMessage(isSamePlanRenewal, verification.message)
+        : buildFailureMessage(
+            verification.message,
+            'Payment was received, but the subscription could not be verified. Please contact support if this keeps happening.'
+          );
 
       if (isSuccess) {
         try {
@@ -133,10 +171,13 @@ export function useSubscriptionPayment({
           );
         }
 
-        openPaymentSuccess();
+        openPaymentSuccess(
+          buildSuccessTitle(isSamePlanRenewal),
+          paymentMessage
+        );
         toast.success('Payment verified and subscription updated.');
       } else {
-        openPaymentFailure();
+        openPaymentFailure('Payment verification failed', paymentMessage);
         toast.error('Payment verification failed.');
       }
     } catch (error) {
@@ -145,7 +186,7 @@ export function useSubscriptionPayment({
         'Failed to verify payment. Please contact support.'
       );
 
-      openPaymentFailure();
+      openPaymentFailure('Payment verification failed', errorMessage);
       toast.error(errorMessage);
     } finally {
       setFlowState('idle');
@@ -231,7 +272,13 @@ export function useSubscriptionPayment({
 
         const message = getRazorpayFailureMessage(response);
         setFlowState('idle');
-        openPaymentFailure();
+        openPaymentFailure(
+          'Payment failed',
+          buildFailureMessage(
+            message,
+            'Your payment could not be completed. Please try again.'
+          )
+        );
         toast.error(message);
       });
 
@@ -249,14 +296,14 @@ export function useSubscriptionPayment({
             'Unable to open Razorpay checkout. Please try again.'
           );
           setFlowState('idle');
-          openPaymentFailure();
+          openPaymentFailure('Unable to start payment', message);
           toast.error(message);
         }
       }, 60);
     } catch (error) {
       const errorMessage = getErrorMessage(error, 'Payment failed');
       setFlowState('idle');
-      openPaymentFailure();
+      openPaymentFailure('Unable to start payment', errorMessage);
       toast.error(errorMessage);
     }
   };

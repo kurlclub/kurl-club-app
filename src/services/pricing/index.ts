@@ -1,7 +1,13 @@
-import { getCatalogPlanFeatureLabels } from '@/lib/subscription/access-policy';
+import {
+  getCatalogPlanFeatureLabels,
+  getSubscriptionLimitLabels,
+} from '@/lib/subscription/catalog-formatting';
 import { getSubscriptionCatalogPlans } from '@/services/subscription';
-import { SubscriptionCatalogPlan } from '@/types/subscription';
-import type { SubscriptionCatalogFeatures } from '@/types/subscription';
+import type {
+  SubscriptionCatalogFeatures,
+  SubscriptionCatalogPlan,
+  SubscriptionLimits,
+} from '@/types/subscription';
 
 export interface PricingPlan {
   id: string;
@@ -14,6 +20,7 @@ export interface PricingPlan {
   };
   features: string[];
   featureFlags?: SubscriptionCatalogFeatures;
+  limits?: SubscriptionLimits;
   popular: boolean;
   badge: string;
   description: string;
@@ -54,19 +61,7 @@ export const getSubscriptionPlans = async (): Promise<PricingData> => {
 
 const normalizeCatalogPlan = (plan: SubscriptionCatalogPlan): PricingPlan => {
   const enabledFeatures = getCatalogPlanFeatureLabels(plan.features);
-  const limitsMap: Array<[number | null | undefined, string]> = [
-    [plan.limits?.maxClubs, 'Clubs up to'],
-    [plan.limits?.maxMembers, 'Members up to'],
-    [plan.limits?.maxTrainers, 'Trainers up to'],
-    [plan.limits?.maxStaffs, 'Staff up to'],
-    [plan.limits?.maxMembershipPlans, 'Membership plans up to'],
-    [plan.limits?.maxWorkoutPlans, 'Workout plans up to'],
-    [plan.limits?.maxLeadsPerMonth, 'Leads per month up to'],
-  ];
-
-  const limits = limitsMap
-    .filter(([value]) => typeof value === 'number' && Number.isFinite(value))
-    .map(([value, label]) => `${label} ${value}`);
+  const limits = getSubscriptionLimitLabels(plan.limits);
 
   return {
     id: String(plan.id),
@@ -79,6 +74,7 @@ const normalizeCatalogPlan = (plan: SubscriptionCatalogPlan): PricingPlan => {
     },
     features: enabledFeatures,
     featureFlags: plan.features,
+    limits: plan.limits,
     popular: Boolean(plan.isPopular),
     badge: plan.badge || '',
     description: plan.description || '',

@@ -313,246 +313,236 @@ export default function InvoiceSettings() {
   );
 
   return (
-    <Card className="bg-white dark:bg-secondary-blue-500 border-gray-200 dark:border-primary-blue-400">
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="flex items-start gap-3">
-            <FileText className="h-5 w-5 text-primary-green-600 dark:text-primary-green-500 mt-1" />
-            <div>
-              <CardTitle className="text-gray-900 dark:text-white">
-                Invoice & Document Settings
-              </CardTitle>
-              <CardDescription className="text-gray-600 dark:text-secondary-blue-200">
-                Customize invoice templates and billing information
-              </CardDescription>
-            </div>
-          </div>
-          {isDirty && (
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => form.reset()}
-                disabled={isLoadingSettings}
-              >
-                Discard
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                onClick={form.handleSubmit(onSubmit)}
-                disabled={isLoadingSettings}
-              >
-                Save Changes
-              </Button>
-            </div>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <FormProvider {...form}>
-          <form className="space-y-6">
-            {/* Invoice Template Selection */}
-            <div>
-              <label className="text-sm font-medium text-gray-900 dark:text-white mb-3 block">
-                Invoice Template
-              </label>
-              {isLoadingTemplates ? (
-                <div className="flex items-center justify-center py-8">
-                  <Spinner />
+    <FormProvider {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)}>
+        <Card className="bg-white dark:bg-secondary-blue-500 border-gray-200 dark:border-primary-blue-400">
+          <CardHeader>
+            <div className="flex items-start justify-between">
+              <div className="flex items-start gap-3">
+                <FileText className="h-5 w-5 text-primary-green-600 dark:text-primary-green-500 mt-1" />
+                <div>
+                  <CardTitle className="text-gray-900 dark:text-white">
+                    Invoice & Document Settings
+                  </CardTitle>
+                  <CardDescription className="text-gray-600 dark:text-secondary-blue-200">
+                    Customize invoice templates and billing information
+                  </CardDescription>
                 </div>
-              ) : templates.length === 0 ? (
-                <div className="flex items-center justify-center py-8">
-                  <p className="text-gray-500 dark:text-gray-400">
-                    No templates available
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {templates.map((template) => {
-                    const templatePreviewAsset =
-                      templatePreviewAssets[template.id];
-                    const templatePreviewUrl =
-                      templatePreviewAsset?.objectUrl ?? '';
-                    const isTemplatePreviewLoading = Boolean(
-                      loadingPreviewIds[template.id] && !templatePreviewUrl
-                    );
-                    const hasTemplatePreviewError = Boolean(
-                      previewLoadErrors[template.id]
-                    );
-
-                    return (
-                      <div
-                        key={template.id}
-                        className={cn(
-                          'relative border-2 rounded-lg overflow-hidden transition-all group',
-                          selectedTemplate === template.id
-                            ? 'border-primary-green-500 bg-primary-green-50 dark:bg-primary-green-900/20'
-                            : 'border-gray-200 dark:border-secondary-blue-400 bg-white dark:bg-secondary-blue-500/30'
-                        )}
-                      >
-                        {/* Selection Checkmark */}
-                        {selectedTemplate === template.id && (
-                          <div className="absolute top-2 right-2 bg-primary-green-800 rounded-full p-1 z-10">
-                            <Check className="h-3 w-3 text-white" />
-                          </div>
-                        )}
-
-                        {/* Template Preview Image */}
-                        <div
-                          role="button"
-                          tabIndex={0}
-                          aria-label={`Select ${template.name} invoice template`}
-                          aria-pressed={selectedTemplate === template.id}
-                          onClick={() => {
-                            handleSelectTemplate(template.id);
-                          }}
-                          onKeyDown={(event) => {
-                            if (event.key === 'Enter' || event.key === ' ') {
-                              event.preventDefault();
-                              handleSelectTemplate(template.id);
-                            }
-                          }}
-                          className="w-full cursor-pointer"
-                        >
-                          <div className="aspect-3/4 bg-gray-100 dark:bg-secondary-blue-400 rounded-t mb-2 overflow-hidden relative">
-                            {templatePreviewUrl ? (
-                              <iframe
-                                src={templatePreviewUrl}
-                                className="w-full h-full border-0 pointer-events-none scale-50 origin-top-left"
-                                title={`${template.name} template thumbnail`}
-                                style={{ width: '200%', height: '200%' }}
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-xs text-gray-600 dark:text-gray-300 px-3 text-center">
-                                {isTemplatePreviewLoading ? (
-                                  <Spinner />
-                                ) : hasTemplatePreviewError ? (
-                                  'Preview unavailable'
-                                ) : (
-                                  'Preparing preview...'
-                                )}
-                              </div>
-                            )}
-                            {/* Preview Overlay */}
-                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="secondary"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handlePreviewTemplate(template);
-                                }}
-                                className="gap-2 pointer-events-auto"
-                              >
-                                <Eye className="h-4 w-4" />
-                                Preview
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Template Name */}
-                        <div className="px-3 pb-3">
-                          <p className="font-medium text-sm text-gray-900 dark:text-white text-center">
-                            {template.name}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
+              </div>
+              {isDirty && (
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => form.reset()}
+                    disabled={isLoadingSettings}
+                  >
+                    Discard
+                  </Button>
+                  <Button type="submit" size="sm" disabled={isLoadingSettings}>
+                    Save Changes
+                  </Button>
                 </div>
               )}
             </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-6">
+              {/* Invoice Template Selection */}
+              <div>
+                <label className="text-sm font-medium text-gray-900 dark:text-white mb-3 block">
+                  Invoice Template
+                </label>
+                {isLoadingTemplates ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Spinner />
+                  </div>
+                ) : templates.length === 0 ? (
+                  <div className="flex items-center justify-center py-8">
+                    <p className="text-gray-500 dark:text-gray-400">
+                      No templates available
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {templates.map((template) => {
+                      const templatePreviewAsset =
+                        templatePreviewAssets[template.id];
+                      const templatePreviewUrl =
+                        templatePreviewAsset?.objectUrl ?? '';
+                      const isTemplatePreviewLoading = Boolean(
+                        loadingPreviewIds[template.id] && !templatePreviewUrl
+                      );
+                      const hasTemplatePreviewError = Boolean(
+                        previewLoadErrors[template.id]
+                      );
 
-            {/* Invoice Number Configuration */}
-            <div>
-              <label className="text-sm font-medium text-gray-900 dark:text-white mb-3 block">
-                Invoice Numbering
-              </label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <KFormField
-                  fieldType={KFormFieldType.INPUT}
-                  control={form.control}
-                  name="invoicePrefix"
-                  label="Prefix"
-                  placeholder="INV"
-                  className="bg-gray-50 dark:bg-primary-blue-400"
-                />
-                <KFormField
-                  fieldType={KFormFieldType.INPUT}
-                  control={form.control}
-                  name="invoiceStartNumber"
-                  label="Starting Number"
-                  placeholder="1001"
-                  className="bg-gray-50 dark:bg-primary-blue-400"
-                />
+                      return (
+                        <div
+                          key={template.id}
+                          className={cn(
+                            'relative border-2 rounded-lg overflow-hidden transition-all group',
+                            selectedTemplate === template.id
+                              ? 'border-primary-green-500 bg-primary-green-50 dark:bg-primary-green-900/20'
+                              : 'border-gray-200 dark:border-secondary-blue-400 bg-white dark:bg-secondary-blue-500/30'
+                          )}
+                        >
+                          {selectedTemplate === template.id && (
+                            <div className="absolute top-2 right-2 bg-primary-green-800 rounded-full p-1 z-10">
+                              <Check className="h-3 w-3 text-white" />
+                            </div>
+                          )}
+
+                          <div
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`Select ${template.name} invoice template`}
+                            aria-pressed={selectedTemplate === template.id}
+                            onClick={() => {
+                              handleSelectTemplate(template.id);
+                            }}
+                            onKeyDown={(event) => {
+                              if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault();
+                                handleSelectTemplate(template.id);
+                              }
+                            }}
+                            className="w-full cursor-pointer"
+                          >
+                            <div className="aspect-3/4 bg-gray-100 dark:bg-secondary-blue-400 rounded-t mb-2 overflow-hidden relative">
+                              {templatePreviewUrl ? (
+                                <iframe
+                                  src={templatePreviewUrl}
+                                  className="w-full h-full border-0 pointer-events-none scale-50 origin-top-left"
+                                  title={`${template.name} template thumbnail`}
+                                  style={{ width: '200%', height: '200%' }}
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-xs text-gray-600 dark:text-gray-300 px-3 text-center">
+                                  {isTemplatePreviewLoading ? (
+                                    <Spinner />
+                                  ) : hasTemplatePreviewError ? (
+                                    'Preview unavailable'
+                                  ) : (
+                                    'Preparing preview...'
+                                  )}
+                                </div>
+                              )}
+                              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="secondary"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePreviewTemplate(template);
+                                  }}
+                                  className="gap-2 pointer-events-auto"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                  Preview
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="px-3 pb-3">
+                            <p className="font-medium text-sm text-gray-900 dark:text-white text-center">
+                              {template.name}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                Example: INV-1001, INV-1002, INV-1003...
-              </p>
-            </div>
 
-            {/* Tax & Company Details */}
-            <div>
-              <label className="text-sm font-medium text-gray-900 dark:text-white mb-3 block">
-                Tax & Company Information
-              </label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <KFormField
-                  fieldType={KFormFieldType.INPUT}
-                  control={form.control}
-                  name="taxRate"
-                  label="Tax Rate (%)"
-                  placeholder="18"
-                  className="bg-gray-50 dark:bg-primary-blue-400"
-                />
-                <KFormField
-                  fieldType={KFormFieldType.INPUT}
-                  control={form.control}
-                  name="companyRegNumber"
-                  label="Tax Registration Number"
-                  placeholder="TAX123456789"
-                  className="bg-gray-50 dark:bg-primary-blue-400"
-                />
+              <div>
+                <label className="text-sm font-medium text-gray-900 dark:text-white mb-3 block">
+                  Invoice Numbering
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <KFormField
+                    fieldType={KFormFieldType.INPUT}
+                    control={form.control}
+                    name="invoicePrefix"
+                    label="Prefix"
+                    placeholder="INV"
+                    className="bg-gray-50 dark:bg-primary-blue-400"
+                  />
+                  <KFormField
+                    fieldType={KFormFieldType.INPUT}
+                    control={form.control}
+                    name="invoiceStartNumber"
+                    label="Starting Number"
+                    placeholder="1001"
+                    className="bg-gray-50 dark:bg-primary-blue-400"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  Example: INV-1001, INV-1002, INV-1003...
+                </p>
               </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-900 dark:text-white mb-3 block">
+                  Tax & Company Information
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <KFormField
+                    fieldType={KFormFieldType.INPUT}
+                    control={form.control}
+                    name="taxRate"
+                    label="Tax Rate (%)"
+                    placeholder="18"
+                    className="bg-gray-50 dark:bg-primary-blue-400"
+                  />
+                  <KFormField
+                    fieldType={KFormFieldType.INPUT}
+                    control={form.control}
+                    name="companyRegNumber"
+                    label="Tax Registration Number"
+                    placeholder="TAX123456789"
+                    className="bg-gray-50 dark:bg-primary-blue-400"
+                  />
+                </div>
+              </div>
+
+              <KFormField
+                fieldType={KFormFieldType.TEXTAREA}
+                control={form.control}
+                name="paymentTerms"
+                label="Payment Terms"
+                placeholder="Payment due within 30 days"
+                className="bg-gray-50 dark:bg-primary-blue-400"
+              />
             </div>
+          </CardContent>
 
-            {/* Payment Terms */}
-            <KFormField
-              fieldType={KFormFieldType.TEXTAREA}
-              control={form.control}
-              name="paymentTerms"
-              label="Payment Terms"
-              placeholder="Payment due within 30 days"
-              className="bg-gray-50 dark:bg-primary-blue-400"
-            />
-          </form>
-        </FormProvider>
-      </CardContent>
-
-      <DocumentPreviewModal
-        open={Boolean(previewTemplate)}
-        onOpenChange={(open) => {
-          if (!open) {
-            setPreviewTemplate(null);
-          }
-        }}
-        documentUrl={activePreviewAsset?.objectUrl ?? ''}
-        title={
-          previewTemplate
-            ? `${previewTemplate.name} Template Preview`
-            : 'Invoice Template Preview'
-        }
-        isLoading={isPreviewLoading}
-        emptyMessage={
-          hasPreviewError
-            ? 'Unable to load this template preview.'
-            : 'Preview is unavailable.'
-        }
-      />
-    </Card>
+          <DocumentPreviewModal
+            open={Boolean(previewTemplate)}
+            onOpenChange={(open) => {
+              if (!open) {
+                setPreviewTemplate(null);
+              }
+            }}
+            documentUrl={activePreviewAsset?.objectUrl ?? ''}
+            title={
+              previewTemplate
+                ? `${previewTemplate.name} Template Preview`
+                : 'Invoice Template Preview'
+            }
+            isLoading={isPreviewLoading}
+            emptyMessage={
+              hasPreviewError
+                ? 'Unable to load this template preview.'
+                : 'Preview is unavailable.'
+            }
+          />
+        </Card>
+      </form>
+    </FormProvider>
   );
 }

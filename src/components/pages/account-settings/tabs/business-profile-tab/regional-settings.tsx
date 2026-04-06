@@ -76,81 +76,79 @@ export default function RegionalSettings() {
   const isDirty = form.formState.isDirty;
 
   return (
-    <Card className="bg-white dark:bg-secondary-blue-500 border-gray-200 dark:border-primary-blue-400">
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="flex items-start gap-3">
-            <Globe className="h-5 w-5 text-primary-green-600 dark:text-primary-green-500 mt-1" />
-            <div>
-              <CardTitle className="text-gray-900 dark:text-white">
-                Currency & Regional Settings
-              </CardTitle>
-              <CardDescription className="text-gray-600 dark:text-secondary-blue-200">
-                Configure currency, timezone, and format preferences
-              </CardDescription>
+    <FormProvider {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)}>
+        <Card className="bg-white dark:bg-secondary-blue-500 border-gray-200 dark:border-primary-blue-400">
+          <CardHeader>
+            <div className="flex items-start justify-between">
+              <div className="flex items-start gap-3">
+                <Globe className="h-5 w-5 text-primary-green-600 dark:text-primary-green-500 mt-1" />
+                <div>
+                  <CardTitle className="text-gray-900 dark:text-white">
+                    Currency & Regional Settings
+                  </CardTitle>
+                  <CardDescription className="text-gray-600 dark:text-secondary-blue-200">
+                    Configure currency, timezone, and format preferences
+                  </CardDescription>
+                </div>
+              </div>
+              {isDirty && (
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => form.reset()}
+                  >
+                    Discard
+                  </Button>
+                  <Button type="submit" size="sm">
+                    Save Changes
+                  </Button>
+                </div>
+              )}
             </div>
-          </div>
-          {isDirty && (
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => form.reset()}
-              >
-                Discard
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                onClick={form.handleSubmit(onSubmit)}
-              >
-                Save Changes
-              </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <KFormField
+                  fieldType={KFormFieldType.SELECT}
+                  control={form.control}
+                  name="currency"
+                  label="Currency"
+                  options={CURRENCIES}
+                  className="bg-gray-50 dark:bg-primary-blue-400"
+                />
+                <KFormField
+                  fieldType={KFormFieldType.SELECT}
+                  control={form.control}
+                  name="timezone"
+                  label="Timezone"
+                  options={TIMEZONES}
+                  className="bg-gray-50 dark:bg-primary-blue-400"
+                />
+                <KFormField
+                  fieldType={KFormFieldType.SELECT}
+                  control={form.control}
+                  name="dateFormat"
+                  label="Date Format"
+                  options={DATE_FORMATS}
+                  className="bg-gray-50 dark:bg-primary-blue-400"
+                />
+                <KFormField
+                  fieldType={KFormFieldType.SELECT}
+                  control={form.control}
+                  name="numberFormat"
+                  label="Number Format"
+                  options={NUMBER_FORMATS}
+                  className="bg-gray-50 dark:bg-primary-blue-400"
+                />
+              </div>
             </div>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent>
-        <FormProvider {...form}>
-          <form className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <KFormField
-                fieldType={KFormFieldType.SELECT}
-                control={form.control}
-                name="currency"
-                label="Currency"
-                options={CURRENCIES}
-                className="bg-gray-50 dark:bg-primary-blue-400"
-              />
-              <KFormField
-                fieldType={KFormFieldType.SELECT}
-                control={form.control}
-                name="timezone"
-                label="Timezone"
-                options={TIMEZONES}
-                className="bg-gray-50 dark:bg-primary-blue-400"
-              />
-              <KFormField
-                fieldType={KFormFieldType.SELECT}
-                control={form.control}
-                name="dateFormat"
-                label="Date Format"
-                options={DATE_FORMATS}
-                className="bg-gray-50 dark:bg-primary-blue-400"
-              />
-              <KFormField
-                fieldType={KFormFieldType.SELECT}
-                control={form.control}
-                name="numberFormat"
-                label="Number Format"
-                options={NUMBER_FORMATS}
-                className="bg-gray-50 dark:bg-primary-blue-400"
-              />
-            </div>
-          </form>
-        </FormProvider>
-      </CardContent>
-    </Card>
+          </CardContent>
+        </Card>
+      </form>
+    </FormProvider>
   );
 }

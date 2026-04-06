@@ -204,6 +204,8 @@ export function Pricing({
         onOpenChange={(open) => {
           if (!open) closePaymentSuccess();
         }}
+        title={paymentSuccess.title}
+        message={paymentSuccess.message}
       />
 
       <PaymentFailureDialog
@@ -211,6 +213,8 @@ export function Pricing({
         onOpenChange={(open) => {
           if (!open) closePaymentFailure();
         }}
+        title={paymentFailure.title}
+        message={paymentFailure.message}
       />
 
       {offer?.enabled && (

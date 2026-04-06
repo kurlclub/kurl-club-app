@@ -1,11 +1,15 @@
 import type { AuthEntitlements, PermissionModuleKey } from '@/types/access';
 import type {
   SubscriptionAccessKey,
-  SubscriptionCatalogFeatures,
   SubscriptionLimitKey,
   SubscriptionPlanEntitlement,
   SubscriptionPlanFeatures,
 } from '@/types/subscription';
+
+export {
+  getCatalogPlanFeatureLabels,
+  SUBSCRIPTION_FEATURE_LABELS,
+} from '@/lib/subscription/catalog-formatting';
 
 export const SUBSCRIPTION_ACCESS_LABELS: Record<SubscriptionAccessKey, string> =
   {
@@ -25,119 +29,6 @@ export const SUBSCRIPTION_ACCESS_LABELS: Record<SubscriptionAccessKey, string> =
     realTimeNotifications: 'Realtime notifications',
     whatsAppNotifications: 'WhatsApp notifications',
   };
-
-export const SUBSCRIPTION_FEATURE_LABELS: Record<string, string> = {
-  emailNotifications: 'Email notifications',
-  whatsAppNotifications: 'WhatsApp notifications',
-  manualAttendance: 'Manual attendance',
-  liveAttendance: 'Live attendance',
-  doorAccessAttendance: 'Door access attendance',
-  devicesPerUserLimit: 'Devices per user',
-  staffLoginLimit: 'Staff login limit',
-  trainerLoginLimit: 'Trainer login limit',
-  memberManagement: 'Member management',
-  trainerManagement: 'Trainer management',
-  staffManagement: 'Staff management',
-  membershipManagement: 'Membership management',
-  paymentTracking: 'Payment tracking',
-  memberPortal: 'Member portal',
-  qrCodeCheckIn: 'QR code check-in',
-  basicDashboard: 'Basic dashboard',
-  invoiceGeneration: 'Invoice generation',
-  expenseTracker: 'Expense tracker',
-  leadManagement: 'Lead management',
-  attendanceTracking: 'Attendance tracking',
-  offersDiscounts: 'Offers and discounts',
-  roleBasedAccess: 'Role-based access',
-  trainerPortal: 'Trainer portal',
-  ptCollections: 'PT collections',
-  commissionTracking: 'Commission tracking',
-  basicReports: 'Basic reports',
-  revenueAnalytics: 'Revenue analytics',
-  advancedAnalytics: 'Advanced analytics',
-  exportToExcel: 'Export to Excel',
-  customReports: 'Custom reports',
-  emailSupport: 'Email support',
-  chatSupport: 'Chat support',
-  phoneSupport: 'Phone support',
-  prioritySupport: 'Priority support',
-  prioritySupport24x7: 'Priority support 24x7',
-  reportsAnalytics: 'Reports analytics',
-  classScheduling: 'Class scheduling',
-  mobileAppAccess: 'Mobile app access',
-  customBranding: 'Custom branding',
-  realTimeNotifications: 'Real-time notifications',
-  paymentRecording: 'Payment recording',
-  'studioDashboard.enabled': 'Studio dashboard',
-  'studioDashboard.paymentInsights': 'Payment insights',
-  'studioDashboard.skipperStats': 'Skipper stats',
-  'studioDashboard.attendanceStats': 'Attendance stats',
-  paymentManagement: 'Payment management',
-  'attendance.memberInsights': 'Member insights',
-  'attendance.deviceManagement': 'Attendance device management',
-  leadsManagement: 'Leads management',
-  payrollManagement: 'Payroll management',
-  'programs.membershipPlans': 'Membership plans',
-  'programs.workoutPlans': 'Workout plans',
-  'staffManagement.activityTracking': 'Staff activity tracking',
-  'staffManagement.staffLogin': 'Staff login',
-  'expenses.reportsDashboard': 'Reports dashboard',
-  'expenses.expenseManagement': 'Expense management',
-  'helpAndSupport.ticketingPortal': 'Ticketing portal support',
-  'helpAndSupport.whatsApp': 'WhatsApp support',
-  'helpAndSupport.email': 'Email support',
-  'helpAndSupport.call': 'Call support',
-  'whatsAppNotifications.paymentReminders': 'WhatsApp payment reminders',
-  'whatsAppNotifications.membershipExpiry': 'WhatsApp membership expiry alerts',
-  'whatsAppNotifications.lowAttendance': 'WhatsApp low attendance alerts',
-  'whatsAppNotifications.specialDays': 'WhatsApp special day alerts',
-  'invoice.customTemplates': 'Custom invoice templates',
-  'notifications.realtime': 'Realtime notifications',
-  'notifications.whatsApp': 'WhatsApp notifications',
-  'notifications.email': 'Email notifications',
-  'notifications.push': 'Push notifications',
-};
-
-const toTitleCase = (value: string) =>
-  value
-    .replace(/([a-z])([A-Z])/g, '$1 $2')
-    .replace(/[._-]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .replace(/^\w/, (char) => char.toUpperCase());
-
-const collectEnabledFeatureKeys = (
-  features: SubscriptionCatalogFeatures | null | undefined,
-  prefix = ''
-): string[] => {
-  if (!features || typeof features !== 'object') {
-    return [];
-  }
-
-  const keys: string[] = [];
-
-  for (const [key, value] of Object.entries(features)) {
-    const path = prefix ? `${prefix}.${key}` : key;
-
-    if (typeof value === 'boolean') {
-      if (value) {
-        keys.push(path);
-      }
-      continue;
-    }
-
-    if (typeof value === 'number') {
-      if (value > 0) {
-        keys.push(path);
-      }
-      continue;
-    }
-
-    keys.push(...collectEnabledFeatureKeys(value, path));
-  }
-
-  return keys;
-};
 
 const ACCESS_SELECTORS: Record<
   SubscriptionAccessKey,
@@ -216,10 +107,3 @@ export const isSubscriptionLimitExceeded = (
   }
   return currentCount >= limit;
 };
-
-export const getCatalogPlanFeatureLabels = (
-  features: SubscriptionCatalogFeatures | null | undefined
-) =>
-  Array.from(new Set(collectEnabledFeatureKeys(features))).map(
-    (key) => SUBSCRIPTION_FEATURE_LABELS[key] || toTitleCase(key)
-  );
