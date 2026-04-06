@@ -52,15 +52,19 @@ export const getSubscriptionPlans = async (): Promise<PricingData> => {
 
 const normalizeCatalogPlan = (plan: SubscriptionCatalogPlan): PricingPlan => {
   const enabledFeatures = getCatalogPlanFeatureLabels(plan.features);
+  const limitsMap: Array<[number | null | undefined, string]> = [
+    [plan.limits?.maxClubs, 'Clubs up to'],
+    [plan.limits?.maxMembers, 'Members up to'],
+    [plan.limits?.maxTrainers, 'Trainers up to'],
+    [plan.limits?.maxStaffs, 'Staff up to'],
+    [plan.limits?.maxMembershipPlans, 'Membership plans up to'],
+    [plan.limits?.maxWorkoutPlans, 'Workout plans up to'],
+    [plan.limits?.maxLeadsPerMonth, 'Leads per month up to'],
+  ];
 
-  const limits = plan.limits
-    ? [
-        `Clubs up to ${plan.limits.maxClubs}`,
-        `Members up to ${plan.limits.maxMembers}`,
-        `Trainers up to ${plan.limits.maxTrainers}`,
-        `Staff up to ${plan.limits.maxStaffs}`,
-      ]
-    : [];
+  const limits = limitsMap
+    .filter(([value]) => typeof value === 'number' && Number.isFinite(value))
+    .map(([value, label]) => `${label} ${value}`);
 
   return {
     id: String(plan.id),

@@ -5,15 +5,15 @@ import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
+  type RazorpayCheckoutSuccessResponse,
   createRazorpayCheckout,
   getRazorpayFailureMessage,
   loadRazorpayCheckoutScript,
-  type RazorpayCheckoutSuccessResponse,
 } from '@/lib/subscription/razorpay';
 import type { PricingPlan } from '@/services/pricing';
 import {
-  createSubscriptionPaymentOrder,
   type SubscriptionPaymentBillingCycle,
+  createSubscriptionPaymentOrder,
   verifyAndRenewSubscription,
 } from '@/services/subscription';
 
@@ -21,15 +21,9 @@ export type SubscriptionBillingCycle = 'monthly' | '6months' | 'yearly';
 
 type PaymentDialogState = {
   open: boolean;
-  title: string;
-  message: string;
 };
 
-type PaymentFlowState =
-  | 'idle'
-  | 'initializing'
-  | 'checkout_open'
-  | 'verifying';
+type PaymentFlowState = 'idle' | 'initializing' | 'checkout_open' | 'verifying';
 
 type StartSubscriptionPaymentParams = {
   plan: PricingPlan;
@@ -44,8 +38,6 @@ type UseSubscriptionPaymentParams = {
 
 const CLOSED_DIALOG: PaymentDialogState = {
   open: false,
-  title: '',
-  message: '',
 };
 
 const toApiBillingCycle = (
@@ -69,19 +61,6 @@ const formatBillingCycleLabel = (
     default:
       return cycle;
   }
-};
-
-const buildSuccessMessage = (
-  isSamePlanRenewal: boolean,
-  verificationMessage?: string
-) => {
-  const fallbackMessage = isSamePlanRenewal
-    ? 'Your current plan has been extended. Remaining time is stacked on your existing plan.'
-    : 'Plan switched successfully. Your new plan starts immediately, and previous remaining time is forfeited.';
-
-  return verificationMessage
-    ? `${verificationMessage} ${fallbackMessage}`.trim()
-    : fallbackMessage;
 };
 
 const getErrorMessage = (error: unknown, fallback: string) =>
@@ -112,26 +91,21 @@ export function useSubscriptionPayment({
     setPaymentFailure(CLOSED_DIALOG);
   };
 
-  const openPaymentSuccess = (title: string, message: string) => {
+  const openPaymentSuccess = () => {
     setPaymentSuccess({
       open: true,
-      title,
-      message,
     });
   };
 
-  const openPaymentFailure = (title: string, message: string) => {
+  const openPaymentFailure = () => {
     setPaymentFailure({
       open: true,
-      title,
-      message,
     });
   };
 
   const verifyPayment = async ({
     subscriptionPaymentId,
     response,
-    isSamePlanRenewal,
   }: {
     subscriptionPaymentId: number;
     response: RazorpayCheckoutSuccessResponse;
@@ -148,10 +122,6 @@ export function useSubscriptionPayment({
       });
 
       const isSuccess = verification.status?.toLowerCase() === 'success';
-      const paymentMessage = isSuccess
-        ? buildSuccessMessage(isSamePlanRenewal, verification.message)
-        : verification.message ||
-          'Payment was received but verification failed.';
 
       if (isSuccess) {
         try {
@@ -163,10 +133,10 @@ export function useSubscriptionPayment({
           );
         }
 
-        openPaymentSuccess('Subscription Updated', paymentMessage);
+        openPaymentSuccess();
         toast.success('Payment verified and subscription updated.');
       } else {
-        openPaymentFailure('Payment Verification Failed', paymentMessage);
+        openPaymentFailure();
         toast.error('Payment verification failed.');
       }
     } catch (error) {
@@ -175,7 +145,7 @@ export function useSubscriptionPayment({
         'Failed to verify payment. Please contact support.'
       );
 
-      openPaymentFailure('Payment Verification Failed', errorMessage);
+      openPaymentFailure();
       toast.error(errorMessage);
     } finally {
       setFlowState('idle');
@@ -261,7 +231,7 @@ export function useSubscriptionPayment({
 
         const message = getRazorpayFailureMessage(response);
         setFlowState('idle');
-        openPaymentFailure('Payment Failed', message);
+        openPaymentFailure();
         toast.error(message);
       });
 
@@ -279,14 +249,14 @@ export function useSubscriptionPayment({
             'Unable to open Razorpay checkout. Please try again.'
           );
           setFlowState('idle');
-          openPaymentFailure('Unable to Start Payment', message);
+          openPaymentFailure();
           toast.error(message);
         }
       }, 60);
     } catch (error) {
       const errorMessage = getErrorMessage(error, 'Payment failed');
       setFlowState('idle');
-      openPaymentFailure('Unable to Start Payment', errorMessage);
+      openPaymentFailure();
       toast.error(errorMessage);
     }
   };
