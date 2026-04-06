@@ -35,9 +35,20 @@ const getPrice = (plan: PricingPlan, cycle: BillingCycle): number => {
     case 'monthly':
       return plan.pricing.monthly;
     case '6months':
-      return Math.round(plan.pricing.sixMonths / 6);
+      return plan.pricing.sixMonths;
     case 'yearly':
-      return Math.round(plan.pricing.yearly / 12);
+      return plan.pricing.yearly;
+  }
+};
+
+const getPriceSuffix = (cycle: BillingCycle) => {
+  switch (cycle) {
+    case 'monthly':
+      return '/mo';
+    case '6months':
+      return '/6 mo';
+    case 'yearly':
+      return '/yr';
   }
 };
 
@@ -96,6 +107,7 @@ export function PlanDetailsDialog({
 
   const currentPrice = getPrice(selectedPlan, billingCycle);
   const billedAmount = getBilledAmount(selectedPlan, billingCycle);
+  const priceSuffix = getPriceSuffix(billingCycle);
   const isFreePlan = currentPrice === 0;
   const description = getPlainText(selectedPlan.description);
   const limitations = buildLimitations(selectedPlan);
@@ -137,7 +149,7 @@ export function PlanDetailsDialog({
                       willChange
                     />
                     <span className="pb-1 text-xs text-secondary-blue-200">
-                      /mo
+                      {priceSuffix}
                     </span>
                   </div>
                 )}

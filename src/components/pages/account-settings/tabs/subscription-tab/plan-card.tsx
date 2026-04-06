@@ -21,17 +21,42 @@ const getPrice = (plan: PricingPlan, cycle: BillingCycle): number => {
     case 'monthly':
       return plan.pricing.monthly;
     case '6months':
-      return Math.round(plan.pricing.sixMonths / 6);
+      return plan.pricing.sixMonths;
     case 'yearly':
-      return Math.round(plan.pricing.yearly / 12);
+      return plan.pricing.yearly;
+  }
+};
+
+const getCycleDurationInMonths = (cycle: BillingCycle): number => {
+  switch (cycle) {
+    case 'monthly':
+      return 1;
+    case '6months':
+      return 6;
+    case 'yearly':
+      return 12;
+  }
+};
+
+const getPriceSuffix = (cycle: BillingCycle) => {
+  switch (cycle) {
+    case 'monthly':
+      return '/mo';
+    case '6months':
+      return '/6 mo';
+    case 'yearly':
+      return '/yr';
   }
 };
 
 const getSavings = (plan: PricingPlan, cycle: BillingCycle): number => {
   const monthly = plan.pricing.monthly;
   const current = getPrice(plan, cycle);
-  if (monthly === 0) return 0;
-  return Math.round(((monthly - current) / monthly) * 100);
+  const fullPrice = monthly * getCycleDurationInMonths(cycle);
+
+  if (monthly === 0 || fullPrice === 0) return 0;
+
+  return Math.round(((fullPrice - current) / fullPrice) * 100);
 };
 
 const getPlainText = (value?: string) => {
@@ -51,6 +76,7 @@ export function PlanCard({
 }: PanCardProps) {
   const currentPrice = getPrice(plan, billingCycle);
   const savings = getSavings(plan, billingCycle);
+  const priceSuffix = getPriceSuffix(billingCycle);
   const isFreePlan = currentPrice === 0;
   const planDescription = getPlainText(plan.description);
   const previewFeatures = plan.features.slice(0, 4);
@@ -118,7 +144,7 @@ export function PlanCard({
                   willChange
                 />
                 <span className="pb-1 text-xs text-secondary-blue-200">
-                  /mo
+                  {priceSuffix}
                 </span>
               </div>
             )}
