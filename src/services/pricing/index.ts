@@ -1,6 +1,7 @@
 import { getCatalogPlanFeatureLabels } from '@/lib/subscription/access-policy';
 import { getSubscriptionCatalogPlans } from '@/services/subscription';
 import { SubscriptionCatalogPlan } from '@/types/subscription';
+import type { SubscriptionCatalogFeatures } from '@/types/subscription';
 
 export interface PricingPlan {
   id: string;
@@ -12,6 +13,7 @@ export interface PricingPlan {
     yearly: number;
   };
   features: string[];
+  featureFlags?: SubscriptionCatalogFeatures;
   popular: boolean;
   badge: string;
   description: string;
@@ -76,6 +78,7 @@ const normalizeCatalogPlan = (plan: SubscriptionCatalogPlan): PricingPlan => {
       yearly: plan.yearlyPrice ?? 0,
     },
     features: enabledFeatures,
+    featureFlags: plan.features,
     popular: Boolean(plan.isPopular),
     badge: plan.badge || '',
     description: plan.description || '',

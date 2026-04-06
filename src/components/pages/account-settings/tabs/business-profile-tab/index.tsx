@@ -356,7 +356,11 @@ export function BusinessProfileTab() {
 
   return (
     <FormProvider {...form}>
-      <div className="space-y-6" key={gymDetails?.id}>
+      <form
+        onSubmit={form.handleSubmit(handleSubmit)}
+        className="space-y-6"
+        key={gymDetails?.id}
+      >
         {/* Basic Details Card */}
         <Card className="bg-white dark:bg-secondary-blue-500 border-gray-200 dark:border-secondary-blue-400 py-2">
           <CardHeader className="pb-4">
@@ -382,11 +386,7 @@ export function BusinessProfileTab() {
                   >
                     Discard
                   </Button>
-                  <Button
-                    type="button"
-                    onClick={form.handleSubmit(handleSubmit)}
-                    disabled={isUpdating}
-                  >
+                  <Button type="submit" disabled={isUpdating}>
                     {isUpdating ? 'Saving...' : 'Save Changes'}
                   </Button>
                 </div>
@@ -515,7 +515,7 @@ export function BusinessProfileTab() {
 
         {/* Delete */}
         <DangerZone />
-      </div>
+      </form>
     </FormProvider>
   );
 }

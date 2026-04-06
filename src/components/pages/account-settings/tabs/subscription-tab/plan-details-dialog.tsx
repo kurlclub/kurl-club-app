@@ -1,5 +1,5 @@
 import NumberFlow from '@number-flow/react';
-import { Check, Info, Loader2 } from 'lucide-react';
+import { Check, Info, Loader2, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -21,6 +21,7 @@ type PlanWithFallbackFields = PricingPlan & {
   sixMonthsPrice?: number;
   yearlyPrice?: number;
   limits?: Record<string, number | null | undefined>;
+  featureFlags?: Record<string, unknown>;
   features?: string[] | Record<string, unknown>;
   limitations?: string[];
 };
@@ -96,6 +97,11 @@ const LIMIT_LABELS: Record<string, string> = {
   maxLeadsPerMonth: 'Leads per month up to',
 };
 
+type FeatureItem = {
+  label: string;
+  enabled: boolean;
+};
+
 const FEATURE_LABELS: Record<string, string> = {
   studioDashboard: 'Studio dashboard',
   'studioDashboard.enabled': 'Studio dashboard',
@@ -157,19 +163,20 @@ const buildLimitations = (plan: PricingPlan): string[] => {
   return Array.from(new Set([...existing, ...fromLimits]));
 };
 
-const collectFeatureLabels = (value: unknown, prefix = ''): string[] => {
+const collectFeatureItems = (value: unknown, prefix = ''): FeatureItem[] => {
   if (Array.isArray(value)) {
     return value
       .filter((item): item is string => typeof item === 'string')
       .map((item) => item.trim())
-      .filter(Boolean);
+      .filter(Boolean)
+      .map((label) => ({ label, enabled: true }));
   }
 
   if (!value || typeof value !== 'object') {
     return [];
   }
 
-  const labels: string[] = [];
+  const items: FeatureItem[] = [];
 
   for (const [key, nested] of Object.entries(
     value as Record<string, unknown>
@@ -177,34 +184,43 @@ const collectFeatureLabels = (value: unknown, prefix = ''): string[] => {
     const path = prefix ? `${prefix}.${key}` : key;
 
     if (typeof nested === 'boolean') {
-      if (nested) {
-        labels.push(
-          FEATURE_LABELS[path] || FEATURE_LABELS[key] || toTitle(path)
-        );
-      }
+      items.push({
+        label: FEATURE_LABELS[path] || FEATURE_LABELS[key] || toTitle(path),
+        enabled: nested,
+      });
       continue;
     }
 
     if (typeof nested === 'number') {
       if (nested > 0) {
-        labels.push(
-          FEATURE_LABELS[path] || FEATURE_LABELS[key] || toTitle(path)
-        );
+        items.push({
+          label: FEATURE_LABELS[path] || FEATURE_LABELS[key] || toTitle(path),
+          enabled: true,
+        });
       }
       continue;
     }
 
-    labels.push(...collectFeatureLabels(nested, path));
+    items.push(...collectFeatureItems(nested, path));
   }
 
-  return labels;
+  return items;
 };
 
-const buildFeatures = (plan: PricingPlan): string[] => {
+const buildFeatures = (plan: PricingPlan): FeatureItem[] => {
   const safePlan = plan as PlanWithFallbackFields;
-  return Array.from(new Set(collectFeatureLabels(safePlan.features))).filter(
-    Boolean
-  );
+  const featureSource = safePlan.featureFlags ?? safePlan.features;
+  const items = collectFeatureItems(featureSource);
+  const featureMap = new Map<string, boolean>();
+
+  for (const item of items) {
+    const existing = featureMap.get(item.label);
+    featureMap.set(item.label, Boolean(existing) || item.enabled);
+  }
+
+  return Array.from(featureMap.entries())
+    .filter(([label]) => Boolean(label))
+    .map(([label, enabled]) => ({ label, enabled }));
 };
 
 export function PlanDetailsDialog({
@@ -314,11 +330,29 @@ export function PlanDetailsDialog({
                   key={`${selectedPlan.id}-feature-${idx}`}
                   className="flex items-center gap-2"
                 >
-                  <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-green-500/15 ring-1 ring-primary-green-500/20">
-                    <Check className="h-2.5 w-2.5 text-primary-green-500" />
+                  <div
+                    className={cn(
+                      'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full ring-1',
+                      feature.enabled
+                        ? 'bg-primary-green-500/15 ring-primary-green-500/20'
+                        : 'bg-alert-red-500/15 ring-alert-red-500/20'
+                    )}
+                  >
+                    {feature.enabled ? (
+                      <Check className="h-2.5 w-2.5 text-primary-green-500" />
+                    ) : (
+                      <X className="h-2.5 w-2.5 text-alert-red-500" />
+                    )}
                   </div>
-                  <span className="text-xs text-secondary-blue-100">
-                    {feature}
+                  <span
+                    className={cn(
+                      'text-xs',
+                      feature.enabled
+                        ? 'text-secondary-blue-100'
+                        : 'text-secondary-blue-300 line-through'
+                    )}
+                  >
+                    {feature.label}
                   </span>
                 </li>
               ))}
