@@ -191,7 +191,7 @@ export function SubscriptionProvider({
   const expiringTodayKey = new Date().toISOString().slice(0, 10);
 
   const hasShownExpiringToday = useMemo(() => {
-    if (isLoading || !isExpiring || !subscription?.subscriptionId) {
+    if (isLoading || !isExpiring || !subscription?.id) {
       return true;
     }
     if (typeof window === 'undefined') return true;
@@ -205,13 +205,13 @@ export function SubscriptionProvider({
     expiringTodayKey,
     isExpiring,
     isLoading,
-    subscription?.subscriptionId,
+    subscription?.id,
   ]);
 
   const expiringModalOpen =
     !isLoading &&
     isExpiring &&
-    !!subscription?.subscriptionId &&
+    !!subscription?.id &&
     !hasShownExpiringToday &&
     dismissedExpiringKey !== expiringTodayKey;
 

@@ -16,27 +16,20 @@ type RawPermission = Partial<AccessPermission> & {
 };
 
 type RawSubscriptionPlan = {
-  subscriptionId?: number | null;
   id?: number | null;
   name?: string | null;
   subtitle?: string | null;
   description?: string | null;
-  descriptionPlainText?: string | null;
   iconUrl?: string | null;
   monthlyPrice?: number | null;
   sixMonthsPrice?: number | null;
   yearlyPrice?: number | null;
   badge?: string | null;
   subscriptionDate?: string | null;
-  status?: string | null;
   billingCycle?: string | null;
-  currency?: string | null;
-  billingAmount?: number | null;
-  startDate?: string | null;
-  endDate?: string | null;
+  isActive?: boolean | null;
   nextBillingDate?: string | null;
   daysRemaining?: number | null;
-  cancelAtPeriodEnd?: boolean | null;
   limits?: Record<string, unknown> | null;
   features?: Record<string, unknown> | null;
 } | null;
@@ -78,16 +71,6 @@ const normalizeBillingCycle = (value: unknown): BillingCycle | null => {
     billingCycle === 'sixMonths' ||
     billingCycle === 'yearly'
     ? billingCycle
-    : null;
-};
-
-const normalizeSubscriptionStatus = (
-  value: unknown
-): SubscriptionPlanStatus | null => {
-  const status = getString(value).toLowerCase();
-
-  return status === 'active' || status === 'expiring' || status === 'expired'
-    ? status
     : null;
 };
 
@@ -173,37 +156,94 @@ const hasValidSubscriptionFeatures = (
   );
 };
 
-const hasValidLifecycleContract = (
+const hasValidSubscriptionPricing = (value: Record<string, unknown>) =>
+  isRequiredNumber(value.monthlyPrice) &&
+  isRequiredNumber(value.sixMonthsPrice) &&
+  isRequiredNumber(value.yearlyPrice);
+
+const normalizeDaysRemaining = (
+  value: unknown,
+  isActive: boolean
+): number | null => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return isActive ? null : null;
+  }
+
+  if (!Number.isInteger(value)) {
+    return null;
+  }
+
+  if (isActive && value < 0) {
+    return null;
+  }
+
+  return value;
+};
+
+const deriveSubscriptionStatus = ({
+  isActive,
+  daysRemaining,
+}: {
+  isActive: boolean;
+  daysRemaining: number | null;
+}): SubscriptionPlanStatus => {
+  if (!isActive) {
+    return 'expired';
+  }
+
+  return daysRemaining !== null && daysRemaining <= 7 ? 'expiring' : 'active';
+};
+
+const deriveBillingAmount = (
   value: Record<string, unknown>,
-  status: SubscriptionPlanStatus,
-  billingCycle: BillingCycle,
-  billingAmount: number,
+  billingCycle: BillingCycle
+): number | null => {
+  if (!hasValidSubscriptionPricing(value)) {
+    return null;
+  }
+
+  if (billingCycle === 'yearly') {
+    return getNumber(value.yearlyPrice);
+  }
+
+  if (billingCycle === 'sixMonths') {
+    return getNumber(value.sixMonthsPrice);
+  }
+
+  return getNumber(value.monthlyPrice);
+};
+
+const stripHtmlToText = (value: string) =>
+  value
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const hasValidLeanSubscriptionContract = (
+  value: Record<string, unknown>,
   subscriptionDate: string,
-  startDate: string,
-  endDate: string,
-  currency: string
+  nextBillingDate: string,
+  isActive: boolean,
+  daysRemaining: number | null,
+  billingAmount: number | null
 ) => {
   if (
-    !isRequiredNumber(value.subscriptionId) ||
     !isRequiredNumber(value.id) ||
     getString(value.name).length === 0 ||
     !isValidDateString(subscriptionDate) ||
-    !isValidDateString(startDate) ||
-    !isValidDateString(endDate) ||
-    currency.length === 0 ||
-    !Number.isFinite(billingAmount)
+    !isValidDateString(nextBillingDate) ||
+    billingAmount === null
   ) {
     return false;
   }
 
-  if (status === 'expired') {
-    return value.nextBillingDate === null && value.daysRemaining === null;
+  if (isActive) {
+    return daysRemaining !== null;
   }
 
-  return (
-    isValidDateString(getNullableString(value.nextBillingDate)) &&
-    Number.isInteger(value.daysRemaining)
-  );
+  return daysRemaining === null || Number.isInteger(daysRemaining);
 };
 
 export const normalizeSubscriptionLimits = (
@@ -331,43 +371,46 @@ export const normalizeSubscriptionPlanEntitlement = (
 ): SubscriptionPlanEntitlement | null => {
   if (!isRecord(value)) return null;
 
-  const status = normalizeSubscriptionStatus(value.status);
   const billingCycle = normalizeBillingCycle(value.billingCycle);
-  const currency = getNullableString(value.currency);
-  const billingAmount = getNullableNumber(value.billingAmount);
+  const isActive = typeof value.isActive === 'boolean' ? value.isActive : null;
   const subscriptionDate = getNullableString(value.subscriptionDate);
-  const startDate = getNullableString(value.startDate);
-  const endDate = getNullableString(value.endDate);
-  const descriptionPlainText = getString(value.descriptionPlainText);
+  const nextBillingDate = getNullableString(value.nextBillingDate);
+  const daysRemaining =
+    isActive === null
+      ? null
+      : normalizeDaysRemaining(value.daysRemaining, isActive);
+  const billingAmount =
+    billingCycle === null ? null : deriveBillingAmount(value, billingCycle);
 
   if (
-    !status ||
     !billingCycle ||
-    currency === null ||
-    billingAmount === null ||
+    isActive === null ||
     subscriptionDate === null ||
-    startDate === null ||
-    endDate === null ||
+    nextBillingDate === null ||
     !hasValidSubscriptionLimits(value.limits) ||
     !hasValidSubscriptionFeatures(value.features) ||
-    !hasValidLifecycleContract(
+    !hasValidSubscriptionPricing(value) ||
+    !hasValidLeanSubscriptionContract(
       value,
-      status,
-      billingCycle,
-      billingAmount,
       subscriptionDate,
-      startDate,
-      endDate,
-      currency
+      nextBillingDate,
+      isActive,
+      daysRemaining,
+      billingAmount
     )
   ) {
     return null;
   }
 
   const description = getString(value.description);
+  const descriptionPlainText = stripHtmlToText(description);
+  const status = deriveSubscriptionStatus({
+    isActive,
+    daysRemaining,
+  });
 
   return {
-    subscriptionId: getNumber(value.subscriptionId),
+    subscriptionId: null,
     id: getNumber(value.id),
     name: getString(value.name),
     subtitle: getString(value.subtitle),
@@ -378,16 +421,17 @@ export const normalizeSubscriptionPlanEntitlement = (
     sixMonthsPrice: getNumber(value.sixMonthsPrice),
     yearlyPrice: getNumber(value.yearlyPrice),
     badge: getString(value.badge) || null,
+    isActive,
     status,
     billingCycle,
-    currency,
+    currency: null,
     billingAmount,
     subscriptionDate,
-    startDate,
-    endDate,
-    nextBillingDate: getNullableString(value.nextBillingDate),
-    daysRemaining: getNullableNumber(value.daysRemaining),
-    cancelAtPeriodEnd: value.cancelAtPeriodEnd === true,
+    startDate: subscriptionDate,
+    endDate: nextBillingDate,
+    nextBillingDate,
+    daysRemaining,
+    cancelAtPeriodEnd: false,
     limits: normalizeSubscriptionLimits(value.limits),
     features: normalizeSubscriptionPlanFeatures(value.features),
   };

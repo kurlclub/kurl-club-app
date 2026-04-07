@@ -46,7 +46,7 @@ describe('auth session storage', () => {
         role: 'admin',
         permissions: [],
         subscriptionPlan: {
-          subscriptionId: 6001,
+          subscriptionId: null,
           id: 4,
           name: 'ENTERPRISE',
           subtitle: 'Powerful',
@@ -57,12 +57,13 @@ describe('auth session storage', () => {
           sixMonthsPrice: 1099,
           yearlyPrice: 1099,
           badge: 'Enterprise',
+          isActive: true,
           status: 'expiring',
           billingCycle: 'monthly',
-          currency: 'INR',
+          currency: null,
           billingAmount: 1099,
           subscriptionDate: '2026-03-04T17:27:24.233437',
-          startDate: '2026-04-01T00:00:00.000Z',
+          startDate: '2026-03-04T17:27:24.233437',
           endDate: '2026-05-01T00:00:00.000Z',
           nextBillingDate: '2026-05-01T00:00:00.000Z',
           daysRemaining: 5,
@@ -158,6 +159,7 @@ describe('auth session storage', () => {
             subscriptionPlan: {
               id: 3,
               name: 'PERFORMANCE',
+              isActive: true,
             },
           },
         })

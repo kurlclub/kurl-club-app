@@ -93,6 +93,7 @@ export interface SubscriptionPlanEntitlement {
   sixMonthsPrice: number;
   yearlyPrice: number;
   badge?: string | null;
+  isActive: boolean;
   status: SubscriptionPlanStatus | null;
   billingCycle: BillingCycle | null;
   currency: string | null;

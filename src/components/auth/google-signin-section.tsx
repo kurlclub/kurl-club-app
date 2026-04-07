@@ -13,6 +13,7 @@ import {
   type CredentialResponse,
   GoogleLogin,
   type PromptMomentNotification,
+  useGoogleOAuth,
 } from '@react-oauth/google';
 import { toast } from 'sonner';
 
@@ -97,6 +98,7 @@ export function GoogleSignInSection({
   const [googleButtonWidth, setGoogleButtonWidth] = useState<number | null>(
     null
   );
+  const { scriptLoadedSuccessfully } = useGoogleOAuth();
   const { isLoading, loginWithGoogle, user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -113,6 +115,7 @@ export function GoogleSignInSection({
     process.env.NEXT_PUBLIC_ENABLE_LOCALHOST_FEDCM === 'true';
   const isLoginRoute = pathname === '/auth/login';
   const isInteractionDisabled = disabled || isGooglePending;
+  const isGoogleButtonReady = isHydrated && scriptLoadedSuccessfully;
   const shouldSuppressPromptThisVisit =
     isHydrated && isGoogleOneTapSuppressed();
   const isLocalhostOrigin =
@@ -207,7 +210,12 @@ export function GoogleSignInSection({
         className={`group relative w-full overflow-hidden rounded-xl ${
           isInteractionDisabled ? 'opacity-60' : ''
         }`}
-        aria-disabled={isInteractionDisabled}
+        aria-disabled={isInteractionDisabled || !isGoogleButtonReady}
+        onClick={
+          isGoogleButtonReady
+            ? undefined
+            : () => toast('Google sign-in is still loading. Please try again.')
+        }
       >
         <div className="pointer-events-none flex w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3.25 text-sm font-medium text-white/90 transition-colors group-hover:border-white/20 group-hover:bg-white/10 group-active:bg-white/15">
           <GoogleColorIcon />
@@ -216,15 +224,19 @@ export function GoogleSignInSection({
             : 'Continue with Google'}
         </div>
 
-        <div
-          className={`absolute inset-0 overflow-hidden opacity-0 [&>div]:h-full [&>div]:w-full [&_iframe]:h-full ${
-            isInteractionDisabled ? 'pointer-events-none' : ''
-          }`}
-        >
-          {isHydrated ? (
+        {isGoogleButtonReady ? (
+          <div
+            className={`absolute inset-0 overflow-hidden opacity-0 [&>div]:h-full [&>div]:w-full [&_iframe]:h-full ${
+              isInteractionDisabled ? 'pointer-events-none' : ''
+            }`}
+          >
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
-              onError={() => toast.error('Google login failed')}
+              onError={() =>
+                toast.error(
+                  'Google sign-in failed to start. Check the production domain in the Google OAuth client settings.'
+                )
+              }
               useOneTap={shouldEnableFedCmPrompt}
               use_fedcm_for_prompt={shouldEnableFedCmPrompt}
               cancel_on_tap_outside={shouldEnableFedCmPrompt}
@@ -236,10 +248,8 @@ export function GoogleSignInSection({
                 className: 'h-full w-full',
               }}
             />
-          ) : (
-            <div className="h-full w-full" />
-          )}
-        </div>
+          </div>
+        ) : null}
       </div>
     </>
   );
