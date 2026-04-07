@@ -6,6 +6,7 @@ import { Check, Eye, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { InvoiceSettingsSkeleton } from '@/components/pages/account-settings/account-settings-skeletons';
 import {
   type InvoiceSettingsFormValues,
   getDefaultInvoiceSettingsFormValues,
@@ -275,6 +276,8 @@ export default function InvoiceSettings() {
   };
 
   const isDirty = form.formState.isDirty;
+  const isSectionLoading =
+    !isDirty && (isSyncingSettingsForm || isLoadingTemplates);
   const isBusy = isSyncingSettingsForm || isSaving;
   const activePreviewAsset = previewTemplate
     ? templatePreviewAssets[previewTemplate.id]
@@ -287,6 +290,10 @@ export default function InvoiceSettings() {
   const hasPreviewError = Boolean(
     previewTemplate && previewLoadErrors[previewTemplate.id]
   );
+
+  if (isSectionLoading) {
+    return <InvoiceSettingsSkeleton />;
+  }
 
   return (
     <FormProvider {...form}>
@@ -317,7 +324,7 @@ export default function InvoiceSettings() {
                     Discard
                   </Button>
                   <Button type="submit" size="sm" disabled={isBusy}>
-                    Save Changes
+                    {isSaving ? 'Saving...' : 'Save Changes'}
                   </Button>
                 </div>
               )}
@@ -330,11 +337,7 @@ export default function InvoiceSettings() {
                 <label className="text-sm font-medium text-gray-900 dark:text-white mb-3 block">
                   Invoice Template
                 </label>
-                {isLoadingTemplates ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Spinner />
-                  </div>
-                ) : templates.length === 0 ? (
+                {templates.length === 0 ? (
                   <div className="flex items-center justify-center py-8">
                     <p className="text-gray-500 dark:text-gray-400">
                       No templates available

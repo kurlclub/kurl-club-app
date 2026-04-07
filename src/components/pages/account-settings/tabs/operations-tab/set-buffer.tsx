@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Calendar, CheckCheck, Edit, Plus, Trash2, Wallet } from 'lucide-react';
 import { z } from 'zod/v4';
 
+import { BufferConfigurationSkeleton } from '@/components/pages/account-settings/account-settings-skeletons';
 import { useSettingsGymId } from '@/components/pages/account-settings/tabs/settings-gym';
 import {
   KFormField,
@@ -18,7 +19,6 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useAppDialog } from '@/hooks/use-app-dialog';
 import { useBufferConfigs } from '@/hooks/use-buffer-config';
 import { useGymFormOptions } from '@/hooks/use-gymform-options';
@@ -131,7 +131,7 @@ export default function SetBuffer() {
   };
 
   if (isLoading) {
-    return <Skeleton className="h-[400px]" />;
+    return <BufferConfigurationSkeleton />;
   }
 
   return (

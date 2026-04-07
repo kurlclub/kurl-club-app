@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { SubscriptionPlansSkeleton } from '@/components/pages/account-settings/account-settings-skeletons';
 import { InvoicePreviewDialog } from '@/components/pages/account-settings/tabs/subscription-tab/invoice-preview-dialog';
 import { Pricing } from '@/components/pages/account-settings/tabs/subscription-tab/pricing';
 import { SubscriptionCard } from '@/components/shared/cards/subscription-card';
@@ -131,9 +132,7 @@ export function SubscriptionTab() {
         >
           <CardContent>
             {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-primary-green-500" />
-              </div>
+              <SubscriptionPlansSkeleton />
             ) : error ? (
               <div className="text-center py-12">
                 <p className="text-red-400">Failed to load pricing plans</p>

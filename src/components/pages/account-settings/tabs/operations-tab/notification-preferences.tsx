@@ -6,6 +6,7 @@ import { Bell } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { NotificationPreferencesSkeleton } from '@/components/pages/account-settings/account-settings-skeletons';
 import {
   type NotificationFormValues,
   getDefaultNotificationFormValues,
@@ -17,7 +18,6 @@ import {
   KFormField,
   KFormFieldType,
 } from '@/components/shared/form/k-formfield';
-import { AppLoader } from '@/components/shared/loaders';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -107,23 +107,16 @@ export default function NotificationPreferences() {
     }
   };
 
-  const isLoading = isSyncingSettingsForm || isSaving;
   const isDirty = form.formState.isDirty;
+  const isSectionLoading = isSyncingSettingsForm && !isDirty;
+  const isBusy = isSyncingSettingsForm || isSaving;
 
   const paymentRemindersEnabled = form.watch('paymentReminders');
   const memberExpiryEnabled = form.watch('memberExpiry');
   const lowAttendanceEnabled = form.watch('lowAttendance');
 
-  if (isLoading && !form.formState.isDirty) {
-    return (
-      <Card className="bg-secondary-blue-500/80 backdrop-blur-sm border-secondary-blue-400 relative overflow-hidden">
-        <CardContent className="p-8">
-          <div className="flex items-center justify-center">
-            <AppLoader />
-          </div>
-        </CardContent>
-      </Card>
-    );
+  if (isSectionLoading) {
+    return <NotificationPreferencesSkeleton />;
   }
 
   return (
@@ -150,7 +143,7 @@ export default function NotificationPreferences() {
                 variant="outline"
                 size="sm"
                 onClick={() => form.reset()}
-                disabled={isLoading}
+                disabled={isBusy}
               >
                 Discard
               </Button>
@@ -158,9 +151,9 @@ export default function NotificationPreferences() {
                 type="button"
                 size="sm"
                 onClick={form.handleSubmit(onSubmit)}
-                disabled={isLoading}
+                disabled={isBusy}
               >
-                {isLoading ? 'Saving...' : 'Save Changes'}
+                {isSaving ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
           )}
