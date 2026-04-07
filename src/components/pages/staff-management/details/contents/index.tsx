@@ -8,7 +8,6 @@ import AssignedMembersTable from './assigned-members-table';
 import Header from './header';
 import Permissions from './permissions';
 import SalaryConfiguration from './salary-configuration';
-import TrainerActivityTab from './trainer-activity';
 
 export default function Contents({
   staffId,
@@ -29,7 +28,6 @@ export default function Contents({
     staffRole === 'trainer'
       ? [
           { id: 'members', label: 'Assigned Members' },
-          { id: 'activity', label: 'Activity' },
           { id: 'salary', label: 'Salary Configuration' },
         ]
       : [
@@ -59,10 +57,6 @@ export default function Contents({
         <div className="py-4">
           {activeTab === 'members' && staffRole === 'trainer' && (
             <AssignedMembersTable trainerId={staffId} />
-          )}
-
-          {activeTab === 'activity' && staffRole === 'trainer' && (
-            <TrainerActivityTab trainerId={staffId} />
           )}
 
           {activeTab === 'roles' && staffRole !== 'trainer' && <Permissions />}
