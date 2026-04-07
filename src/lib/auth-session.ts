@@ -45,6 +45,16 @@ const normalizeClub = (value: unknown): AppClub | null => {
     gymId: getNumber(value.gymId),
     gymName: getString(value.gymName),
     location: getString(value.location),
+    contactNumber1: getString(value.contactNumber1),
+    contactNumber2: getNullableString(value.contactNumber2),
+    email: getString(value.email),
+    socialLinks:
+      typeof value.socialLinks === 'string' ||
+      Array.isArray(value.socialLinks) ||
+      value.socialLinks === null
+        ? value.socialLinks
+        : null,
+    gymAdminId: getNumber(value.gymAdminId),
     status: getNumber(value.status),
     gymIdentifier: getString(value.gymIdentifier),
     photoPath: getNullableString(value.photoPath),

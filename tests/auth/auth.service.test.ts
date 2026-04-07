@@ -124,6 +124,14 @@ describe('fetchAppSession', () => {
       uid: 'uid-22',
       userId: 22,
       userRole: 'owner',
+      clubs: [
+        {
+          gymId: 52,
+          contactNumber1: '9999999999',
+          email: 'prime@kurlclub.com',
+          gymAdminId: 22,
+        },
+      ],
       gyms: [
         {
           gymId: 52,

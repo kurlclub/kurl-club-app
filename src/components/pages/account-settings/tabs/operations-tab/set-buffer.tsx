@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Calendar, CheckCheck, Edit, Plus, Trash2, Wallet } from 'lucide-react';
 import { z } from 'zod/v4';
 
-import { useViewGymId } from '@/components/pages/account-settings/tabs/profile-and-gyms-tab';
+import { useSettingsGymId } from '@/components/pages/account-settings/tabs/settings-gym';
 import {
   KFormField,
   KFormFieldType,
@@ -22,19 +22,17 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useAppDialog } from '@/hooks/use-app-dialog';
 import { useBufferConfigs } from '@/hooks/use-buffer-config';
 import { useGymFormOptions } from '@/hooks/use-gymform-options';
-import { useGymBranch } from '@/providers/gym-branch-provider';
 import { bufferSchema } from '@/schemas';
 import type { BufferConfig } from '@/services/buffer-config';
 
 type BufferFormData = z.infer<typeof bufferSchema>;
 
 export default function SetBuffer() {
-  const viewGymId = useViewGymId();
-  const { gymBranch } = useGymBranch();
-  const gymId = viewGymId || gymBranch?.gymId;
+  const settingsGymId = useSettingsGymId();
+  const effectiveGymId = settingsGymId ?? undefined;
   const { configs, isLoading, createConfig, updateConfig, deleteConfig } =
-    useBufferConfigs(gymId || undefined);
-  const { formOptions } = useGymFormOptions(gymId);
+    useBufferConfigs(effectiveGymId);
+  const { formOptions } = useGymFormOptions(effectiveGymId);
   const { showConfirm } = useAppDialog();
   const [editingId, setEditingId] = useState<number | null>(null);
   const [isAdding, setIsAdding] = useState(false);

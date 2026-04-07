@@ -1,5 +1,3 @@
-import React from 'react';
-
 import InvoiceSettings from '../business-profile-tab/invoice-settings';
 import NotificationPreferences from './notification-preferences';
 import SetBuffer from './set-buffer';

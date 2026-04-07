@@ -43,6 +43,11 @@ export interface AppClub {
   gymId: number;
   gymName: string;
   location: string;
+  contactNumber1: string;
+  contactNumber2: string | null;
+  email: string;
+  socialLinks?: string | Array<string | { url?: string | null }> | null;
+  gymAdminId: number;
   status: number;
   gymIdentifier: string;
   photoPath: string | null;

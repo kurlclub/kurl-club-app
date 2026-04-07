@@ -7,6 +7,13 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 import {
+  type InvoiceSettingsFormValues,
+  getDefaultInvoiceSettingsFormValues,
+  getInvoiceSettingsFormValues,
+  useSettingsGymId,
+  useSyncSettingsFormWithGym,
+} from '@/components/pages/account-settings/tabs/settings-gym';
+import {
   KFormField,
   KFormFieldType,
 } from '@/components/shared/form/k-formfield';
@@ -21,7 +28,6 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { API_BASE_URL, cn } from '@/lib/utils';
-import { useGymBranch } from '@/providers/gym-branch-provider';
 import {
   type InvoiceSettings,
   type InvoiceTemplate,
@@ -33,13 +39,13 @@ import {
 const invoiceSettingsSchema = z.object({
   invoicePrefix: z.string().min(1, 'Invoice prefix is required'),
   invoiceStartNumber: z.string().min(1, 'Starting number is required'),
-  taxRate: z.string().optional(),
-  companyRegNumber: z.string().optional(),
-  paymentTerms: z.string().optional(),
+  taxRate: z.string(),
+  companyRegNumber: z.string(),
+  paymentTerms: z.string(),
   invoiceTemplate: z.string().min(1, 'Template is required'),
 });
 
-type InvoiceSettingsForm = z.infer<typeof invoiceSettingsSchema>;
+type InvoiceSettingsForm = InvoiceSettingsFormValues;
 
 type TemplatePreviewAsset = {
   objectUrl: string;
@@ -60,11 +66,13 @@ const buildTemplatePreviewUrl = (previewUrl: string) => {
 };
 
 export default function InvoiceSettings() {
-  const { gymBranch } = useGymBranch();
-  const [selectedTemplate, setSelectedTemplate] = useState('modern');
+  const settingsGymId = useSettingsGymId();
+  const [selectedTemplate, setSelectedTemplate] = useState(
+    getDefaultInvoiceSettingsFormValues().invoiceTemplate
+  );
   const [templates, setTemplates] = useState<InvoiceTemplate[]>([]);
   const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
-  const [isLoadingSettings, setIsLoadingSettings] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [previewTemplate, setPreviewTemplate] =
     useState<InvoiceTemplate | null>(null);
   const [templatePreviewAssets, setTemplatePreviewAssets] = useState<
@@ -82,15 +90,11 @@ export default function InvoiceSettings() {
 
   const form = useForm<InvoiceSettingsForm>({
     resolver: zodResolver(invoiceSettingsSchema),
-    defaultValues: {
-      invoicePrefix: 'INV',
-      invoiceStartNumber: '1001',
-      taxRate: '',
-      companyRegNumber: '',
-      paymentTerms: 'Payment due within 30 days',
-      invoiceTemplate: 'modern',
-    },
+    defaultValues: getDefaultInvoiceSettingsFormValues(),
   });
+  const handleSyncedValues = useCallback((values: InvoiceSettingsForm) => {
+    setSelectedTemplate(values.invoiceTemplate);
+  }, []);
 
   useEffect(() => {
     templatePreviewAssetsRef.current = templatePreviewAssets;
@@ -190,11 +194,6 @@ export default function InvoiceSettings() {
       try {
         const data = await getInvoiceTemplates();
         setTemplates(data);
-        // Set first template as default if available
-        if (data.length > 0 && !form.getValues('invoiceTemplate')) {
-          setSelectedTemplate(data[0].id);
-          form.setValue('invoiceTemplate', data[0].id);
-        }
       } catch (error) {
         console.error('Error loading invoice templates:', error);
         toast.error('Failed to load invoice templates');
@@ -204,41 +203,20 @@ export default function InvoiceSettings() {
     };
 
     fetchTemplates();
-  }, [form]);
+  }, []);
 
-  // Prefill invoice settings if available
-  useEffect(() => {
-    const fetchSettings = async () => {
-      if (!gymBranch?.gymId) return;
-
-      setIsLoadingSettings(true);
-      try {
-        const settings = await getInvoiceSettings(gymBranch.gymId);
-        if (!settings) return;
-
-        form.reset({
-          invoicePrefix: settings.invoicePrefix ?? 'INV',
-          invoiceStartNumber: String(settings.invoiceStartingNumber ?? 1001),
-          taxRate:
-            settings.taxRate === 0 || settings.taxRate
-              ? String(settings.taxRate)
-              : '',
-          companyRegNumber: settings.taxRegistrationNumber ?? '',
-          paymentTerms: settings.paymentTerms ?? '',
-          invoiceTemplate: settings.invoiceTemplate ?? 'modern',
-        });
-
-        setSelectedTemplate(settings.invoiceTemplate ?? 'modern');
-      } catch (error) {
-        console.error('Error loading invoice settings:', error);
-        toast.error('Failed to load invoice settings');
-      } finally {
-        setIsLoadingSettings(false);
-      }
-    };
-
-    fetchSettings();
-  }, [gymBranch?.gymId, form]);
+  const isSyncingSettingsForm = useSyncSettingsFormWithGym<
+    InvoiceSettingsForm,
+    InvoiceSettings
+  >({
+    gymId: settingsGymId,
+    getDefaultValues: getDefaultInvoiceSettingsFormValues,
+    fetchSettings: getInvoiceSettings,
+    mapSettingsToValues: getInvoiceSettingsFormValues,
+    errorMessage: 'Failed to load invoice settings',
+    form,
+    onValuesSynced: handleSyncedValues,
+  });
 
   useEffect(() => {
     if (templates.length === 0) return;
@@ -249,7 +227,7 @@ export default function InvoiceSettings() {
   }, [templates, loadTemplatePreviewAsset]);
 
   const onSubmit = async (data: InvoiceSettingsForm) => {
-    if (!gymBranch?.gymId) {
+    if (!settingsGymId) {
       toast.error('No gym selected');
       return;
     }
@@ -258,7 +236,7 @@ export default function InvoiceSettings() {
     const taxRate = data.taxRate ? Number(data.taxRate) : 0;
 
     const payload: InvoiceSettings = {
-      gymId: gymBranch.gymId,
+      gymId: settingsGymId,
       invoicePrefix: data.invoicePrefix,
       invoiceStartingNumber: Number.isFinite(invoiceStartingNumber)
         ? invoiceStartingNumber
@@ -270,20 +248,17 @@ export default function InvoiceSettings() {
     };
 
     try {
+      setIsSaving(true);
       const result = await upsertInvoiceSettings(payload);
       toast.success(result.success);
-      setSelectedTemplate(result.data.invoiceTemplate);
-      form.reset({
-        invoicePrefix: result.data.invoicePrefix,
-        invoiceStartNumber: String(result.data.invoiceStartingNumber),
-        taxRate: String(result.data.taxRate ?? 0),
-        companyRegNumber: result.data.taxRegistrationNumber ?? '',
-        paymentTerms: result.data.paymentTerms ?? '',
-        invoiceTemplate: result.data.invoiceTemplate,
-      });
+      const nextFormValues = getInvoiceSettingsFormValues(result.data);
+      setSelectedTemplate(nextFormValues.invoiceTemplate);
+      form.reset(nextFormValues);
     } catch (error) {
       console.error('Error saving invoice settings:', error);
       toast.error('Failed to save invoice settings');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -300,6 +275,7 @@ export default function InvoiceSettings() {
   };
 
   const isDirty = form.formState.isDirty;
+  const isBusy = isSyncingSettingsForm || isSaving;
   const activePreviewAsset = previewTemplate
     ? templatePreviewAssets[previewTemplate.id]
     : null;
@@ -336,11 +312,11 @@ export default function InvoiceSettings() {
                     variant="outline"
                     size="sm"
                     onClick={() => form.reset()}
-                    disabled={isLoadingSettings}
+                    disabled={isBusy}
                   >
                     Discard
                   </Button>
-                  <Button type="submit" size="sm" disabled={isLoadingSettings}>
+                  <Button type="submit" size="sm" disabled={isBusy}>
                     Save Changes
                   </Button>
                 </div>
