@@ -2,7 +2,6 @@ import { api } from '@/lib/api';
 import { normalizeAccessMeData } from '@/services/auth/access-me-normalizer';
 import type { AppSession, AppUser, AuthEntitlements } from '@/types/access';
 import type { GymDetails } from '@/types/gym';
-import type { SubscriptionLifecycle } from '@/types/subscription';
 
 interface LoginRequest {
   email: string;
@@ -53,25 +52,6 @@ interface UserDetailsResponse {
       gymIdentifier: string;
       photoPath: string | null;
     }>;
-    subscription?: {
-      plan: {
-        id: number;
-        name: string;
-        tier: string;
-        status: 'active' | 'expired' | 'cancelled';
-      };
-      subscriptionId: number;
-      billingCycle: 'monthly' | 'sixMonths' | 'yearly';
-      startDate: string;
-      endDate: string;
-      usageLimits: {
-        maxClubs: number;
-        maxMembers: number;
-        maxTrainers: number;
-        maxStaffs: number;
-      };
-      features: Record<string, boolean | number>;
-    };
   };
 }
 
@@ -103,20 +83,6 @@ interface SelfOnboardingResponse {
     phoneNumber: string;
   };
 }
-
-const normalizeLifecycle = (
-  subscription: UserDetailsResponse['data']['subscription']
-): SubscriptionLifecycle | null => {
-  if (!subscription) return null;
-
-  return {
-    subscriptionId: subscription.subscriptionId,
-    billingCycle: subscription.billingCycle,
-    startDate: subscription.startDate,
-    endDate: subscription.endDate,
-    status: subscription.plan.status,
-  };
-};
 
 const buildUserDetails = ({
   uid,
@@ -230,7 +196,6 @@ export const getUserByUid = async (uid: string, currentGymId?: number) => {
         activeGym,
       }),
       gymDetails: buildGymDetails(activeGym),
-      lifecycle: normalizeLifecycle(response.data.subscription),
       allClubs: response.data.clubs,
     };
   } catch (error) {
@@ -278,12 +243,13 @@ export const fetchAppSession = async (
     throw new Error(accessResult.error || 'Failed to get access data');
   }
 
+  const entitlements: AuthEntitlements = accessResult.data;
+
   return {
     session: {
       user: userResult.data,
       gymDetails: userResult.gymDetails ?? null,
-      entitlements: accessResult.data,
-      subscriptionLifecycle: userResult.lifecycle ?? null,
+      entitlements,
     },
   };
 };

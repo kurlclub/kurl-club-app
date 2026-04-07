@@ -7,8 +7,6 @@ import { googleLogout } from '@react-oauth/google';
 
 import {
   APP_SESSION_STORAGE_KEY,
-  LEGACY_GYM_DETAILS_STORAGE_KEY,
-  LEGACY_USER_STORAGE_KEY,
   resolveStoredAppSession,
   serializeStoredAppSession,
 } from '@/lib/auth-session';
@@ -22,13 +20,11 @@ import {
 } from '@/services/auth/auth';
 import type { AppSession, AppUser, AuthEntitlements } from '@/types/access';
 import type { GymDetails } from '@/types/gym';
-import type { SubscriptionLifecycle } from '@/types/subscription';
 
 interface AuthContextType {
   user: AppUser | null;
   gymDetails: GymDetails | null;
   entitlements: AuthEntitlements | null;
-  subscriptionLifecycle: SubscriptionLifecycle | null;
   isLoading: boolean;
   login: (
     email: string,
@@ -48,8 +44,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const clearSessionStorage = () => {
   try {
     localStorage.removeItem(APP_SESSION_STORAGE_KEY);
-    localStorage.removeItem(LEGACY_USER_STORAGE_KEY);
-    localStorage.removeItem(LEGACY_GYM_DETAILS_STORAGE_KEY);
+    localStorage.removeItem('appUser');
+    localStorage.removeItem('gymDetails');
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
   } catch (error) {
@@ -76,8 +72,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [entitlements, setEntitlements] = useState<AuthEntitlements | null>(
     null
   );
-  const [subscriptionLifecycle, setSubscriptionLifecycle] =
-    useState<SubscriptionLifecycle | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
@@ -90,12 +84,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           APP_SESSION_STORAGE_KEY,
           serializeStoredAppSession(session)
         );
-        localStorage.removeItem(LEGACY_USER_STORAGE_KEY);
-        localStorage.removeItem(LEGACY_GYM_DETAILS_STORAGE_KEY);
+        localStorage.removeItem('appUser');
+        localStorage.removeItem('gymDetails');
       } else {
         localStorage.removeItem(APP_SESSION_STORAGE_KEY);
-        localStorage.removeItem(LEGACY_USER_STORAGE_KEY);
-        localStorage.removeItem(LEGACY_GYM_DETAILS_STORAGE_KEY);
+        localStorage.removeItem('appUser');
+        localStorage.removeItem('gymDetails');
       }
       persistCurrentGymBranch(session);
     } catch (storageError) {
@@ -107,7 +101,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setUser(session?.user ?? null);
     setGymDetails(session?.gymDetails ?? null);
     setEntitlements(session?.entitlements ?? null);
-    setSubscriptionLifecycle(session?.subscriptionLifecycle ?? null);
   }, []);
 
   const refreshSession = React.useCallback(
@@ -126,17 +119,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         const accessToken = localStorage.getItem('accessToken');
         const resolvedSession = resolveStoredAppSession({
           encryptedSession: localStorage.getItem(APP_SESSION_STORAGE_KEY),
-          encryptedLegacyUser: localStorage.getItem(LEGACY_USER_STORAGE_KEY),
-          encryptedLegacyGymDetails: localStorage.getItem(
-            LEGACY_GYM_DETAILS_STORAGE_KEY
-          ),
         });
 
         if (resolvedSession.session) {
           applySession(resolvedSession.session);
-          if (resolvedSession.didMigrateLegacyState) {
-            persistSession(resolvedSession.session);
-          }
         }
 
         if (!accessToken) {
@@ -285,7 +271,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         user,
         gymDetails,
         entitlements,
-        subscriptionLifecycle,
         isLoading,
         login: handleLogin,
         loginWithGoogle: handleGoogleLogin,

@@ -26,7 +26,11 @@ export function SubscriptionTab() {
   const invoicePdfUrlRef = useRef<string | null>(null);
   const { data: pricingData, isLoading, error } = useSubscriptionPlans();
   const { subscription } = useSubscriptionAccess();
-  const nextBillingDate = safeFormatDate(subscription?.endDate, 'en-GB', 'N/A');
+  const nextBillingDate = safeFormatDate(
+    subscription?.nextBillingDate,
+    'en-GB',
+    'N/A'
+  );
   const billingCycleLabel =
     subscription?.billingCycle === 'sixMonths'
       ? '6 months billing'

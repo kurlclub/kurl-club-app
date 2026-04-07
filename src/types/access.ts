@@ -1,9 +1,5 @@
 import type { GymDetails } from '@/types/gym';
-import type {
-  BillingCycle,
-  SubscriptionLifecycle,
-  SubscriptionPlanEntitlement,
-} from '@/types/subscription';
+import type { SubscriptionPlanEntitlement } from '@/types/subscription';
 
 export type PermissionModuleKey =
   | 'member_management'
@@ -65,31 +61,10 @@ export interface AppUser {
   clubs: AppClub[];
 }
 
-export interface LegacyUserSubscription {
-  plan: {
-    id: number;
-    name: string;
-    tier: string;
-    status: 'active' | 'expired' | 'cancelled';
-  };
-  subscriptionId: number;
-  billingCycle: BillingCycle;
-  startDate: string;
-  endDate: string;
-  usageLimits: {
-    maxClubs: number;
-    maxMembers: number;
-    maxTrainers: number;
-    maxStaffs: number;
-  };
-  features: Record<string, boolean | number>;
-}
-
 export interface AppSession {
   user: AppUser | null;
   gymDetails: GymDetails | null;
   entitlements: AuthEntitlements | null;
-  subscriptionLifecycle: SubscriptionLifecycle | null;
 }
 
 export interface StoredAppSession extends AppSession {

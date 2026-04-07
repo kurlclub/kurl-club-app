@@ -11,15 +11,27 @@ import type { AuthEntitlements } from '@/types/access';
 import { DEFAULT_SUBSCRIPTION_PLAN_FEATURES } from '@/types/subscription';
 
 const fullPlan: NonNullable<AuthEntitlements['subscriptionPlan']> = {
+  subscriptionId: 42,
   id: 4,
   name: 'ENTERPRISE',
   subtitle: 'Powerful',
   description: '<p>Enterprise</p>',
+  descriptionPlainText: 'Enterprise',
+  iconUrl: 'https://cdn.example.com/subscriptions/enterprise.png',
+  status: 'active',
+  billingCycle: 'monthly',
+  currency: 'INR',
+  billingAmount: 1099,
   monthlyPrice: 1099,
   sixMonthsPrice: 1099,
   yearlyPrice: 1099,
   badge: 'Enterprise',
   subscriptionDate: '2026-03-04T17:27:24.233437',
+  startDate: '2026-03-04T17:27:24.233437Z',
+  endDate: '2026-04-04T17:27:24.233437Z',
+  nextBillingDate: '2026-04-04T17:27:24.233437Z',
+  daysRemaining: 12,
+  cancelAtPeriodEnd: false,
   limits: {
     maxClubs: 10,
     maxMembers: 1000,

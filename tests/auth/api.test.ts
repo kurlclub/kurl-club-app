@@ -67,7 +67,6 @@ describe('api auth headers', () => {
           permissions: [],
           subscriptionPlan: null,
         },
-        subscriptionLifecycle: null,
       })
     );
 

@@ -1,4 +1,4 @@
-export type SubscriptionPlanStatus = 'active' | 'expired' | 'cancelled';
+export type SubscriptionPlanStatus = 'active' | 'expiring' | 'expired';
 export type BillingCycle = 'monthly' | 'sixMonths' | 'yearly';
 
 export interface SubscriptionLimits {
@@ -82,29 +82,30 @@ export interface SubscriptionPlanFeatures {
 }
 
 export interface SubscriptionPlanEntitlement {
+  subscriptionId: number | null;
   id: number;
   name: string;
   subtitle: string;
   description: string;
+  descriptionPlainText: string;
+  iconUrl: string | null;
   monthlyPrice: number;
   sixMonthsPrice: number;
   yearlyPrice: number;
   badge?: string | null;
-  subscriptionDate?: string | null;
+  status: SubscriptionPlanStatus | null;
+  billingCycle: BillingCycle | null;
+  currency: string | null;
+  billingAmount: number | null;
+  subscriptionDate: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  nextBillingDate: string | null;
+  daysRemaining: number | null;
+  cancelAtPeriodEnd: boolean;
   limits: SubscriptionLimits;
   features: SubscriptionPlanFeatures;
 }
-
-export interface SubscriptionLifecycle {
-  subscriptionId: number;
-  billingCycle: BillingCycle;
-  startDate: string;
-  endDate: string;
-  status: SubscriptionPlanStatus;
-}
-
-export interface CurrentSubscription
-  extends SubscriptionPlanEntitlement, SubscriptionLifecycle {}
 
 export type SubscriptionAccessKey =
   | 'memberManagement'

@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import React from 'react';
 
 import {
@@ -38,7 +39,13 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
   const planName = subscription?.name || 'No Active Plan';
   const planBadge = subscription?.badge;
   const endDateLabel = safeFormatDate(subscription?.endDate, 'en-GB', 'N/A');
+  const nextBillingDateLabel = safeFormatDate(
+    subscription?.nextBillingDate,
+    'en-GB',
+    'N/A'
+  );
   const billingCycle = subscription?.billingCycle || 'monthly';
+  const planDescription = subscription?.descriptionPlainText || '';
 
   const effectiveVariant: SubscriptionVariant =
     variant ||
@@ -75,7 +82,7 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
   > = {
     standard: {
       title: planName,
-      description: `Billing cycle: ${billingCycleLabel} • Ends on ${endDateLabel}`,
+      description: `Billing cycle: ${billingCycleLabel} • Next billing on ${nextBillingDateLabel}`,
       badge: 'Standard',
       icon: <ShieldCheck className="h-4 w-4" />,
       cardClass:
@@ -94,7 +101,7 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
           <span className="font-bold text-primary-green-200">{planName}</span>
         </>
       ),
-      description: `Billing cycle: ${billingCycleLabel} • Ends on ${endDateLabel}${
+      description: `Billing cycle: ${billingCycleLabel} • Next billing on ${nextBillingDateLabel}${
         typeof daysRemaining === 'number' && daysRemaining >= 0
           ? ` • ${daysRemaining} day${daysRemaining === 1 ? '' : 's'} left`
           : ''
@@ -117,7 +124,7 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
           <span className="font-bold text-amber-200">{planName}</span>
         </>
       ),
-      description: `Renews on ${endDateLabel}${
+      description: `Next billing on ${nextBillingDateLabel}${
         typeof daysRemaining === 'number' && daysRemaining >= 0
           ? ` • ${daysRemaining} day${daysRemaining === 1 ? '' : 's'} remaining`
           : ''
@@ -240,6 +247,29 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
       >
         {activeContent.description}
       </p>
+
+      {(subscription?.iconUrl || planDescription) &&
+        effectiveVariant !== 'none' && (
+          <div className="relative z-10 mt-4 flex items-start gap-3 rounded-xl border border-white/10 bg-black/10 p-3">
+            {subscription?.iconUrl ? (
+              <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-white/10 bg-white/5">
+                <Image
+                  src={subscription.iconUrl}
+                  alt={`${planName} icon`}
+                  fill
+                  className="object-contain p-1.5"
+                  sizes="40px"
+                  unoptimized
+                />
+              </div>
+            ) : null}
+            {planDescription ? (
+              <p className="text-sm leading-relaxed text-secondary-blue-100">
+                {planDescription}
+              </p>
+            ) : null}
+          </div>
+        )}
 
       {effectiveVariant === 'expired' && (
         <div className="relative z-10 mt-4 rounded-xl border border-white/25 bg-black/15 p-3.5 backdrop-blur-[1px]">

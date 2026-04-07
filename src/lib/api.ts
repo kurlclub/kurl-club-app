@@ -1,7 +1,5 @@
 import {
   APP_SESSION_STORAGE_KEY,
-  LEGACY_GYM_DETAILS_STORAGE_KEY,
-  LEGACY_USER_STORAGE_KEY,
   resolveStoredAppSession,
 } from './auth-session';
 import { API_BASE_URL } from './utils/index';
@@ -37,8 +35,6 @@ const clearStorage = (): void => {
     localStorage.removeItem(APP_SESSION_STORAGE_KEY);
     localStorage.removeItem('appUser');
     localStorage.removeItem('gymDetails');
-    localStorage.removeItem(LEGACY_GYM_DETAILS_STORAGE_KEY);
-    localStorage.removeItem(LEGACY_USER_STORAGE_KEY);
     localStorage.removeItem('gymBranch');
   } catch (error) {
     console.error('Failed to clear storage:', error);
@@ -134,8 +130,6 @@ const baseFetch: typeof fetch = async (url, options = {}) => {
   try {
     sessionData = resolveStoredAppSession({
       encryptedSession: getStorageItem(APP_SESSION_STORAGE_KEY),
-      encryptedLegacyUser: getStorageItem(LEGACY_USER_STORAGE_KEY),
-      encryptedLegacyGymDetails: getStorageItem(LEGACY_GYM_DETAILS_STORAGE_KEY),
     }).session;
   } catch (error) {
     console.warn('Failed to get auth session for headers:', error);
