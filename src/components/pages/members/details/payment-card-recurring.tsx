@@ -1,12 +1,13 @@
 'use client';
 
-import { Calendar, Clock, Edit, FileText, Info } from 'lucide-react';
+import { Calendar, Clock, Edit, FileText } from 'lucide-react';
 
 import { FeeStatusBadge } from '@/components/shared/badges/fee-status-badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { FormOptionsResponse } from '@/hooks/use-gymform-options';
+import { getRecurringDisplayDueDate } from '@/lib/payments/recurring';
 import {
   calculateDaysRemaining,
   formatDateTime,
@@ -42,17 +43,10 @@ export function RecurringPaymentCard({
     currentCycle.cyclePaymentStatus,
     currentCycle.pendingAmount
   );
-  const bufferDaysRemaining = currentCycle.bufferEndDate
-    ? calculateDaysRemaining(currentCycle.bufferEndDate)
-    : 0;
-  const hasBuffer =
-    currentCycle.bufferEligible &&
-    currentCycle.bufferEndDate &&
-    bufferDaysRemaining >= 0;
-  const daysRemaining = hasBuffer
-    ? calculateDaysRemaining(currentCycle.bufferEndDate!)
-    : calculateDaysRemaining(currentCycle.dueDate);
-  const isPartialPayment = currentCycle.cyclePaymentStatus === 'partially_paid';
+  const displayDueDate =
+    getRecurringDisplayDueDate(member) || currentCycle.dueDate;
+  const daysRemaining = calculateDaysRemaining(displayDueDate);
+  const outstandingAmount = member.totalDebtAmount;
 
   const progressValue = (() => {
     const today = new Date();
@@ -78,6 +72,10 @@ export function RecurringPaymentCard({
   const membershipPlan = formOptions?.membershipPlans.find(
     (plan) => plan.membershipPlanId === membershipPlanId
   );
+  const planName =
+    member.membershipPlanName ||
+    membershipPlan?.planName ||
+    `Plan ${membershipPlanId}`;
 
   return (
     <div className="shadow-sm bg-secondary-blue-500 rounded-lg h-full flex flex-col">
@@ -105,23 +103,14 @@ export function RecurringPaymentCard({
         </div>
       </div>
 
-      {isPartialPayment && hasBuffer && bufferDaysRemaining > 0 && (
-        <div className="bg-secondary-yellow-500/30 text-neutral-ochre-200 inline-flex items-center gap-2 px-4 py-1 border-l-4 border-yellow-400">
-          <Info size={12} />
-          <p className="text-xs">
-            On Buffer Period: {bufferDaysRemaining} days remaining
-          </p>
-        </div>
-      )}
-
       <div className="px-5 py-4">
         <div className="flex items-center justify-between mb-2">
           <span className="text-secondary-blue-50 text-sm font-medium flex items-center gap-1">
             <Calendar className="h-3 w-3" />
-            Payment Timeline
+            Current Cycle Timeline
           </span>
           <span className="text-secondary-blue-50 text-sm capitalize">
-            {membershipPlan?.planName}
+            {planName}
           </span>
         </div>
 
@@ -144,11 +133,13 @@ export function RecurringPaymentCard({
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-2">
             <div className="text-center flex-1">
               <div
-                className={`text-lg font-bold ${currentCycle.pendingAmount > 0 ? 'text-red-400' : 'text-green-400'}`}
+                className={`text-lg font-bold ${outstandingAmount > 0 ? 'text-red-400' : 'text-green-400'}`}
               >
-                ₹{currentCycle.pendingAmount.toLocaleString()}
+                ₹{outstandingAmount.toLocaleString()}
               </div>
-              <div className="text-primary-blue-50 text-xs">Outstanding</div>
+              <div className="text-primary-blue-50 text-xs">
+                Total Outstanding
+              </div>
             </div>
 
             <Separator
@@ -159,7 +150,7 @@ export function RecurringPaymentCard({
             <div className="text-center flex-1">
               <div className="text-lg font-bold text-blue-400">
                 ₹
-                {currentCycle.lastAmountPaid
+                {currentCycle.lastAmountPaid != null
                   ? currentCycle.lastAmountPaid.toLocaleString()
                   : 0}
               </div>

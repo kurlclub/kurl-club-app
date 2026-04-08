@@ -158,7 +158,6 @@ export interface MemberDetails {
   fullAddress: string;
   workoutPlan: number;
   daysRemaining: number;
-  bufferDaysRemaining: number | null;
   perSessionRate: number | null;
   idNumber: string;
   fitnessGoal: FitnessGoal;
@@ -306,7 +305,6 @@ export interface MemberUpdatePayload {
 
   // System fields (read-only, sent back)
   daysRemaining?: number;
-  bufferDaysRemaining?: number;
   membershipPlan?: string;
   paymentCycleInfo?: string;
 }

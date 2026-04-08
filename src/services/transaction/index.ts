@@ -1,5 +1,6 @@
 import { api } from '@/lib/api';
 import { ApiResponse } from '@/types';
+import type { BillingType } from '@/types/payment';
 
 export interface PaymentRequest {
   memberId: number;
@@ -10,20 +11,19 @@ export interface PaymentRequest {
   paymentType: number;
 }
 
-export interface ExtendBufferRequest {
-  memberId: number;
-  daysToAdd: number;
-}
-
 export interface PaymentHistory {
   id: number;
   amount: number;
   paymentMethod: string;
   paymentDate: string;
-  paymentType: number;
+  paymentType: string;
   isEdited: boolean;
   originalPaymentId: number | null;
   status: string;
+  type: BillingType | string;
+  cycleId: number | null;
+  sessionId: number | null;
+  attendanceId: number | null;
 }
 
 export const partialPayment = async (data: PaymentRequest) => {
@@ -51,18 +51,6 @@ export const fullPayment = async (data: PaymentRequest) => {
     console.error('Error recording full payment:', error);
     const errorMessage =
       error instanceof Error ? error.message : 'Failed to record full payment';
-    return { error: errorMessage };
-  }
-};
-
-export const extendBuffer = async (data: ExtendBufferRequest) => {
-  try {
-    const response = await api.post('/Transaction/extend-buffer', data);
-    return { success: 'Buffer extended successfully!', data: response };
-  } catch (error) {
-    console.error('Error extending buffer:', error);
-    const errorMessage =
-      error instanceof Error ? error.message : 'Failed to extend buffer';
     return { error: errorMessage };
   }
 };

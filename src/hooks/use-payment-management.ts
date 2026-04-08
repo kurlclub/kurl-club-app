@@ -4,11 +4,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import {
-  type ExtendBufferRequest,
   type PaymentRequest,
   emailPaymentReport,
   exportPaymentReport,
-  extendBuffer,
   fullPayment,
   getPaymentHistory,
   partialPayment,
@@ -19,7 +17,6 @@ export function usePaymentManagement() {
 
   const refreshPaymentQueries = async () => {
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['gymPayments'] }),
       queryClient.invalidateQueries({ queryKey: ['paymentHistory'] }),
       queryClient.invalidateQueries({ queryKey: ['memberPaymentDetails'] }),
       queryClient.invalidateQueries({ queryKey: ['current-due-payments'] }),
@@ -65,31 +62,11 @@ export function usePaymentManagement() {
     },
   });
 
-  const extendBufferMutation = useMutation({
-    mutationFn: (data: ExtendBufferRequest) => extendBuffer(data),
-    onSuccess: async (result) => {
-      if (result.success) {
-        await refreshPaymentQueries();
-        toast.success(result.success);
-      } else if (result.error) {
-        toast.error(result.error);
-      }
-    },
-    onError: (error) => {
-      toast.error(
-        error instanceof Error ? error.message : 'Failed to extend buffer'
-      );
-    },
-  });
-
   return {
     recordPartialPayment: partialPaymentMutation.mutateAsync,
     recordFullPayment: fullPaymentMutation.mutateAsync,
-    extendBuffer: extendBufferMutation.mutateAsync,
     isProcessing:
-      partialPaymentMutation.isPending ||
-      fullPaymentMutation.isPending ||
-      extendBufferMutation.isPending,
+      partialPaymentMutation.isPending || fullPaymentMutation.isPending,
   };
 }
 

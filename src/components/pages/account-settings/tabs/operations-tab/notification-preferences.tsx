@@ -131,8 +131,8 @@ export default function NotificationPreferences() {
                 Notification Preferences
               </CardTitle>
               <CardDescription className="text-secondary-blue-200">
-                Configure automated alerts and reminders for buffer periods and
-                payments
+                Configure automated alerts and reminders for payments and
+                membership expiry
               </CardDescription>
             </div>
           </div>

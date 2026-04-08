@@ -326,28 +326,12 @@ export const GymDataDetailsSchema = z.object({
     .optional(),
 });
 
-export const dayBufferSchema = z.object({
-  fee_buffer_amount: z.string().min(1, 'buffer amount is required'),
-  fee_buffer_days: z.string().min(1, 'buffer day is required'),
-  plan: z.string().min(1, 'plan selection is required'),
-});
-
 export const paymentFormSchema = z.object({
   amount: z.string().refine((val) => {
     const num = Number(val);
     return num >= 1;
   }, 'Amount must be at least 1'),
   method: z.string().min(1, 'Payment method is required'),
-  extendDays: z.string().refine((val) => {
-    const num = Number(val);
-    return num >= 1;
-  }, 'Days must be at least 1'),
-});
-
-export const bufferSchema = z.object({
-  feeBufferAmount: z.string().min(1, 'Amount is required'),
-  feeBufferDays: z.string().min(1, 'Days is required'),
-  membershipPlanId: z.string().min(1, 'Plan is required'),
 });
 
 export const gymUpdateSchema = z.object({

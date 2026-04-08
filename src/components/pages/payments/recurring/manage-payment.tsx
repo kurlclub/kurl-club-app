@@ -6,13 +6,10 @@ import { FormProvider, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Calendar,
-  Clock,
   CreditCard,
   Handshake,
   Hourglass,
-  OctagonAlert,
   Plus,
-  Shield,
   Wallet,
 } from 'lucide-react';
 import { z } from 'zod/v4';
@@ -33,6 +30,10 @@ import {
   usePaymentManagement,
 } from '@/hooks/use-payment-management';
 import { paymentMethodOptions } from '@/lib/constants';
+import {
+  getRecurringDisplayDueDate,
+  getRecurringFullSettlementAmount,
+} from '@/lib/payments/recurring';
 import { formatDateTime } from '@/lib/utils';
 import { useGymBranch } from '@/providers/gym-branch-provider';
 import { paymentFormSchema } from '@/schemas';
@@ -55,14 +56,18 @@ export function ManagePaymentSheet({
 }: ManagePaymentSheetProps) {
   const [showHistory, setShowHistory] = useState(false);
   const [paymentType, setPaymentType] = useState<'partial' | 'full'>('partial');
-  const pending = member?.currentCycle?.pendingAmount || 0;
+  const currentCyclePending = member?.currentCycle?.pendingAmount || 0;
+  const settlementAmount = getRecurringFullSettlementAmount(member);
+  const displayDueDate = getRecurringDisplayDueDate(member);
+  const unsettledCycles = member?.totalDebtCycles || 0;
+  const isOverdue = member?.overallPaymentStatus === 'Overdue';
+  const dueDateLabel = isOverdue ? 'Oldest Due Date' : 'Due Date';
+  const amountLabel = isOverdue ? 'Total Outstanding' : 'Current Pending';
+  const planLabel =
+    member?.membershipPlanName || `Plan ${member?.membershipPlanId ?? ''}`;
   const { gymBranch } = useGymBranch();
-  const {
-    recordPartialPayment,
-    recordFullPayment,
-    extendBuffer,
-    isProcessing,
-  } = usePaymentManagement();
+  const { recordPartialPayment, recordFullPayment, isProcessing } =
+    usePaymentManagement();
   const { data: paymentHistory = [], isLoading: isHistoryLoading } =
     usePaymentHistory(member?.memberId || 0);
   const { showConfirm } = useAppDialog();
@@ -72,23 +77,18 @@ export function ManagePaymentSheet({
     defaultValues: {
       amount: '',
       method: '',
-      extendDays: '',
     },
   });
 
   const amountValue = useWatch({ control: form.control, name: 'amount' });
-  const extendDaysValue = useWatch({
-    control: form.control,
-    name: 'extendDays',
-  });
   const paymentMethod = useWatch({ control: form.control, name: 'method' });
 
   const amountNum = Number(amountValue) || 0;
-  const extendDaysNum = Number(extendDaysValue) || 0;
 
   const isPartialPaymentValid =
-    amountNum >= 1 && amountNum <= pending && Boolean(paymentMethod);
-  const isExtendValid = extendDaysNum >= 1;
+    amountNum >= 1 &&
+    amountNum <= currentCyclePending &&
+    Boolean(paymentMethod);
 
   const handlePartialPayment = () => {
     if (!member || !gymBranch?.gymId) return;
@@ -114,39 +114,26 @@ export function ManagePaymentSheet({
   };
 
   const handleFullPayment = () => {
-    if (!member || !gymBranch?.gymId || !paymentMethod) return;
+    if (!member || !gymBranch?.gymId || !paymentMethod || settlementAmount <= 0)
+      return;
+
+    const settlementDescription =
+      unsettledCycles > 1
+        ? `Settle ₹${settlementAmount.toLocaleString()} across ${unsettledCycles} unsettled cycles for ${member.memberName}?`
+        : `Are you sure you want to settle ₹${settlementAmount.toLocaleString()} for ${member.memberName}?`;
 
     showConfirm({
       title: 'Confirm Full Payment',
-      description: `Are you sure you want to mark ₹${pending} as fully paid for ${member.memberName}?`,
-      confirmLabel: 'Mark Paid',
+      description: settlementDescription,
+      confirmLabel: unsettledCycles > 1 ? 'Settle All Dues' : 'Mark Paid',
       onConfirm: async () => {
         await recordFullPayment({
           memberId: member.memberId,
           gymId: gymBranch.gymId,
           membershipPlanId: member.membershipPlanId,
-          amount: pending,
+          amount: settlementAmount,
           paymentMethod,
           paymentType: 1,
-        });
-
-        form.reset();
-        onOpenChange(false);
-      },
-    });
-  };
-
-  const handleExtendBuffer = () => {
-    if (!member) return;
-
-    showConfirm({
-      title: 'Extend Buffer Period',
-      description: `Extend buffer by ${extendDaysNum} day${extendDaysNum > 1 ? 's' : ''} for ${member.memberName}?`,
-      confirmLabel: 'Extend Buffer',
-      onConfirm: async () => {
-        await extendBuffer({
-          memberId: member.memberId,
-          daysToAdd: extendDaysNum,
         });
 
         form.reset();
@@ -197,7 +184,7 @@ export function ManagePaymentSheet({
                   </div>
                 </div>
                 <Badge className="bg-primary-blue-400 text-primary-blue-100">
-                  Plan {member.membershipPlanId}
+                  {planLabel}
                 </Badge>
               </div>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -205,7 +192,7 @@ export function ManagePaymentSheet({
                   <Wallet className="w-5 h-5 text-primary-blue-200" />
                   <div>
                     <div className="text-primary-blue-200 text-xs">
-                      Total Fee
+                      Current Cycle Fee
                     </div>
                     <div className="text-white">
                       ₹{member.currentCycle?.planFee || 0}
@@ -221,11 +208,11 @@ export function ManagePaymentSheet({
                   <Calendar className="w-5 h-5 text-primary-blue-200" />
                   <div>
                     <div className="text-primary-blue-200 text-xs">
-                      Due Date
+                      {dueDateLabel}
                     </div>
                     <div className="text-white">
-                      {member.currentCycle?.dueDate
-                        ? formatDateTime(member.currentCycle.dueDate, 'date')
+                      {displayDueDate
+                        ? formatDateTime(displayDueDate, 'date')
                         : 'N/A'}
                     </div>
                   </div>
@@ -239,8 +226,12 @@ export function ManagePaymentSheet({
                 <div className="flex items-center gap-2">
                   <Hourglass className="w-5 h-5 text-primary-blue-200" />
                   <div>
-                    <div className="text-primary-blue-200 text-xs">Pending</div>
-                    <div className="text-white">₹{pending}</div>
+                    <div className="text-primary-blue-200 text-xs">
+                      {amountLabel}
+                    </div>
+                    <div className="text-white">
+                      ₹{settlementAmount.toLocaleString()}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -268,7 +259,6 @@ export function ManagePaymentSheet({
 
           {/* Payment Actions */}
           <div className="grid gap-4">
-            {/* Conditional Payment Card */}
             <FormProvider {...form}>
               {paymentType === 'partial' ? (
                 <Card className="border-primary-blue-400 bg-primary-blue-500/20">
@@ -291,7 +281,9 @@ export function ManagePaymentSheet({
                           size="sm"
                         />
                         <div className="mt-1 text-xs text-primary-blue-200">
-                          Maximum: ₹{pending}
+                          {settlementAmount > currentCyclePending
+                            ? `Current cycle max: ₹${currentCyclePending.toLocaleString()}`
+                            : `Maximum: ₹${currentCyclePending.toLocaleString()}`}
                         </div>
                       </div>
                       <KFormField
@@ -347,13 +339,20 @@ export function ManagePaymentSheet({
                           Amount
                         </div>
                         <div className="text-base font-bold text-white">
-                          ₹{pending}
+                          ₹{settlementAmount.toLocaleString()}
                         </div>
                       </div>
                     </div>
+                    {unsettledCycles > 1 ? (
+                      <div className="text-xs text-primary-blue-200">
+                        Clears all unsettled recurring cycles for this member.
+                      </div>
+                    ) : null}
                     <Button
                       className="w-full"
-                      disabled={pending <= 0 || !paymentMethod || isProcessing}
+                      disabled={
+                        settlementAmount <= 0 || !paymentMethod || isProcessing
+                      }
                       onClick={handleFullPayment}
                     >
                       {isProcessing ? (
@@ -364,65 +363,13 @@ export function ManagePaymentSheet({
                       ) : (
                         <div className="flex items-center gap-2">
                           <Handshake className="w-4 h-4" />
-                          Settle ₹{pending}
+                          Settle ₹{settlementAmount.toLocaleString()}
                         </div>
                       )}
                     </Button>
                   </CardContent>
                 </Card>
               )}
-            </FormProvider>
-
-            {/* Buffer Extension */}
-            <FormProvider {...form}>
-              <Card className="border-primary-blue-400 bg-primary-blue-500/20">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2 text-white">
-                    <Shield className="w-4 h-4" />
-                    Buffer Extension
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-end gap-3">
-                    <div className="flex-1">
-                      <KFormField
-                        fieldType={KFormFieldType.INPUT}
-                        control={form.control}
-                        name="extendDays"
-                        label="Extension Days"
-                        type="number"
-                        placeholder="0"
-                        size="sm"
-                      />
-                    </div>
-                    <Button
-                      disabled={!isExtendValid || isProcessing}
-                      onClick={handleExtendBuffer}
-                    >
-                      {isProcessing ? (
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                          Processing...
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4" />
-                          Extend
-                        </div>
-                      )}
-                    </Button>
-                  </div>
-                  <div className="inline-flex items-center w-full bg-neutral-ochre-400/30 px-2 py-1 rounded border-neutral-ochre-500">
-                    <OctagonAlert
-                      size={10}
-                      className="mr-2 text-neutral-ochre-200"
-                    />
-                    <span className="text-[10px] text-neutral-ochre-100">
-                      Use only for genuine cases with proper justification
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
             </FormProvider>
           </div>
         </div>

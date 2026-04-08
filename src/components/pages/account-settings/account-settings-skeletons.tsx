@@ -202,35 +202,6 @@ export function NotificationPreferencesSkeleton() {
   );
 }
 
-export function BufferConfigurationSkeleton() {
-  return (
-    <Card className={darkCardClassName}>
-      <div className="absolute inset-0 opacity-30 pointer-events-none" />
-      <CardHeader className="relative z-10">
-        <SectionHeaderSkeleton showAction />
-      </CardHeader>
-      <CardContent className="relative z-10 space-y-4">
-        {Array.from({ length: 2 }).map((_, index) => (
-          <div key={index} className={cn('space-y-4 p-4', darkRowClassName)}>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              {Array.from({ length: 3 }).map((__, innerIndex) => (
-                <div key={innerIndex} className="space-y-2">
-                  <Skeleton className="h-3 w-24" />
-                  <Skeleton className="h-7 w-32" />
-                </div>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <Skeleton className="h-9 w-20" />
-              <Skeleton className="h-9 w-20" />
-            </div>
-          </div>
-        ))}
-      </CardContent>
-    </Card>
-  );
-}
-
 export function InvoiceSettingsSkeleton() {
   return (
     <Card className="bg-white dark:bg-secondary-blue-500 border-gray-200 dark:border-primary-blue-400">

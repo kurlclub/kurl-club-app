@@ -156,7 +156,7 @@ export function CompletedTab() {
       </div>
 
       {isLoading ? (
-        <TableSkeleton rows={10} columns={7} />
+        <TableSkeleton rows={10} columns={6} />
       ) : (
         <>
           <TableView

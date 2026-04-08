@@ -1,6 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { api } from '@/lib/api';
+import {
+  type ApiRecurringPaymentMember,
+  normalizeRecurringPaymentMember,
+} from '@/lib/payments/recurring';
 import { RecurringPaymentMember } from '@/types/payment';
 
 type PaymentTabResponse = {
@@ -35,6 +39,48 @@ type PaymentTabResponse = {
   };
 };
 
+export type GymPaymentHistoryRecord = {
+  paymentId: number;
+  memberId: number;
+  memberName: string;
+  memberIdentifier: string;
+  photoPath: string;
+  amount: number;
+  paymentDate: string;
+  paymentMethod: string;
+  status: string;
+  paymentCycleId: number;
+  cycleStartDate: string;
+  cycleEndDate: string;
+  cycleStatus: string;
+};
+
+export type GymPaymentHistoryResponse = {
+  status: string;
+  data: GymPaymentHistoryRecord[];
+  summary: {
+    totalPayments: number;
+    totalRevenue: number;
+    fromDate: string | null;
+    toDate: string | null;
+  };
+  availableFilters?: {
+    paymentMethods: Array<{ value: string; count: number }>;
+    statuses: Array<{ value: string; count: number }>;
+  };
+};
+
+type RawPaymentTabResponse = Omit<PaymentTabResponse, 'data'> & {
+  data: ApiRecurringPaymentMember[];
+};
+
+const normalizePaymentTabResponse = (
+  response: RawPaymentTabResponse
+): PaymentTabResponse => ({
+  ...response,
+  data: response.data.map(normalizeRecurringPaymentMember),
+});
+
 export const fetchCurrentDuePayments = async (
   gymId: number | string,
   filters?: {
@@ -54,7 +100,8 @@ export const fetchCurrentDuePayments = async (
   const queryString = params.toString();
   const url = `/Payment/${gymId}/current-due${queryString ? `?${queryString}` : ''}`;
 
-  return await api.get<PaymentTabResponse>(url);
+  const response = await api.get<RawPaymentTabResponse>(url);
+  return normalizePaymentTabResponse(response);
 };
 
 export const useCurrentDuePayments = (
@@ -96,7 +143,8 @@ export const fetchOverduePayments = async (
   const queryString = params.toString();
   const url = `/Payment/${gymId}/overdue${queryString ? `?${queryString}` : ''}`;
 
-  return await api.get<PaymentTabResponse>(url);
+  const response = await api.get<RawPaymentTabResponse>(url);
+  return normalizePaymentTabResponse(response);
 };
 
 export const useOverduePayments = (
@@ -138,7 +186,8 @@ export const fetchCompletedPayments = async (
   const queryString = params.toString();
   const url = `/Payment/${gymId}/completed${queryString ? `?${queryString}` : ''}`;
 
-  return await api.get<PaymentTabResponse>(url);
+  const response = await api.get<RawPaymentTabResponse>(url);
+  return normalizePaymentTabResponse(response);
 };
 
 export const useCompletedPayments = (
@@ -178,34 +227,7 @@ export const fetchPaymentHistory = async (
   const queryString = params.toString();
   const url = `/Payment/gym/${gymId}/history${queryString ? `?${queryString}` : ''}`;
 
-  const response = await api.get<{
-    status: string;
-    data: Array<{
-      paymentId: number;
-      memberId: number;
-      memberName: string;
-      memberIdentifier: string;
-      photoPath: string;
-      amount: number;
-      paymentDate: string;
-      paymentMethod: string;
-      status: string;
-      paymentCycleId: number;
-      cycleStartDate: string;
-      cycleEndDate: string;
-      cycleStatus: string;
-    }>;
-    summary: {
-      totalPayments: number;
-      totalRevenue: number;
-      fromDate: string | null;
-      toDate: string | null;
-    };
-    availableFilters?: {
-      paymentMethods: Array<{ value: string; count: number }>;
-      statuses: Array<{ value: string; count: number }>;
-    };
-  }>(url);
+  const response = await api.get<GymPaymentHistoryResponse>(url);
 
   return response;
 };
