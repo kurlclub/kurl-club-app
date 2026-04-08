@@ -11,7 +11,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { useSheet } from '@/hooks/use-sheet';
 import { FilterConfig } from '@/lib/filters';
 import { useGymBranch } from '@/providers/gym-branch-provider';
-import { useCurrentDuePayments } from '@/services/payments';
+import { useUpcomingDuePayments } from '@/services/payments';
 import type {
   MemberPaymentDetails,
   RecurringPaymentMember,
@@ -22,7 +22,7 @@ import { createPaymentColumns } from './columns';
 import { ManagePaymentSheet } from './manage-payment';
 import { TableView } from './table-view';
 
-export function CurrentDueTab() {
+export function UpcomingDueTab() {
   const [selectedPayment, setSelectedPayment] =
     useState<RecurringPaymentMember | null>(null);
   const [selectedInvoiceMember, setSelectedInvoiceMember] =
@@ -48,13 +48,13 @@ export function CurrentDueTab() {
   }>({});
 
   // Fetch filtered data
-  const { data, isLoading } = useCurrentDuePayments(gymId, {
+  const { data, isLoading } = useUpcomingDuePayments(gymId, {
     ...apiFilters,
     search: debouncedSearch || undefined,
   });
 
   // Fetch unfiltered data for filter options
-  const { data: filtersData } = useCurrentDuePayments(gymId, {});
+  const { data: filtersData } = useUpcomingDuePayments(gymId, {});
 
   const payments = data?.data || [];
   const summary = data?.summary;

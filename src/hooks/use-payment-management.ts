@@ -19,7 +19,7 @@ export function usePaymentManagement() {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['paymentHistory'] }),
       queryClient.invalidateQueries({ queryKey: ['memberPaymentDetails'] }),
-      queryClient.invalidateQueries({ queryKey: ['current-due-payments'] }),
+      queryClient.invalidateQueries({ queryKey: ['upcoming-due-payments'] }),
       queryClient.invalidateQueries({ queryKey: ['overdue-payments'] }),
       queryClient.invalidateQueries({ queryKey: ['completed-payments'] }),
       queryClient.invalidateQueries({ queryKey: ['payment-history'] }),

@@ -7,20 +7,20 @@ import { useTabState } from '@/hooks/use-tab-state';
 
 import {
   CompletedTab,
-  CurrentDueTab,
   HistoryTab,
   OverdueTab,
+  UpcomingDueTab,
 } from './recurring';
 
 const TABS: TabItem[] = [
-  { id: 'current-due', label: 'Current Due' },
+  { id: 'upcoming-due', label: 'Upcoming Due' },
   { id: 'overdue', label: 'Overdue' },
   { id: 'completed', label: 'Completed' },
   { id: 'history', label: 'History' },
 ];
 
 export default function Payments() {
-  const { activeTab, handleTabChange } = useTabState(TABS, 'current-due');
+  const { activeTab, handleTabChange } = useTabState(TABS, 'upcoming-due');
 
   return (
     <FeatureAccessGuard
@@ -35,7 +35,7 @@ export default function Payments() {
         activeTab={activeTab}
         onTabChange={handleTabChange}
       >
-        {activeTab === 'current-due' && <CurrentDueTab />}
+        {activeTab === 'upcoming-due' && <UpcomingDueTab />}
         {activeTab === 'overdue' && <OverdueTab />}
         {activeTab === 'completed' && <CompletedTab />}
         {activeTab === 'history' && <HistoryTab />}

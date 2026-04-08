@@ -81,7 +81,7 @@ const normalizePaymentTabResponse = (
   data: response.data.map(normalizeRecurringPaymentMember),
 });
 
-export const fetchCurrentDuePayments = async (
+export const fetchUpcomingDuePayments = async (
   gymId: number | string,
   filters?: {
     search?: string;
@@ -98,13 +98,13 @@ export const fetchCurrentDuePayments = async (
   if (filters?.sortOrder) params.append('sortOrder', filters.sortOrder);
 
   const queryString = params.toString();
-  const url = `/Payment/${gymId}/current-due${queryString ? `?${queryString}` : ''}`;
+  const url = `/Payment/${gymId}/upcoming-due${queryString ? `?${queryString}` : ''}`;
 
   const response = await api.get<RawPaymentTabResponse>(url);
   return normalizePaymentTabResponse(response);
 };
 
-export const useCurrentDuePayments = (
+export const useUpcomingDuePayments = (
   gymId: number | string,
   filters?: {
     search?: string;
@@ -114,8 +114,8 @@ export const useCurrentDuePayments = (
   }
 ) => {
   return useQuery({
-    queryKey: ['current-due-payments', gymId, filters],
-    queryFn: () => fetchCurrentDuePayments(gymId, filters),
+    queryKey: ['upcoming-due-payments', gymId, filters],
+    queryFn: () => fetchUpcomingDuePayments(gymId, filters),
     enabled: !!gymId,
     staleTime: 1000 * 60 * 2,
     refetchOnMount: false,
