@@ -274,6 +274,18 @@ export const adminstratorFormSchema = z.object({
     .min(1, 'Address is required.')
     .max(250, 'Address must not exceed 250 characters.'),
   bloodGroup: z.string().min(1, 'Blood group selection is required'),
+  Username: z
+    .string()
+    .email('Please enter a valid email address')
+    .optional()
+    .or(z.literal('')),
+  Password: z
+    .string()
+    .optional()
+    .or(z.literal(''))
+    .refine((value) => !value || value.length >= 6, {
+      message: 'Password must be at least 6 characters',
+    }),
 });
 
 export const GymDataDetailsSchema = z.object({
@@ -314,28 +326,12 @@ export const GymDataDetailsSchema = z.object({
     .optional(),
 });
 
-export const dayBufferSchema = z.object({
-  fee_buffer_amount: z.string().min(1, 'buffer amount is required'),
-  fee_buffer_days: z.string().min(1, 'buffer day is required'),
-  plan: z.string().min(1, 'plan selection is required'),
-});
-
 export const paymentFormSchema = z.object({
   amount: z.string().refine((val) => {
     const num = Number(val);
     return num >= 1;
   }, 'Amount must be at least 1'),
   method: z.string().min(1, 'Payment method is required'),
-  extendDays: z.string().refine((val) => {
-    const num = Number(val);
-    return num >= 1;
-  }, 'Days must be at least 1'),
-});
-
-export const bufferSchema = z.object({
-  feeBufferAmount: z.string().min(1, 'Amount is required'),
-  feeBufferDays: z.string().min(1, 'Days is required'),
-  membershipPlanId: z.string().min(1, 'Plan is required'),
 });
 
 export const gymUpdateSchema = z.object({

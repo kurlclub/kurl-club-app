@@ -2,6 +2,10 @@ import { QueryClient, useQuery } from '@tanstack/react-query';
 
 import { api } from '@/lib/api';
 import {
+  type ApiRecurringPaymentMember,
+  normalizeRecurringPaymentMember,
+} from '@/lib/payments/recurring';
+import {
   MemberDetailsResponse,
   MemberListItem,
   MemberListResponse,
@@ -278,9 +282,24 @@ export const fetchMemberPaymentDetails = async (memberId: number | string) => {
   // Fallback to transaction API for recurring
   const response = await api.get<{
     status: string;
-    data: MemberPaymentDetails;
+    data: ApiRecurringPaymentMember;
   }>(`/Transaction/GetPaymentDetailsByMember/${memberId}`);
-  return response;
+
+  const profilePicture =
+    typeof memberData.profilePicture === 'string'
+      ? memberData.profilePicture
+      : response.data.profilePicture;
+
+  return {
+    status: response.status,
+    data: normalizeRecurringPaymentMember({
+      ...response.data,
+      membershipPlanName:
+        memberData.membershipPlan?.planName || response.data.membershipPlanName,
+      photoPath: memberData.photoPath ?? response.data.photoPath,
+      profilePicture,
+    }),
+  };
 };
 
 export const useMemberPaymentDetails = (memberId: number | string) => {

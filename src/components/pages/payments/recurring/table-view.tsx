@@ -31,7 +31,7 @@ export const TableView = ({
     <DataTable
       columns={columns}
       data={payments}
-      initialSorting={[{ id: 'currentCycle.bufferEndDate', desc: false }]}
+      initialSorting={[{ id: 'displayDueDate', desc: false }]}
       toolbar={(table) => (
         <DataTableToolbar
           table={table}

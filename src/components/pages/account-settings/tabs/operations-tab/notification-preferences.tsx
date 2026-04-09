@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -6,11 +6,18 @@ import { Bell } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { NotificationPreferencesSkeleton } from '@/components/pages/account-settings/account-settings-skeletons';
+import {
+  type NotificationFormValues,
+  getDefaultNotificationFormValues,
+  getNotificationFormValues,
+  useSettingsGymId,
+  useSyncSettingsFormWithGym,
+} from '@/components/pages/account-settings/tabs/settings-gym';
 import {
   KFormField,
   KFormFieldType,
 } from '@/components/shared/form/k-formfield';
-import { AppLoader } from '@/components/shared/loaders';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -21,7 +28,6 @@ import {
 } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
-import { useGymBranch } from '@/providers/gym-branch-provider';
 import {
   type NotificationSettings,
   getNotificationSettings,
@@ -39,68 +45,36 @@ const notificationSchema = z.object({
   whatsappNotifications: z.boolean(),
 });
 
-type NotificationForm = z.infer<typeof notificationSchema>;
+type NotificationForm = NotificationFormValues;
 
 export default function NotificationPreferences() {
-  const [isLoading, setIsLoading] = useState(false);
-  const { gymBranch } = useGymBranch();
+  const [isSaving, setIsSaving] = useState(false);
+  const settingsGymId = useSettingsGymId();
 
   const form = useForm<NotificationForm>({
     resolver: zodResolver(notificationSchema),
-    defaultValues: {
-      paymentReminders: true,
-      paymentReminderDays: 3,
-      memberExpiry: true,
-      memberExpiryDays: 7,
-      notifyOnExpiryDay: true,
-      lowAttendance: false,
-      emailNotifications: true,
-      whatsappNotifications: false,
-    },
+    defaultValues: getDefaultNotificationFormValues(),
   });
 
-  // Fetch current settings
-  useEffect(() => {
-    const fetchSettings = async () => {
-      if (!gymBranch?.gymId) return;
-
-      setIsLoading(true);
-      try {
-        const settings = await getNotificationSettings(gymBranch.gymId);
-
-        // If settings exist, populate the form
-        if (settings) {
-          form.reset({
-            paymentReminders: settings.paymentReminder?.enabled ?? true,
-            paymentReminderDays: settings.paymentReminder?.daysBefore ?? 3,
-            memberExpiry: settings.membershipExpiryAlert?.enabled ?? true,
-            memberExpiryDays: settings.membershipExpiryAlert?.daysBefore ?? 7,
-            notifyOnExpiryDay:
-              settings.membershipExpiryAlert?.notifyOnExpiryDay ?? true,
-            lowAttendance: settings.lowAttendanceAlert?.enabled ?? false,
-            emailNotifications: settings.channels?.email ?? true,
-            whatsappNotifications: settings.channels?.whatsApp ?? false,
-          });
-        }
-        // If settings is null (doesn't exist), keep default values
-      } catch (error) {
-        console.error('Error loading notification settings:', error);
-        toast.error('Failed to load notification settings');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchSettings();
-  }, [gymBranch?.gymId, form]);
+  const isSyncingSettingsForm = useSyncSettingsFormWithGym<
+    NotificationForm,
+    NotificationSettings
+  >({
+    gymId: settingsGymId,
+    getDefaultValues: getDefaultNotificationFormValues,
+    fetchSettings: getNotificationSettings,
+    mapSettingsToValues: getNotificationFormValues,
+    errorMessage: 'Failed to load notification settings',
+    form,
+  });
 
   const onSubmit = async (data: NotificationForm) => {
-    if (!gymBranch?.gymId) {
+    if (!settingsGymId) {
       toast.error('No gym selected');
       return;
     }
 
-    setIsLoading(true);
+    setIsSaving(true);
     try {
       // Transform form data to API format
       const settings: NotificationSettings = {
@@ -122,36 +96,27 @@ export default function NotificationPreferences() {
         },
       };
 
-      const result = await updateNotificationSettings(
-        gymBranch.gymId,
-        settings
-      );
+      const result = await updateNotificationSettings(settingsGymId, settings);
       toast.success(result.success);
       form.reset(data); // Reset form state to mark as not dirty
     } catch (error) {
       console.error('Error saving notification settings:', error);
       toast.error('Failed to save notification settings');
     } finally {
-      setIsLoading(false);
+      setIsSaving(false);
     }
   };
 
   const isDirty = form.formState.isDirty;
+  const isSectionLoading = isSyncingSettingsForm && !isDirty;
+  const isBusy = isSyncingSettingsForm || isSaving;
 
   const paymentRemindersEnabled = form.watch('paymentReminders');
   const memberExpiryEnabled = form.watch('memberExpiry');
   const lowAttendanceEnabled = form.watch('lowAttendance');
 
-  if (isLoading && !form.formState.isDirty) {
-    return (
-      <Card className="bg-secondary-blue-500/80 backdrop-blur-sm border-secondary-blue-400 relative overflow-hidden">
-        <CardContent className="p-8">
-          <div className="flex items-center justify-center">
-            <AppLoader />
-          </div>
-        </CardContent>
-      </Card>
-    );
+  if (isSectionLoading) {
+    return <NotificationPreferencesSkeleton />;
   }
 
   return (
@@ -166,8 +131,8 @@ export default function NotificationPreferences() {
                 Notification Preferences
               </CardTitle>
               <CardDescription className="text-secondary-blue-200">
-                Configure automated alerts and reminders for buffer periods and
-                payments
+                Configure automated alerts and reminders for payments and
+                membership expiry
               </CardDescription>
             </div>
           </div>
@@ -178,7 +143,7 @@ export default function NotificationPreferences() {
                 variant="outline"
                 size="sm"
                 onClick={() => form.reset()}
-                disabled={isLoading}
+                disabled={isBusy}
               >
                 Discard
               </Button>
@@ -186,9 +151,9 @@ export default function NotificationPreferences() {
                 type="button"
                 size="sm"
                 onClick={form.handleSubmit(onSubmit)}
-                disabled={isLoading}
+                disabled={isBusy}
               >
-                {isLoading ? 'Saving...' : 'Save Changes'}
+                {isSaving ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
           )}

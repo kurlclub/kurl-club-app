@@ -57,10 +57,14 @@ export function InvoiceGenerator({
             amount: s.amountPaid || s.sessionRate,
             paymentMethod: 'Session Payment',
             paymentDate: s.sessionDate,
-            paymentType: 1,
+            paymentType: 'Session',
             isEdited: false,
             originalPaymentId: null,
-            status: 'completed',
+            status: 'paid',
+            type: 'PerSession' as const,
+            cycleId: null,
+            sessionId: s.sessionId || null,
+            attendanceId: null,
           })) || []
       : [];
 

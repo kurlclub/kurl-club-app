@@ -16,32 +16,17 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
+import { getRecurringDisplayDueDate } from '@/lib/payments/recurring';
 import {
   calculateDaysRemaining,
   getPaymentBadgeStatus,
   getProfilePictureSrc,
-  getUrgencyConfig,
   safeParseDate,
 } from '@/lib/utils';
 import type {
   MemberPaymentDetails,
   RecurringPaymentMember,
 } from '@/types/payment';
-
-const UrgencyIndicator = ({
-  color,
-}: {
-  color: 'red' | 'orange' | 'yellow' | 'green';
-}) => (
-  <span className="relative flex justify-center items-center size-3">
-    <span
-      className={`absolute inline-flex h-full w-full animate-pulse rounded-full bg-${color}-400/45`}
-    ></span>
-    <span
-      className={`relative inline-flex size-2 rounded-full bg-${color}-500`}
-    ></span>
-  </span>
-);
 
 const ActionsCell: React.FC<{
   user: RecurringPaymentMember;
@@ -142,12 +127,11 @@ export const createPaymentColumns = (
     enableHiding: false,
   },
   {
-    accessorKey: 'currentCycle.dueDate',
+    id: 'displayDueDate',
+    accessorFn: (row) => getRecurringDisplayDueDate(row) ?? '',
     header: 'Due Date',
     cell: ({ row }) => {
-      const { currentCycle } = row.original;
-      if (!currentCycle) return <div className="min-w-24">-</div>;
-      const { dueDate, bufferEndDate } = currentCycle;
+      const dueDate = getRecurringDisplayDueDate(row.original);
       if (!dueDate) return <div className="min-w-24">-</div>;
 
       const daysDiff = calculateDaysRemaining(dueDate);
@@ -162,11 +146,7 @@ export const createPaymentColumns = (
 
       if (daysDiff < 0) {
         statusColor = 'text-alert-red-400';
-        if (bufferEndDate) {
-          statusText = 'On buffer period';
-        } else {
-          statusText = `${Math.abs(daysDiff)} days overdue`;
-        }
+        statusText = `${Math.abs(daysDiff)} days overdue`;
       } else if (daysDiff === 0) {
         statusColor = 'text-neutral-ochre-400';
         statusText = 'Due today';
@@ -183,127 +163,6 @@ export const createPaymentColumns = (
           <div className={`text-xs ${statusColor}`}>{statusText}</div>
         </div>
       );
-    },
-  },
-  {
-    id: 'currentCycle.bufferEndDate',
-    accessorKey: 'currentCycle.bufferEndDate',
-    header: 'Buffer',
-    cell: ({ row }) => {
-      const { currentCycle } = row.original;
-      if (!currentCycle) return <div className="min-w-24">-</div>;
-      const { bufferEndDate, pendingAmount } = currentCycle;
-
-      // Shows when there's no buffer OR payment is completed
-      if (!bufferEndDate || pendingAmount === 0) {
-        return (
-          <div className="min-w-24">
-            <span className="bg-primary-blue-300/50 text-primary-blue-100 px-2 py-1 rounded text-xs font-medium">
-              No buffer
-            </span>
-          </div>
-        );
-      }
-
-      const daysRemaining = calculateDaysRemaining(bufferEndDate);
-
-      const {
-        bgColor,
-        color,
-        text: urgencyText,
-      } = getUrgencyConfig(daysRemaining);
-
-      const formattedDate =
-        safeParseDate(bufferEndDate)?.toLocaleDateString('en-GB', {
-          day: 'numeric',
-          month: 'short',
-        }) || '-';
-
-      return (
-        <div className="min-w-24">
-          <div
-            className={`${bgColor} w-fit px-2 py-1 rounded text-xs flex items-center gap-2 mb-1`}
-          >
-            <UrgencyIndicator color={color} />
-            <span className="font-medium">{urgencyText}</span>
-          </div>
-          <div className="text-xs text-primary-blue-100">
-            {daysRemaining < 0
-              ? `Expired on ${formattedDate}`
-              : 'Buffer period'}
-          </div>
-        </div>
-      );
-    },
-    sortingFn: (rowA, rowB) => {
-      const aData = rowA.original.currentCycle;
-      const bData = rowB.original.currentCycle;
-      if (!aData || !bData) return 0;
-
-      // Completed payments go to bottom
-      if (aData.pendingAmount === 0 && bData.pendingAmount > 0) return 1;
-      if (bData.pendingAmount === 0 && aData.pendingAmount > 0) return -1;
-      if (aData.pendingAmount === 0 && bData.pendingAmount === 0) return 0;
-
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      // For sorting urgency: use buffer end date if exists, otherwise use due date
-      const getUrgencyDate = (cycle: {
-        bufferEndDate?: string | null;
-        dueDate: string;
-      }) => {
-        if (cycle.bufferEndDate) {
-          return safeParseDate(cycle.bufferEndDate);
-        }
-        return safeParseDate(cycle.dueDate);
-      };
-
-      const aDate = getUrgencyDate(aData);
-      const bDate = getUrgencyDate(bData);
-      if (!aDate || !bDate) return 0;
-
-      aDate.setHours(0, 0, 0, 0);
-      bDate.setHours(0, 0, 0, 0);
-
-      // Calculate days remaining for each
-      const aDaysLeft = Math.ceil(
-        (aDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-      );
-      const bDaysLeft = Math.ceil(
-        (bDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-      );
-
-      // Sort by urgency: expired first, then by days remaining (ascending)
-      return aDaysLeft - bDaysLeft;
-    },
-    filterFn: (row, id, value: string[]) => {
-      const { currentCycle } = row.original;
-      if (!currentCycle) return false;
-      const { bufferEndDate, dueDate } = currentCycle;
-
-      // Use buffer end date if exists, otherwise use due date
-      const targetDate = bufferEndDate || dueDate;
-      if (!targetDate) return false;
-
-      const daysRemaining = calculateDaysRemaining(targetDate);
-
-      return value.some((filterValue: string) => {
-        switch (filterValue) {
-          case 'overdue':
-            return daysRemaining < 0;
-          case 'today':
-            return daysRemaining === 0;
-          case '1-3':
-            return daysRemaining >= 1 && daysRemaining <= 3;
-          case '4-7':
-            return daysRemaining >= 4 && daysRemaining <= 7;
-          case '7+':
-            return daysRemaining > 7;
-          default:
-            return false;
-        }
-      });
     },
   },
   {
@@ -365,11 +224,11 @@ export const createPaymentColumns = (
     header: 'Package',
     cell: ({ row }) => {
       const { currentCycle, membershipPlanId } = row.original;
-      if (!currentCycle) return <div className="min-w-[120px]">-</div>;
-      const { planFee } = currentCycle;
-      const planName = membershipPlans.find(
-        (p) => p.membershipPlanId === membershipPlanId
-      )?.planName;
+      const planFee = currentCycle?.planFee;
+      const planName =
+        row.original.membershipPlanName ||
+        membershipPlans.find((p) => p.membershipPlanId === membershipPlanId)
+          ?.planName;
 
       return (
         <div className="min-w-[120px]">
@@ -380,9 +239,11 @@ export const createPaymentColumns = (
               <div className="h-4 bg-primary-blue-300/30 rounded animate-pulse" />
             )}
           </div>
-          <div className="text-xs text-primary-blue-100">
-            Current cycle • ₹{planFee}
-          </div>
+          {planFee != null ? (
+            <div className="text-xs text-primary-blue-100">
+              Current cycle • ₹{planFee}
+            </div>
+          ) : null}
         </div>
       );
     },

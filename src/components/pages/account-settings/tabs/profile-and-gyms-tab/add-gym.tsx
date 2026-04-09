@@ -21,7 +21,7 @@ import { KSheet } from '@/components/shared/form/k-sheet';
 import SocialLinkInput from '@/components/shared/form/social-link-input';
 import ProfilePictureUploader from '@/components/shared/uploaders/profile-uploader';
 import { Button } from '@/components/ui/button';
-import { FormControl } from '@/components/ui/form';
+import { FormControl, FormLabel } from '@/components/ui/form';
 import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
 import { useAuth } from '@/providers/auth-provider';
 import { addGymSchema } from '@/schemas';
@@ -192,22 +192,6 @@ function AddGym({ isOpen, closeSheet, onGymAdded }: AddGymProps) {
             label="Location"
             mandetory
           />
-
-          <KFormField
-            fieldType={KFormFieldType.PHONE_INPUT}
-            control={form.control}
-            name="ContactNumber1"
-            label="Contact Number 1"
-            mandetory
-          />
-
-          <KFormField
-            fieldType={KFormFieldType.PHONE_INPUT}
-            control={form.control}
-            name="ContactNumber2"
-            label="Contact Number 2"
-          />
-
           <KFormField
             fieldType={KFormFieldType.INPUT}
             control={form.control}
@@ -215,6 +199,30 @@ function AddGym({ isOpen, closeSheet, onGymAdded }: AddGymProps) {
             label="Email"
             mandetory
           />
+          <div className="flex flex-col gap-1.5">
+            <FormLabel className="text-sm font-normal text-primary-blue-100 leading-normal">
+              Primary Contact
+              <span className="ml-1 text-alert-red-400">*</span>
+            </FormLabel>
+            <KFormField
+              fieldType={KFormFieldType.PHONE_INPUT}
+              control={form.control}
+              name="ContactNumber1"
+              label="Primary Contact"
+              mandetory
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <FormLabel className="text-sm font-normal text-primary-blue-100 leading-normal">
+              Secondary Contact
+            </FormLabel>
+            <KFormField
+              fieldType={KFormFieldType.PHONE_INPUT}
+              control={form.control}
+              name="ContactNumber2"
+              label="Secondary Contact"
+            />
+          </div>
           <div className="space-y-3">
             {fields.map((field, index) => (
               <div key={field.id} className="flex items-end gap-3">

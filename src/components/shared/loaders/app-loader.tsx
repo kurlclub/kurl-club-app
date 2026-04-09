@@ -14,6 +14,7 @@ export const AppLoader = () => {
             alt="Loading"
             width={80}
             height={80}
+            loading="eager"
             className="drop-shadow-[0_0_15px_rgba(190,255,0,0.3)]"
           />
         </div>

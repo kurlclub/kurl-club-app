@@ -1,5 +1,5 @@
 export { HistoryTab } from './history-tab';
-export { CurrentDueTab } from './current-due-tab';
+export { UpcomingDueTab } from './upcoming-due-tab';
 export { OverdueTab } from './overdue-tab';
 export { CompletedTab } from './completed-tab';
 export { createPaymentColumns } from './columns';

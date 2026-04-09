@@ -29,21 +29,23 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
-import { SubscriptionFeatureKey } from '@/types/subscription';
+import type { SubscriptionAccessKey } from '@/types/subscription';
 
 export function NavMain({
+  label,
   items,
 }: {
+  label: string;
   items: {
     title: string;
     url: string;
     icon?: LucideIcon;
     isActive?: boolean;
-    requiredFeature?: SubscriptionFeatureKey;
+    requiredFeature?: SubscriptionAccessKey;
     items?: {
       title: string;
       url: string;
-      requiredFeature?: SubscriptionFeatureKey;
+      requiredFeature?: SubscriptionAccessKey;
     }[];
   }[];
 }) {
@@ -82,7 +84,7 @@ export function NavMain({
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>GENERAL</SidebarGroupLabel>
+      <SidebarGroupLabel>{label}</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => {
           const isCurrentPage = pathname === item.url || item.isActive;

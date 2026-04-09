@@ -121,18 +121,37 @@ export default function RegionalSettings({ gymId }: RegionalSettingsProps) {
   const isDirty = form.formState.isDirty;
 
   return (
-    <Card className="bg-white dark:bg-secondary-blue-500 border-gray-200 dark:border-primary-blue-400">
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="flex items-start gap-3">
-            <Globe className="h-5 w-5 text-primary-green-600 dark:text-primary-green-500 mt-1" />
-            <div>
-              <CardTitle className="text-gray-900 dark:text-white">
-                Currency & Regional Settings
-              </CardTitle>
-              <CardDescription className="text-gray-600 dark:text-secondary-blue-200">
-                Configure currency, timezone, and format preferences
-              </CardDescription>
+    <FormProvider {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)}>
+        <Card className="bg-white dark:bg-secondary-blue-500 border-gray-200 dark:border-primary-blue-400">
+          <CardHeader>
+            <div className="flex items-start justify-between">
+              <div className="flex items-start gap-3">
+                <Globe className="h-5 w-5 text-primary-green-600 dark:text-primary-green-500 mt-1" />
+                <div>
+                  <CardTitle className="text-gray-900 dark:text-white">
+                    Currency & Regional Settings
+                  </CardTitle>
+                  <CardDescription className="text-gray-600 dark:text-secondary-blue-200">
+                    Configure currency, timezone, and format preferences
+                  </CardDescription>
+                </div>
+              </div>
+              {isDirty && (
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => form.reset()}
+                  >
+                    Discard
+                  </Button>
+                  <Button type="submit" size="sm">
+                    Save Changes
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
           {isDirty && (

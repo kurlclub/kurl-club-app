@@ -1,6 +1,13 @@
-import { SUBSCRIPTION_FEATURE_LABELS } from '@/lib/subscription/feature-labels';
+import {
+  getCatalogPlanFeatureLabels,
+  getSubscriptionLimitLabels,
+} from '@/lib/subscription/catalog-formatting';
 import { getSubscriptionCatalogPlans } from '@/services/subscription';
-import { SubscriptionCatalogPlan } from '@/types/subscription';
+import type {
+  SubscriptionCatalogFeatures,
+  SubscriptionCatalogPlan,
+  SubscriptionLimits,
+} from '@/types/subscription';
 
 export interface PricingPlan {
   id: string;
@@ -12,6 +19,8 @@ export interface PricingPlan {
     yearly: number;
   };
   features: string[];
+  featureFlags?: SubscriptionCatalogFeatures;
+  limits?: SubscriptionLimits;
   popular: boolean;
   badge: string;
   description: string;
@@ -51,27 +60,8 @@ export const getSubscriptionPlans = async (): Promise<PricingData> => {
 };
 
 const normalizeCatalogPlan = (plan: SubscriptionCatalogPlan): PricingPlan => {
-  const featureEntries = Object.entries(plan.features || {});
-  const enabledFeatures = featureEntries
-    .filter(([, value]) =>
-      typeof value === 'number' ? value > 0 : value === true
-    )
-    .map(
-      ([key]) =>
-        SUBSCRIPTION_FEATURE_LABELS[
-          key as keyof typeof SUBSCRIPTION_FEATURE_LABELS
-        ]
-    )
-    .filter(Boolean);
-
-  const limits = plan.limits
-    ? [
-        `Clubs up to ${plan.limits.maxClubs}`,
-        `Members up to ${plan.limits.maxMembers}`,
-        `Trainers up to ${plan.limits.maxTrainers}`,
-        `Staff up to ${plan.limits.maxStaffs}`,
-      ]
-    : [];
+  const enabledFeatures = getCatalogPlanFeatureLabels(plan.features);
+  const limits = getSubscriptionLimitLabels(plan.limits);
 
   return {
     id: String(plan.id),
@@ -83,6 +73,8 @@ const normalizeCatalogPlan = (plan: SubscriptionCatalogPlan): PricingPlan => {
       yearly: plan.yearlyPrice ?? 0,
     },
     features: enabledFeatures,
+    featureFlags: plan.features,
+    limits: plan.limits,
     popular: Boolean(plan.isPopular),
     badge: plan.badge || '',
     description: plan.description || '',

@@ -19,25 +19,12 @@ import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
 import { FilterConfig } from '@/lib/filters';
 import { getProfilePictureSrc, safeParseDate } from '@/lib/utils';
 import { useGymBranch } from '@/providers/gym-branch-provider';
-import { usePaymentHistory } from '@/services/payments';
+import {
+  type GymPaymentHistoryRecord,
+  usePaymentHistory,
+} from '@/services/payments';
 
-type PaymentHistoryRecord = {
-  paymentId: number;
-  memberId: number;
-  memberName: string;
-  memberIdentifier: string;
-  photoPath: string;
-  amount: number;
-  paymentDate: string;
-  paymentMethod: string;
-  status: string;
-  paymentCycleId: number;
-  cycleStartDate: string;
-  cycleEndDate: string;
-  cycleStatus: string;
-};
-
-const columns: ColumnDef<PaymentHistoryRecord>[] = [
+const columns: ColumnDef<GymPaymentHistoryRecord>[] = [
   {
     accessorKey: 'memberIdentifier',
     header: 'Member ID',
@@ -67,10 +54,7 @@ const columns: ColumnDef<PaymentHistoryRecord>[] = [
         <div className="flex items-center gap-2 w-40">
           <Avatar className="h-8 w-8">
             <AvatarImage
-              src={getProfilePictureSrc(
-                row.original.photoPath,
-                row.original.photoPath
-              )}
+              src={getProfilePictureSrc(undefined, row.original.photoPath)}
               alt={name}
             />
             <AvatarFallback className="font-medium" style={avatarStyle}>

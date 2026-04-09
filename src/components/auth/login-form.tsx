@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { AuthWrapper } from '@/components/auth/auth-wrapper';
+import { GoogleSignInSection } from '@/components/auth/google-signin-section';
 import {
   KFormField,
   KFormFieldType,
@@ -91,10 +92,11 @@ export function LoginForm() {
           <Button
             type="submit"
             disabled={isPending}
-            className="px-3 py-4 h-[46px]"
+            className="px-3 py-4 h-11.5"
           >
             {isPending ? 'Logging in...' : 'Login'}
           </Button>
+          <GoogleSignInSection disabled={isPending} />
         </form>
       </Form>
     </AuthWrapper>

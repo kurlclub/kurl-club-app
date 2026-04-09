@@ -1,4 +1,7 @@
 import { api } from '@/lib/api';
+import { normalizeAccessMeData } from '@/services/auth/access-me-normalizer';
+import type { AppSession, AppUser, AuthEntitlements } from '@/types/access';
+import type { GymDetails } from '@/types/gym';
 
 interface LoginRequest {
   email: string;
@@ -49,27 +52,18 @@ interface UserDetailsResponse {
       gymIdentifier: string;
       photoPath: string | null;
     }>;
-    subscription?: {
-      plan: {
-        id: number;
-        name: string;
-        tier: string;
-        status: 'active' | 'expired' | 'cancelled';
-      };
-      subscriptionId: number;
-      billingCycle: 'monthly' | 'sixMonths' | 'yearly';
-      startDate: string;
-      endDate: string;
-      usageLimits: {
-        maxClubs: number;
-        maxMembers: number;
-        maxTrainers: number;
-        maxStaffs: number;
-      };
-      features: Record<string, boolean | number>;
-    };
   };
 }
+
+type AccessMeResponse = {
+  status?: string;
+  message?: string;
+  data?: {
+    role?: string | null;
+    subscriptionPlan?: Record<string, unknown> | null;
+    permissions?: Array<Record<string, unknown>> | null;
+  } | null;
+};
 
 interface SelfOnboardingRequest {
   contactName: string;
@@ -90,6 +84,66 @@ interface SelfOnboardingResponse {
   };
 }
 
+const buildUserDetails = ({
+  uid,
+  payload,
+  activeGym,
+}: {
+  uid: string;
+  payload: UserDetailsResponse['data'];
+  activeGym?: UserDetailsResponse['data']['clubs'][number];
+}): AppUser => ({
+  userId: payload.userId,
+  userName: payload.userName,
+  userEmail: payload.userEmail,
+  userRole: payload.userRole,
+  uid,
+  photoURL: payload.photoPath ?? null,
+  isMultiClub: payload.isMultiClub,
+  gyms: activeGym
+    ? [
+        {
+          gymId: activeGym.gymId,
+          gymName: activeGym.gymName,
+          gymLocation: activeGym.location,
+        },
+      ]
+    : [],
+  clubs: payload.clubs.map((club) => ({
+    gymId: club.gymId,
+    gymName: club.gymName,
+    location: club.location,
+    contactNumber1: club.contactNumber1,
+    contactNumber2: club.contactNumber2,
+    email: club.email,
+    socialLinks: club.socialLinks,
+    gymAdminId: club.gymAdminId,
+    status: club.status,
+    gymIdentifier: club.gymIdentifier,
+    photoPath: club.photoPath,
+  })),
+});
+
+const buildGymDetails = (
+  activeGym?: UserDetailsResponse['data']['clubs'][number]
+): GymDetails | null => {
+  if (!activeGym) return null;
+
+  return {
+    id: activeGym.gymId,
+    gymName: activeGym.gymName,
+    location: activeGym.location,
+    contactNumber1: activeGym.contactNumber1,
+    contactNumber2: activeGym.contactNumber2,
+    email: activeGym.email,
+    socialLinks: activeGym.socialLinks,
+    gymIdentifier: activeGym.gymIdentifier,
+    gymAdminId: activeGym.gymAdminId,
+    status: String(activeGym.status),
+    photoPath: activeGym.photoPath,
+  };
+};
+
 export const login = async (credentials: LoginRequest) => {
   try {
     const response = await api.post<LoginResponse>('/Auth/login', credentials, {
@@ -105,13 +159,29 @@ export const login = async (credentials: LoginRequest) => {
   }
 };
 
+export const googleLogin = async (idToken: string) => {
+  try {
+    const response = await api.post<LoginResponse>(
+      '/Auth/google-login',
+      { idToken },
+      { skipAuth: true }
+    );
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error('Google login error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Google login failed',
+    };
+  }
+};
+
 export const getUserByUid = async (uid: string, currentGymId?: number) => {
   try {
     const response = await api.get<UserDetailsResponse>(
       `/User/GetUserById/${uid}`
     );
 
-    // Find active gym: status=1, or by currentGymId, or first gym
     const activeGym =
       response.data.clubs.find((club) => club.status === 1) ||
       (currentGymId &&
@@ -120,19 +190,12 @@ export const getUserByUid = async (uid: string, currentGymId?: number) => {
 
     return {
       success: true,
-      data: {
-        ...response.data,
-        gyms: activeGym
-          ? [
-              {
-                gymId: activeGym.gymId,
-                gymName: activeGym.gymName,
-                gymLocation: activeGym.location,
-              },
-            ]
-          : [],
-      },
-      activeGymDetails: activeGym,
+      data: buildUserDetails({
+        uid,
+        payload: response.data,
+        activeGym,
+      }),
+      gymDetails: buildGymDetails(activeGym),
       allClubs: response.data.clubs,
     };
   } catch (error) {
@@ -141,6 +204,54 @@ export const getUserByUid = async (uid: string, currentGymId?: number) => {
       error: error instanceof Error ? error.message : 'Failed to get user',
     };
   }
+};
+
+export const getAccessMe = async () => {
+  try {
+    const response = await api.get<AccessMeResponse>('/Access/me');
+    const entitlements: AuthEntitlements = normalizeAccessMeData(
+      response.data ?? null
+    );
+
+    return {
+      success: true,
+      data: entitlements,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : 'Failed to get access data',
+    };
+  }
+};
+
+export const fetchAppSession = async (
+  uid: string,
+  currentGymId?: number
+): Promise<{ session: AppSession }> => {
+  const [userResult, accessResult] = await Promise.all([
+    getUserByUid(uid, currentGymId),
+    getAccessMe(),
+  ]);
+
+  if (!userResult.success || !userResult.data) {
+    throw new Error(userResult.error || 'Failed to get user');
+  }
+
+  if (!accessResult.success || !accessResult.data) {
+    throw new Error(accessResult.error || 'Failed to get access data');
+  }
+
+  const entitlements: AuthEntitlements = accessResult.data;
+
+  return {
+    session: {
+      user: userResult.data,
+      gymDetails: userResult.gymDetails ?? null,
+      entitlements,
+    },
+  };
 };
 
 export const switchClub = async (uid: string, gymId: number) => {
@@ -161,10 +272,11 @@ export const logout = () => {
     try {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
+      localStorage.removeItem('appSession');
       localStorage.removeItem('appUser');
+      localStorage.removeItem('gymDetails');
       localStorage.removeItem('gymBranch');
 
-      // Clear cookies
       document.cookie = 'accessToken=; path=/; max-age=0';
       document.cookie = 'refreshToken=; path=/; max-age=0';
     } catch (error) {

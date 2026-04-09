@@ -114,6 +114,53 @@ export default function AdministratorForm({
         </FieldColumn>
       </FieldRow>
 
+      {/* User Credentials */}
+      <h5 className="text-white text-base font-normal leading-normal mt-8!">
+        User Credentials
+      </h5>
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          left: '-9999px',
+          width: '1px',
+          height: '1px',
+          overflow: 'hidden',
+        }}
+      >
+        <input
+          name="__fake_username"
+          type="text"
+          autoComplete="username"
+          tabIndex={-1}
+        />
+        <input
+          name="__fake_password"
+          type="password"
+          autoComplete="new-password"
+          tabIndex={-1}
+        />
+      </div>
+      <KFormField
+        control={form.control}
+        name="Username"
+        fieldType={KFormFieldType.INPUT}
+        label="Username (Email) - Optional"
+        placeholder="staff@example.com"
+        disabled={isSubmitting}
+        autoComplete="off"
+        type="email"
+      />
+      <KFormField
+        control={form.control}
+        name="Password"
+        fieldType={KFormFieldType.PASSWORD}
+        label="Password - Optional"
+        placeholder="Enter password"
+        disabled={isSubmitting}
+        autoComplete="new-password"
+      />
+
       {/* Address Details */}
       <h5 className="text-white text-base font-normal leading-normal mt-8!">
         Address Details

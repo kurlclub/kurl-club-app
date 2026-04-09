@@ -1,6 +1,11 @@
 // Universal types
 export type BillingType = 'Recurring' | 'PerSession';
 export type FeeStatus = 'paid' | 'unpaid' | 'partially_paid';
+export type OverallPaymentStatus =
+  | 'CurrentDue'
+  | 'Overdue'
+  | 'Completed'
+  | 'NoCycles';
 
 // Session payment detail types
 export interface SessionDetail {
@@ -48,6 +53,7 @@ export interface BaseMember {
   memberName: string;
   memberIdentifier?: string;
   membershipPlanId: number;
+  membershipPlanName?: string;
   billingType: 'Recurring' | 'PerSession';
   profilePicture?: string;
   photoPath?: string;
@@ -63,11 +69,8 @@ export interface PaymentCycle {
   amountPaid: number;
   pendingAmount: number;
   cyclePaymentStatus: FeeStatus;
-  bufferEndDate: string | null;
-  totalBufferDays: number;
-  bufferEligible: boolean;
-  lastAmountPaid: number;
-  lastAmountPaidDate: string;
+  lastAmountPaid: number | null;
+  lastAmountPaidDate: string | null;
 }
 
 export interface RecurringPaymentMember extends BaseMember {
@@ -76,7 +79,7 @@ export interface RecurringPaymentMember extends BaseMember {
   previousCycles?: PaymentCycle[];
   totalDebtCycles: number;
   totalDebtAmount: number;
-  overallPaymentStatus: 'CurrentDue' | 'Overdue' | 'Completed' | 'NoCycles';
+  overallPaymentStatus: OverallPaymentStatus;
 }
 
 // Per-session payment specific

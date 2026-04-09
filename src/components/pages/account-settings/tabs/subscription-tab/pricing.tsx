@@ -1,17 +1,27 @@
 'use client';
 
-import Link from 'next/link';
 import { useRef, useState } from 'react';
 
-import NumberFlow from '@number-flow/react';
 import confetti from 'canvas-confetti';
-import { motion } from 'framer-motion';
-import { Check, Star } from 'lucide-react';
+import { Star } from 'lucide-react';
 
+import { PlanDetailsDialog } from '@/components/pages/account-settings/tabs/subscription-tab/plan-details-dialog';
+import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
+import {
+  type SubscriptionBillingCycle,
+  useSubscriptionPayment,
+} from '@/hooks/use-subscription-payment';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/providers/auth-provider';
 import type { PricingData, PricingPlan } from '@/services/pricing';
 
-type BillingCycle = 'monthly' | '6months' | 'yearly';
+import {
+  PaymentFailureDialog,
+  PaymentSuccessDialog,
+} from './payment-status-dialogs';
+import { PlanCard } from './plan-card';
+
+type BillingCycle = SubscriptionBillingCycle;
 
 interface PricingProps {
   title?: string;
@@ -42,23 +52,6 @@ const getBillingOptions = (plans: PricingPlan[]) => {
   ];
 };
 
-const getPrice = (plan: PricingPlan, cycle: BillingCycle): number => {
-  switch (cycle) {
-    case 'monthly':
-      return plan.pricing.monthly;
-    case '6months':
-      return Math.round(plan.pricing.sixMonths / 6);
-    case 'yearly':
-      return Math.round(plan.pricing.yearly / 12);
-  }
-};
-
-const getSavings = (plan: PricingPlan, cycle: BillingCycle): number => {
-  const monthly = plan.pricing.monthly;
-  const current = getPrice(plan, cycle);
-  return Math.round(((monthly - current) / monthly) * 100);
-};
-
 const triggerConfetti = () => {
   confetti({
     particleCount: 30,
@@ -77,7 +70,11 @@ export function Pricing({
   description,
   pricingData,
 }: PricingProps) {
+  const { refreshUser } = useAuth();
+  const { subscription } = useSubscriptionAccess();
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('yearly');
+  const [selectedPlan, setSelectedPlan] = useState<PricingPlan | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const switchRef = useRef<HTMLButtonElement>(null);
 
   const handleCycleChange = (cycle: BillingCycle) => {
@@ -94,42 +91,84 @@ export function Pricing({
     description ||
     offer?.description ||
     'Start with 2 months free trial • All plans include full access';
+  const currentPlanId = subscription?.id;
+  const {
+    isPaying,
+    paymentSuccess,
+    paymentFailure,
+    closePaymentSuccess,
+    closePaymentFailure,
+    startSubscriptionPayment,
+  } = useSubscriptionPayment({
+    currentPlanId,
+    refreshUser,
+  });
+  const planChangeType =
+    !!selectedPlan &&
+    typeof currentPlanId === 'number' &&
+    Number(selectedPlan.id) === currentPlanId
+      ? 'same'
+      : 'different';
+
+  const handleChoosePlan = (plan: PricingPlan) => {
+    if (isPaying) return;
+    setSelectedPlan(plan);
+    setIsDetailsOpen(true);
+  };
+
+  const handlePayNow = async (plan: PricingPlan, cycle: BillingCycle) => {
+    await startSubscriptionPayment({
+      plan,
+      billingCycle: cycle,
+      onCheckoutReady: () => setIsDetailsOpen(false),
+    });
+  };
 
   return (
-    <div className="py-6 max-w-5xl mx-auto">
-      {/* Compact Header */}
-      <div className="text-center mb-6">
+    <div className="relative mx-auto max-w-6xl py-6">
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden rounded-3xl">
+        <div className="absolute -left-20 top-0 h-64 w-64 rounded-full bg-primary-green-500/10 blur-3xl" />
+        <div className="absolute -right-16 bottom-0 h-72 w-72 rounded-full bg-semantic-blue-500/15 blur-3xl" />
+      </div>
+
+      <div className="mb-8 text-center">
         {offer?.enabled && (
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-linear-to-r from-primary-green-500/20 to-primary-green-600/20 border border-primary-green-500/30 rounded-full mb-3">
-            <Star className="h-3 w-3 text-primary-green-500" />
-            <span className="text-xs font-semibold text-primary-green-500">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary-green-500/30 bg-linear-to-r from-primary-green-500/20 to-secondary-green-600/20 px-4 py-1.5 shadow-[0_0_0_1px_rgba(211,247,2,0.08)]">
+            <Star className="h-3.5 w-3.5 text-primary-green-300" />
+            <span className="text-xs font-semibold tracking-wide text-primary-green-200">
               {offer.durationMonths} Months Free Trial
             </span>
           </div>
         )}
-        <h2 className="text-2xl font-bold text-white mb-1">{title}</h2>
-        <p className="text-secondary-blue-200 text-sm">{finalDescription}</p>
+        <h2 className="mb-2 text-3xl font-bold tracking-tight text-white md:text-4xl">
+          {title}
+        </h2>
+        <p className="mx-auto max-w-2xl text-sm text-secondary-blue-200 md:text-base">
+          {finalDescription}
+        </p>
       </div>
 
-      {/* Billing Selector */}
-      <div className="flex justify-center mb-6">
-        <div className="inline-flex bg-secondary-blue-600 rounded-lg p-0.5 border border-secondary-blue-400">
+      <div className="mb-8 flex justify-center">
+        <div className="inline-flex rounded-xl border border-secondary-blue-400 bg-secondary-blue-650 p-1 shadow-inner shadow-black/25">
           {billingOptions.map(({ key, label, savings }) => (
             <button
               key={key}
               ref={key === 'yearly' ? switchRef : null}
+              disabled={isPaying}
               onClick={() => handleCycleChange(key)}
               className={cn(
-                'px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200',
+                'relative rounded-lg px-4 py-2 text-xs font-semibold tracking-wide transition-all duration-250 disabled:cursor-not-allowed disabled:opacity-60 sm:px-5',
                 billingCycle === key
-                  ? 'bg-primary-green-200 text-secondary-blue-600 shadow-lg'
-                  : 'text-secondary-blue-100 hover:text-white'
+                  ? 'bg-primary-green-300 text-primary-blue-700 shadow-lg shadow-primary-green-500/30'
+                  : 'text-secondary-blue-100 hover:bg-secondary-blue-600 hover:text-white'
               )}
             >
               {label}
               {savings > 0 && (
-                <span className="ml-1 text-[10px]">
-                  {billingCycle === key ? `${savings}%` : `(${savings}%)`}
+                <span className="ml-1 text-[10px] opacity-90">
+                  {billingCycle === key
+                    ? `Save ${savings}%`
+                    : `(${savings}% off)`}
                 </span>
               )}
             </button>
@@ -137,102 +176,50 @@ export function Pricing({
         </div>
       </div>
 
-      {/* Pricing Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-4xl mx-auto">
-        {plans.map((plan, index) => {
-          const currentPrice = getPrice(plan, billingCycle);
-          const savings = getSavings(plan, billingCycle);
-
-          return (
-            <motion.div
-              key={plan.id}
-              initial={{ y: 10, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
-              className={cn(
-                'relative p-5 rounded-xl border flex flex-col h-full bg-secondary-blue-500 transition-all duration-300 hover:shadow-lg',
-                plan.popular
-                  ? 'border-primary-green-500 shadow-lg scale-[1.02] bg-linear-to-br from-secondary-blue-500 to-secondary-blue-600'
-                  : 'border-secondary-blue-400 hover:border-primary-green-300'
-              )}
-            >
-              {plan.popular && (
-                <div className="absolute -top-2 left-1/2 -translate-x-1/2">
-                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-linear-to-r from-primary-green-300 to-primary-green-600 text-white text-xs font-bold rounded-full shadow-lg">
-                    <Star className="h-3 w-3 fill-current" />
-                    {plan.badge}
-                  </span>
-                </div>
-              )}
-
-              <div className="mb-5">
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <h3 className="text-lg font-bold text-white leading-tight">
-                      {plan.name}
-                    </h3>
-                    <p className="text-primary-green-500 text-xs font-medium">
-                      {plan.subtitle}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <div className="flex items-baseline gap-0.5">
-                      <span className="text-xs text-secondary-blue-300">₹</span>
-                      <NumberFlow
-                        value={currentPrice}
-                        className="text-2xl font-bold text-white"
-                        transformTiming={{ duration: 300, easing: 'ease-out' }}
-                        willChange
-                      />
-                      <span className="text-xs text-secondary-blue-200">
-                        /mo
-                      </span>
-                    </div>
-                    {billingCycle !== 'monthly' && (
-                      <span className="inline-block px-1.5 py-0.5 bg-primary-green-500/20 text-primary-green-500 text-[10px] font-semibold rounded-full mt-1">
-                        Save {savings}%
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <p className="text-[10px] text-secondary-blue-300 text-center">
-                  Billed after trial
-                </p>
-              </div>
-
-              <ul className="space-y-2 mb-5">
-                {plan.features.map((feature, idx) => (
-                  <li key={idx} className="flex items-start gap-2">
-                    <div className="shrink-0 w-4 h-4 bg-primary-green-500/15 rounded-full flex items-center justify-center mt-0.5">
-                      <Check className="h-2.5 w-2.5 text-primary-green-500" />
-                    </div>
-                    <span className="text-xs text-secondary-blue-100 font-medium leading-tight">
-                      {feature}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-
-              <Link
-                href="/signup"
-                className={cn(
-                  'w-full h-10 font-semibold text-sm transition-all duration-300 rounded-lg flex items-center justify-center mt-auto',
-                  plan.popular
-                    ? 'bg-primary-green-500 hover:bg-primary-green-600 text-white shadow-md hover:shadow-lg'
-                    : 'border-2 border-primary-green-500 text-primary-green-500 hover:bg-primary-green-500 hover:text-white'
-                )}
-              >
-                Start Free Trial
-              </Link>
-            </motion.div>
-          );
-        })}
+      <div className="mx-auto grid max-w-5xl grid-cols-1 gap-5 lg:grid-cols-2">
+        {plans.map((plan, index) => (
+          <PlanCard
+            key={plan.id}
+            plan={plan}
+            index={index}
+            billingCycle={billingCycle}
+            onChoosePlan={handleChoosePlan}
+            disabled={isPaying}
+          />
+        ))}
       </div>
 
-      {/* Disclaimer */}
+      <PlanDetailsDialog
+        open={isDetailsOpen}
+        onOpenChange={setIsDetailsOpen}
+        selectedPlan={selectedPlan}
+        billingCycle={billingCycle}
+        planChangeType={planChangeType || null}
+        onPayNow={handlePayNow}
+        isPaying={isPaying}
+      />
+
+      <PaymentSuccessDialog
+        open={paymentSuccess.open}
+        onOpenChange={(open) => {
+          if (!open) closePaymentSuccess();
+        }}
+        title={paymentSuccess.title}
+        message={paymentSuccess.message}
+      />
+
+      <PaymentFailureDialog
+        open={paymentFailure.open}
+        onOpenChange={(open) => {
+          if (!open) closePaymentFailure();
+        }}
+        title={paymentFailure.title}
+        message={paymentFailure.message}
+      />
+
       {offer?.enabled && (
-        <div className="text-center mt-4">
-          <p className="text-sm text-secondary-blue-200 italic">
+        <div className="mt-5 text-center">
+          <p className="text-sm italic text-secondary-blue-200">
             Limited-time offer • Terms & conditions apply*
           </p>
         </div>

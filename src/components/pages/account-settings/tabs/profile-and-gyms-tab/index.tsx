@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Badge } from '@kurlclub/ui-components';
 import { motion } from 'framer-motion';
@@ -8,6 +8,11 @@ import { Building2, Check, Plus, User } from 'lucide-react';
 
 import { BusinessProfileTab } from '@/components/pages/account-settings/tabs/business-profile-tab';
 import OperationsTab from '@/components/pages/account-settings/tabs/operations-tab';
+import {
+  SettingsGymScopeProvider,
+  resolveSettingsGymId,
+  syncSelectedSettingsGymId,
+} from '@/components/pages/account-settings/tabs/settings-gym';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -18,31 +23,36 @@ import { useGymBranch } from '@/providers/gym-branch-provider';
 
 import AddGym from './add-gym';
 
-// Context to override gym ID for viewing only (not switching)
-const ViewGymContext = createContext<{ viewGymId: number | null }>({
-  viewGymId: null,
-});
-
-export const useViewGymId = () => {
-  const context = useContext(ViewGymContext);
-  return context.viewGymId;
-};
-
 export function ProfileAndGymsTab() {
   const { user } = useAuth();
   const { requireLimitAccess, usageLimits } = useSubscriptionAccess();
   const { gymBranch } = useGymBranch();
   const [isAddGymSheetOpen, setIsAddGymSheetOpen] = useState(false);
-  const [selectedGymId, setSelectedGymId] = useState<number | null>(
-    () => gymBranch?.gymId || user?.clubs?.[0]?.gymId || null
+  const clubGymIds = useMemo(
+    () => user?.clubs?.map((club) => club.gymId) ?? [],
+    [user?.clubs]
   );
+  const globalGymId = gymBranch?.gymId ?? null;
+  const initialSelectedGymId = resolveSettingsGymId({
+    globalGymId,
+    clubGymIds,
+  });
+  const [selectedSettingsGymId, setSelectedSettingsGymId] = useState<
+    number | null
+  >(initialSelectedGymId);
+  const previousGlobalGymIdRef = useRef<number | null>(globalGymId);
   const clubCount = user?.clubs?.length ?? 0;
   const maxClubs = usageLimits.maxClubs;
-  const hasFiniteClubLimit = Number.isFinite(maxClubs) && maxClubs > 0;
-  const isClubLimitReached = hasFiniteClubLimit && clubCount >= maxClubs;
+  const finiteMaxClubs =
+    typeof maxClubs === 'number' && Number.isFinite(maxClubs) && maxClubs > 0
+      ? maxClubs
+      : null;
+  const hasFiniteClubLimit = finiteMaxClubs !== null;
+  const isClubLimitReached =
+    finiteMaxClubs !== null && clubCount >= finiteMaxClubs;
 
-  const handleSelectGym = (gymId: number) => {
-    setSelectedGymId(gymId);
+  const handleSelectSettingsGym = (gymId: number) => {
+    setSelectedSettingsGymId(gymId);
   };
 
   const handleOpenAddGym = () => {
@@ -55,18 +65,20 @@ export function ProfileAndGymsTab() {
     setIsAddGymSheetOpen(true);
   };
 
-  // Only sync with global gym on initial mount
+  // Keep the local settings selection in sync with sidebar club switches.
   useEffect(() => {
-    if (gymBranch?.gymId) {
-      setSelectedGymId(gymBranch.gymId);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const previousGlobalGymId = previousGlobalGymIdRef.current;
+    previousGlobalGymIdRef.current = globalGymId;
 
-  const contextValue = useMemo(
-    () => ({ viewGymId: selectedGymId }),
-    [selectedGymId]
-  );
+    setSelectedSettingsGymId((currentSelectedGymId) =>
+      syncSelectedSettingsGymId({
+        currentSelectedGymId,
+        nextGlobalGymId: globalGymId,
+        previousGlobalGymId,
+        availableGymIds: clubGymIds,
+      })
+    );
+  }, [clubGymIds, globalGymId]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -84,7 +96,10 @@ export function ProfileAndGymsTab() {
             <div className="flex items-center gap-3">
               <div className="relative shrink-0">
                 <Avatar className="relative size-10 border-2 border-white/50 rounded-lg">
-                  <AvatarImage src={user?.photoURL} alt={user?.userName} />
+                  <AvatarImage
+                    src={user?.photoURL || undefined}
+                    alt={user?.userName}
+                  />
                   <AvatarFallback className="">
                     <User className="w-5 h-5 text-white/50" />
                   </AvatarFallback>
@@ -116,14 +131,14 @@ export function ProfileAndGymsTab() {
               </p>
               <div className="space-y-1.5">
                 {user.clubs.map((club, index) => {
-                  const isSelected = club.gymId === selectedGymId;
+                  const isSelected = club.gymId === selectedSettingsGymId;
                   return (
                     <motion.button
                       key={club.gymId}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.2, delay: index * 0.05 }}
-                      onClick={() => handleSelectGym(club.gymId)}
+                      onClick={() => handleSelectSettingsGym(club.gymId)}
                       className={`group/gym flex w-full items-center gap-3 rounded-lg p-2 text-left transition-all duration-300 ${
                         isSelected
                           ? 'bg-primary-green-500/10 ring-1 ring-primary-green-500/30'
@@ -175,23 +190,6 @@ export function ProfileAndGymsTab() {
               </div>
             </div>
           )}
-
-          <div className="border-t border-secondary-blue-400 px-4 py-3 bg-secondary-blue-600/40">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-[11px] text-secondary-blue-200 uppercase tracking-wider font-semibold">
-                Club Usage
-              </p>
-              <span className="text-[11px] text-white/90 font-semibold">
-                {hasFiniteClubLimit
-                  ? `${clubCount}/${maxClubs}`
-                  : `${clubCount}/Unlimited`}
-              </span>
-            </div>
-            <Button type="button" className="w-full" onClick={handleOpenAddGym}>
-              <Plus className="size-4" />
-              {isClubLimitReached ? 'Upgrade Plan' : 'Add Gym'}
-            </Button>
-          </div>
         </Card>
       </motion.div>
 
@@ -205,19 +203,19 @@ export function ProfileAndGymsTab() {
               </p>
               <p className="text-xs text-secondary-blue-200 mt-0.5">
                 {hasFiniteClubLimit
-                  ? `You are using ${clubCount} out of ${maxClubs} clubs in your current plan.`
+                  ? `You are using ${clubCount} out of ${finiteMaxClubs} clubs in your current plan.`
                   : `You currently manage ${clubCount} clubs.`}
               </p>
             </div>
             <Button type="button" onClick={handleOpenAddGym}>
               <Plus className="size-4" />
-              {isClubLimitReached ? 'Upgrade Plan' : 'Add Gym'}
+              {isClubLimitReached ? 'Upgrade Plan' : 'Add Club'}
             </Button>
           </CardContent>
         </Card>
 
-        {selectedGymId ? (
-          <ViewGymContext.Provider value={contextValue}>
+        {selectedSettingsGymId ? (
+          <SettingsGymScopeProvider settingsGymId={selectedSettingsGymId}>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -236,7 +234,7 @@ export function ProfileAndGymsTab() {
                 </TabsContent>
               </Tabs>
             </motion.div>
-          </ViewGymContext.Provider>
+          </SettingsGymScopeProvider>
         ) : (
           <motion.div
             initial={{ opacity: 0 }}
@@ -265,7 +263,7 @@ export function ProfileAndGymsTab() {
         closeSheet={() => setIsAddGymSheetOpen(false)}
         onGymAdded={(gymId) => {
           if (gymId) {
-            setSelectedGymId(gymId);
+            setSelectedSettingsGymId(gymId);
           }
         }}
       />

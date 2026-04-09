@@ -1,10 +1,10 @@
-import { SubscriptionFeatureKey } from '@/types/subscription';
+import type { SubscriptionAccessKey } from '@/types/subscription';
 
 export type RouteGateMode = 'block' | 'overlay';
 
 export type RouteFeatureGate = {
   prefix: string;
-  feature: SubscriptionFeatureKey;
+  feature: SubscriptionAccessKey;
   mode: RouteGateMode;
   title: string;
   message: string;

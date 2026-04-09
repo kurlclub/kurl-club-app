@@ -1,7 +1,6 @@
 import {
   AlertCircle,
   CircleUserRound,
-  Clock,
   Minus,
   PersonStanding,
 } from 'lucide-react';
@@ -18,19 +17,6 @@ export interface FilterConfig {
   title: string;
   options: FilterOption[];
 }
-
-// Buffer Due Date Filter
-export const bufferDueDateFilter = {
-  columnId: 'currentCycle.bufferEndDate',
-  title: 'Due Date Urgency',
-  options: [
-    { label: 'Overdue', value: 'overdue', icon: AlertCircle },
-    { label: 'Due Today', value: 'today', icon: Clock },
-    { label: 'Due in 1-3 days', value: '1-3', icon: Clock },
-    { label: 'Due in 4-7 days', value: '4-7', icon: Clock },
-    { label: 'Due in 7+ days', value: '7+', icon: Clock },
-  ],
-};
 
 // Payment Status Filter
 export const paymentStatusFilter = {
@@ -59,11 +45,7 @@ export const createPackageFilter = (
 // Helper functions to get filters for each tab
 export const getPaymentFilters = (
   membershipPlans: Array<{ membershipPlanId: number; planName: string }> = []
-) => [
-  bufferDueDateFilter,
-  paymentStatusFilter,
-  createPackageFilter(membershipPlans),
-];
+) => [paymentStatusFilter, createPackageFilter(membershipPlans)];
 
 export const getCompletedPaymentFilters = (
   membershipPlans: Array<{ membershipPlanId: number; planName: string }> = []

@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { useViewGymId } from '@/components/pages/account-settings/tabs/profile-and-gyms-tab';
+import { useSettingsGymId } from '@/components/pages/account-settings/tabs/settings-gym';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -64,7 +64,7 @@ const toBlockerRows = (blockers: DeleteCheckData['blockers']) =>
   }));
 
 export default function DangerZone() {
-  const gymId = useViewGymId();
+  const gymId = useSettingsGymId();
   const { refreshUser } = useAuth();
   const [isLoadingCheck, setIsLoadingCheck] = useState(false);
   const [deleteCheckData, setDeleteCheckData] =

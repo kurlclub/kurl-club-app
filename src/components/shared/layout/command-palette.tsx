@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/command';
 import { DialogTitle } from '@/components/ui/dialog';
 import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
-import { SubscriptionFeatureKey } from '@/types/subscription';
+import type { SubscriptionAccessKey } from '@/types/subscription';
 
 const commands = [
   {
@@ -26,7 +26,7 @@ const commands = [
     icon: UserPlus,
     action: 'modal',
     keywords: ['onboarding', 'send', 'whatsapp', 'link'],
-    requiredFeature: 'whatsAppNotifications' as SubscriptionFeatureKey,
+    requiredFeature: 'whatsAppNotifications' as SubscriptionAccessKey,
   },
   {
     id: 'record-payment',
@@ -34,7 +34,7 @@ const commands = [
     icon: CreditCard,
     action: '/payments?action=record',
     keywords: ['payment', 'record', 'fee', 'collect'],
-    requiredFeature: 'paymentTracking' as SubscriptionFeatureKey,
+    requiredFeature: 'paymentTracking' as SubscriptionAccessKey,
   },
   {
     id: 'view-members',
@@ -42,7 +42,7 @@ const commands = [
     icon: Users,
     action: '/members',
     keywords: ['members', 'list', 'view', 'all'],
-    requiredFeature: 'memberManagement' as SubscriptionFeatureKey,
+    requiredFeature: 'memberManagement' as SubscriptionAccessKey,
   },
 ];
 
@@ -66,7 +66,7 @@ export function CommandPalette() {
 
   const runCommand = (
     action: string,
-    requiredFeature?: SubscriptionFeatureKey
+    requiredFeature?: SubscriptionAccessKey
   ) => {
     setOpen(false);
     if (requiredFeature) {
