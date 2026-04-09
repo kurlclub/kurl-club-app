@@ -359,7 +359,7 @@ export function BusinessProfileTab() {
         </form>
       </FormProvider>
 
-      <RegionalSettings />
+      <RegionalSettings gymId={gymDetails?.id} />
       <DangerZone />
     </div>
   );
