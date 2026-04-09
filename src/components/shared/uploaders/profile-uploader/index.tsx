@@ -99,7 +99,44 @@ export default function ProfilePictureUploader({
           image={image}
           isSmall={isSmall}
           onClick={() => setPreviewModalOpen(true)}
-        />
+        >
+          <AvatarImage
+            key={image}
+            src={image}
+            alt="Profile picture"
+            className={isImageLoading ? 'opacity-0' : 'opacity-100'}
+            onLoadingStatusChange={(status) => {
+              if (status === 'loading') {
+                setIsImageLoading(true);
+                setIsImageError(false);
+                return;
+              }
+
+              if (status === 'loaded') {
+                setIsImageLoading(false);
+                setIsImageError(false);
+                return;
+              }
+
+              if (status === 'error') {
+                setIsImageLoading(false);
+                setIsImageError(true);
+              }
+            }}
+          />
+          {isImageLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-secondary-blue-500/70">
+              <Loader2 className="h-5 w-5 animate-spin text-white/80" />
+            </div>
+          )}
+          <AvatarFallback>
+            {isImageError ? (
+              <User className="w-16 h-16" />
+            ) : (
+              <Loader2 className="h-5 w-5 animate-spin text-white/80" />
+            )}
+          </AvatarFallback>
+        </Avatar>
       ) : (
         <Button
           variant="outline"

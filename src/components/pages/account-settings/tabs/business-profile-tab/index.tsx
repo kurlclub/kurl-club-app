@@ -342,25 +342,37 @@ export function BusinessProfileTab() {
                   >
                     <Trash2 className="h-5 w-5" />
                   </Button>
-                </div>
-              ))}
+                )}
+                <Button
+                  type="button"
+                  onClick={() => handleDeleteSocialLink(index)}
+                  className="h-[52px] w-[52px] border border-secondary-blue-400"
+                  variant="secondary"
+                  disabled={isUpdating}
+                >
+                  <Trash2 className="h-5 w-5" />
+                </Button>
+              </div>
+            ))}
 
-              <Button
-                type="button"
-                variant="secondary"
-                className="hover:bg-primary-blue-500"
-                onClick={() => append({ url: '' })}
-                disabled={isUpdating}
-              >
-                Add Social Link
-              </Button>
-            </CardContent>
-          </Card>
-        </form>
-      </FormProvider>
+            <Button
+              type="button"
+              variant="secondary"
+              className="hover:bg-primary-blue-500"
+              onClick={() => append({ url: '' })}
+              disabled={isUpdating}
+            >
+              Add Social Link
+            </Button>
+          </CardContent>
+        </Card>
 
-      <RegionalSettings />
-      <DangerZone />
-    </div>
+        {/* Regional Settings */}
+        <RegionalSettings gymId={gymDetails?.id} />
+
+        {/* Delete */}
+        <DangerZone />
+      </div>
+    </FormProvider>
   );
 }
