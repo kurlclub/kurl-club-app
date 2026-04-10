@@ -94,7 +94,7 @@ export interface SubscriptionPlanEntitlement {
   yearlyPrice: number;
   badge?: string | null;
   isActive: boolean;
-  status: SubscriptionPlanStatus | null;
+  status?: SubscriptionPlanStatus | null; // Optional - calculated on frontend if missing
   billingCycle: BillingCycle | null;
   currency: string | null;
   billingAmount: number | null;
