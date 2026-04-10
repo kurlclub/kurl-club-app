@@ -144,42 +144,22 @@ export default function RegionalSettings({ gymId }: RegionalSettingsProps) {
                     variant="outline"
                     size="sm"
                     onClick={() => form.reset()}
+                    disabled={isSaving || isPrefilling}
                   >
                     Discard
                   </Button>
-                  <Button type="submit" size="sm">
-                    Save Changes
+                  <Button
+                    type="submit"
+                    size="sm"
+                    disabled={isSaving || isPrefilling || !gymId}
+                  >
+                    {isSaving ? 'Saving...' : 'Save Changes'}
                   </Button>
                 </div>
               )}
             </div>
-          </div>
-          {isDirty && (
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => form.reset()}
-                disabled={isSaving || isPrefilling}
-              >
-                Discard
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                onClick={form.handleSubmit(onSubmit)}
-                disabled={isSaving || isPrefilling || !gymId}
-              >
-                {isSaving ? 'Saving...' : 'Save Changes'}
-              </Button>
-            </div>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent>
-        <FormProvider {...form}>
-          <form className="space-y-4">
+          </CardHeader>
+          <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <KFormField
                 fieldType={KFormFieldType.SELECT}
@@ -206,9 +186,9 @@ export default function RegionalSettings({ gymId }: RegionalSettingsProps) {
                 className="bg-gray-50 dark:bg-primary-blue-400"
               />
             </div>
-          </form>
-        </FormProvider>
-      </CardContent>
-    </Card>
+          </CardContent>
+        </Card>
+      </form>
+    </FormProvider>
   );
 }
