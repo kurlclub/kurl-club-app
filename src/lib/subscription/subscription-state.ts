@@ -15,7 +15,7 @@ export const getSubscriptionStatusState = ({
   isExpiring: boolean;
   status: SubscriptionRuntimeStatus;
 } => {
-  if (!subscriptionPlan || !subscriptionPlan.status) {
+  if (!subscriptionPlan) {
     return {
       daysRemaining: null,
       isExpired: false,
@@ -24,13 +24,17 @@ export const getSubscriptionStatusState = ({
     };
   }
 
+  const isActive = subscriptionPlan.isActive ?? false;
+  const days = subscriptionPlan.daysRemaining ?? 0;
+
+  // Simple logic: if isActive is true, subscription is active
+  const status: SubscriptionRuntimeStatus = isActive ? 'active' : 'expired';
+  const isExpiring = isActive && days <= 7 && days > 0;
+
   return {
-    daysRemaining:
-      subscriptionPlan.status === 'expired'
-        ? null
-        : subscriptionPlan.daysRemaining,
-    isExpired: subscriptionPlan.status === 'expired',
-    isExpiring: subscriptionPlan.status === 'expiring',
-    status: subscriptionPlan.status,
+    daysRemaining: isActive ? days : null,
+    isExpired: !isActive,
+    isExpiring,
+    status,
   };
 };

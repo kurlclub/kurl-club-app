@@ -74,11 +74,6 @@ const normalizeBillingCycle = (value: unknown): BillingCycle | null => {
     : null;
 };
 
-const isValidDateString = (value: string | null) =>
-  typeof value === 'string' &&
-  value.length > 0 &&
-  !Number.isNaN(Date.parse(value));
-
 const isRequiredNumber = (value: unknown) =>
   typeof value === 'number' && Number.isFinite(value);
 
@@ -196,9 +191,9 @@ const deriveSubscriptionStatus = ({
 
 const deriveBillingAmount = (
   value: Record<string, unknown>,
-  billingCycle: BillingCycle
+  billingCycle: BillingCycle | null
 ): number | null => {
-  if (!hasValidSubscriptionPricing(value)) {
+  if (!billingCycle || !hasValidSubscriptionPricing(value)) {
     return null;
   }
 
@@ -220,31 +215,6 @@ const stripHtmlToText = (value: string) =>
     .replace(/&amp;/g, '&')
     .replace(/\s+/g, ' ')
     .trim();
-
-const hasValidLeanSubscriptionContract = (
-  value: Record<string, unknown>,
-  subscriptionDate: string,
-  nextBillingDate: string,
-  isActive: boolean,
-  daysRemaining: number | null,
-  billingAmount: number | null
-) => {
-  if (
-    !isRequiredNumber(value.id) ||
-    getString(value.name).length === 0 ||
-    !isValidDateString(subscriptionDate) ||
-    !isValidDateString(nextBillingDate) ||
-    billingAmount === null
-  ) {
-    return false;
-  }
-
-  if (isActive) {
-    return daysRemaining !== null;
-  }
-
-  return daysRemaining === null || Number.isInteger(daysRemaining);
-};
 
 export const normalizeSubscriptionLimits = (
   value: unknown
@@ -383,21 +353,12 @@ export const normalizeSubscriptionPlanEntitlement = (
     billingCycle === null ? null : deriveBillingAmount(value, billingCycle);
 
   if (
-    !billingCycle ||
     isActive === null ||
     subscriptionDate === null ||
     nextBillingDate === null ||
     !hasValidSubscriptionLimits(value.limits) ||
     !hasValidSubscriptionFeatures(value.features) ||
-    !hasValidSubscriptionPricing(value) ||
-    !hasValidLeanSubscriptionContract(
-      value,
-      subscriptionDate,
-      nextBillingDate,
-      isActive,
-      daysRemaining,
-      billingAmount
-    )
+    !hasValidSubscriptionPricing(value)
   ) {
     return null;
   }
