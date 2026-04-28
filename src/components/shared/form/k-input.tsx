@@ -11,6 +11,7 @@ interface KInputProps extends Omit<
 > {
   label: string;
   className?: string;
+  wrapperClass?: string;
   suffix?: string;
   maxLength?: number;
   mandetory?: boolean;
@@ -22,6 +23,7 @@ const KInput = forwardRef<HTMLInputElement, KInputProps>(
   (
     {
       className,
+      wrapperClass,
       label,
       mandetory,
       type,
@@ -95,7 +97,7 @@ const KInput = forwardRef<HTMLInputElement, KInputProps>(
 
     /* ----------------------------- DEFAULT FLOATING INPUT ----------------------------- */
     return (
-      <div className="relative">
+      <div className={cn('relative', wrapperClass)}>
         <Input
           id={inputId}
           ref={ref}

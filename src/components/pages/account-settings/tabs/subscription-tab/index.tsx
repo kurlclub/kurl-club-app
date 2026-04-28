@@ -3,19 +3,18 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { motion } from 'framer-motion';
-import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { SubscriptionPlansSkeleton } from '@/components/pages/account-settings/account-settings-skeletons';
-import { InvoicePreviewDialog } from '@/components/pages/account-settings/tabs/subscription-tab/invoice-preview-dialog';
 import { Pricing } from '@/components/pages/account-settings/tabs/subscription-tab/pricing';
 import { SubscriptionCard } from '@/components/shared/cards/subscription-card';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
 import { useSubscriptionPlans } from '@/hooks/use-subscription-plans';
 import { safeFormatDate } from '@/lib/utils';
 import { fetchSubscriptionInvoice } from '@/services/subscription';
+
+import BillingInformation from './billing-information';
 
 export function SubscriptionTab() {
   const [isInvoicePreviewOpen, setIsInvoicePreviewOpen] = useState(false);
@@ -153,59 +152,17 @@ export function SubscriptionTab() {
       </motion.div>
 
       {/* Billing Information */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-      >
-        <Card className="bg-secondary-blue-500 border-secondary-blue-400">
-          <CardContent className="space-y-6 p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="p-4 bg-secondary-blue-600 rounded-lg">
-                <p className="font-medium text-white mb-1">Next billing date</p>
-                <p className="text-sm text-secondary-blue-200">
-                  {nextBillingDate}
-                </p>
-              </div>
-              <div className="p-4 bg-secondary-blue-600 rounded-lg">
-                <p className="font-medium text-white mb-1">Billing cycle</p>
-                <p className="text-sm text-secondary-blue-200">
-                  {billingCycleLabel}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between pt-4 border-t border-secondary-blue-400">
-              <div>
-                <p className="font-medium text-white">Billing History</p>
-                <p className="text-sm text-secondary-blue-200">
-                  View and download your invoices
-                </p>
-              </div>
-              <Button
-                variant="default"
-                size="sm"
-                disabled={isInvoiceLoading}
-                onClick={handleViewInvoice}
-              >
-                {isInvoiceLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : null}
-                {isInvoiceLoading ? 'Loading…' : 'View Invoices'}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      <InvoicePreviewDialog
-        open={isInvoicePreviewOpen}
-        onOpenChange={handleInvoiceDialogClose}
-        pdfUrl={invoicePdfUrl}
-        downloadFileName={invoiceFileName}
-        isLoading={isInvoiceLoading}
+      <BillingInformation
+        nextBillingDate={nextBillingDate}
+        billingCycleLabel={billingCycleLabel}
+        isInvoiceLoading={isInvoiceLoading}
+        isInvoicePreviewOpen={isInvoicePreviewOpen}
+        invoicePdfUrl={invoicePdfUrl}
+        invoiceFileName={invoiceFileName}
         isDownloading={isDownloading}
-        onDownload={handleDownloadInvoice}
+        handleViewInvoice={handleViewInvoice}
+        handleInvoiceDialogClose={handleInvoiceDialogClose}
+        handleDownloadInvoice={handleDownloadInvoice}
       />
     </div>
   );
