@@ -34,8 +34,8 @@ export const createMemberSchema = z
         message: 'Please select a valid Date of Birth.',
       }),
     doj: z.iso.datetime('Please select a valid Date of Joining.'),
-    bloodGroup: z.string().min(1, 'Blood group selection is required'),
-    gender: z.string().min(1, 'Gender selection is required'),
+    bloodGroup: z.string().optional(),
+    gender: z.string().optional(),
     membershipPlanId: z.string().min(1, 'Package selection is required'),
     feeStatus: z.string().min(1, 'Fee status is required'),
     phone: z
@@ -53,13 +53,9 @@ export const createMemberSchema = z
         },
         { message: 'Invalid email format' }
       ),
-    height: z.string().min(1, 'Height is required'),
-    weight: z.string().min(1, 'Weight is required'),
-    personalTrainer: z
-      .union([z.string(), z.number()])
-      .refine((val) => String(val) !== '' && String(val) !== '0', {
-        message: 'Personal trainer selection is required',
-      }),
+    height: z.string().optional(),
+    weight: z.string().optional(),
+    personalTrainer: z.union([z.string(), z.number()]).optional(),
     address: z
       .string()
       .min(1, 'Address is required.')
