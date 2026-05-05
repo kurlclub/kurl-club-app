@@ -288,7 +288,7 @@
 }
 
 @utility gst-input {
-  @apply outline-1! outline-solid! outline-secondary-blue-400!;
+  @apply outline outline-solid! outline-secondary-blue-400!;
 }
 
 @utility k-transition {

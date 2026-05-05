@@ -3,12 +3,13 @@
 import { useState } from 'react';
 
 import { motion } from 'framer-motion';
-import { Check, Loader2, Pencil } from 'lucide-react';
+import { Check, Loader2, Pencil, X } from 'lucide-react';
 
 import { KInput } from '@/components/shared/form/k-input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { useGst } from '@/hooks/use-gst';
 
 import { InvoicePreviewDialog } from './invoice-preview-dialog';
 
@@ -103,10 +104,13 @@ function BillingInformation({
   handleDownloadInvoice,
 }: BillingInformationProps) {
   const [gstinInput, setGstinInput] = useState('');
-  const [savedGstin, setSavedGstin] = useState<string | null>(null);
+  const [gstValue, setGstValue] = useState('');
+  const [isGstAdded, setIsGstAdded] = useState(false);
   const [isEditingGstin, setIsEditingGstin] = useState(false);
   const [gstinError, setGstinError] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+
+  const { addGst, deleteGst, isAddingGst, isDeletingGst } = useGst();
 
   const totalInvoices = invoiceHistory.length;
   const totalPages = Math.max(1, Math.ceil(totalInvoices / INVOICES_PER_PAGE));
@@ -127,18 +131,28 @@ function BillingInformation({
       setGstinError('Enter a valid 15-character GSTIN (e.g. 22AAAAA0000A1Z5).');
       return;
     }
-    setSavedGstin(trimmed);
+    addGst(trimmed);
+    setGstValue(trimmed);
+    setIsGstAdded(true);
     setIsEditingGstin(false);
     setGstinError('');
+    setGstinInput('');
   };
 
   const handleGstinEdit = () => {
-    setGstinInput(savedGstin ?? '');
+    setGstinInput('');
     setGstinError('');
     setIsEditingGstin(true);
   };
 
-  const showGstinForm = !savedGstin || isEditingGstin;
+  const handleGstinDelete = () => {
+    deleteGst();
+    setIsGstAdded(false);
+    setGstValue('');
+    setGstinInput('');
+  };
+
+  const showGstinForm = !isGstAdded || isEditingGstin;
 
   return (
     <>
@@ -173,21 +187,39 @@ function BillingInformation({
                     Add your GSTIN to include it on invoices
                   </p>
                 </div>
-                {savedGstin && !isEditingGstin && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-secondary-blue-200 hover:text-white"
-                    onClick={handleGstinEdit}
-                  >
-                    <Pencil />
-                    Edit
-                  </Button>
+                {isGstAdded && !isEditingGstin && (
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-primary-green-500/20 text-primary-green-300 border-primary-green-500/30">
+                      GSTIN: {gstValue}
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-secondary-blue-200 hover:text-white"
+                      onClick={handleGstinEdit}
+                    >
+                      <Pencil />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-alert-red-400 hover:text-alert-red-300"
+                      onClick={handleGstinDelete}
+                      disabled={isDeletingGst}
+                    >
+                      {isDeletingGst ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        'Delete'
+                      )}
+                    </Button>
+                  </div>
                 )}
               </div>
 
               <div className="space-y-3">
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
                   <KInput
                     disabled={!showGstinForm}
                     label="GSTIN"
@@ -202,21 +234,28 @@ function BillingInformation({
                     className="gst-input"
                   />
                   {showGstinForm && (
-                    <Button onClick={handleGstinSave} className="shrink-0 h-13">
-                      <Check />
-                      Save
+                    <Button
+                      onClick={handleGstinSave}
+                      className="h-13"
+                      disabled={isAddingGst}
+                    >
+                      {isAddingGst ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Check />
+                      )}
                     </Button>
                   )}
                   {isEditingGstin && (
                     <Button
-                      variant="ghost"
-                      className="shrink-0 h-13 text-secondary-blue-200 hover:text-white"
+                      variant="outlinePrimary"
+                      className="h-13"
                       onClick={() => {
                         setIsEditingGstin(false);
                         setGstinError('');
                       }}
                     >
-                      Cancel
+                      <X />
                     </Button>
                   )}
                 </div>

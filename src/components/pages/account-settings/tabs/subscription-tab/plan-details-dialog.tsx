@@ -1,6 +1,9 @@
-import NumberFlow from '@number-flow/react';
-import { Check, Info, Loader2, X } from 'lucide-react';
+import { useState } from 'react';
 
+import NumberFlow from '@number-flow/react';
+import { Check, Info, Loader2, Trash2, X } from 'lucide-react';
+
+import { KInput } from '@/components/shared/form/k-input';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -10,12 +13,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useGst } from '@/hooks/use-gst';
 import {
   getSubscriptionCatalogFeatureItems,
   getSubscriptionLimitLabels,
 } from '@/lib/subscription/catalog-formatting';
 import { cn } from '@/lib/utils';
 import type { PricingPlan } from '@/services/pricing';
+
+/** Validates a 15-character Indian GSTIN format */
+const isValidGSTIN = (value: string) =>
+  /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(value);
 
 type BillingCycle = 'monthly' | '6months' | 'yearly';
 type PlanChangeType = 'same' | 'different';
@@ -103,6 +111,14 @@ export function PlanDetailsDialog({
   onPayNow,
   isPaying = false,
 }: PlanDetailsDialogProps) {
+  const [gstValue, setGstValue] = useState<string>('');
+  const [savedGstValue, setSavedGstValue] = useState<string>('');
+  const [isGstAdded, setIsGstAdded] = useState<boolean>(false);
+  const [isEditingGst, setIsEditingGst] = useState<boolean>(false);
+  const [gstError, setGstError] = useState<string>('');
+
+  const { addGst, deleteGst, isAddingGst, isDeletingGst } = useGst();
+
   if (!selectedPlan) return null;
 
   const currentPrice = getPrice(selectedPlan, billingCycle);
@@ -126,7 +142,7 @@ export function PlanDetailsDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-2">
+        <div className="space-y-1">
           <div className="rounded-xl border border-secondary-blue-400/70 bg-secondary-blue-700/50 p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -197,7 +213,7 @@ export function PlanDetailsDialog({
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-secondary-blue-200">
               {hasUnavailableFeatures ? 'Features' : 'Included Features'}
             </p>
-            <ul className="grid max-h-30 grid-cols-1 gap-2 overflow-y-auto pl-0.5 pr-1 md:grid-cols-2">
+            <ul className="grid max-h-[90px] grid-cols-1 gap-2 overflow-y-auto pl-0.5 pr-1 md:grid-cols-2">
               {features.map((feature, idx) => (
                 <li
                   key={`${selectedPlan.id}-feature-${idx}`}
@@ -230,6 +246,109 @@ export function PlanDetailsDialog({
                 </li>
               ))}
             </ul>
+          </div>
+
+          {/* GST Section */}
+          <div className="rounded-xl border border-secondary-blue-400/70 bg-secondary-blue-700/50 p-4">
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-secondary-blue-200">
+              GST (Optional)
+            </p>
+            {isGstAdded ? (
+              <div className="flex items-center justify-between gap-2">
+                <KInput
+                  disabled
+                  label="GSTIN"
+                  id="gstin"
+                  value={savedGstValue}
+                  onChange={(e) => setGstValue(e.target.value)}
+                  maxLength={15}
+                  wrapperClass="w-full"
+                  className="gst-input"
+                />
+                <Button
+                  className="h-13"
+                  variant="destructive"
+                  onClick={() => {
+                    deleteGst();
+                    setIsGstAdded(false);
+                    setSavedGstValue('');
+                    setGstValue('');
+                  }}
+                  disabled={isDeletingGst}
+                >
+                  {isDeletingGst ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
+            ) : isEditingGst ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <KInput
+                    label="GSTIN"
+                    id="gstin"
+                    value={gstValue}
+                    onChange={(e) => {
+                      setGstValue(e.target.value.toUpperCase());
+                      if (gstError) setGstError('');
+                    }}
+                    maxLength={15}
+                    wrapperClass="w-full"
+                    className="gst-input"
+                  />
+                  <Button
+                    className="h-13"
+                    onClick={() => {
+                      const trimmed = gstValue.trim().toUpperCase();
+                      if (!trimmed) {
+                        setGstError('GSTIN is required.');
+                        return;
+                      }
+                      if (!isValidGSTIN(trimmed)) {
+                        setGstError(
+                          'Enter a valid 15-character GSTIN (e.g. 22AAAAA0000A1Z5).'
+                        );
+                        return;
+                      }
+                      addGst(trimmed);
+                      setSavedGstValue(trimmed);
+                      setIsGstAdded(true);
+                      setIsEditingGst(false);
+                      setGstError('');
+                    }}
+                    disabled={!gstValue.trim() || isAddingGst}
+                  >
+                    {isAddingGst ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Check />
+                    )}
+                  </Button>
+                  <Button
+                    className="h-13"
+                    variant="outlinePrimary"
+                    onClick={() => {
+                      setIsEditingGst(false);
+                      setGstValue('');
+                    }}
+                  >
+                    <X />
+                  </Button>
+                </div>
+                {gstError && <p className="text-xs text-red-400">{gstError}</p>}
+              </>
+            ) : (
+              <Button
+                variant="outlinePrimary"
+                size="lg"
+                onClick={() => setIsEditingGst(true)}
+                className="h-13"
+              >
+                Add GST
+              </Button>
+            )}
           </div>
 
           {isFreePlan && (
