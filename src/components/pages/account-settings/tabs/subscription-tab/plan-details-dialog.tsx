@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import NumberFlow from '@number-flow/react';
 import { Check, Info, Loader2, Trash2, X } from 'lucide-react';
@@ -117,7 +117,19 @@ export function PlanDetailsDialog({
   const [isEditingGst, setIsEditingGst] = useState<boolean>(false);
   const [gstError, setGstError] = useState<string>('');
 
-  const { addGst, deleteGst, isAddingGst, isDeletingGst } = useGst();
+  const { gstNumber, addGst, deleteGst, isAddingGst, isDeletingGst } = useGst();
+
+  useEffect(() => {
+    if (gstNumber) {
+      setSavedGstValue(gstNumber);
+      setIsGstAdded(true);
+      return;
+    }
+
+    setSavedGstValue('');
+    setGstValue('');
+    setIsGstAdded(false);
+  }, [gstNumber]);
 
   if (!selectedPlan) return null;
 
@@ -164,10 +176,15 @@ export function PlanDetailsDialog({
                       transformTiming={{ duration: 300, easing: 'ease-out' }}
                       willChange
                     />
-                    <span className="pb-1 text-xs text-secondary-blue-200">
+                    <span className="pb-1 text-xs text-secondary-blue-200 whitespace-nowrap">
                       {priceSuffix}
                     </span>
                   </div>
+                )}
+                {!isFreePlan && (
+                  <p className="mt-1 text-xs text-secondary-blue-300 whitespace-nowrap">
+                    +GST (18%) included
+                  </p>
                 )}
               </div>
               <div className="text-right">

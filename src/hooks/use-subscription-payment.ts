@@ -17,6 +17,8 @@ import {
   verifyAndRenewSubscription,
 } from '@/services/subscription';
 
+import { useGst } from './use-gst';
+
 export type SubscriptionBillingCycle = 'monthly' | '6months' | 'yearly';
 
 type PaymentDialogState = {
@@ -102,6 +104,8 @@ export function useSubscriptionPayment({
     useState<PaymentDialogState>(CLOSED_DIALOG);
   const [paymentFailure, setPaymentFailure] =
     useState<PaymentDialogState>(CLOSED_DIALOG);
+
+  const { gstNumber } = useGst();
 
   const setFlowState = (nextState: PaymentFlowState) => {
     paymentFlowStateRef.current = nextState;
@@ -216,6 +220,7 @@ export function useSubscriptionPayment({
       const orderData = await createSubscriptionPaymentOrder({
         planId,
         billingCycle: toApiBillingCycle(billingCycle),
+        ...(gstNumber && { gstNumber }),
       });
 
       const isRazorpayLoaded = await loadRazorpayCheckoutScript();

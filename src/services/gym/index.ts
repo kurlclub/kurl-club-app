@@ -154,6 +154,22 @@ export const fetchGymProfilePicture = async (gymId: number) => {
   }
 };
 
+export const fetchGstNumber = async (gymId: number) => {
+  try {
+    const response = await api.get<
+      ApiResponse<{ gymName: string; gstNumber: string | null }>
+    >(`/Gym/${gymId}/gst-number`);
+    return response;
+  } catch (error) {
+    console.error('Error fetching GST number:', error);
+    return {
+      status: 'Error',
+      error:
+        error instanceof Error ? error.message : 'Failed to fetch GST number.',
+    };
+  }
+};
+
 export const addGstNumber = async (gymId: number, gstNumber: string) => {
   try {
     const response = await api.put<ApiResponse<null>>(

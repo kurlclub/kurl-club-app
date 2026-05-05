@@ -143,10 +143,15 @@ export function PlanCard({
                   transformTiming={{ duration: 300, easing: 'ease-out' }}
                   willChange
                 />
-                <span className="pb-1 text-xs text-secondary-blue-200">
+                <span className="pb-1 text-xs text-secondary-blue-200 whitespace-nowrap">
                   {priceSuffix}
                 </span>
               </div>
+            )}
+            {!isFreePlan && (
+              <p className="mt-1 text-xs text-secondary-blue-300 whitespace-nowrap">
+                +GST (18%) included
+              </p>
             )}
             {billingCycle !== 'monthly' && !isFreePlan && savings > 0 && (
               <span className="mt-1 inline-block rounded-full border border-primary-green-400/30 bg-primary-green-500/15 px-2 py-0.5 text-[10px] font-semibold text-primary-green-200">

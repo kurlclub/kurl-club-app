@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { motion } from 'framer-motion';
 import { Check, Loader2, Pencil, X } from 'lucide-react';
@@ -110,7 +110,22 @@ function BillingInformation({
   const [gstinError, setGstinError] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
-  const { addGst, deleteGst, isAddingGst, isDeletingGst } = useGst();
+  const { gstNumber, addGst, deleteGst, isAddingGst, isDeletingGst } = useGst();
+
+  useEffect(() => {
+    if (!gstNumber) {
+      setGstValue('');
+      setIsGstAdded(false);
+      setGstinInput('');
+      return;
+    }
+
+    setGstValue(gstNumber);
+    setIsGstAdded(true);
+    if (!isEditingGstin) {
+      setGstinInput(gstNumber);
+    }
+  }, [gstNumber, isEditingGstin]);
 
   const totalInvoices = invoiceHistory.length;
   const totalPages = Math.max(1, Math.ceil(totalInvoices / INVOICES_PER_PAGE));
@@ -140,7 +155,7 @@ function BillingInformation({
   };
 
   const handleGstinEdit = () => {
-    setGstinInput('');
+    setGstinInput(gstValue);
     setGstinError('');
     setIsEditingGstin(true);
   };
@@ -189,9 +204,6 @@ function BillingInformation({
                 </div>
                 {isGstAdded && !isEditingGstin && (
                   <div className="flex items-center gap-2">
-                    <Badge className="bg-primary-green-500/20 text-primary-green-300 border-primary-green-500/30">
-                      GSTIN: {gstValue}
-                    </Badge>
                     <Button
                       variant="ghost"
                       size="sm"
