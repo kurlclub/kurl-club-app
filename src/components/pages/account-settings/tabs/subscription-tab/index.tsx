@@ -1,9 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-
 import { motion } from 'framer-motion';
-import { toast } from 'sonner';
 
 import { SubscriptionPlansSkeleton } from '@/components/pages/account-settings/account-settings-skeletons';
 import { Pricing } from '@/components/pages/account-settings/tabs/subscription-tab/pricing';
@@ -12,17 +9,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
 import { useSubscriptionPlans } from '@/hooks/use-subscription-plans';
 import { safeFormatDate } from '@/lib/utils';
-import { fetchSubscriptionInvoice } from '@/services/subscription';
 
 import BillingInformation from './billing-information';
 
 export function SubscriptionTab() {
-  const [isInvoicePreviewOpen, setIsInvoicePreviewOpen] = useState(false);
-  const [isInvoiceLoading, setIsInvoiceLoading] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [invoicePdfUrl, setInvoicePdfUrl] = useState<string | null>(null);
-  const [invoiceFileName, setInvoiceFileName] = useState('invoice.pdf');
-  const invoicePdfUrlRef = useRef<string | null>(null);
   const { data: pricingData, isLoading, error } = useSubscriptionPlans();
   const { subscription } = useSubscriptionAccess();
   const nextBillingDate = safeFormatDate(
@@ -39,77 +29,11 @@ export function SubscriptionTab() {
           ? 'Monthly billing'
           : 'N/A';
 
-  const updateInvoicePdfUrl = (nextUrl: string | null) => {
-    const previousUrl = invoicePdfUrlRef.current;
-
-    if (previousUrl && previousUrl !== nextUrl) {
-      URL.revokeObjectURL(previousUrl);
-    }
-
-    invoicePdfUrlRef.current = nextUrl;
-    setInvoicePdfUrl(nextUrl);
-  };
-
-  useEffect(
-    () => () => {
-      if (invoicePdfUrlRef.current) {
-        URL.revokeObjectURL(invoicePdfUrlRef.current);
-      }
-    },
-    []
-  );
-
   const handleScrollToPlans = () => {
     const element = document.getElementById('available-plans');
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-  };
-
-  const handleViewInvoice = async () => {
-    setIsInvoiceLoading(true);
-    try {
-      const { blob, filename } = await fetchSubscriptionInvoice(false);
-      const url = URL.createObjectURL(blob);
-      updateInvoicePdfUrl(url);
-      setInvoiceFileName(filename);
-      setIsInvoicePreviewOpen(true);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Failed to load invoice.';
-      toast.error(message);
-    } finally {
-      setIsInvoiceLoading(false);
-    }
-  };
-
-  const handleDownloadInvoice = async () => {
-    setIsDownloading(true);
-    try {
-      const { blob, filename } = await fetchSubscriptionInvoice(true);
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      setInvoiceFileName(filename);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Failed to download invoice.';
-      toast.error(message);
-    } finally {
-      setIsDownloading(false);
-    }
-  };
-
-  const handleInvoiceDialogClose = (open: boolean) => {
-    if (!open) {
-      updateInvoicePdfUrl(null);
-    }
-    setIsInvoicePreviewOpen(open);
   };
 
   return (
@@ -155,14 +79,6 @@ export function SubscriptionTab() {
       <BillingInformation
         nextBillingDate={nextBillingDate}
         billingCycleLabel={billingCycleLabel}
-        isInvoiceLoading={isInvoiceLoading}
-        isInvoicePreviewOpen={isInvoicePreviewOpen}
-        invoicePdfUrl={invoicePdfUrl}
-        invoiceFileName={invoiceFileName}
-        isDownloading={isDownloading}
-        handleViewInvoice={handleViewInvoice}
-        handleInvoiceDialogClose={handleInvoiceDialogClose}
-        handleDownloadInvoice={handleDownloadInvoice}
       />
     </div>
   );

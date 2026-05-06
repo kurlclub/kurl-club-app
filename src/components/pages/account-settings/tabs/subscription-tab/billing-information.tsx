@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { motion } from 'framer-motion';
 import { Check, Loader2, Pencil, X } from 'lucide-react';
@@ -9,9 +9,9 @@ import { KInput } from '@/components/shared/form/k-input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useGst } from '@/hooks/use-gst';
-
-import { InvoicePreviewDialog } from './invoice-preview-dialog';
+import { useInvoiceHistory } from '@/hooks/use-invoice-history';
 
 /** Validates a 15-character Indian GSTIN format */
 const isValidGSTIN = (value: string) =>
@@ -20,88 +20,13 @@ const isValidGSTIN = (value: string) =>
 type BillingInformationProps = {
   nextBillingDate: string;
   billingCycleLabel: string;
-  isInvoiceLoading: boolean;
-  isInvoicePreviewOpen: boolean;
-  invoicePdfUrl: string | null;
-  invoiceFileName: string;
-  isDownloading: boolean;
-  handleViewInvoice: () => Promise<void>;
-  handleInvoiceDialogClose: (open: boolean) => void;
-  handleDownloadInvoice: () => Promise<void>;
 };
-
-const invoiceHistory = [
-  {
-    id: 'INV-2026-008',
-    billingPeriod: 'Aug 2026',
-    issuedOn: '28 Aug 2026',
-    amount: 'Rs. 5,499',
-    status: 'Paid',
-  },
-  {
-    id: 'INV-2026-007',
-    billingPeriod: 'Jul 2026',
-    issuedOn: '28 Jul 2026',
-    amount: 'Rs. 5,499',
-    status: 'Paid',
-  },
-  {
-    id: 'INV-2026-006',
-    billingPeriod: 'Jun 2026',
-    issuedOn: '28 Jun 2026',
-    amount: 'Rs. 5,499',
-    status: 'Paid',
-  },
-  {
-    id: 'INV-2026-005',
-    billingPeriod: 'May 2026',
-    issuedOn: '28 May 2026',
-    amount: 'Rs. 4,999',
-    status: 'Paid',
-  },
-  {
-    id: 'INV-2026-004',
-    billingPeriod: 'Apr 2026',
-    issuedOn: '28 Apr 2026',
-    amount: 'Rs. 4,999',
-    status: 'Paid',
-  },
-  {
-    id: 'INV-2026-003',
-    billingPeriod: 'Mar 2026',
-    issuedOn: '28 Mar 2026',
-    amount: 'Rs. 4,999',
-    status: 'Paid',
-  },
-  {
-    id: 'INV-2026-002',
-    billingPeriod: 'Feb 2026',
-    issuedOn: '28 Feb 2026',
-    amount: 'Rs. 4,999',
-    status: 'Paid',
-  },
-  {
-    id: 'INV-2026-001',
-    billingPeriod: 'Jan 2026',
-    issuedOn: '28 Jan 2026',
-    amount: 'Rs. 4,999',
-    status: 'Paid',
-  },
-] as const;
 
 const INVOICES_PER_PAGE = 6;
 
 function BillingInformation({
   nextBillingDate,
   billingCycleLabel,
-  isInvoiceLoading,
-  isInvoicePreviewOpen,
-  invoicePdfUrl,
-  invoiceFileName,
-  isDownloading,
-  handleViewInvoice,
-  handleInvoiceDialogClose,
-  handleDownloadInvoice,
 }: BillingInformationProps) {
   const [gstinInput, setGstinInput] = useState('');
   const [gstValue, setGstValue] = useState('');
@@ -127,14 +52,48 @@ function BillingInformation({
     }
   }, [gstNumber, isEditingGstin]);
 
-  const totalInvoices = invoiceHistory.length;
+  const {
+    invoices,
+    viewInvoice,
+    downloadInvoice,
+    isViewingInvoiceFor,
+    isDownloadingInvoiceFor,
+    isLoading: isInvoicesLoading,
+  } = useInvoiceHistory();
+
+  const gstState = useMemo(() => {
+    if (gstNumber) {
+      return {
+        gstValue: gstNumber,
+        isGstAdded: true,
+        gstinInput: isEditingGstin ? gstinInput : gstNumber,
+      };
+    }
+    return {
+      gstValue: '',
+      isGstAdded: false,
+      gstinInput: '',
+    };
+  }, [gstNumber, isEditingGstin, gstinInput]);
+
+  const totalInvoices = invoices.length;
   const totalPages = Math.max(1, Math.ceil(totalInvoices / INVOICES_PER_PAGE));
   const currentPageStart = (currentPage - 1) * INVOICES_PER_PAGE;
   const currentPageEnd = currentPageStart + INVOICES_PER_PAGE;
-  const paginatedInvoices = invoiceHistory.slice(
-    currentPageStart,
-    currentPageEnd
-  );
+  const paginatedInvoices = invoices.slice(currentPageStart, currentPageEnd);
+
+  // Helper functions for formatting invoice data
+  const formatInvoiceDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  };
+
+  const formatInvoiceAmount = (amount: number, currency: string) => {
+    return `${currency === 'INR' ? 'Rs.' : currency} ${amount.toLocaleString('en-IN')}`;
+  };
 
   const handleGstinSave = () => {
     const trimmed = gstinInput.trim().toUpperCase();
@@ -287,145 +246,183 @@ function BillingInformation({
                   </p>
                 </div>
                 <div className="rounded-full border border-secondary-blue-400 bg-secondary-blue-600 px-3 py-1 text-xs font-medium text-secondary-blue-200">
-                  {invoiceHistory.length} invoices
+                  {totalInvoices} invoices
                 </div>
               </div>
 
               <div className="space-y-3">
-                {paginatedInvoices.map((invoice) => (
-                  <div
-                    key={invoice.id}
-                    className="rounded-xl border border-secondary-blue-400 bg-secondary-blue-600 p-4"
-                  >
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                      <div className="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                        <div>
-                          <p className="text-xs uppercase tracking-[0.18em] text-secondary-blue-200">
-                            Invoice ID
-                          </p>
-                          <p className="mt-1 text-sm font-semibold text-white">
-                            {invoice.id}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs uppercase tracking-[0.18em] text-secondary-blue-200">
-                            Billing Period
-                          </p>
-                          <p className="mt-1 text-sm font-semibold text-white">
-                            {invoice.billingPeriod}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs uppercase tracking-[0.18em] text-secondary-blue-200">
-                            Issued On
-                          </p>
-                          <p className="mt-1 text-sm font-semibold text-white">
-                            {invoice.issuedOn}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs uppercase tracking-[0.18em] text-secondary-blue-200">
-                            Amount
-                          </p>
-                          <div className="mt-1 flex items-center gap-2">
-                            <p className="text-sm font-semibold text-white">
-                              {invoice.amount}
-                            </p>
-                            <Badge
+                {isInvoicesLoading ? (
+                  Array.from({ length: 3 }).map((_, index) => (
+                    <div
+                      key={index}
+                      className="rounded-xl border border-secondary-blue-400 bg-secondary-blue-600 p-4"
+                    >
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-4 w-28" />
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-4 w-16" />
+                      </div>
+                      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+                        <Skeleton className="h-9 w-24 rounded-md" />
+                        <Skeleton className="h-9 w-28 rounded-md" />
+                      </div>
+                    </div>
+                  ))
+                ) : paginatedInvoices.length > 0 ? (
+                  paginatedInvoices.map((invoice) => {
+                    const viewing = isViewingInvoiceFor(invoice.id);
+                    const downloading = isDownloadingInvoiceFor(invoice.id);
+
+                    return (
+                      <div
+                        key={invoice.id}
+                        className="rounded-xl border border-secondary-blue-400 bg-secondary-blue-600 p-4"
+                      >
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                          <div className="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                            <div>
+                              <p className="text-xs uppercase tracking-[0.18em] text-secondary-blue-200">
+                                Invoice ID
+                              </p>
+                              <p className="mt-1 text-sm font-semibold text-white">
+                                {invoice.invoiceNumber}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs uppercase tracking-[0.18em] text-secondary-blue-200">
+                                Plan
+                              </p>
+                              <p className="mt-1 text-sm font-semibold text-white">
+                                {invoice.planName}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs uppercase tracking-[0.18em] text-secondary-blue-200">
+                                Paid On
+                              </p>
+                              <p className="mt-1 text-sm font-semibold text-white">
+                                {formatInvoiceDate(invoice.paidAtUtc)}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs uppercase tracking-[0.18em] text-secondary-blue-200">
+                                Amount
+                              </p>
+                              <div className="mt-1 flex items-center gap-2">
+                                <p className="text-sm font-semibold text-white">
+                                  {formatInvoiceAmount(
+                                    invoice.amount,
+                                    invoice.currency
+                                  )}
+                                </p>
+                                <Badge
+                                  variant="outline"
+                                  className="border-secondary-green-500/40 bg-secondary-green-500/10 px-2 py-1 text-xs text-secondary-green-300"
+                                >
+                                  Paid
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3 lg:pl-4">
+                            <Button
                               variant="outline"
-                              className="border-secondary-green-500/40 bg-secondary-green-500/10 px-2 py-1 text-xs text-secondary-green-300"
+                              size="sm"
+                              disabled={viewing}
+                              onClick={() => viewInvoice(invoice.id)}
                             >
-                              {invoice.status}
-                            </Badge>
+                              {viewing ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : null}
+                              View
+                            </Button>
+                            <Button
+                              variant="default"
+                              size="sm"
+                              disabled={downloading}
+                              onClick={() => downloadInvoice(invoice.id)}
+                            >
+                              {downloading ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : null}
+                              Download
+                            </Button>
                           </div>
                         </div>
                       </div>
+                    );
+                  })
+                ) : (
+                  <div className="rounded-xl border border-secondary-blue-400 bg-secondary-blue-600 p-6 text-center text-sm text-secondary-blue-200">
+                    No invoice history available yet.
+                  </div>
+                )}
 
-                      <div className="flex items-center gap-3 lg:pl-4">
-                        <Button
-                          variant="default"
-                          size="sm"
-                          disabled={isInvoiceLoading}
-                          onClick={handleViewInvoice}
-                        >
-                          {isInvoiceLoading ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : null}
-                          {isInvoiceLoading ? 'Loading…' : 'View Invoice'}
-                        </Button>
-                      </div>
+                {!isInvoicesLoading && paginatedInvoices.length > 0 && (
+                  <div className="flex flex-col gap-3 border-t border-secondary-blue-400 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-xs text-secondary-blue-200">
+                      Showing {currentPageStart + 1} to{' '}
+                      {Math.min(currentPageEnd, totalInvoices)} of{' '}
+                      {totalInvoices} invoices
+                    </p>
+
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-secondary-blue-300 text-secondary-blue-200 hover:bg-secondary-blue-500"
+                        disabled={currentPage === 1}
+                        onClick={() =>
+                          setCurrentPage((prev) => Math.max(1, prev - 1))
+                        }
+                      >
+                        Previous
+                      </Button>
+
+                      {Array.from({ length: totalPages }, (_, index) => {
+                        const page = index + 1;
+                        const isActive = page === currentPage;
+
+                        return (
+                          <Button
+                            key={page}
+                            size="sm"
+                            variant={isActive ? 'default' : 'outline'}
+                            className={
+                              isActive
+                                ? ''
+                                : 'border-secondary-blue-300 text-secondary-blue-200 hover:bg-secondary-blue-500'
+                            }
+                            onClick={() => setCurrentPage(page)}
+                          >
+                            {page}
+                          </Button>
+                        );
+                      })}
+
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-secondary-blue-300 text-secondary-blue-200 hover:bg-secondary-blue-500"
+                        disabled={currentPage === totalPages}
+                        onClick={() =>
+                          setCurrentPage((prev) =>
+                            Math.min(totalPages, prev + 1)
+                          )
+                        }
+                      >
+                        Next
+                      </Button>
                     </div>
                   </div>
-                ))}
-
-                <div className="flex flex-col gap-3 border-t border-secondary-blue-400 pt-4 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-xs text-secondary-blue-200">
-                    Showing {currentPageStart + 1} to{' '}
-                    {Math.min(currentPageEnd, totalInvoices)} of {totalInvoices}{' '}
-                    invoices
-                  </p>
-
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="border-secondary-blue-300 text-secondary-blue-200 hover:bg-secondary-blue-500"
-                      disabled={currentPage === 1}
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.max(1, prev - 1))
-                      }
-                    >
-                      Previous
-                    </Button>
-
-                    {Array.from({ length: totalPages }, (_, index) => {
-                      const page = index + 1;
-                      const isActive = page === currentPage;
-
-                      return (
-                        <Button
-                          key={page}
-                          size="sm"
-                          variant={isActive ? 'default' : 'outline'}
-                          className={
-                            isActive
-                              ? ''
-                              : 'border-secondary-blue-300 text-secondary-blue-200 hover:bg-secondary-blue-500'
-                          }
-                          onClick={() => setCurrentPage(page)}
-                        >
-                          {page}
-                        </Button>
-                      );
-                    })}
-
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="border-secondary-blue-300 text-secondary-blue-200 hover:bg-secondary-blue-500"
-                      disabled={currentPage === totalPages}
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.min(totalPages, prev + 1))
-                      }
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
           </CardContent>
         </Card>
       </motion.div>
-      <InvoicePreviewDialog
-        open={isInvoicePreviewOpen}
-        onOpenChange={handleInvoiceDialogClose}
-        pdfUrl={invoicePdfUrl}
-        downloadFileName={invoiceFileName}
-        isLoading={isInvoiceLoading}
-        isDownloading={isDownloading}
-        onDownload={handleDownloadInvoice}
-      />
     </>
   );
 }
