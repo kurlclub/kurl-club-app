@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import NumberFlow from '@number-flow/react';
 import { Check, Info, Loader2, Trash2, X } from 'lucide-react';
@@ -111,25 +111,15 @@ export function PlanDetailsDialog({
   onPayNow,
   isPaying = false,
 }: PlanDetailsDialogProps) {
+  const { gstNumber, addGst, deleteGst, isAddingGst, isDeletingGst } = useGst();
+
   const [gstValue, setGstValue] = useState<string>('');
-  const [savedGstValue, setSavedGstValue] = useState<string>('');
-  const [isGstAdded, setIsGstAdded] = useState<boolean>(false);
   const [isEditingGst, setIsEditingGst] = useState<boolean>(false);
   const [gstError, setGstError] = useState<string>('');
 
-  const { gstNumber, addGst, deleteGst, isAddingGst, isDeletingGst } = useGst();
-
-  useEffect(() => {
-    if (gstNumber) {
-      setSavedGstValue(gstNumber);
-      setIsGstAdded(true);
-      return;
-    }
-
-    setSavedGstValue('');
-    setGstValue('');
-    setIsGstAdded(false);
-  }, [gstNumber]);
+  // Derive state from gstNumber instead of using effects
+  const savedGstValue = gstNumber || '';
+  const isGstAdded = !!gstNumber;
 
   if (!selectedPlan) return null;
 
@@ -230,7 +220,7 @@ export function PlanDetailsDialog({
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-secondary-blue-200">
               {hasUnavailableFeatures ? 'Features' : 'Included Features'}
             </p>
-            <ul className="grid max-h-[90px] grid-cols-1 gap-2 overflow-y-auto pl-0.5 pr-1 md:grid-cols-2">
+            <ul className="grid max-h-22.5 grid-cols-1 gap-2 overflow-y-auto pl-0.5 pr-1 md:grid-cols-2">
               {features.map((feature, idx) => (
                 <li
                   key={`${selectedPlan.id}-feature-${idx}`}
@@ -287,8 +277,6 @@ export function PlanDetailsDialog({
                   variant="destructive"
                   onClick={() => {
                     deleteGst();
-                    setIsGstAdded(false);
-                    setSavedGstValue('');
                     setGstValue('');
                   }}
                   disabled={isDeletingGst}
@@ -330,10 +318,9 @@ export function PlanDetailsDialog({
                         return;
                       }
                       addGst(trimmed);
-                      setSavedGstValue(trimmed);
-                      setIsGstAdded(true);
                       setIsEditingGst(false);
                       setGstError('');
+                      setGstValue('');
                     }}
                     disabled={!gstValue.trim() || isAddingGst}
                   >

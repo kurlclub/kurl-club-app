@@ -22,7 +22,8 @@ const parseAmount = (value: string | undefined): number => {
 export const validatePaymentAmount = (
   amountPaid: string | undefined,
   feeStatus: string,
-  totalFee: number
+  totalFee: number,
+  discountAmount?: string | undefined
 ): PaymentValidationResult => {
   // If fee status is unpaid, skip all payment-related validation
   if (feeStatus === 'unpaid') {
@@ -35,13 +36,15 @@ export const validatePaymentAmount = (
   }
 
   const paidAmount = roundToCurrency(parseAmount(amountPaid));
+  const discount = roundToCurrency(parseAmount(discountAmount));
   const totalAmount = roundToCurrency(totalFee);
   const hasAmount = hasValue(amountPaid);
+  const effectiveTotal = roundToCurrency(totalAmount - discount);
 
   const showPaidWarning =
-    feeStatus === 'paid' && hasAmount && paidAmount < totalAmount;
+    feeStatus === 'paid' && hasAmount && paidAmount < effectiveTotal;
   const showUnpaidWarning = false; // not applicable when feeStatus isn't 'unpaid'
-  const showOverpaymentError = hasAmount && paidAmount > totalAmount;
+  const showOverpaymentError = hasAmount && paidAmount > effectiveTotal;
 
   return {
     showPaidWarning,

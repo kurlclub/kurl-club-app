@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 
 import { motion } from 'framer-motion';
 import { Check, Loader2, Pencil, X } from 'lucide-react';
@@ -28,29 +28,16 @@ function BillingInformation({
   nextBillingDate,
   billingCycleLabel,
 }: BillingInformationProps) {
+  const { gstNumber, addGst, deleteGst, isAddingGst, isDeletingGst } = useGst();
+
   const [gstinInput, setGstinInput] = useState('');
-  const [gstValue, setGstValue] = useState('');
-  const [isGstAdded, setIsGstAdded] = useState(false);
   const [isEditingGstin, setIsEditingGstin] = useState(false);
   const [gstinError, setGstinError] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
-  const { gstNumber, addGst, deleteGst, isAddingGst, isDeletingGst } = useGst();
-
-  useEffect(() => {
-    if (!gstNumber) {
-      setGstValue('');
-      setIsGstAdded(false);
-      setGstinInput('');
-      return;
-    }
-
-    setGstValue(gstNumber);
-    setIsGstAdded(true);
-    if (!isEditingGstin) {
-      setGstinInput(gstNumber);
-    }
-  }, [gstNumber, isEditingGstin]);
+  // Derive state from gstNumber instead of using effects
+  const gstValue = gstNumber || '';
+  const isGstAdded = !!gstNumber;
 
   const {
     invoices,
@@ -60,21 +47,6 @@ function BillingInformation({
     isDownloadingInvoiceFor,
     isLoading: isInvoicesLoading,
   } = useInvoiceHistory();
-
-  const gstState = useMemo(() => {
-    if (gstNumber) {
-      return {
-        gstValue: gstNumber,
-        isGstAdded: true,
-        gstinInput: isEditingGstin ? gstinInput : gstNumber,
-      };
-    }
-    return {
-      gstValue: '',
-      isGstAdded: false,
-      gstinInput: '',
-    };
-  }, [gstNumber, isEditingGstin, gstinInput]);
 
   const totalInvoices = invoices.length;
   const totalPages = Math.max(1, Math.ceil(totalInvoices / INVOICES_PER_PAGE));
@@ -106,8 +78,6 @@ function BillingInformation({
       return;
     }
     addGst(trimmed);
-    setGstValue(trimmed);
-    setIsGstAdded(true);
     setIsEditingGstin(false);
     setGstinError('');
     setGstinInput('');
@@ -121,8 +91,6 @@ function BillingInformation({
 
   const handleGstinDelete = () => {
     deleteGst();
-    setIsGstAdded(false);
-    setGstValue('');
     setGstinInput('');
   };
 
