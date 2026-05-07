@@ -153,3 +153,54 @@ export const fetchGymProfilePicture = async (gymId: number) => {
     return null;
   }
 };
+
+export const fetchGstNumber = async (gymId: number) => {
+  try {
+    const response = await api.get<
+      ApiResponse<{ gymName: string; gstNumber: string | null }>
+    >(`/Gym/${gymId}/gst-number`);
+    return response;
+  } catch (error) {
+    console.error('Error fetching GST number:', error);
+    return {
+      status: 'Error',
+      error:
+        error instanceof Error ? error.message : 'Failed to fetch GST number.',
+    };
+  }
+};
+
+export const addGstNumber = async (gymId: number, gstNumber: string) => {
+  try {
+    const response = await api.put<ApiResponse<null>>(
+      `/Gym/${gymId}/gst-number`,
+      { gstNumber }
+    );
+    return {
+      success: response.message || 'GST number added successfully.',
+    };
+  } catch (error) {
+    console.error('Error adding GST number:', error);
+    return {
+      error:
+        error instanceof Error ? error.message : 'Failed to add GST number.',
+    };
+  }
+};
+
+export const deleteGstNumber = async (gymId: number) => {
+  try {
+    const response = (await api.delete(
+      `/Gym/${gymId}/gst-number`
+    )) as unknown as ApiResponse;
+    return {
+      success: response.message || 'GST number deleted successfully.',
+    };
+  } catch (error) {
+    console.error('Error deleting GST number:', error);
+    return {
+      error:
+        error instanceof Error ? error.message : 'Failed to delete GST number.',
+    };
+  }
+};

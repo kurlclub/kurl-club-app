@@ -27,6 +27,7 @@ export type SubscriptionPaymentOrder = {
 export type CreateSubscriptionPaymentOrderPayload = {
   planId: number;
   billingCycle: SubscriptionPaymentBillingCycle;
+  gstNumber?: string;
 };
 
 export type CreateSubscriptionPaymentOrderResponse = {
@@ -72,9 +73,16 @@ const assertSubscriptionPaymentOrder = (
 export const createSubscriptionPaymentOrder = async (
   payload: CreateSubscriptionPaymentOrderPayload
 ) => {
+  // Create payload with gstNumber only if it's provided
+  const requestPayload = {
+    planId: payload.planId,
+    billingCycle: payload.billingCycle,
+    ...(payload.gstNumber && { gstNumber: payload.gstNumber }),
+  };
+
   const response = await api.post<CreateSubscriptionPaymentOrderResponse>(
     '/SubscriptionPayment/create-order',
-    payload
+    requestPayload
   );
 
   if (response.status !== 'Success' || !response.data) {

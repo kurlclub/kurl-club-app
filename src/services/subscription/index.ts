@@ -1,4 +1,8 @@
 import { api } from '@/lib/api';
+import {
+  InvoiceHistoryItem,
+  InvoiceHistoryResponse,
+} from '@/types/subscription';
 import { SubscriptionCatalogPlan } from '@/types/subscription';
 
 export * from './payment';
@@ -50,5 +54,38 @@ export const fetchSubscriptionInvoice = async (
   return {
     blob,
     filename: resolveDownloadFilename(contentDisposition, 'invoice.pdf'),
+  };
+};
+
+export const fetchInvoiceHistory = async (): Promise<InvoiceHistoryItem[]> => {
+  const response = await api.get<InvoiceHistoryResponse>(
+    '/SubscriptionPayment/invoice-history'
+  );
+
+  if (response.status !== 'Success' || !response.data) {
+    throw new Error('Failed to fetch invoice history');
+  }
+
+  return response.data;
+};
+
+export const fetchInvoiceById = async (
+  invoiceId: number,
+  download: boolean = false
+): Promise<{ blob: Blob; filename: string }> => {
+  const { blob, contentDisposition } = await api.get<{
+    blob: Blob;
+    contentDisposition: string | null;
+  }>(`/SubscriptionPayment/download-invoice-history/${invoiceId}`, {
+    params: { download },
+    responseType: 'blob',
+  });
+
+  return {
+    blob,
+    filename: resolveDownloadFilename(
+      contentDisposition,
+      `invoice-${invoiceId}.pdf`
+    ),
   };
 };
