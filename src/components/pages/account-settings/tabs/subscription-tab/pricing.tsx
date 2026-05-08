@@ -5,6 +5,10 @@ import { useRef, useState } from 'react';
 import confetti from 'canvas-confetti';
 import { Star } from 'lucide-react';
 
+import {
+  type CheckoutBillingFormValues,
+  CheckoutDialog,
+} from '@/components/pages/account-settings/tabs/subscription-tab/checkout-dialog';
 import { PlanDetailsDialog } from '@/components/pages/account-settings/tabs/subscription-tab/plan-details-dialog';
 import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
 import {
@@ -75,6 +79,7 @@ export function Pricing({
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('yearly');
   const [selectedPlan, setSelectedPlan] = useState<PricingPlan | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const switchRef = useRef<HTMLButtonElement>(null);
 
   const handleCycleChange = (cycle: BillingCycle) => {
@@ -116,11 +121,21 @@ export function Pricing({
     setIsDetailsOpen(true);
   };
 
-  const handlePayNow = async (plan: PricingPlan, cycle: BillingCycle) => {
+  const handleOpenCheckout = async () => {
+    setIsDetailsOpen(false);
+    setIsCheckoutOpen(true);
+  };
+
+  const handlePayNow = async (
+    plan: PricingPlan,
+    cycle: BillingCycle,
+    billingDetails: CheckoutBillingFormValues
+  ) => {
     await startSubscriptionPayment({
       plan,
       billingCycle: cycle,
-      onCheckoutReady: () => setIsDetailsOpen(false),
+      billingDetails,
+      onCheckoutReady: () => setIsCheckoutOpen(false),
     });
   };
 
@@ -195,7 +210,16 @@ export function Pricing({
         selectedPlan={selectedPlan}
         billingCycle={billingCycle}
         planChangeType={planChangeType || null}
-        onPayNow={handlePayNow}
+        onPayNow={handleOpenCheckout}
+        isPaying={isPaying}
+      />
+
+      <CheckoutDialog
+        open={isCheckoutOpen}
+        onOpenChange={setIsCheckoutOpen}
+        selectedPlan={selectedPlan}
+        billingCycle={billingCycle}
+        onConfirm={handlePayNow}
         isPaying={isPaying}
       />
 

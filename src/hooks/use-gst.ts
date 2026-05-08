@@ -77,6 +77,7 @@ export function useGst() {
     isGstLoading,
     gstError,
     addGst: addGstMutation.mutate,
+    addGstAsync: addGstMutation.mutateAsync,
     deleteGst: deleteGstMutation.mutate,
     isAddingGst: addGstMutation.isPending,
     isDeletingGst: deleteGstMutation.isPending,
