@@ -212,3 +212,25 @@ export const DEFAULT_SUBSCRIPTION_PLAN_FEATURES: SubscriptionPlanFeatures = {
     push: false,
   },
 };
+
+export type InvoiceHistoryItem = {
+  invoiceNumber: string;
+  id: number;
+  planName: string;
+  billingCycle: 'monthly' | 'yearly';
+  amount: number;
+  gstRate: number;
+  gstAmount: number;
+  gstNumber: string | null;
+  currency: string;
+  effectiveFromUtc: string;
+  expiresAtUtc: string;
+  paidAtUtc: string;
+  razorpayPaymentId: string;
+  receipt: string;
+};
+
+export type InvoiceHistoryResponse = {
+  status: string;
+  data: InvoiceHistoryItem[];
+};

@@ -52,7 +52,7 @@ export type GymPaymentHistoryRecord = {
   paymentCycleId: number;
   cycleStartDate: string;
   cycleEndDate: string;
-  cycleStatus: string;
+  cycleStatus: string | null;
 };
 
 export type GymPaymentHistoryResponse = {

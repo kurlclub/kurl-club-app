@@ -19,11 +19,15 @@ interface FeeStatusBadgeProps {
     | 'lost'
     | 'new'
     | 'contacted'
-    | 'interested';
+    | 'interested'
+    | null;
   days?: number;
   showIcon?: boolean;
   className?: string;
 }
+
+const formatStatusLabel = (status: string | null | undefined) =>
+  (status || 'paid').replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
 export const FeeStatusBadge = ({
   status = 'paid',
@@ -101,9 +105,7 @@ export const FeeStatusBadge = ({
       )}
     >
       {getIcon()}
-      {days
-        ? `${days} days`
-        : status.replace('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+      {days ? `${days} days` : formatStatusLabel(status)}
     </Badge>
   );
 };

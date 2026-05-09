@@ -35,12 +35,8 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     </QueryProvider>
   );
 
-  if (!googleClientId) {
-    return appTree;
-  }
-
   return (
-    <GoogleOAuthProvider clientId={googleClientId}>
+    <GoogleOAuthProvider clientId={googleClientId ?? ''}>
       {appTree}
     </GoogleOAuthProvider>
   );

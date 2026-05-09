@@ -10,10 +10,15 @@ export type SubscriptionPaymentOrder = {
   planId: number;
   planName: string;
   billingCycle: SubscriptionPaymentBillingCycle;
+  baseAmount?: number;
+  gstRate?: number;
+  gstAmount?: number;
   amount: number;
   currency: string;
+  autoRenew?: boolean;
   razorpayKeyId: string;
-  orderId: string;
+  orderId?: string;
+  subscriptionId?: string;
   receipt: string;
   effectiveFrom: string;
   expiresAt: string;
@@ -27,6 +32,14 @@ export type SubscriptionPaymentOrder = {
 export type CreateSubscriptionPaymentOrderPayload = {
   planId: number;
   billingCycle: SubscriptionPaymentBillingCycle;
+  autoRenew: boolean;
+  gstNumber?: string;
+  billingFullName: string;
+  billingAddressLine: string;
+  billingCity: string;
+  billingState: string;
+  billingPincode: string;
+  billingCountry: string;
 };
 
 export type CreateSubscriptionPaymentOrderResponse = {
@@ -38,6 +51,7 @@ export type CreateSubscriptionPaymentOrderResponse = {
 export type VerifyAndRenewSubscriptionPayload = {
   subscriptionPaymentId: number;
   razorpayOrderId: string;
+  razorpaySubscriptionId?: string;
   razorpayPaymentId: string;
   razorpaySignature: string;
 };
@@ -56,7 +70,7 @@ const assertSubscriptionPaymentOrder = (
   }
 
   if (
-    !order.orderId ||
+    (!order.orderId && !order.subscriptionId) ||
     !order.razorpayKeyId ||
     !Number.isFinite(order.subscriptionPaymentId) ||
     !Number.isFinite(order.planId) ||
@@ -72,9 +86,23 @@ const assertSubscriptionPaymentOrder = (
 export const createSubscriptionPaymentOrder = async (
   payload: CreateSubscriptionPaymentOrderPayload
 ) => {
+  // Create payload with gstNumber only if it's provided
+  const requestPayload = {
+    planId: payload.planId,
+    billingCycle: payload.billingCycle,
+    autoRenew: payload.autoRenew,
+    ...(payload.gstNumber && { gstNumber: payload.gstNumber }),
+    billingFullName: payload.billingFullName,
+    billingAddressLine: payload.billingAddressLine,
+    billingCity: payload.billingCity,
+    billingState: payload.billingState,
+    billingPincode: payload.billingPincode,
+    billingCountry: payload.billingCountry,
+  };
+
   const response = await api.post<CreateSubscriptionPaymentOrderResponse>(
     '/SubscriptionPayment/create-order',
-    payload
+    requestPayload
   );
 
   if (response.status !== 'Success' || !response.data) {

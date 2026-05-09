@@ -12,10 +12,13 @@ import {
 } from '@/lib/subscription/razorpay';
 import type { PricingPlan } from '@/services/pricing';
 import {
+  type CreateSubscriptionPaymentOrderPayload,
   type SubscriptionPaymentBillingCycle,
   createSubscriptionPaymentOrder,
   verifyAndRenewSubscription,
 } from '@/services/subscription';
+
+import { useGst } from './use-gst';
 
 export type SubscriptionBillingCycle = 'monthly' | '6months' | 'yearly';
 
@@ -26,10 +29,15 @@ type PaymentDialogState = {
 };
 
 type PaymentFlowState = 'idle' | 'initializing' | 'checkout_open' | 'verifying';
+type SubscriptionPaymentBillingDetails = Omit<
+  CreateSubscriptionPaymentOrderPayload,
+  'planId' | 'billingCycle' | 'autoRenew'
+>;
 
 type StartSubscriptionPaymentParams = {
   plan: PricingPlan;
   billingCycle: SubscriptionBillingCycle;
+  billingDetails: SubscriptionPaymentBillingDetails;
   onCheckoutReady?: () => void;
 };
 
@@ -102,6 +110,7 @@ export function useSubscriptionPayment({
     useState<PaymentDialogState>(CLOSED_DIALOG);
   const [paymentFailure, setPaymentFailure] =
     useState<PaymentDialogState>(CLOSED_DIALOG);
+  const { gstNumber, addGstAsync } = useGst();
 
   const setFlowState = (nextState: PaymentFlowState) => {
     paymentFlowStateRef.current = nextState;
@@ -136,10 +145,14 @@ export function useSubscriptionPayment({
 
   const verifyPayment = async ({
     subscriptionPaymentId,
+    paymentReferenceId,
+    razorpaySubscriptionId,
     response,
     isSamePlanRenewal,
   }: {
     subscriptionPaymentId: number;
+    paymentReferenceId: string;
+    razorpaySubscriptionId?: string;
     response: RazorpayCheckoutSuccessResponse;
     isSamePlanRenewal: boolean;
   }) => {
@@ -148,7 +161,16 @@ export function useSubscriptionPayment({
     try {
       const verification = await verifyAndRenewSubscription({
         subscriptionPaymentId,
-        razorpayOrderId: response.razorpay_order_id,
+        razorpayOrderId:
+          response.razorpay_order_id ||
+          response.razorpay_subscription_id ||
+          paymentReferenceId,
+        ...(response.razorpay_subscription_id || razorpaySubscriptionId
+          ? {
+              razorpaySubscriptionId:
+                response.razorpay_subscription_id || razorpaySubscriptionId,
+            }
+          : {}),
         razorpayPaymentId: response.razorpay_payment_id,
         razorpaySignature: response.razorpay_signature,
       });
@@ -196,6 +218,7 @@ export function useSubscriptionPayment({
   const startSubscriptionPayment = async ({
     plan,
     billingCycle,
+    billingDetails,
     onCheckoutReady,
   }: StartSubscriptionPaymentParams) => {
     if (paymentFlowStateRef.current !== 'idle') {
@@ -212,10 +235,27 @@ export function useSubscriptionPayment({
 
       const isSamePlanRenewal =
         typeof currentPlanId === 'number' && planId === currentPlanId;
+      const billingGstNumber = billingDetails.gstNumber?.trim().toUpperCase();
+      const shouldSaveBillingGst = Boolean(billingGstNumber && !gstNumber);
+
+      if (shouldSaveBillingGst && billingGstNumber) {
+        const gstResult = await addGstAsync(billingGstNumber);
+        if (gstResult.error) {
+          throw new Error(gstResult.error);
+        }
+      }
 
       const orderData = await createSubscriptionPaymentOrder({
         planId,
         billingCycle: toApiBillingCycle(billingCycle),
+        autoRenew: false,
+        ...(billingGstNumber && { gstNumber: billingGstNumber }),
+        billingFullName: billingDetails.billingFullName,
+        billingAddressLine: billingDetails.billingAddressLine,
+        billingCity: billingDetails.billingCity,
+        billingState: billingDetails.billingState,
+        billingPincode: billingDetails.billingPincode,
+        billingCountry: billingDetails.billingCountry,
       });
 
       const isRazorpayLoaded = await loadRazorpayCheckoutScript();
@@ -230,11 +270,18 @@ export function useSubscriptionPayment({
         return true;
       };
 
+      const paymentReferenceId = orderData.orderId || orderData.subscriptionId;
+      if (!paymentReferenceId) {
+        throw new Error('Subscription payment order response is incomplete.');
+      }
+
       const razorpay = createRazorpayCheckout({
         key: orderData.razorpayKeyId,
         name: `KurlClub - ${orderData.planName}`,
         description: `Billing Cycle: ${formatBillingCycleLabel(orderData.billingCycle)}`,
-        order_id: orderData.orderId,
+        ...(orderData.subscriptionId
+          ? { subscription_id: orderData.subscriptionId }
+          : { order_id: paymentReferenceId }),
         prefill: {
           name: orderData.customer.name,
           email: orderData.customer.email,
@@ -245,6 +292,9 @@ export function useSubscriptionPayment({
           planId: String(orderData.planId),
           planName: orderData.planName,
           billingCycle: orderData.billingCycle,
+          ...(orderData.subscriptionId && {
+            subscriptionId: orderData.subscriptionId,
+          }),
         },
         theme: {
           color: '#1c1f24',
@@ -261,6 +311,8 @@ export function useSubscriptionPayment({
 
           void verifyPayment({
             subscriptionPaymentId: orderData.subscriptionPaymentId,
+            paymentReferenceId,
+            razorpaySubscriptionId: orderData.subscriptionId,
             response,
             isSamePlanRenewal,
           });

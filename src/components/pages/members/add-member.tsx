@@ -18,7 +18,8 @@ import FileUploader from '@/components/shared/uploaders/file-uploader';
 import ProfilePictureUploader from '@/components/shared/uploaders/profile-uploader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { FormControl } from '@/components/ui/form';
+import { Checkbox } from '@/components/ui/checkbox';
+import { FormControl, FormLabel } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useGymFormOptions } from '@/hooks/use-gymform-options';
 import { useMemberForm } from '@/hooks/use-member-form';
@@ -101,9 +102,26 @@ const PaymentFields = ({
 }) => {
   const amountPaid = form.watch('amountPaid');
   const feeStatus = form.watch('feeStatus') || '';
+  const isDiscounted = form.watch('isDiscounted');
+  const discountedAmount = form.watch('discountedAmount');
+
+  // Calculate discount amount when checkbox is checked
+  React.useEffect(() => {
+    if (isDiscounted && amountPaid && totalAmount > 0) {
+      const paid = Number(amountPaid);
+      const discount = totalAmount - paid;
+      if (discount > 0) {
+        form.setValue('discountedAmount', discount.toFixed(2));
+      } else {
+        form.setValue('discountedAmount', '0');
+      }
+    } else {
+      form.setValue('discountedAmount', '');
+    }
+  }, [isDiscounted, amountPaid, totalAmount, form]);
 
   const { showPaidWarning, showUnpaidWarning, showOverpaymentError } =
-    validatePaymentAmount(amountPaid, feeStatus, totalAmount);
+    validatePaymentAmount(amountPaid, feeStatus, totalAmount, discountedAmount);
 
   const paidAmount = amountPaid ? Number(amountPaid) : 0;
   const excessAmount = Math.max(
@@ -147,6 +165,29 @@ const PaymentFields = ({
           </FieldColumn>
         )}
       </FieldRow>
+
+      {feeStatus !== 'unpaid' && (
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="isDiscounted"
+            checked={isDiscounted}
+            onCheckedChange={(checked) => {
+              form.setValue('isDiscounted', checked as boolean);
+            }}
+          />
+          <FormLabel
+            htmlFor="isDiscounted"
+            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+          >
+            Apply Discount
+          </FormLabel>
+          {isDiscounted && discountedAmount && Number(discountedAmount) > 0 && (
+            <span className="text-sm text-primary-green-500">
+              (Discount: ₹{Number(discountedAmount).toLocaleString()})
+            </span>
+          )}
+        </div>
+      )}
 
       <PaymentWarnings
         showPaidWarning={showPaidWarning}
@@ -721,19 +762,25 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                   label="Member Name"
                   maxLength={20}
                 />
-                <KFormField
-                  fieldType={KFormFieldType.INPUT}
-                  control={form.control}
-                  name="email"
-                  label="Email (Optional)"
-                />
-                <KFormField
-                  fieldType={KFormFieldType.PHONE_INPUT}
-                  control={form.control}
-                  name="phone"
-                  label="Phone"
-                  placeholder="(555) 123-4567"
-                />
+                <FieldRow>
+                  <FieldColumn>
+                    <KFormField
+                      fieldType={KFormFieldType.INPUT}
+                      control={form.control}
+                      name="email"
+                      label="Email (Optional)"
+                    />
+                  </FieldColumn>
+                  <FieldColumn>
+                    <KFormField
+                      fieldType={KFormFieldType.PHONE_INPUT}
+                      control={form.control}
+                      name="phone"
+                      label="Phone"
+                      placeholder="(555) 123-4567"
+                    />
+                  </FieldColumn>
+                </FieldRow>
 
                 <FieldRow>
                   <FieldColumn>
@@ -822,6 +869,18 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                     />
                   </FieldColumn>
                 </FieldRow>
+
+                <KFormField
+                  fieldType={KFormFieldType.TEXTAREA}
+                  control={form.control}
+                  name="address"
+                  label="Address Line"
+                  maxLength={250}
+                />
+
+                <h5 className="text-white text-base font-normal leading-normal mt-8!">
+                  Membership & Training
+                </h5>
 
                 <FieldRow>
                   <FieldColumn>
@@ -985,17 +1044,6 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                   name="emergencyContactRelation"
                   label="Relation"
                   options={relationOptions}
-                />
-
-                <h5 className="text-white text-base font-normal leading-normal mt-8!">
-                  Address Details
-                </h5>
-                <KFormField
-                  fieldType={KFormFieldType.TEXTAREA}
-                  control={form.control}
-                  name="address"
-                  label="Address Line"
-                  maxLength={250}
                 />
               </>
             )}

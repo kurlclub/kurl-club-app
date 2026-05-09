@@ -64,6 +64,8 @@ export const createMemberSchema = z
     joiningFee: z.string().optional(),
     workoutPlanId: z.string().min(1, 'Workout plan selection is required'),
     modeOfPayment: z.string().optional(),
+    isDiscounted: z.boolean().optional(),
+    discountedAmount: z.string().optional(),
     currentPackageStartDate: z
       .string()
       .optional()

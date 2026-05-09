@@ -126,7 +126,7 @@ export function PlanDetailsDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-2">
+        <div className="space-y-1">
           <div className="rounded-xl border border-secondary-blue-400/70 bg-secondary-blue-700/50 p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
@@ -148,10 +148,15 @@ export function PlanDetailsDialog({
                       transformTiming={{ duration: 300, easing: 'ease-out' }}
                       willChange
                     />
-                    <span className="pb-1 text-xs text-secondary-blue-200">
+                    <span className="pb-1 text-xs text-secondary-blue-200 whitespace-nowrap">
                       {priceSuffix}
                     </span>
                   </div>
+                )}
+                {!isFreePlan && (
+                  <p className="mt-1 text-xs text-secondary-blue-300 whitespace-nowrap">
+                    +GST (18%) included
+                  </p>
                 )}
               </div>
               <div className="text-right">
@@ -197,7 +202,7 @@ export function PlanDetailsDialog({
             <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-secondary-blue-200">
               {hasUnavailableFeatures ? 'Features' : 'Included Features'}
             </p>
-            <ul className="grid max-h-30 grid-cols-1 gap-2 overflow-y-auto pl-0.5 pr-1 md:grid-cols-2">
+            <ul className="grid max-h-22.5 grid-cols-1 gap-2 overflow-y-auto pl-0.5 pr-1 md:grid-cols-2">
               {features.map((feature, idx) => (
                 <li
                   key={`${selectedPlan.id}-feature-${idx}`}
@@ -293,7 +298,7 @@ export function PlanDetailsDialog({
                 Loading...
               </span>
             ) : (
-              'Pay Now'
+              'Proceed to Pay'
             )}
           </Button>
         </DialogFooter>

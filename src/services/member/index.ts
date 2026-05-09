@@ -216,6 +216,17 @@ export const deleteMember = async (
   }
 };
 
+export type SyncMemberBiometricResponse = {
+  status?: string;
+  message?: string;
+};
+
+export const syncMemberBiometric = async (id: string | number) => {
+  return await api.post<SyncMemberBiometricResponse>(
+    `/Member/${id}/sync-biometric`
+  );
+};
+
 export const bulkImportMembers = async (members: MemberListItem[]) => {
   try {
     const response = await api.post('/Gym/bulk-import-members', members);

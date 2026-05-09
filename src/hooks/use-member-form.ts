@@ -48,6 +48,8 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
       amountPaid: '',
       joiningFee: '',
       modeOfPayment: '',
+      isDiscounted: false,
+      discountedAmount: '',
       currentPackageStartDate: '',
       customSessionRate: '',
       numberOfSessions: '',
@@ -105,6 +107,8 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
           amountPaid: '',
           joiningFee: '',
           modeOfPayment: '',
+          isDiscounted: false,
+          discountedAmount: '',
           currentPackageStartDate: '',
           customSessionRate: '',
           numberOfSessions: '',
@@ -158,6 +162,7 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
       }
 
       if (key === 'numberOfSessions' && value === '') return;
+      if (key === 'isDiscounted') return;
 
       // Map frontend field names to API field names
       const fieldMap: Record<string, string> = {
@@ -188,6 +193,7 @@ export const useMemberForm = (gymId?: number, onboardingId?: number) => {
         modeOfPayment: 'ModeOfPayment',
         onboardingType: 'MemberOnboardingType',
         currentPackageStartDate: 'CurrentPackageStartDate',
+        discountedAmount: 'DiscountAmount',
       };
 
       const apiFieldName = fieldMap[key] || key;

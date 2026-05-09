@@ -2,15 +2,15 @@
 
 import { useRouter } from 'next/navigation';
 
-import { useQueryClient } from '@tanstack/react-query';
-import { Trash2 } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Fingerprint, Loader2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import MemberStatusBadge from '@/components/shared/badges/member-status-badge';
 import { KEdit } from '@/components/shared/icons';
 import { Button } from '@/components/ui/button';
 import { useAppDialog } from '@/hooks/use-app-dialog';
-import { deleteMember } from '@/services/member';
+import { deleteMember, syncMemberBiometric } from '@/services/member';
 
 interface HeaderProps {
   isEditing: boolean;
@@ -24,6 +24,22 @@ function Header({ isEditing, handleSave, toggleEdit, memberId }: HeaderProps) {
   const router = useRouter();
 
   const { showConfirm } = useAppDialog();
+
+  const syncBiometricMutation = useMutation({
+    mutationFn: syncMemberBiometric,
+    onSuccess: (response) => {
+      toast.success(
+        response?.message || 'Member synced to biometric device successfully.'
+      );
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to sync member to biometric device.'
+      );
+    },
+  });
 
   const handleDeleteCustomer = (id: string) => {
     showConfirm({
@@ -49,7 +65,7 @@ function Header({ isEditing, handleSave, toggleEdit, memberId }: HeaderProps) {
   };
 
   return (
-    <div className="flex sticky pt-4 md:pt-[26px] pb-4 z-20 drop-shadow-xl -top-px w-full items-center bg-primary-blue-500 justify-between gap-3 flex-wrap">
+    <div className="flex sticky pt-4 md:pt-6.5 pb-4 z-20 drop-shadow-xl -top-px w-full items-center bg-primary-blue-500 justify-between gap-3 flex-wrap">
       <MemberStatusBadge status="active" />
       <div className="flex items-center gap-2">
         {isEditing ? (
@@ -68,6 +84,19 @@ function Header({ isEditing, handleSave, toggleEdit, memberId }: HeaderProps) {
             <Button className="h-10" variant="outline" onClick={toggleEdit}>
               <KEdit className="h-5! w-5!" />
               Edit
+            </Button>
+            <Button
+              className="h-10"
+              variant="outline"
+              disabled={!memberId || syncBiometricMutation.isPending}
+              onClick={() => syncBiometricMutation.mutate(memberId)}
+            >
+              {syncBiometricMutation.isPending ? (
+                <Loader2 className="h-5! w-5! animate-spin" />
+              ) : (
+                <Fingerprint className="h-5! w-5!" />
+              )}
+              Sync Biometric
             </Button>
             <Button
               className="h-10"
