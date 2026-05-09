@@ -35,7 +35,6 @@ function BillingInformation({
   const [gstinError, setGstinError] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Derive state from gstNumber instead of using effects
   const gstValue = gstNumber || '';
   const isGstAdded = !!gstNumber;
 
@@ -95,6 +94,7 @@ function BillingInformation({
   };
 
   const showGstinForm = !isGstAdded || isEditingGstin;
+  const gstinDisplayValue = showGstinForm ? gstinInput : gstValue;
 
   return (
     <>
@@ -163,7 +163,7 @@ function BillingInformation({
                     disabled={!showGstinForm}
                     label="GSTIN"
                     id="gstin"
-                    value={gstinInput}
+                    value={gstinDisplayValue}
                     onChange={(e) => {
                       setGstinInput(e.target.value.toUpperCase());
                       if (gstinError) setGstinError('');
