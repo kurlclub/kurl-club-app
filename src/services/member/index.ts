@@ -51,6 +51,9 @@ export const fetchGymMembers = async (
   if (filters?.feeStatus) params.append('feeStatus', filters.feeStatus);
   if (filters?.package) params.append('package', filters.package);
   if (filters?.gender) params.append('gender', filters.gender);
+  if (typeof filters?.isFrozen === 'boolean') {
+    params.append('isFrozen', String(filters.isFrozen));
+  }
   if (filters?.trainer) params.append('trainer', filters.trainer.toString());
   if (filters?.sortBy) params.append('sortBy', filters.sortBy);
   if (filters?.sortOrder) params.append('sortOrder', filters.sortOrder);
@@ -225,6 +228,56 @@ export const syncMemberBiometric = async (id: string | number) => {
   return await api.post<SyncMemberBiometricResponse>(
     `/Member/${id}/sync-biometric`
   );
+};
+
+export type FreezeMemberPayload = {
+  reason: string;
+};
+
+export type FreezeMemberResponse = {
+  status?: string;
+  message?: string;
+};
+
+export type MemberFreezeHistoryItem = {
+  id: number;
+  freezeStartDate: string;
+  freezeEndDate: string | null;
+  reason: string;
+  freezeDurationDays: number;
+  isActive: boolean;
+};
+
+export type MemberFreezeHistoryResponse = {
+  status: string;
+  data: MemberFreezeHistoryItem[];
+};
+
+export const freezeMember = async (
+  id: string | number,
+  payload: FreezeMemberPayload
+) => {
+  return await api.post<FreezeMemberResponse>(`/Member/${id}/freeze`, payload);
+};
+
+export const unfreezeMember = async (id: string | number) => {
+  return await api.post<FreezeMemberResponse>(`/Member/${id}/unfreeze`);
+};
+
+export const fetchMemberFreezeHistory = async (id: string | number) => {
+  const response = await api.get<MemberFreezeHistoryResponse>(
+    `/Member/${id}/freeze-history`
+  );
+  return response.data || [];
+};
+
+export const useMemberFreezeHistory = (id: string | number, enabled = true) => {
+  return useQuery({
+    queryKey: ['memberFreezeHistory', id],
+    queryFn: () => fetchMemberFreezeHistory(id),
+    enabled: !!id && enabled,
+    staleTime: 1000 * 60,
+  });
 };
 
 export const bulkImportMembers = async (members: MemberListItem[]) => {
