@@ -35,6 +35,7 @@ export function AllMembersTab({
     feeStatus?: string[];
     package?: string[];
     gender?: string[];
+    isFrozen?: string[];
   }>({});
   const [memberFilters, setMemberFilters] = useState<MemberFilters>({
     page: 1,
@@ -91,6 +92,20 @@ export function AllMembersTab({
           count: gender.count,
         })) || [],
     },
+    {
+      columnId: 'isFrozen',
+      title: 'Frozen',
+      options: [
+        {
+          label: 'Frozen',
+          value: 'true',
+        },
+        {
+          label: 'Not Frozen',
+          value: 'false',
+        },
+      ],
+    },
   ];
 
   const handleSearch = (term: string) => {
@@ -102,14 +117,21 @@ export function AllMembersTab({
     columnId: string,
     values: string[] | undefined
   ) => {
+    const nextValues =
+      columnId === 'isFrozen' && values?.length ? values.slice(-1) : values;
     setSelectedFilters((prev) => ({
       ...prev,
-      [columnId]: values,
+      [columnId]: nextValues,
     }));
 
     setMemberFilters((prev) => ({
       ...prev,
-      [columnId]: values?.join(',') || undefined,
+      [columnId]:
+        columnId === 'isFrozen'
+          ? nextValues?.[0] === undefined
+            ? undefined
+            : nextValues[0] === 'true'
+          : nextValues?.join(',') || undefined,
       page: 1,
     }));
   };
