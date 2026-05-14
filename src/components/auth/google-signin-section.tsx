@@ -207,7 +207,7 @@ export function GoogleSignInSection({
 
       <div
         ref={buttonShellRef}
-        className={`group relative w-full overflow-hidden rounded-xl ${
+        className={`group relative w-full overflow-hidden rounded-lg ${
           isInteractionDisabled ? 'opacity-60' : ''
         }`}
         aria-disabled={isInteractionDisabled || !isGoogleButtonReady}
@@ -217,7 +217,7 @@ export function GoogleSignInSection({
             : () => toast('Google sign-in is still loading. Please try again.')
         }
       >
-        <div className="pointer-events-none flex w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3.25 text-sm font-medium text-white/90 transition-colors group-hover:border-white/20 group-hover:bg-white/10 group-active:bg-white/15">
+        <div className="pointer-events-none flex w-full items-center justify-center gap-3 rounded-lg border border-white/10 bg-white/5 px-4 py-3.25 text-sm font-medium text-white/90 transition-colors group-hover:border-white/20 group-hover:bg-white/10 group-active:bg-white/15">
           <GoogleColorIcon />
           {isGooglePending
             ? 'Signing in with Google...'
