@@ -610,7 +610,8 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
       const { hasAnyWarning } = validatePaymentAmount(
         data.amountPaid,
         data.feeStatus || '',
-        totalFee
+        totalFee,
+        data.discountedAmount
       );
 
       if (hasAnyWarning) {
