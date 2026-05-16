@@ -9,7 +9,6 @@ import {
   KFormField,
   KFormFieldType,
 } from '@/components/shared/form/k-formfield';
-import { KInput } from '@/components/shared/form/k-input';
 import { KSheet } from '@/components/shared/form/k-sheet';
 import { InfoBanner } from '@/components/shared/info-banner';
 import { Spinner } from '@/components/shared/loader';
@@ -828,40 +827,16 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                 </FieldRow>
 
                 <FieldRow>
+
                   <FieldColumn>
-                    {isMigratedMember ? (
-                      <KFormField
-                        fieldType={KFormFieldType.UI_DATE_PICKER}
-                        control={form.control}
-                        name="doj"
-                        label="Date of joining"
-                        mode="single"
-                        floating
-                      />
-                    ) : (
-                      <KFormField
-                        fieldType={KFormFieldType.SKELETON}
-                        control={form.control}
-                        name="doj"
-                        renderSkeleton={(field) => (
-                          <FormControl>
-                            <KInput
-                              label="Date of joining"
-                              id="doj"
-                              value={
-                                typeof field.value === 'string'
-                                  ? new Date(field.value).toLocaleDateString(
-                                      'en-GB'
-                                    )
-                                  : ''
-                              }
-                              disabled
-                              onChange={() => {}}
-                            />
-                          </FormControl>
-                        )}
-                      />
-                    )}
+                    <KFormField
+                      fieldType={KFormFieldType.UI_DATE_PICKER}
+                      control={form.control}
+                      name="doj"
+                      label="Date of joining"
+                      mode="single"
+                      floating
+                    />
                   </FieldColumn>
                   <FieldColumn>
                     <KFormField
