@@ -1,7 +1,7 @@
+import Image from 'next/image';
 import React from 'react';
 import { FormProvider, UseFormReturn } from 'react-hook-form';
 
-import { ArrowRightLeft, UserPlus } from 'lucide-react';
 import { z } from 'zod/v4';
 
 import { FieldColumn, FieldRow } from '@/components/shared/form/field-layout';
@@ -25,7 +25,6 @@ import {
   feeStatusOptions,
   genderOptions,
   idTypeOptions,
-  memberOnboardingTypeOptions,
   paymentModeOptions,
   purposeOptions,
   relationOptions,
@@ -412,20 +411,20 @@ const calculateMigratedRecurringTotal = ({
 const onboardingTypeCardMeta: Record<
   OnboardingTypeValue,
   {
+    title: string;
     description: string;
-    helperText: string;
-    icon: React.ReactNode;
+    characterImage: string;
   }
 > = {
   fresh_join: {
-    description: 'New member joining today.',
-    helperText: 'Uses your current Add Member flow.',
-    icon: <UserPlus className="h-6 w-6" />,
+    title: 'Add new member',
+    description: 'Add a completely new member',
+    characterImage: '/images/new-member.png',
   },
   migrated_member: {
-    description: 'Member joined before using KurlClub.',
-    helperText: 'Lets you set current package start date for auto total.',
-    icon: <ArrowRightLeft className="h-6 w-6" />,
+    title: 'Migrate member',
+    description: 'Add an already existing member.',
+    characterImage: '/images/migrate-member.png',
   },
 };
 
@@ -438,50 +437,61 @@ const OnboardingTypeCards = ({
   onSelect: (value: OnboardingTypeValue) => void;
   errorMessage?: string;
 }) => {
-  return (
-    <div className="space-y-3">
-      <h5 className="text-white text-base font-normal leading-normal mt-0!">
-        Member Onboarding Type
-      </h5>
-      <p className="text-gray-400 text-sm">
-        Choose one to continue. The form will load based on your selection.
-      </p>
+  const orderedOptions: OnboardingTypeValue[] = [
+    'fresh_join',
+    'migrated_member',
+  ];
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {memberOnboardingTypeOptions.map((option) => {
-          const onboardingValue = option.value as OnboardingTypeValue;
-          const meta = onboardingTypeCardMeta[onboardingValue];
-          const isSelected = value === onboardingValue;
+  return (
+    <div className="space-y-4 mt-4">
+      <div className="grid grid-cols-1 gap-4">
+        {orderedOptions.map((optionValue) => {
+          const meta = onboardingTypeCardMeta[optionValue];
+          const isSelected = value === optionValue;
 
           return (
             <button
-              key={option.value}
+              key={optionValue}
               type="button"
-              onClick={() => onSelect(onboardingValue)}
-              className={`text-left rounded-xl border p-4 transition-all ${
+              onClick={() => onSelect(optionValue)}
+              className={`relative text-left rounded-[14px] border transition-all overflow-hidden min-h-27.5 ${
                 isSelected
-                  ? 'border-primary-blue-400 bg-secondary-blue-500/80'
-                  : 'border-secondary-blue-300 bg-secondary-blue-600/40 hover:border-secondary-blue-200'
+                  ? 'border-primary-green-500'
+                  : 'border-secondary-blue-400 hover:border-secondary-blue-300'
               }`}
             >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-white text-base">{option.label}</p>
-                  <p className="text-sm text-gray-300 mt-1">
-                    {meta.description}
-                  </p>
-                </div>
-                <div
-                  className={`h-12 w-12 rounded-lg flex items-center justify-center ${
-                    isSelected
-                      ? 'bg-primary-blue-500/20 text-primary-blue-300'
-                      : 'bg-secondary-blue-500/50 text-gray-300'
-                  }`}
-                >
-                  {meta.icon}
+              <div
+                className="absolute inset-0 bg-linear-to-br from-[#141720] via-[#1C1F24] to-[#282D35]"
+                style={{ zIndex: 0 }}
+              />
+              <div className="relative p-4" style={{ zIndex: 1 }}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <p className="text-white text-lg font-medium">
+                      {meta.title}
+                    </p>
+                    <p className="text-gray-300 text-xs font-light mt-1">
+                      {meta.description}
+                    </p>
+                    <p className="text-primary-green-500 text-sm mt-3 underline">
+                      Add +
+                    </p>
+                  </div>
                 </div>
               </div>
-              <p className="text-xs text-gray-400 mt-3">{meta.helperText}</p>
+              <div
+                className="absolute bottom-0 -right-2.5"
+                style={{ zIndex: 2 }}
+              >
+                <Image
+                  src={meta.characterImage}
+                  alt={meta.title}
+                  width={160}
+                  height={150}
+                  className="object-contain pointer-events-none"
+                  priority
+                />
+              </div>
             </button>
           );
         })}
@@ -695,7 +705,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
         type="button"
         variant="secondary"
         size="sm"
-        className="h-[46px] min-w-[90px]"
+        className="h-11.5 min-w-22.5"
         onClick={() => {
           form.reset();
           form.clearErrors();
@@ -714,7 +724,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
             closeSheet();
           }}
           variant="secondary"
-          className="h-[46px] min-w-[90px]"
+          className="h-11.5 min-w-22.5"
           disabled={isSubmitting}
         >
           Cancel
@@ -722,7 +732,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
         <Button
           type="submit"
           form="add-member-form"
-          className="h-[46px] min-w-[73px]"
+          className="h-11.5 min-w-18.25"
           disabled={isSubmitting || !hasSelectedOnboardingType}
         >
           {isSubmitting ? 'Saving...' : 'Add'}
@@ -733,7 +743,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
 
   return (
     <KSheet
-      className="w-[536px]"
+      className="w-124"
       isOpen={isOpen}
       onClose={closeSheet}
       title="Add Member"
@@ -804,7 +814,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                     onCancel={() => setIsEditingGymId(false)}
                     onChange={setGymIdValue}
                   /> */}
-                  <Badge className="bg-secondary-blue-400 flex items-center w-fit justify-center text-sm text-white rounded-full h-[30px] py-2 px-2 border border-secondary-blue-300 bg-opacity-100 transition-colors">
+                  <Badge className="bg-secondary-blue-400 flex items-center w-fit justify-center text-sm text-white rounded-full h-7.5 py-2 px-2 border border-secondary-blue-300 bg-opacity-100 transition-colors">
                     Gym no: #Pending
                   </Badge>
                 </div>
