@@ -54,35 +54,46 @@ const isPerSessionPlan = (plan: MembershipPlanSubset): boolean =>
 
 const PaymentWarnings = ({
   showPaidWarning,
-  showUnpaidWarning,
+  showPartialWarning,
   showOverpaymentError,
-  excessAmount,
+  showDiscountError,
+  effectiveTotal,
+  paidAmount,
 }: {
   showPaidWarning: boolean;
-  showUnpaidWarning: boolean;
+  showPartialWarning: boolean;
   showOverpaymentError: boolean;
-  excessAmount: string;
+  showDiscountError: boolean;
+  effectiveTotal: number;
+  paidAmount: number;
 }) => (
   <>
+    {showDiscountError && (
+      <InfoBanner
+        variant="error"
+        icon="🚫"
+        message="Discount must be less than package amount"
+      />
+    )}
     {showPaidWarning && (
       <InfoBanner
         variant="warning"
         icon="⚠️"
-        message='Amount is less than total. Consider changing status to "Partial"'
+        message={`Status is "Paid" but amount (₹${paidAmount.toLocaleString()}) doesn't match effective total (₹${effectiveTotal.toLocaleString()}). Change status to "Partial" or adjust amount.`}
       />
     )}
-    {showUnpaidWarning && (
+    {showPartialWarning && (
       <InfoBanner
         variant="warning"
         icon="⚠️"
-        message='Amount entered but status is "Unpaid". Consider changing to "Paid" or "Partial"'
+        message={`Status is "Partial" but amount is ${paidAmount === 0 ? 'zero' : 'equal to effective total'}. Change to "${paidAmount === 0 ? 'Unpaid' : 'Paid'}".`}
       />
     )}
     {showOverpaymentError && (
       <InfoBanner
         variant="error"
         icon="🚫"
-        message={`Amount exceeds total by ₹${excessAmount}. Please verify the amount.`}
+        message={`Amount (₹${paidAmount.toLocaleString()}) exceeds effective total (₹${effectiveTotal.toLocaleString()}) by ₹${(paidAmount - effectiveTotal).toLocaleString()}`}
       />
     )}
   </>
@@ -102,29 +113,21 @@ const PaymentFields = ({
   const isDiscounted = form.watch('isDiscounted');
   const discountedAmount = form.watch('discountedAmount');
 
-  // Calculate discount amount when checkbox is checked
-  React.useEffect(() => {
-    if (isDiscounted && amountPaid && totalAmount > 0) {
-      const paid = Number(amountPaid);
-      const discount = totalAmount - paid;
-      if (discount > 0) {
-        form.setValue('discountedAmount', discount.toFixed(2));
-      } else {
-        form.setValue('discountedAmount', '0');
-      }
-    } else {
-      form.setValue('discountedAmount', '');
-    }
-  }, [isDiscounted, amountPaid, totalAmount, form]);
-
-  const { showPaidWarning, showUnpaidWarning, showOverpaymentError } =
-    validatePaymentAmount(amountPaid, feeStatus, totalAmount, discountedAmount);
+  const {
+    showPaidWarning,
+    showPartialWarning,
+    showOverpaymentError,
+    showDiscountError,
+  } = validatePaymentAmount(
+    amountPaid,
+    feeStatus,
+    totalAmount,
+    discountedAmount
+  );
 
   const paidAmount = amountPaid ? Number(amountPaid) : 0;
-  const excessAmount = Math.max(
-    0,
-    Number((paidAmount - totalAmount).toFixed(2))
-  );
+  const discount = discountedAmount ? Number(discountedAmount) : 0;
+  const effectiveTotal = Math.max(0, totalAmount - discount);
 
   return (
     <div
@@ -152,8 +155,8 @@ const PaymentFields = ({
               type="number"
               maxLength={10}
               suffix={
-                totalAmount > 0
-                  ? `/ ${totalAmount.toLocaleString(undefined, {
+                effectiveTotal > 0
+                  ? `/ ${effectiveTotal.toLocaleString(undefined, {
                       maximumFractionDigits: 2,
                     })}`
                   : ''
@@ -163,36 +166,89 @@ const PaymentFields = ({
         )}
       </FieldRow>
 
-      {feeStatus !== 'unpaid' && (
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="isDiscounted"
-            checked={isDiscounted}
-            onCheckedChange={(checked) => {
-              form.setValue('isDiscounted', checked as boolean);
-            }}
-          />
-          <FormLabel
-            htmlFor="isDiscounted"
-            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-          >
-            Apply Discount
-          </FormLabel>
-          {isDiscounted && discountedAmount && Number(discountedAmount) > 0 && (
-            <span className="text-sm text-primary-green-500">
-              (Discount: ₹{Number(discountedAmount).toLocaleString()})
+      {/* Discount Section - Show for ALL statuses */}
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          id="isDiscounted"
+          checked={isDiscounted}
+          onCheckedChange={(checked) => {
+            form.setValue('isDiscounted', checked as boolean);
+            if (!checked) {
+              form.setValue('discountedAmount', '');
+            }
+          }}
+        />
+        <FormLabel
+          htmlFor="isDiscounted"
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+        >
+          Apply Discount
+        </FormLabel>
+      </div>
+
+      {isDiscounted && (
+        <KFormField
+          fieldType={KFormFieldType.INPUT}
+          control={form.control}
+          name="discountedAmount"
+          label="Discount Amount"
+          type="number"
+          placeholder="Enter discount amount"
+          maxLength={10}
+          suffix={`Max: ${totalAmount.toLocaleString()}`}
+        />
+      )}
+
+      {/* Breakdown Display */}
+      {isDiscounted && discount > 0 && (
+        <div className="text-sm space-y-2 p-4 bg-secondary-blue-500/30 rounded-lg border border-secondary-blue-400">
+          <div className="flex justify-between">
+            <span className="text-gray-400">Package Amount:</span>
+            <span className="text-white">₹{totalAmount.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-400">Discount Applied:</span>
+            <span className="text-alert-red-400">
+              -₹{discount.toLocaleString()}
             </span>
+          </div>
+          <div className="flex justify-between border-t border-secondary-blue-400 pt-2">
+            <span className="text-white font-semibold">Effective Total:</span>
+            <span className="text-primary-green-500 font-semibold">
+              ₹{effectiveTotal.toLocaleString()}
+            </span>
+          </div>
+
+          {feeStatus !== 'unpaid' && paidAmount > 0 && (
+            <>
+              <div className="flex justify-between text-gray-300">
+                <span>Amount Paid:</span>
+                <span>₹{paidAmount.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between border-t border-secondary-blue-400 pt-2">
+                <span className="text-white font-semibold">Pending:</span>
+                <span
+                  className={`font-semibold ${
+                    effectiveTotal - paidAmount === 0
+                      ? 'text-primary-green-500'
+                      : 'text-alert-orange-400'
+                  }`}
+                >
+                  ₹{Math.max(0, effectiveTotal - paidAmount).toLocaleString()}
+                </span>
+              </div>
+            </>
           )}
         </div>
       )}
 
       <PaymentWarnings
         showPaidWarning={showPaidWarning}
-        showUnpaidWarning={showUnpaidWarning}
+        showPartialWarning={showPartialWarning}
         showOverpaymentError={showOverpaymentError}
-        excessAmount={excessAmount.toLocaleString(undefined, {
-          maximumFractionDigits: 2,
-        })}
+        showDiscountError={showDiscountError}
+        effectiveTotal={effectiveTotal}
+        paidAmount={paidAmount}
       />
       {feeStatus !== 'unpaid' && (
         <>
@@ -827,7 +883,6 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                 </FieldRow>
 
                 <FieldRow>
-
                   <FieldColumn>
                     <KFormField
                       fieldType={KFormFieldType.UI_DATE_PICKER}
