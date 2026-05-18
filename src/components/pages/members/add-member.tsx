@@ -1,8 +1,7 @@
+import Image from 'next/image';
 import React from 'react';
 import { FormProvider, UseFormReturn } from 'react-hook-form';
 
-import { ArrowRightLeft, UserPlus } from 'lucide-react';
-import { toast } from 'sonner';
 import { z } from 'zod/v4';
 
 import { FieldColumn, FieldRow } from '@/components/shared/form/field-layout';
@@ -10,8 +9,8 @@ import {
   KFormField,
   KFormFieldType,
 } from '@/components/shared/form/k-formfield';
-import { KInput } from '@/components/shared/form/k-input';
 import { KSheet } from '@/components/shared/form/k-sheet';
+import { OptionalSection } from '@/components/shared/form/optional-section';
 import { InfoBanner } from '@/components/shared/info-banner';
 import { Spinner } from '@/components/shared/loader';
 import FileUploader from '@/components/shared/uploaders/file-uploader';
@@ -20,7 +19,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { FormControl, FormLabel } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { useGymFormOptions } from '@/hooks/use-gymform-options';
 import { useMemberForm } from '@/hooks/use-member-form';
 import {
@@ -28,7 +26,6 @@ import {
   feeStatusOptions,
   genderOptions,
   idTypeOptions,
-  memberOnboardingTypeOptions,
   paymentModeOptions,
   purposeOptions,
   relationOptions,
@@ -57,35 +54,46 @@ const isPerSessionPlan = (plan: MembershipPlanSubset): boolean =>
 
 const PaymentWarnings = ({
   showPaidWarning,
-  showUnpaidWarning,
+  showPartialWarning,
   showOverpaymentError,
-  excessAmount,
+  showDiscountError,
+  effectiveTotal,
+  paidAmount,
 }: {
   showPaidWarning: boolean;
-  showUnpaidWarning: boolean;
+  showPartialWarning: boolean;
   showOverpaymentError: boolean;
-  excessAmount: string;
+  showDiscountError: boolean;
+  effectiveTotal: number;
+  paidAmount: number;
 }) => (
   <>
+    {showDiscountError && (
+      <InfoBanner
+        variant="error"
+        icon="🚫"
+        message="Discount must be less than package amount"
+      />
+    )}
     {showPaidWarning && (
       <InfoBanner
         variant="warning"
         icon="⚠️"
-        message='Amount is less than total. Consider changing status to "Partial"'
+        message={`Status is "Paid" but amount (₹${paidAmount.toLocaleString()}) doesn't match effective total (₹${effectiveTotal.toLocaleString()}). Change status to "Partial" or adjust amount.`}
       />
     )}
-    {showUnpaidWarning && (
+    {showPartialWarning && (
       <InfoBanner
         variant="warning"
         icon="⚠️"
-        message='Amount entered but status is "Unpaid". Consider changing to "Paid" or "Partial"'
+        message={`Status is "Partial" but amount is ${paidAmount === 0 ? 'zero' : 'equal to effective total'}. Change to "${paidAmount === 0 ? 'Unpaid' : 'Paid'}".`}
       />
     )}
     {showOverpaymentError && (
       <InfoBanner
         variant="error"
         icon="🚫"
-        message={`Amount exceeds total by ₹${excessAmount}. Please verify the amount.`}
+        message={`Amount (₹${paidAmount.toLocaleString()}) exceeds effective total (₹${effectiveTotal.toLocaleString()}) by ₹${(paidAmount - effectiveTotal).toLocaleString()}`}
       />
     )}
   </>
@@ -105,29 +113,21 @@ const PaymentFields = ({
   const isDiscounted = form.watch('isDiscounted');
   const discountedAmount = form.watch('discountedAmount');
 
-  // Calculate discount amount when checkbox is checked
-  React.useEffect(() => {
-    if (isDiscounted && amountPaid && totalAmount > 0) {
-      const paid = Number(amountPaid);
-      const discount = totalAmount - paid;
-      if (discount > 0) {
-        form.setValue('discountedAmount', discount.toFixed(2));
-      } else {
-        form.setValue('discountedAmount', '0');
-      }
-    } else {
-      form.setValue('discountedAmount', '');
-    }
-  }, [isDiscounted, amountPaid, totalAmount, form]);
-
-  const { showPaidWarning, showUnpaidWarning, showOverpaymentError } =
-    validatePaymentAmount(amountPaid, feeStatus, totalAmount, discountedAmount);
+  const {
+    showPaidWarning,
+    showPartialWarning,
+    showOverpaymentError,
+    showDiscountError,
+  } = validatePaymentAmount(
+    amountPaid,
+    feeStatus,
+    totalAmount,
+    discountedAmount
+  );
 
   const paidAmount = amountPaid ? Number(amountPaid) : 0;
-  const excessAmount = Math.max(
-    0,
-    Number((paidAmount - totalAmount).toFixed(2))
-  );
+  const discount = discountedAmount ? Number(discountedAmount) : 0;
+  const effectiveTotal = Math.max(0, totalAmount - discount);
 
   return (
     <div
@@ -155,8 +155,8 @@ const PaymentFields = ({
               type="number"
               maxLength={10}
               suffix={
-                totalAmount > 0
-                  ? `/ ${totalAmount.toLocaleString(undefined, {
+                effectiveTotal > 0
+                  ? `/ ${effectiveTotal.toLocaleString(undefined, {
                       maximumFractionDigits: 2,
                     })}`
                   : ''
@@ -166,36 +166,89 @@ const PaymentFields = ({
         )}
       </FieldRow>
 
-      {feeStatus !== 'unpaid' && (
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="isDiscounted"
-            checked={isDiscounted}
-            onCheckedChange={(checked) => {
-              form.setValue('isDiscounted', checked as boolean);
-            }}
-          />
-          <FormLabel
-            htmlFor="isDiscounted"
-            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-          >
-            Apply Discount
-          </FormLabel>
-          {isDiscounted && discountedAmount && Number(discountedAmount) > 0 && (
-            <span className="text-sm text-primary-green-500">
-              (Discount: ₹{Number(discountedAmount).toLocaleString()})
+      {/* Discount Section - Show for ALL statuses */}
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          id="isDiscounted"
+          checked={isDiscounted}
+          onCheckedChange={(checked) => {
+            form.setValue('isDiscounted', checked as boolean);
+            if (!checked) {
+              form.setValue('discountedAmount', '');
+            }
+          }}
+        />
+        <FormLabel
+          htmlFor="isDiscounted"
+          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+        >
+          Apply Discount
+        </FormLabel>
+      </div>
+
+      {isDiscounted && (
+        <KFormField
+          fieldType={KFormFieldType.INPUT}
+          control={form.control}
+          name="discountedAmount"
+          label="Discount Amount"
+          type="number"
+          placeholder="Enter discount amount"
+          maxLength={10}
+          suffix={`Max: ${totalAmount.toLocaleString()}`}
+        />
+      )}
+
+      {/* Breakdown Display */}
+      {isDiscounted && discount > 0 && (
+        <div className="text-sm space-y-2 p-4 bg-secondary-blue-500/30 rounded-lg border border-secondary-blue-400">
+          <div className="flex justify-between">
+            <span className="text-gray-400">Package Amount:</span>
+            <span className="text-white">₹{totalAmount.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-400">Discount Applied:</span>
+            <span className="text-alert-red-400">
+              -₹{discount.toLocaleString()}
             </span>
+          </div>
+          <div className="flex justify-between border-t border-secondary-blue-400 pt-2">
+            <span className="text-white font-semibold">Effective Total:</span>
+            <span className="text-primary-green-500 font-semibold">
+              ₹{effectiveTotal.toLocaleString()}
+            </span>
+          </div>
+
+          {feeStatus !== 'unpaid' && paidAmount > 0 && (
+            <>
+              <div className="flex justify-between text-gray-300">
+                <span>Amount Paid:</span>
+                <span>₹{paidAmount.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between border-t border-secondary-blue-400 pt-2">
+                <span className="text-white font-semibold">Pending:</span>
+                <span
+                  className={`font-semibold ${
+                    effectiveTotal - paidAmount === 0
+                      ? 'text-primary-green-500'
+                      : 'text-alert-orange-400'
+                  }`}
+                >
+                  ₹{Math.max(0, effectiveTotal - paidAmount).toLocaleString()}
+                </span>
+              </div>
+            </>
           )}
         </div>
       )}
 
       <PaymentWarnings
         showPaidWarning={showPaidWarning}
-        showUnpaidWarning={showUnpaidWarning}
+        showPartialWarning={showPartialWarning}
         showOverpaymentError={showOverpaymentError}
-        excessAmount={excessAmount.toLocaleString(undefined, {
-          maximumFractionDigits: 2,
-        })}
+        showDiscountError={showDiscountError}
+        effectiveTotal={effectiveTotal}
+        paidAmount={paidAmount}
       />
       {feeStatus !== 'unpaid' && (
         <>
@@ -359,20 +412,20 @@ const calculateMigratedRecurringTotal = ({
 const onboardingTypeCardMeta: Record<
   OnboardingTypeValue,
   {
+    title: string;
     description: string;
-    helperText: string;
-    icon: React.ReactNode;
+    characterImage: string;
   }
 > = {
   fresh_join: {
-    description: 'New member joining today.',
-    helperText: 'Uses your current Add Member flow.',
-    icon: <UserPlus className="h-6 w-6" />,
+    title: 'Add new member',
+    description: 'Add a completely new member',
+    characterImage: '/images/new-member.png',
   },
   migrated_member: {
-    description: 'Member joined before using KurlClub.',
-    helperText: 'Lets you set current package start date for auto total.',
-    icon: <ArrowRightLeft className="h-6 w-6" />,
+    title: 'Migrate member',
+    description: 'Add an already existing member.',
+    characterImage: '/images/migrate-member.png',
   },
 };
 
@@ -385,50 +438,61 @@ const OnboardingTypeCards = ({
   onSelect: (value: OnboardingTypeValue) => void;
   errorMessage?: string;
 }) => {
-  return (
-    <div className="space-y-3">
-      <h5 className="text-white text-base font-normal leading-normal mt-0!">
-        Member Onboarding Type
-      </h5>
-      <p className="text-gray-400 text-sm">
-        Choose one to continue. The form will load based on your selection.
-      </p>
+  const orderedOptions: OnboardingTypeValue[] = [
+    'fresh_join',
+    'migrated_member',
+  ];
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {memberOnboardingTypeOptions.map((option) => {
-          const onboardingValue = option.value as OnboardingTypeValue;
-          const meta = onboardingTypeCardMeta[onboardingValue];
-          const isSelected = value === onboardingValue;
+  return (
+    <div className="space-y-4 mt-4">
+      <div className="grid grid-cols-1 gap-4">
+        {orderedOptions.map((optionValue) => {
+          const meta = onboardingTypeCardMeta[optionValue];
+          const isSelected = value === optionValue;
 
           return (
             <button
-              key={option.value}
+              key={optionValue}
               type="button"
-              onClick={() => onSelect(onboardingValue)}
-              className={`text-left rounded-xl border p-4 transition-all ${
+              onClick={() => onSelect(optionValue)}
+              className={`relative text-left rounded-[14px] border transition-all overflow-hidden min-h-27.5 ${
                 isSelected
-                  ? 'border-primary-blue-400 bg-secondary-blue-500/80'
-                  : 'border-secondary-blue-300 bg-secondary-blue-600/40 hover:border-secondary-blue-200'
+                  ? 'border-primary-green-500'
+                  : 'border-secondary-blue-400 hover:border-secondary-blue-300'
               }`}
             >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-white text-base">{option.label}</p>
-                  <p className="text-sm text-gray-300 mt-1">
-                    {meta.description}
-                  </p>
-                </div>
-                <div
-                  className={`h-12 w-12 rounded-lg flex items-center justify-center ${
-                    isSelected
-                      ? 'bg-primary-blue-500/20 text-primary-blue-300'
-                      : 'bg-secondary-blue-500/50 text-gray-300'
-                  }`}
-                >
-                  {meta.icon}
+              <div
+                className="absolute inset-0 bg-linear-to-br from-[#141720] via-[#1C1F24] to-[#282D35]"
+                style={{ zIndex: 0 }}
+              />
+              <div className="relative p-4" style={{ zIndex: 1 }}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <p className="text-white text-lg font-medium">
+                      {meta.title}
+                    </p>
+                    <p className="text-gray-300 text-xs font-light mt-1">
+                      {meta.description}
+                    </p>
+                    <p className="text-primary-green-500 text-sm mt-3 underline">
+                      Add +
+                    </p>
+                  </div>
                 </div>
               </div>
-              <p className="text-xs text-gray-400 mt-3">{meta.helperText}</p>
+              <div
+                className="absolute bottom-0 -right-2.5"
+                style={{ zIndex: 2 }}
+              >
+                <Image
+                  src={meta.characterImage}
+                  alt={meta.title}
+                  width={160}
+                  height={150}
+                  className="object-contain pointer-events-none"
+                  priority
+                />
+              </div>
             </button>
           );
         })}
@@ -443,63 +507,63 @@ const OnboardingTypeCards = ({
   );
 };
 
-const EditableGymId = ({
-  isEditing,
-  gymIdValue,
-  onEdit,
-  onSave,
-  onCancel,
-  onChange,
-}: {
-  isEditing: boolean;
-  gymIdValue: string;
-  onEdit: () => void;
-  onSave: () => void;
-  onCancel: () => void;
-  onChange: (value: string) => void;
-}) => {
-  if (isEditing) {
-    return (
-      <div className="flex items-center gap-2">
-        <Input
-          type="text"
-          value={gymIdValue}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="Enter Gym No"
-          className="h-[30px] w-32"
-          autoFocus
-        />
-        <Button
-          type="button"
-          size="sm"
-          onClick={onSave}
-          disabled={!gymIdValue.trim()}
-          className="h-[30px] px-2 text-xs"
-        >
-          Save
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="secondary"
-          onClick={onCancel}
-          className="h-[30px] px-2 text-xs"
-        >
-          Cancel
-        </Button>
-      </div>
-    );
-  }
+// const EditableGymId = ({
+//   isEditing,
+//   gymIdValue,
+//   onEdit,
+//   onSave,
+//   onCancel,
+//   onChange,
+// }: {
+//   isEditing: boolean;
+//   gymIdValue: string;
+//   onEdit: () => void;
+//   onSave: () => void;
+//   onCancel: () => void;
+//   onChange: (value: string) => void;
+// }) => {
+//   if (isEditing) {
+//     return (
+//       <div className="flex items-center gap-2">
+//         <Input
+//           type="text"
+//           value={gymIdValue}
+//           onChange={(e) => onChange(e.target.value)}
+//           placeholder="Enter Gym No"
+//           className="h-[30px] w-32"
+//           autoFocus
+//         />
+//         <Button
+//           type="button"
+//           size="sm"
+//           onClick={onSave}
+//           disabled={!gymIdValue.trim()}
+//           className="h-[30px] px-2 text-xs"
+//         >
+//           Save
+//         </Button>
+//         <Button
+//           type="button"
+//           size="sm"
+//           variant="secondary"
+//           onClick={onCancel}
+//           className="h-[30px] px-2 text-xs"
+//         >
+//           Cancel
+//         </Button>
+//       </div>
+//     );
+//   }
 
-  return (
-    <Badge
-      onClick={onEdit}
-      className="bg-secondary-blue-400 flex items-center w-fit justify-center text-sm text-white rounded-full h-[30px] py-2 px-2 border border-secondary-blue-300 bg-opacity-100 cursor-pointer hover:bg-secondary-blue-500 transition-colors"
-    >
-      Gym no: #{gymIdValue || 'Pending'}
-    </Badge>
-  );
-};
+//   return (
+//     <Badge
+//       onClick={onEdit}
+//       className="bg-secondary-blue-400 flex items-center w-fit justify-center text-sm text-white rounded-full h-[30px] py-2 px-2 border border-secondary-blue-300 bg-opacity-100 cursor-pointer hover:bg-secondary-blue-500 transition-colors"
+//     >
+//       Gym no: #{gymIdValue || 'Pending'}
+//     </Badge>
+//   );
+// };
 
 // MAIN COMPONENT
 type CreateMemberDetailsProps = {
@@ -532,7 +596,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
   } = externalMemberForm || internalMemberForm;
   const isSubmitting = form.formState.isSubmitting;
 
-  const [isEditingGymId, setIsEditingGymId] = React.useState(false);
+  // const [isEditingGymId, setIsEditingGymId] = React.useState(false);?
   const [gymIdValue, setGymIdValue] = React.useState('');
 
   const onboardingType = form.watch('onboardingType');
@@ -582,14 +646,14 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
     form.clearErrors('onboardingType');
   };
 
-  const handleSaveGymId = async () => {
-    if (!gymIdValue.trim()) {
-      toast.error('Gym No is required');
-      return;
-    }
+  // const handleSaveGymId = async () => {
+  //   if (!gymIdValue.trim()) {
+  //     toast.error('Gym No is required');
+  //     return;
+  //   }
 
-    setIsEditingGymId(false);
-  };
+  //   setIsEditingGymId(false);
+  // };
 
   const onSubmit = async (data: CreateMemberDetailsData) => {
     if (!data.onboardingType) {
@@ -612,7 +676,8 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
       const { hasAnyWarning } = validatePaymentAmount(
         data.amountPaid,
         data.feeStatus || '',
-        totalFee
+        totalFee,
+        data.discountedAmount
       );
 
       if (hasAnyWarning) {
@@ -641,7 +706,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
         type="button"
         variant="secondary"
         size="sm"
-        className="h-[46px] min-w-[90px]"
+        className="h-11.5 min-w-22.5"
         onClick={() => {
           form.reset();
           form.clearErrors();
@@ -660,7 +725,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
             closeSheet();
           }}
           variant="secondary"
-          className="h-[46px] min-w-[90px]"
+          className="h-11.5 min-w-22.5"
           disabled={isSubmitting}
         >
           Cancel
@@ -668,7 +733,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
         <Button
           type="submit"
           form="add-member-form"
-          className="h-[46px] min-w-[73px]"
+          className="h-11.5 min-w-18.25"
           disabled={isSubmitting || !hasSelectedOnboardingType}
         >
           {isSubmitting ? 'Saving...' : 'Add'}
@@ -679,7 +744,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
 
   return (
     <KSheet
-      className="w-[536px]"
+      className="w-124"
       isOpen={isOpen}
       onClose={closeSheet}
       title="Add Member"
@@ -741,14 +806,18 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                       </FormControl>
                     )}
                   />
-                  <EditableGymId
+                  {/* TODO:Custom gymID feature */}
+                  {/* <EditableGymId
                     isEditing={isEditingGymId}
                     gymIdValue={gymIdValue}
                     onEdit={() => setIsEditingGymId(true)}
                     onSave={handleSaveGymId}
                     onCancel={() => setIsEditingGymId(false)}
                     onChange={setGymIdValue}
-                  />
+                  /> */}
+                  <Badge className="bg-secondary-blue-400 flex items-center w-fit justify-center text-sm text-white rounded-full h-7.5 py-2 px-2 border border-secondary-blue-300 bg-opacity-100 transition-colors">
+                    Gym no: #Pending
+                  </Badge>
                 </div>
 
                 <h5 className="text-white text-base font-normal leading-normal mt-0!">
@@ -765,14 +834,6 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                 <FieldRow>
                   <FieldColumn>
                     <KFormField
-                      fieldType={KFormFieldType.INPUT}
-                      control={form.control}
-                      name="email"
-                      label="Email (Optional)"
-                    />
-                  </FieldColumn>
-                  <FieldColumn>
-                    <KFormField
                       fieldType={KFormFieldType.PHONE_INPUT}
                       control={form.control}
                       name="phone"
@@ -780,92 +841,14 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                       placeholder="(555) 123-4567"
                     />
                   </FieldColumn>
-                </FieldRow>
-
-                <FieldRow>
                   <FieldColumn>
                     <KFormField
-                      fieldType={KFormFieldType.SELECT}
+                      fieldType={KFormFieldType.UI_DATE_PICKER}
                       control={form.control}
-                      name="gender"
-                      label="Gender"
-                      options={genderOptions}
-                    />
-                  </FieldColumn>
-                  <FieldColumn>
-                    <KFormField
-                      fieldType={KFormFieldType.SELECT}
-                      control={form.control}
-                      name="bloodGroup"
-                      label="Blood Group"
-                      options={bloodGroupOptions}
-                    />
-                  </FieldColumn>
-                </FieldRow>
-
-                <FieldRow>
-                  <FieldColumn>
-                    <KFormField
-                      fieldType={KFormFieldType.INPUT}
-                      control={form.control}
-                      name="height"
-                      label="Height (CM)"
-                      maxLength={3}
-                    />
-                  </FieldColumn>
-                  <FieldColumn>
-                    <KFormField
-                      fieldType={KFormFieldType.INPUT}
-                      control={form.control}
-                      name="weight"
-                      label="Weight (KG)"
-                      maxLength={3}
-                    />
-                  </FieldColumn>
-                </FieldRow>
-
-                <FieldRow>
-                  <FieldColumn>
-                    {isMigratedMember ? (
-                      <KFormField
-                        fieldType={KFormFieldType.UI_DATE_PICKER}
-                        control={form.control}
-                        name="doj"
-                        label="Date of joining"
-                        mode="single"
-                        floating
-                      />
-                    ) : (
-                      <KFormField
-                        fieldType={KFormFieldType.SKELETON}
-                        control={form.control}
-                        name="doj"
-                        renderSkeleton={(field) => (
-                          <FormControl>
-                            <KInput
-                              label="Date of joining"
-                              id="doj"
-                              value={
-                                typeof field.value === 'string'
-                                  ? new Date(field.value).toLocaleDateString(
-                                      'en-GB'
-                                    )
-                                  : ''
-                              }
-                              disabled
-                              onChange={() => {}}
-                            />
-                          </FormControl>
-                        )}
-                      />
-                    )}
-                  </FieldColumn>
-                  <FieldColumn>
-                    <KFormField
-                      fieldType={KFormFieldType.DATE_INPUT}
-                      control={form.control}
-                      name="dob"
-                      label="Date of birth (DD/MM/YYYY)"
+                      name="doj"
+                      label="Date of joining"
+                      mode="single"
+                      floating
                     />
                   </FieldColumn>
                 </FieldRow>
@@ -878,40 +861,77 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                   maxLength={250}
                 />
 
+                <OptionalSection title="Additional Personal Details">
+                  <KFormField
+                    fieldType={KFormFieldType.INPUT}
+                    control={form.control}
+                    name="email"
+                    label="Email"
+                  />
+                  <FieldRow>
+                    <FieldColumn>
+                      <KFormField
+                        fieldType={KFormFieldType.SELECT}
+                        control={form.control}
+                        name="gender"
+                        label="Gender"
+                        options={genderOptions}
+                      />
+                    </FieldColumn>
+                    <FieldColumn>
+                      <KFormField
+                        fieldType={KFormFieldType.SELECT}
+                        control={form.control}
+                        name="bloodGroup"
+                        label="Blood Group"
+                        options={bloodGroupOptions}
+                      />
+                    </FieldColumn>
+                  </FieldRow>
+
+                  <FieldRow>
+                    <FieldColumn>
+                      <KFormField
+                        fieldType={KFormFieldType.INPUT}
+                        control={form.control}
+                        name="height"
+                        label="Height (CM)"
+                        maxLength={3}
+                      />
+                    </FieldColumn>
+                    <FieldColumn>
+                      <KFormField
+                        fieldType={KFormFieldType.INPUT}
+                        control={form.control}
+                        name="weight"
+                        label="Weight (KG)"
+                        maxLength={3}
+                      />
+                    </FieldColumn>
+                  </FieldRow>
+
+                  <KFormField
+                    fieldType={KFormFieldType.DATE_INPUT}
+                    control={form.control}
+                    name="dob"
+                    label="Date of birth (DD/MM/YYYY)"
+                  />
+                </OptionalSection>
+
                 <h5 className="text-white text-base font-normal leading-normal mt-8!">
                   Membership & Training
                 </h5>
 
-                <FieldRow>
-                  <FieldColumn>
-                    <KFormField
-                      fieldType={KFormFieldType.SELECT}
-                      control={form.control}
-                      name="personalTrainer"
-                      label="Personal Trainer"
-                      options={
-                        formOptions?.trainers
-                          ? formOptions.trainers.map((option) => ({
-                              label: option.trainerName,
-                              value: String(option.id),
-                            }))
-                          : []
-                      }
-                    />
-                  </FieldColumn>
-                  <FieldColumn>
-                    <KFormField
-                      fieldType={KFormFieldType.SELECT}
-                      control={form.control}
-                      name="membershipPlanId"
-                      label="Package"
-                      options={formOptions?.membershipPlans.map((plan) => ({
-                        label: plan.planName,
-                        value: String(plan.membershipPlanId),
-                      }))}
-                    />
-                  </FieldColumn>
-                </FieldRow>
+                <KFormField
+                  fieldType={KFormFieldType.SELECT}
+                  control={form.control}
+                  name="membershipPlanId"
+                  label="Package"
+                  options={formOptions?.membershipPlans.map((plan) => ({
+                    label: plan.planName,
+                    value: String(plan.membershipPlanId),
+                  }))}
+                />
 
                 {isMigratedMember && selectedPlan && (
                   <>
@@ -942,17 +962,6 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                   </>
                 )}
 
-                <KFormField
-                  fieldType={KFormFieldType.SELECT}
-                  control={form.control}
-                  name="workoutPlanId"
-                  label="Workout Plan"
-                  options={formOptions?.workoutPlans.map((option) => ({
-                    label: option.name,
-                    value: String(option.id),
-                  }))}
-                />
-
                 {selectedPlan && (
                   <PaymentSection
                     form={form}
@@ -962,89 +971,118 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                   />
                 )}
 
-                <h5 className="text-white text-base font-normal leading-normal mt-8!">
-                  Health & Fitness Goals
-                </h5>
-                <KFormField
-                  fieldType={KFormFieldType.SELECT}
-                  control={form.control}
-                  name="fitnessGoal"
-                  label="What brings you here?"
-                  options={purposeOptions}
-                />
-                <KFormField
-                  fieldType={KFormFieldType.TEXTAREA}
-                  control={form.control}
-                  name="medicalHistory"
-                  label="Medical History or Notes"
-                  maxLength={250}
-                />
+                <OptionalSection title="Trainer & Workout Plan">
+                  <KFormField
+                    fieldType={KFormFieldType.SELECT}
+                    control={form.control}
+                    name="personalTrainer"
+                    label="Personal Trainer"
+                    options={
+                      formOptions?.trainers
+                        ? formOptions.trainers.map((option) => ({
+                            label: option.trainerName,
+                            value: String(option.id),
+                          }))
+                        : []
+                    }
+                  />
+                  <KFormField
+                    fieldType={KFormFieldType.SELECT}
+                    control={form.control}
+                    name="workoutPlanId"
+                    label="Workout Plan"
+                    options={formOptions?.workoutPlans.map((option) => ({
+                      label: option.name,
+                      value: String(option.id),
+                    }))}
+                  />
+                </OptionalSection>
 
-                <h5 className="text-white text-base font-normal leading-normal mt-8!">
-                  Identity Verification
-                </h5>
-                <p className="text-gray-400 text-sm -mt-2 mb-2">
-                  Please provide a government-issued ID for verification
-                </p>
-                <KFormField
-                  fieldType={KFormFieldType.SELECT}
-                  control={form.control}
-                  name="idType"
-                  label="ID Type"
-                  options={idTypeOptions}
-                />
-                <KFormField
-                  fieldType={KFormFieldType.INPUT}
-                  control={form.control}
-                  name="idNumber"
-                  label="ID Number"
-                />
-                <KFormField
-                  fieldType={KFormFieldType.SKELETON}
-                  control={form.control}
-                  name="idCopyPath"
-                  renderSkeleton={(field) => (
-                    <FormControl>
-                      <FileUploader
-                        file={field.value as File | null}
-                        onChange={(file) => {
-                          field.onChange(file);
-                          if (!file) setExistingIdCopyUrl(null);
-                        }}
-                        label="Upload ID Document"
-                        existingFileUrl={existingIdCopyUrl}
-                      />
-                    </FormControl>
-                  )}
-                />
+                <OptionalSection title="Health, Identity & Emergency Contact">
+                  <h6 className="text-white text-sm font-medium">
+                    Health & Fitness Goals
+                  </h6>
+                  <KFormField
+                    fieldType={KFormFieldType.SELECT}
+                    control={form.control}
+                    name="fitnessGoal"
+                    label="What brings you here?"
+                    options={purposeOptions}
+                  />
+                  <KFormField
+                    fieldType={KFormFieldType.TEXTAREA}
+                    control={form.control}
+                    name="medicalHistory"
+                    label="Medical History or Notes"
+                    maxLength={250}
+                  />
 
-                <h5 className="text-white text-base font-normal leading-normal mt-8!">
-                  Emergency Details
-                </h5>
-                <p className="text-gray-400 text-sm -mt-2 mb-2">
-                  Who should we contact in case of emergency?
-                </p>
-                <KFormField
-                  fieldType={KFormFieldType.INPUT}
-                  control={form.control}
-                  name="emergencyContactName"
-                  label="Emergency Contact Name"
-                  maxLength={20}
-                />
-                <KFormField
-                  fieldType={KFormFieldType.PHONE_INPUT}
-                  control={form.control}
-                  name="emergencyContactPhone"
-                  label="Emergency Contact Phone"
-                  placeholder="(555) 123-4567"
-                />
-                <KFormField
-                  fieldType={KFormFieldType.SELECT}
-                  control={form.control}
-                  name="emergencyContactRelation"
-                  label="Relation"
-                  options={relationOptions}
-                />
+                  <h6 className="text-white text-sm font-medium mt-6">
+                    Identity Verification
+                  </h6>
+                  <p className="text-gray-400 text-xs mb-3">
+                    Please provide a government-issued ID for verification
+                  </p>
+                  <KFormField
+                    fieldType={KFormFieldType.SELECT}
+                    control={form.control}
+                    name="idType"
+                    label="ID Type"
+                    options={idTypeOptions}
+                  />
+                  <KFormField
+                    fieldType={KFormFieldType.INPUT}
+                    control={form.control}
+                    name="idNumber"
+                    label="ID Number"
+                  />
+                  <KFormField
+                    fieldType={KFormFieldType.SKELETON}
+                    control={form.control}
+                    name="idCopyPath"
+                    renderSkeleton={(field) => (
+                      <FormControl>
+                        <FileUploader
+                          file={field.value as File | null}
+                          onChange={(file) => {
+                            field.onChange(file);
+                            if (!file) setExistingIdCopyUrl(null);
+                          }}
+                          label="Upload ID Document"
+                          existingFileUrl={existingIdCopyUrl}
+                        />
+                      </FormControl>
+                    )}
+                  />
+
+                  <h6 className="text-white text-sm font-medium mt-6">
+                    Emergency Contact
+                  </h6>
+                  <p className="text-gray-400 text-xs mb-3">
+                    Who should we contact in case of emergency?
+                  </p>
+                  <KFormField
+                    fieldType={KFormFieldType.INPUT}
+                    control={form.control}
+                    name="emergencyContactName"
+                    label="Emergency Contact Name"
+                    maxLength={20}
+                  />
+                  <KFormField
+                    fieldType={KFormFieldType.PHONE_INPUT}
+                    control={form.control}
+                    name="emergencyContactPhone"
+                    label="Emergency Contact Phone"
+                    placeholder="(555) 123-4567"
+                  />
+                  <KFormField
+                    fieldType={KFormFieldType.SELECT}
+                    control={form.control}
+                    name="emergencyContactRelation"
+                    label="Relation"
+                    options={relationOptions}
+                  />
+                </OptionalSection>
               </>
             )}
           </form>

@@ -172,6 +172,7 @@ export interface MemberDetails {
   onboardingId: number | null;
   sessionPaymentInfo: SessionPaymentInfo | null;
   paymentCycleInfo: PaymentCycleInfo | null;
+  isFrozen?: boolean;
 }
 
 export interface MemberDetailsResponse {
@@ -473,6 +474,7 @@ export interface MemberQueryFilters {
   feeStatus?: string;
   package?: string;
   gender?: string;
+  isFrozen?: boolean;
   trainer?: number;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';

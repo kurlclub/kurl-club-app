@@ -1,7 +1,9 @@
 type PaymentValidationResult = {
   showPaidWarning: boolean;
+  showPartialWarning: boolean;
   showUnpaidWarning: boolean;
   showOverpaymentError: boolean;
+  showDiscountError: boolean;
   hasAnyWarning: boolean;
 };
 
@@ -16,7 +18,7 @@ const hasValue = (value: string | undefined): boolean =>
 const parseAmount = (value: string | undefined): number => {
   if (!hasValue(value)) return 0;
   const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : 0;
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
 };
 
 export const validatePaymentAmount = (
@@ -25,32 +27,50 @@ export const validatePaymentAmount = (
   totalFee: number,
   discountAmount?: string | undefined
 ): PaymentValidationResult => {
-  // If fee status is unpaid, skip all payment-related validation
-  if (feeStatus === 'unpaid') {
-    return {
-      showPaidWarning: false,
-      showUnpaidWarning: false,
-      showOverpaymentError: false,
-      hasAnyWarning: false,
-    };
-  }
-
   const paidAmount = roundToCurrency(parseAmount(amountPaid));
   const discount = roundToCurrency(parseAmount(discountAmount));
   const totalAmount = roundToCurrency(totalFee);
   const hasAmount = hasValue(amountPaid);
-  const effectiveTotal = roundToCurrency(totalAmount - discount);
+  const effectiveTotal = roundToCurrency(Math.max(0, totalAmount - discount));
 
+  // Discount validation (applies to all statuses)
+  const showDiscountError = discount >= totalAmount;
+
+  // If fee status is unpaid, skip payment-related validation
+  if (feeStatus === 'unpaid') {
+    return {
+      showPaidWarning: false,
+      showPartialWarning: false,
+      showUnpaidWarning: false,
+      showOverpaymentError: false,
+      showDiscountError,
+      hasAnyWarning: showDiscountError,
+    };
+  }
+
+  // Paid status: amount must equal effectiveTotal
   const showPaidWarning =
-    feeStatus === 'paid' && hasAmount && paidAmount < effectiveTotal;
-  const showUnpaidWarning = false; // not applicable when feeStatus isn't 'unpaid'
+    feeStatus === 'paid' && hasAmount && paidAmount !== effectiveTotal;
+
+  // Partially paid: amount must be between 1 and (effectiveTotal - 1)
+  const showPartialWarning =
+    feeStatus === 'partially_paid' &&
+    (paidAmount === 0 || paidAmount >= effectiveTotal);
+
+  // Overpayment: amount exceeds effectiveTotal
   const showOverpaymentError = hasAmount && paidAmount > effectiveTotal;
 
   return {
     showPaidWarning,
-    showUnpaidWarning,
+    showPartialWarning,
+    showUnpaidWarning: false,
     showOverpaymentError,
-    hasAnyWarning: showPaidWarning || showOverpaymentError,
+    showDiscountError,
+    hasAnyWarning:
+      showPaidWarning ||
+      showPartialWarning ||
+      showOverpaymentError ||
+      showDiscountError,
   };
 };
 

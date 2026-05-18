@@ -1,29 +1,62 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Fingerprint, Loader2, Trash2 } from 'lucide-react';
+import {
+  AlertTriangle,
+  Fingerprint,
+  Loader2,
+  Snowflake,
+  Trash2,
+  Unlock,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 import MemberStatusBadge from '@/components/shared/badges/member-status-badge';
 import { KEdit } from '@/components/shared/icons';
 import { Button } from '@/components/ui/button';
 import { useAppDialog } from '@/hooks/use-app-dialog';
-import { deleteMember, syncMemberBiometric } from '@/services/member';
+import { formatDateTime } from '@/lib/utils';
+import {
+  deleteMember,
+  syncMemberBiometric,
+  unfreezeMember,
+  useMemberFreezeHistory,
+} from '@/services/member';
+
+import { FreezeMemberDialog } from './freeze-member-dialog';
 
 interface HeaderProps {
   isEditing: boolean;
   handleSave: () => void;
   toggleEdit: () => void;
   memberId: string;
+  isFrozen?: boolean;
 }
 
-function Header({ isEditing, handleSave, toggleEdit, memberId }: HeaderProps) {
+function Header({
+  isEditing,
+  handleSave,
+  toggleEdit,
+  memberId,
+  isFrozen = false,
+}: HeaderProps) {
   const queryClient = useQueryClient();
   const router = useRouter();
+  const [isFreezeDialogOpen, setIsFreezeDialogOpen] = useState(false);
+  const [freezeDialogInitialTab, setFreezeDialogInitialTab] = useState<
+    'now' | 'history'
+  >('now');
+  const [freezeDialogKey, setFreezeDialogKey] = useState(0);
 
   const { showConfirm } = useAppDialog();
+  const { data: freezeHistory = [] } = useMemberFreezeHistory(
+    memberId,
+    !!memberId && isFrozen
+  );
+  const activeFreeze = freezeHistory.find((item) => item.isActive);
 
   const syncBiometricMutation = useMutation({
     mutationFn: syncMemberBiometric,
@@ -37,6 +70,26 @@ function Header({ isEditing, handleSave, toggleEdit, memberId }: HeaderProps) {
         error instanceof Error
           ? error.message
           : 'Failed to sync member to biometric device.'
+      );
+    },
+  });
+
+  const unfreezeMutation = useMutation({
+    mutationFn: unfreezeMember,
+    onSuccess: async (response) => {
+      toast.success(response?.message || 'Member unfrozen successfully.');
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['member', memberId] }),
+        queryClient.invalidateQueries({ queryKey: ['gymMembers'] }),
+        queryClient.invalidateQueries({ queryKey: ['allGymMembers'] }),
+        queryClient.invalidateQueries({
+          queryKey: ['memberFreezeHistory', memberId],
+        }),
+      ]);
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to unfreeze member.'
       );
     },
   });
@@ -60,6 +113,19 @@ function Header({ isEditing, handleSave, toggleEdit, memberId }: HeaderProps) {
         } catch {
           toast.error('Failed to delete member.');
         }
+      },
+    });
+  };
+
+  const handleUnfreezeMember = () => {
+    if (!memberId) return;
+
+    showConfirm({
+      title: 'Unfreeze Member',
+      description: 'Are you sure you want to unfreeze this member?',
+      confirmLabel: 'Unfreeze',
+      onConfirm: async () => {
+        unfreezeMutation.mutate(memberId);
       },
     });
   };
@@ -98,6 +164,35 @@ function Header({ isEditing, handleSave, toggleEdit, memberId }: HeaderProps) {
               )}
               Sync Biometric
             </Button>
+            {isFrozen ? (
+              <Button
+                className="h-10"
+                variant="outline"
+                disabled={!memberId}
+                onClick={() => {
+                  setFreezeDialogInitialTab('history');
+                  setFreezeDialogKey((key) => key + 1);
+                  setIsFreezeDialogOpen(true);
+                }}
+              >
+                <Snowflake className="h-5! w-5!" />
+                Freeze History
+              </Button>
+            ) : (
+              <Button
+                className="h-10"
+                variant="outline"
+                disabled={!memberId}
+                onClick={() => {
+                  setFreezeDialogInitialTab('now');
+                  setFreezeDialogKey((key) => key + 1);
+                  setIsFreezeDialogOpen(true);
+                }}
+              >
+                <Snowflake className="h-5! w-5!" />
+                Freeze
+              </Button>
+            )}
             <Button
               className="h-10"
               variant="destructive"
@@ -109,6 +204,46 @@ function Header({ isEditing, handleSave, toggleEdit, memberId }: HeaderProps) {
           </>
         )}
       </div>
+      {isFrozen && (
+        <div className="flex basis-full flex-col gap-3 rounded-md border border-secondary-yellow-500/60 bg-secondary-yellow-500/10 p-3 text-white md:flex-row md:items-center md:justify-between">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-secondary-yellow-500" />
+            <div>
+              <div className="text-sm font-semibold">
+                This member is currently frozen
+              </div>
+              <div className="text-xs text-primary-blue-100">
+                Frozen from{' '}
+                {formatDateTime(activeFreeze?.freezeStartDate, 'date')}
+                {activeFreeze?.reason ? `: ${activeFreeze.reason}` : ''}
+              </div>
+            </div>
+          </div>
+          <Button
+            className="h-9 shrink-0"
+            disabled={!memberId || unfreezeMutation.isPending}
+            onClick={handleUnfreezeMember}
+          >
+            {unfreezeMutation.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Unlock className="h-4 w-4" />
+            )}
+            Unfreeze
+          </Button>
+        </div>
+      )}
+      <FreezeMemberDialog
+        key={freezeDialogKey}
+        memberId={memberId}
+        open={isFreezeDialogOpen}
+        onOpenChange={setIsFreezeDialogOpen}
+        initialTab={freezeDialogInitialTab}
+        isFrozen={isFrozen}
+        activeFreeze={activeFreeze}
+        onUnfreeze={handleUnfreezeMember}
+        isUnfreezing={unfreezeMutation.isPending}
+      />
     </div>
   );
 }

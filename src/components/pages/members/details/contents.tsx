@@ -18,7 +18,7 @@ function Contents({
   isEditing,
   handleSave,
   toggleEdit,
-  // details,
+  details,
   // originalDetails,
   formOptions,
 }: {
@@ -37,6 +37,7 @@ function Contents({
         isEditing={isEditing}
         handleSave={handleSave}
         toggleEdit={toggleEdit}
+        isFrozen={details?.isFrozen}
       />
       {/* TODO: Total hours functionality not implemented yet */}
       {/* <InfoCard

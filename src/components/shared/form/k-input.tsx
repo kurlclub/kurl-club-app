@@ -69,7 +69,7 @@ const KInput = forwardRef<HTMLInputElement, KInputProps>(
             type={type}
             className={cn(
               'k-input bg-secondary-blue-500',
-              size === 'sm' ? 'h-11' : 'h-[52px]',
+              size === 'sm' ? 'h-11' : 'h-13',
               className
             )}
             placeholder=" "
@@ -104,7 +104,7 @@ const KInput = forwardRef<HTMLInputElement, KInputProps>(
           type={type}
           className={cn(
             'k-input bg-secondary-blue-500',
-            size === 'sm' ? 'px-3 pb-2 pt-5 h-11' : 'px-4 pb-2.5 pt-6 h-[52px]',
+            size === 'sm' ? 'px-3 pb-2 pt-5 h-11' : 'px-4 pb-2.5 pt-6 h-13',
             className
           )}
           placeholder=" "
@@ -124,8 +124,8 @@ const KInput = forwardRef<HTMLInputElement, KInputProps>(
         {suffix && (
           <span
             className={cn(
-              'absolute right-3 p-1 text-primary-blue-100 bg-secondary-blue-500',
-              size === 'sm' ? 'top-[35%]' : 'top-[42%]'
+              'absolute text-[15px] right-3 p-1 text-primary-blue-100 bg-secondary-blue-500',
+              size === 'sm' ? 'top-[31%]' : 'top-[35%]'
             )}
           >
             {suffix}
