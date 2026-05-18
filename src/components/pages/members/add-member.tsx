@@ -2,7 +2,6 @@ import React from 'react';
 import { FormProvider, UseFormReturn } from 'react-hook-form';
 
 import { ArrowRightLeft, UserPlus } from 'lucide-react';
-import { toast } from 'sonner';
 import { z } from 'zod/v4';
 
 import { FieldColumn, FieldRow } from '@/components/shared/form/field-layout';
@@ -10,7 +9,6 @@ import {
   KFormField,
   KFormFieldType,
 } from '@/components/shared/form/k-formfield';
-import { KInput } from '@/components/shared/form/k-input';
 import { KSheet } from '@/components/shared/form/k-sheet';
 import { InfoBanner } from '@/components/shared/info-banner';
 import { Spinner } from '@/components/shared/loader';
@@ -20,7 +18,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { FormControl, FormLabel } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { useGymFormOptions } from '@/hooks/use-gymform-options';
 import { useMemberForm } from '@/hooks/use-member-form';
 import {
@@ -443,63 +440,63 @@ const OnboardingTypeCards = ({
   );
 };
 
-const EditableGymId = ({
-  isEditing,
-  gymIdValue,
-  onEdit,
-  onSave,
-  onCancel,
-  onChange,
-}: {
-  isEditing: boolean;
-  gymIdValue: string;
-  onEdit: () => void;
-  onSave: () => void;
-  onCancel: () => void;
-  onChange: (value: string) => void;
-}) => {
-  if (isEditing) {
-    return (
-      <div className="flex items-center gap-2">
-        <Input
-          type="text"
-          value={gymIdValue}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="Enter Gym No"
-          className="h-[30px] w-32"
-          autoFocus
-        />
-        <Button
-          type="button"
-          size="sm"
-          onClick={onSave}
-          disabled={!gymIdValue.trim()}
-          className="h-[30px] px-2 text-xs"
-        >
-          Save
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="secondary"
-          onClick={onCancel}
-          className="h-[30px] px-2 text-xs"
-        >
-          Cancel
-        </Button>
-      </div>
-    );
-  }
+// const EditableGymId = ({
+//   isEditing,
+//   gymIdValue,
+//   onEdit,
+//   onSave,
+//   onCancel,
+//   onChange,
+// }: {
+//   isEditing: boolean;
+//   gymIdValue: string;
+//   onEdit: () => void;
+//   onSave: () => void;
+//   onCancel: () => void;
+//   onChange: (value: string) => void;
+// }) => {
+//   if (isEditing) {
+//     return (
+//       <div className="flex items-center gap-2">
+//         <Input
+//           type="text"
+//           value={gymIdValue}
+//           onChange={(e) => onChange(e.target.value)}
+//           placeholder="Enter Gym No"
+//           className="h-[30px] w-32"
+//           autoFocus
+//         />
+//         <Button
+//           type="button"
+//           size="sm"
+//           onClick={onSave}
+//           disabled={!gymIdValue.trim()}
+//           className="h-[30px] px-2 text-xs"
+//         >
+//           Save
+//         </Button>
+//         <Button
+//           type="button"
+//           size="sm"
+//           variant="secondary"
+//           onClick={onCancel}
+//           className="h-[30px] px-2 text-xs"
+//         >
+//           Cancel
+//         </Button>
+//       </div>
+//     );
+//   }
 
-  return (
-    <Badge
-      onClick={onEdit}
-      className="bg-secondary-blue-400 flex items-center w-fit justify-center text-sm text-white rounded-full h-[30px] py-2 px-2 border border-secondary-blue-300 bg-opacity-100 cursor-pointer hover:bg-secondary-blue-500 transition-colors"
-    >
-      Gym no: #{gymIdValue || 'Pending'}
-    </Badge>
-  );
-};
+//   return (
+//     <Badge
+//       onClick={onEdit}
+//       className="bg-secondary-blue-400 flex items-center w-fit justify-center text-sm text-white rounded-full h-[30px] py-2 px-2 border border-secondary-blue-300 bg-opacity-100 cursor-pointer hover:bg-secondary-blue-500 transition-colors"
+//     >
+//       Gym no: #{gymIdValue || 'Pending'}
+//     </Badge>
+//   );
+// };
 
 // MAIN COMPONENT
 type CreateMemberDetailsProps = {
@@ -532,7 +529,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
   } = externalMemberForm || internalMemberForm;
   const isSubmitting = form.formState.isSubmitting;
 
-  const [isEditingGymId, setIsEditingGymId] = React.useState(false);
+  // const [isEditingGymId, setIsEditingGymId] = React.useState(false);?
   const [gymIdValue, setGymIdValue] = React.useState('');
 
   const onboardingType = form.watch('onboardingType');
@@ -582,14 +579,14 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
     form.clearErrors('onboardingType');
   };
 
-  const handleSaveGymId = async () => {
-    if (!gymIdValue.trim()) {
-      toast.error('Gym No is required');
-      return;
-    }
+  // const handleSaveGymId = async () => {
+  //   if (!gymIdValue.trim()) {
+  //     toast.error('Gym No is required');
+  //     return;
+  //   }
 
-    setIsEditingGymId(false);
-  };
+  //   setIsEditingGymId(false);
+  // };
 
   const onSubmit = async (data: CreateMemberDetailsData) => {
     if (!data.onboardingType) {
@@ -612,7 +609,8 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
       const { hasAnyWarning } = validatePaymentAmount(
         data.amountPaid,
         data.feeStatus || '',
-        totalFee
+        totalFee,
+        data.discountedAmount
       );
 
       if (hasAnyWarning) {
@@ -741,14 +739,18 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                       </FormControl>
                     )}
                   />
-                  <EditableGymId
+                  {/* TODO:Custom gymID feature */}
+                  {/* <EditableGymId
                     isEditing={isEditingGymId}
                     gymIdValue={gymIdValue}
                     onEdit={() => setIsEditingGymId(true)}
                     onSave={handleSaveGymId}
                     onCancel={() => setIsEditingGymId(false)}
                     onChange={setGymIdValue}
-                  />
+                  /> */}
+                  <Badge className="bg-secondary-blue-400 flex items-center w-fit justify-center text-sm text-white rounded-full h-[30px] py-2 px-2 border border-secondary-blue-300 bg-opacity-100 transition-colors">
+                    Gym no: #Pending
+                  </Badge>
                 </div>
 
                 <h5 className="text-white text-base font-normal leading-normal mt-0!">
@@ -825,40 +827,16 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                 </FieldRow>
 
                 <FieldRow>
+
                   <FieldColumn>
-                    {isMigratedMember ? (
-                      <KFormField
-                        fieldType={KFormFieldType.UI_DATE_PICKER}
-                        control={form.control}
-                        name="doj"
-                        label="Date of joining"
-                        mode="single"
-                        floating
-                      />
-                    ) : (
-                      <KFormField
-                        fieldType={KFormFieldType.SKELETON}
-                        control={form.control}
-                        name="doj"
-                        renderSkeleton={(field) => (
-                          <FormControl>
-                            <KInput
-                              label="Date of joining"
-                              id="doj"
-                              value={
-                                typeof field.value === 'string'
-                                  ? new Date(field.value).toLocaleDateString(
-                                      'en-GB'
-                                    )
-                                  : ''
-                              }
-                              disabled
-                              onChange={() => {}}
-                            />
-                          </FormControl>
-                        )}
-                      />
-                    )}
+                    <KFormField
+                      fieldType={KFormFieldType.UI_DATE_PICKER}
+                      control={form.control}
+                      name="doj"
+                      label="Date of joining"
+                      mode="single"
+                      floating
+                    />
                   </FieldColumn>
                   <FieldColumn>
                     <KFormField
