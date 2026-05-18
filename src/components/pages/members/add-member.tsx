@@ -10,6 +10,7 @@ import {
   KFormFieldType,
 } from '@/components/shared/form/k-formfield';
 import { KSheet } from '@/components/shared/form/k-sheet';
+import { OptionalSection } from '@/components/shared/form/optional-section';
 import { InfoBanner } from '@/components/shared/info-banner';
 import { Spinner } from '@/components/shared/loader';
 import FileUploader from '@/components/shared/uploaders/file-uploader';
@@ -833,14 +834,6 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                 <FieldRow>
                   <FieldColumn>
                     <KFormField
-                      fieldType={KFormFieldType.INPUT}
-                      control={form.control}
-                      name="email"
-                      label="Email (Optional)"
-                    />
-                  </FieldColumn>
-                  <FieldColumn>
-                    <KFormField
                       fieldType={KFormFieldType.PHONE_INPUT}
                       control={form.control}
                       name="phone"
@@ -848,51 +841,6 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                       placeholder="(555) 123-4567"
                     />
                   </FieldColumn>
-                </FieldRow>
-
-                <FieldRow>
-                  <FieldColumn>
-                    <KFormField
-                      fieldType={KFormFieldType.SELECT}
-                      control={form.control}
-                      name="gender"
-                      label="Gender"
-                      options={genderOptions}
-                    />
-                  </FieldColumn>
-                  <FieldColumn>
-                    <KFormField
-                      fieldType={KFormFieldType.SELECT}
-                      control={form.control}
-                      name="bloodGroup"
-                      label="Blood Group"
-                      options={bloodGroupOptions}
-                    />
-                  </FieldColumn>
-                </FieldRow>
-
-                <FieldRow>
-                  <FieldColumn>
-                    <KFormField
-                      fieldType={KFormFieldType.INPUT}
-                      control={form.control}
-                      name="height"
-                      label="Height (CM)"
-                      maxLength={3}
-                    />
-                  </FieldColumn>
-                  <FieldColumn>
-                    <KFormField
-                      fieldType={KFormFieldType.INPUT}
-                      control={form.control}
-                      name="weight"
-                      label="Weight (KG)"
-                      maxLength={3}
-                    />
-                  </FieldColumn>
-                </FieldRow>
-
-                <FieldRow>
                   <FieldColumn>
                     <KFormField
                       fieldType={KFormFieldType.UI_DATE_PICKER}
@@ -901,14 +849,6 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                       label="Date of joining"
                       mode="single"
                       floating
-                    />
-                  </FieldColumn>
-                  <FieldColumn>
-                    <KFormField
-                      fieldType={KFormFieldType.DATE_INPUT}
-                      control={form.control}
-                      name="dob"
-                      label="Date of birth (DD/MM/YYYY)"
                     />
                   </FieldColumn>
                 </FieldRow>
@@ -921,40 +861,77 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                   maxLength={250}
                 />
 
+                <OptionalSection title="Additional Personal Details">
+                  <KFormField
+                    fieldType={KFormFieldType.INPUT}
+                    control={form.control}
+                    name="email"
+                    label="Email"
+                  />
+                  <FieldRow>
+                    <FieldColumn>
+                      <KFormField
+                        fieldType={KFormFieldType.SELECT}
+                        control={form.control}
+                        name="gender"
+                        label="Gender"
+                        options={genderOptions}
+                      />
+                    </FieldColumn>
+                    <FieldColumn>
+                      <KFormField
+                        fieldType={KFormFieldType.SELECT}
+                        control={form.control}
+                        name="bloodGroup"
+                        label="Blood Group"
+                        options={bloodGroupOptions}
+                      />
+                    </FieldColumn>
+                  </FieldRow>
+
+                  <FieldRow>
+                    <FieldColumn>
+                      <KFormField
+                        fieldType={KFormFieldType.INPUT}
+                        control={form.control}
+                        name="height"
+                        label="Height (CM)"
+                        maxLength={3}
+                      />
+                    </FieldColumn>
+                    <FieldColumn>
+                      <KFormField
+                        fieldType={KFormFieldType.INPUT}
+                        control={form.control}
+                        name="weight"
+                        label="Weight (KG)"
+                        maxLength={3}
+                      />
+                    </FieldColumn>
+                  </FieldRow>
+
+                  <KFormField
+                    fieldType={KFormFieldType.DATE_INPUT}
+                    control={form.control}
+                    name="dob"
+                    label="Date of birth (DD/MM/YYYY)"
+                  />
+                </OptionalSection>
+
                 <h5 className="text-white text-base font-normal leading-normal mt-8!">
                   Membership & Training
                 </h5>
 
-                <FieldRow>
-                  <FieldColumn>
-                    <KFormField
-                      fieldType={KFormFieldType.SELECT}
-                      control={form.control}
-                      name="personalTrainer"
-                      label="Personal Trainer"
-                      options={
-                        formOptions?.trainers
-                          ? formOptions.trainers.map((option) => ({
-                              label: option.trainerName,
-                              value: String(option.id),
-                            }))
-                          : []
-                      }
-                    />
-                  </FieldColumn>
-                  <FieldColumn>
-                    <KFormField
-                      fieldType={KFormFieldType.SELECT}
-                      control={form.control}
-                      name="membershipPlanId"
-                      label="Package"
-                      options={formOptions?.membershipPlans.map((plan) => ({
-                        label: plan.planName,
-                        value: String(plan.membershipPlanId),
-                      }))}
-                    />
-                  </FieldColumn>
-                </FieldRow>
+                <KFormField
+                  fieldType={KFormFieldType.SELECT}
+                  control={form.control}
+                  name="membershipPlanId"
+                  label="Package"
+                  options={formOptions?.membershipPlans.map((plan) => ({
+                    label: plan.planName,
+                    value: String(plan.membershipPlanId),
+                  }))}
+                />
 
                 {isMigratedMember && selectedPlan && (
                   <>
@@ -985,17 +962,6 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                   </>
                 )}
 
-                <KFormField
-                  fieldType={KFormFieldType.SELECT}
-                  control={form.control}
-                  name="workoutPlanId"
-                  label="Workout Plan"
-                  options={formOptions?.workoutPlans.map((option) => ({
-                    label: option.name,
-                    value: String(option.id),
-                  }))}
-                />
-
                 {selectedPlan && (
                   <PaymentSection
                     form={form}
@@ -1005,89 +971,118 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                   />
                 )}
 
-                <h5 className="text-white text-base font-normal leading-normal mt-8!">
-                  Health & Fitness Goals
-                </h5>
-                <KFormField
-                  fieldType={KFormFieldType.SELECT}
-                  control={form.control}
-                  name="fitnessGoal"
-                  label="What brings you here?"
-                  options={purposeOptions}
-                />
-                <KFormField
-                  fieldType={KFormFieldType.TEXTAREA}
-                  control={form.control}
-                  name="medicalHistory"
-                  label="Medical History or Notes"
-                  maxLength={250}
-                />
+                <OptionalSection title="Trainer & Workout Plan">
+                  <KFormField
+                    fieldType={KFormFieldType.SELECT}
+                    control={form.control}
+                    name="personalTrainer"
+                    label="Personal Trainer"
+                    options={
+                      formOptions?.trainers
+                        ? formOptions.trainers.map((option) => ({
+                            label: option.trainerName,
+                            value: String(option.id),
+                          }))
+                        : []
+                    }
+                  />
+                  <KFormField
+                    fieldType={KFormFieldType.SELECT}
+                    control={form.control}
+                    name="workoutPlanId"
+                    label="Workout Plan"
+                    options={formOptions?.workoutPlans.map((option) => ({
+                      label: option.name,
+                      value: String(option.id),
+                    }))}
+                  />
+                </OptionalSection>
 
-                <h5 className="text-white text-base font-normal leading-normal mt-8!">
-                  Identity Verification
-                </h5>
-                <p className="text-gray-400 text-sm -mt-2 mb-2">
-                  Please provide a government-issued ID for verification
-                </p>
-                <KFormField
-                  fieldType={KFormFieldType.SELECT}
-                  control={form.control}
-                  name="idType"
-                  label="ID Type"
-                  options={idTypeOptions}
-                />
-                <KFormField
-                  fieldType={KFormFieldType.INPUT}
-                  control={form.control}
-                  name="idNumber"
-                  label="ID Number"
-                />
-                <KFormField
-                  fieldType={KFormFieldType.SKELETON}
-                  control={form.control}
-                  name="idCopyPath"
-                  renderSkeleton={(field) => (
-                    <FormControl>
-                      <FileUploader
-                        file={field.value as File | null}
-                        onChange={(file) => {
-                          field.onChange(file);
-                          if (!file) setExistingIdCopyUrl(null);
-                        }}
-                        label="Upload ID Document"
-                        existingFileUrl={existingIdCopyUrl}
-                      />
-                    </FormControl>
-                  )}
-                />
+                <OptionalSection title="Health, Identity & Emergency Contact">
+                  <h6 className="text-white text-sm font-medium">
+                    Health & Fitness Goals
+                  </h6>
+                  <KFormField
+                    fieldType={KFormFieldType.SELECT}
+                    control={form.control}
+                    name="fitnessGoal"
+                    label="What brings you here?"
+                    options={purposeOptions}
+                  />
+                  <KFormField
+                    fieldType={KFormFieldType.TEXTAREA}
+                    control={form.control}
+                    name="medicalHistory"
+                    label="Medical History or Notes"
+                    maxLength={250}
+                  />
 
-                <h5 className="text-white text-base font-normal leading-normal mt-8!">
-                  Emergency Details
-                </h5>
-                <p className="text-gray-400 text-sm -mt-2 mb-2">
-                  Who should we contact in case of emergency?
-                </p>
-                <KFormField
-                  fieldType={KFormFieldType.INPUT}
-                  control={form.control}
-                  name="emergencyContactName"
-                  label="Emergency Contact Name"
-                  maxLength={20}
-                />
-                <KFormField
-                  fieldType={KFormFieldType.PHONE_INPUT}
-                  control={form.control}
-                  name="emergencyContactPhone"
-                  label="Emergency Contact Phone"
-                  placeholder="(555) 123-4567"
-                />
-                <KFormField
-                  fieldType={KFormFieldType.SELECT}
-                  control={form.control}
-                  name="emergencyContactRelation"
-                  label="Relation"
-                  options={relationOptions}
-                />
+                  <h6 className="text-white text-sm font-medium mt-6">
+                    Identity Verification
+                  </h6>
+                  <p className="text-gray-400 text-xs mb-3">
+                    Please provide a government-issued ID for verification
+                  </p>
+                  <KFormField
+                    fieldType={KFormFieldType.SELECT}
+                    control={form.control}
+                    name="idType"
+                    label="ID Type"
+                    options={idTypeOptions}
+                  />
+                  <KFormField
+                    fieldType={KFormFieldType.INPUT}
+                    control={form.control}
+                    name="idNumber"
+                    label="ID Number"
+                  />
+                  <KFormField
+                    fieldType={KFormFieldType.SKELETON}
+                    control={form.control}
+                    name="idCopyPath"
+                    renderSkeleton={(field) => (
+                      <FormControl>
+                        <FileUploader
+                          file={field.value as File | null}
+                          onChange={(file) => {
+                            field.onChange(file);
+                            if (!file) setExistingIdCopyUrl(null);
+                          }}
+                          label="Upload ID Document"
+                          existingFileUrl={existingIdCopyUrl}
+                        />
+                      </FormControl>
+                    )}
+                  />
+
+                  <h6 className="text-white text-sm font-medium mt-6">
+                    Emergency Contact
+                  </h6>
+                  <p className="text-gray-400 text-xs mb-3">
+                    Who should we contact in case of emergency?
+                  </p>
+                  <KFormField
+                    fieldType={KFormFieldType.INPUT}
+                    control={form.control}
+                    name="emergencyContactName"
+                    label="Emergency Contact Name"
+                    maxLength={20}
+                  />
+                  <KFormField
+                    fieldType={KFormFieldType.PHONE_INPUT}
+                    control={form.control}
+                    name="emergencyContactPhone"
+                    label="Emergency Contact Phone"
+                    placeholder="(555) 123-4567"
+                  />
+                  <KFormField
+                    fieldType={KFormFieldType.SELECT}
+                    control={form.control}
+                    name="emergencyContactRelation"
+                    label="Relation"
+                    options={relationOptions}
+                  />
+                </OptionalSection>
               </>
             )}
           </form>
