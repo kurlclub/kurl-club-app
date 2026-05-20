@@ -171,7 +171,7 @@ export function Overview({
       <div className="flex items-center justify-between mb-4">
         <h2>Membership details</h2>
         <div className="flex items-center gap-2">
-          <span>Activate</span>
+          <span>Set as active plan</span>
           <Switch
             checked={plan.isActive}
             onCheckedChange={handleDefaultChange}

@@ -15,11 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  API_BASE_URL,
-  safeParseDate,
-  toUtcDateOnlyISOString,
-} from '@/lib/utils';
+import { API_BASE_URL, safeParseDate } from '@/lib/utils';
 import { useGymBranch } from '@/providers/gym-branch-provider';
 import {
   Expense,
@@ -111,6 +107,26 @@ const toDateInputValue = (dateValue: string) => {
   const month = String(parsed.getMonth() + 1).padStart(2, '0');
   const day = String(parsed.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+};
+
+const toExpenseDateTimeISOString = (
+  dateValue: string,
+  timeSource: Date = new Date()
+) => {
+  const [year, month, day] = dateValue.split('-').map(Number);
+  if (!year || !month || !day) return '';
+
+  const date = new Date(
+    year,
+    month - 1,
+    day,
+    timeSource.getHours(),
+    timeSource.getMinutes(),
+    timeSource.getSeconds(),
+    timeSource.getMilliseconds()
+  );
+
+  return Number.isNaN(date.getTime()) ? '' : date.toISOString();
 };
 
 const parseReceiptPaths = (
@@ -287,7 +303,12 @@ const AddExpense = ({ isOpen, closeSheet, expenseToEdit }: AddExpenseProps) => {
       return;
     }
 
-    const expenseDate = toUtcDateOnlyISOString(values.expenseDate);
+    const expenseDate = toExpenseDateTimeISOString(
+      values.expenseDate,
+      isEditMode && expenseToEdit
+        ? safeParseDate(expenseToEdit.expenseDate)
+        : undefined
+    );
     if (!expenseDate) {
       toast.error('Enter a valid expense date');
 

@@ -429,6 +429,48 @@ const onboardingTypeCardMeta: Record<
   },
 };
 
+const selectedOnboardingTypeMeta: Record<
+  OnboardingTypeValue,
+  {
+    title: string;
+  }
+> = {
+  fresh_join: {
+    title: 'New Member',
+  },
+  migrated_member: {
+    title: 'Migrated Member',
+  },
+};
+
+const MemberSheetTitle = ({
+  onboardingType,
+  onChange,
+}: {
+  onboardingType?: OnboardingTypeValue;
+  onChange: () => void;
+}) => {
+  const title = onboardingType
+    ? `Add ${selectedOnboardingTypeMeta[onboardingType].title}`
+    : 'Choose Member Type';
+
+  return (
+    <div className="flex items-center gap-3 pr-10">
+      <span className="min-w-0 truncate">{title}</span>
+      {onboardingType && (
+        <Button
+          type="button"
+          variant="outlinePrimary"
+          size="sm"
+          onClick={onChange}
+        >
+          Change
+        </Button>
+      )}
+    </div>
+  );
+};
+
 const OnboardingTypeCards = ({
   value,
   onSelect,
@@ -444,7 +486,7 @@ const OnboardingTypeCards = ({
   ];
 
   return (
-    <div className="space-y-4 mt-4">
+    <div className="space-y-4">
       <div className="grid grid-cols-1 gap-4">
         {orderedOptions.map((optionValue) => {
           const meta = onboardingTypeCardMeta[optionValue];
@@ -747,7 +789,12 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
       className="w-124"
       isOpen={isOpen}
       onClose={closeSheet}
-      title="Add Member"
+      title={
+        <MemberSheetTitle
+          onboardingType={onboardingType}
+          onChange={handleChangeOnboardingType}
+        />
+      }
       footer={footer}
       onCloseBtnClick={() => {
         form.reset();
@@ -777,17 +824,6 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
               />
             ) : (
               <>
-                <div className="flex justify-end">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleChangeOnboardingType}
-                    className="h-auto p-0 text-primary-blue-300 hover:text-primary-blue-200"
-                  >
-                    Change onboarding type
-                  </Button>
-                </div>
                 <div className="items-start gap-2 mb-6 flex justify-between">
                   <KFormField
                     fieldType={KFormFieldType.SKELETON}
