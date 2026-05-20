@@ -1,10 +1,13 @@
+import { CircleQuestionMark, UsersRound } from 'lucide-react';
+
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { LeadSource } from '@/types/lead';
 
 import { KBadgeAds, KBadgeOnline, KBadgeWalkIn } from '../icons';
 
 interface SourceBadgeProps {
-  status?: 'walk_in' | 'online' | 'ads';
+  status?: LeadSource;
   days?: number;
   showIcon?: boolean;
   className?: string;
@@ -26,6 +29,10 @@ export const SourceBadge = ({
         return <KBadgeOnline />;
       case 'ads':
         return <KBadgeAds />;
+      case 'referral':
+        return <UsersRound className="size-4" />;
+      case 'other':
+        return <CircleQuestionMark className="size-4" />;
       default:
         return null;
     }

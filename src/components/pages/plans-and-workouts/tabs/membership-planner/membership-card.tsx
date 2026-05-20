@@ -1,3 +1,11 @@
+import {
+  CalendarClock,
+  CheckCircle2,
+  Clock3,
+  RefreshCw,
+  XCircle,
+} from 'lucide-react';
+
 import { Card, CardFooter } from '@/components/ui/card';
 import type { MembershipPlan } from '@/types/membership-plan';
 
@@ -8,6 +16,15 @@ interface WorkoutCardProps {
 
 export function MembershipCard({ plan, onClick }: WorkoutCardProps) {
   const isPerSession = plan.billingType === 'PerSession';
+  const BillingIcon = isPerSession ? CalendarClock : RefreshCw;
+  const billingLabel = isPerSession ? 'Per Session' : 'Recurring';
+  const StatusIcon = plan.isActive ? CheckCircle2 : XCircle;
+  const activeStatusClass = isPerSession
+    ? 'border-semantic-blue-400/30 bg-semantic-blue-500/15 text-semantic-blue-100'
+    : 'border-primary-green-400/30 bg-primary-green-500/15 text-primary-green-100';
+  const durationInDays = Number(plan.durationInDays);
+  const durationLabel =
+    durationInDays === 30 ? '1 month' : `${plan.durationInDays} days`;
 
   return (
     <Card
@@ -33,10 +50,38 @@ export function MembershipCard({ plan, onClick }: WorkoutCardProps) {
               : 'bg-gradient-to-br from-primary-green-500/5 to-transparent'
           }`}
         />
-        <div className="relative z-10 space-y-2">
-          <div className="flex items-start justify-between gap-2">
+        <div className="relative z-10 space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <span
+              className={`inline-flex min-w-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium ${
+                isPerSession
+                  ? 'border-semantic-blue-400/30 bg-semantic-blue-500/10 text-semantic-blue-100'
+                  : 'border-primary-green-400/30 bg-primary-green-500/10 text-primary-green-100'
+              }`}
+              title={`Billing type: ${billingLabel}`}
+            >
+              <BillingIcon
+                className="h-3.5 w-3.5 shrink-0"
+                aria-hidden="true"
+              />
+              <span className="truncate">{billingLabel}</span>
+            </span>
+            <span
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium ${
+                plan.isActive
+                  ? activeStatusClass
+                  : 'border-red-400/30 bg-red-500/15 text-red-100'
+              }`}
+              title={`Plan status: ${plan.isActive ? 'Active' : 'Inactive'}`}
+            >
+              <StatusIcon className="h-3.5 w-3.5" aria-hidden="true" />
+              {plan.isActive ? 'Active' : 'Inactive'}
+            </span>
+          </div>
+
+          <div className="space-y-2">
             <h3
-              className={`text-white font-semibold text-base sm:text-lg leading-tight transition-colors duration-300 flex-1 ${
+              className={`line-clamp-2 min-h-[2rem] text-base font-semibold leading-tight text-white transition-colors duration-300 sm:text-lg ${
                 isPerSession
                   ? 'group-hover:text-semantic-blue-200'
                   : 'group-hover:text-primary-green-200'
@@ -44,26 +89,27 @@ export function MembershipCard({ plan, onClick }: WorkoutCardProps) {
             >
               {plan.planName}
             </h3>
-            <span
-              className={`text-xs px-2 py-1 rounded-full shrink-0 ${
-                isPerSession
-                  ? 'text-semantic-blue-100 bg-semantic-blue-500/20'
-                  : 'text-primary-green-100 bg-primary-green-500/20'
-              }`}
-            >
-              {plan.durationInDays} days
-            </span>
-          </div>
-          <div className="flex items-baseline gap-1">
-            <span
-              className={`font-bold text-xl sm:text-2xl tracking-tight ${
-                isPerSession
-                  ? 'text-semantic-blue-200'
-                  : 'text-primary-green-200'
-              }`}
-            >
-              ₹{new Intl.NumberFormat('en-IN').format(Number(plan.fee))}
-            </span>
+            <div className="flex items-end justify-between gap-3">
+              <span
+                className={`text-2xl font-bold leading-none tracking-tight sm:text-3xl ${
+                  isPerSession
+                    ? 'text-semantic-blue-200'
+                    : 'text-primary-green-200'
+                }`}
+              >
+                ₹{new Intl.NumberFormat('en-IN').format(Number(plan.fee))}
+              </span>
+              <span
+                className={`inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium ${
+                  isPerSession
+                    ? 'border-semantic-blue-400/25 bg-semantic-blue-500/10 text-semantic-blue-100'
+                    : 'border-primary-green-400/25 bg-primary-green-500/10 text-primary-green-100'
+                }`}
+              >
+                <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
+                {durationLabel}
+              </span>
+            </div>
           </div>
         </div>
       </div>

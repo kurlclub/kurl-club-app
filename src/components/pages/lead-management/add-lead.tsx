@@ -6,6 +6,7 @@ import { FormProvider, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@kurlclub/ui-components';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Check, CircleQuestionMark, UsersRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod/v4';
 
@@ -14,6 +15,11 @@ import {
   KFormFieldType,
 } from '@/components/shared/form/k-formfield';
 import { KSheet } from '@/components/shared/form/k-sheet';
+import {
+  KBadgeAds,
+  KBadgeOnline,
+  KBadgeWalkIn,
+} from '@/components/shared/icons';
 import { FormControl } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -25,7 +31,7 @@ import {
   updateLead,
 } from '@/services/lead';
 import { useGymStaffs } from '@/services/staff';
-import { Lead } from '@/types/lead';
+import { Lead, LeadSource } from '@/types/lead';
 import type { StaffType } from '@/types/staff';
 
 const leadFormSchema = z.object({
@@ -38,12 +44,44 @@ const leadFormSchema = z.object({
       message: 'Please select a valid date.',
     }),
   assignedTo: z.string().optional(),
-  source: z.enum(['walk_in', 'online', 'ads']),
+  source: z.enum(['walk_in', 'online', 'ads', 'referral', 'other']),
   status: z.enum(['new', 'interested', 'contacted', 'lost']),
   note: z.string().optional(),
 });
 
 type LeadFormValues = z.infer<typeof leadFormSchema>;
+
+const sourceOptions: Array<{
+  value: LeadFormValues['source'];
+  label: string;
+  icon: React.ReactNode;
+}> = [
+  {
+    value: 'walk_in',
+    label: 'Walk In',
+    icon: <KBadgeWalkIn />,
+  },
+  {
+    value: 'referral',
+    label: 'Referral',
+    icon: <UsersRound />,
+  },
+  {
+    value: 'online',
+    label: 'Online',
+    icon: <KBadgeOnline />,
+  },
+  {
+    value: 'ads',
+    label: 'Advertisement',
+    icon: <KBadgeAds />,
+  },
+  {
+    value: 'other',
+    label: 'Other',
+    icon: <CircleQuestionMark />,
+  },
+];
 
 const normalizeLeadStatus = (status?: string): LeadFormValues['status'] => {
   const normalized = (status || '').toLowerCase();
@@ -136,9 +174,8 @@ const AddLead: React.FC<AddLeadProps> = ({
       phone: initialData?.phone || '',
       followUpDate: initialData?.followUpDate || '',
       assignedTo: initialAssignedToValue,
-      source:
-        (initialData?.source as 'walk_in' | 'online' | 'ads') || 'walk_in',
-      status: normalizeLeadStatus(initialData?.interest),
+      source: (initialData?.source as LeadSource) || 'walk_in',
+      status: initialData ? normalizeLeadStatus(initialData.interest) : 'new',
       note: initialData?.note || '',
     }),
     [initialAssignedToValue, initialData]
@@ -177,7 +214,7 @@ const AddLead: React.FC<AddLeadProps> = ({
       name: data.leadName,
       phone: data.phone,
       source: data.source,
-      status: data.status,
+      status: initialData ? data.status : 'new',
       notes: data.note || '',
     };
 
@@ -214,9 +251,9 @@ const AddLead: React.FC<AddLeadProps> = ({
     }
   }, [defaultFormValues, isOpen, form]);
 
-  const selectedStatus = useWatch({
+  const selectedSource = useWatch({
     control: form.control,
-    name: 'status',
+    name: 'source',
   });
 
   return (
@@ -285,6 +322,56 @@ const AddLead: React.FC<AddLeadProps> = ({
             fieldType={KFormFieldType.PHONE_INPUT}
             label="Phone Number"
           />
+
+          <div className="flex flex-col gap-2 p-3 rounded-lg bg-secondary-blue-500">
+            <Label className="text-sm leading-normal mb-1">Source</Label>
+
+            <FormControl>
+              <RadioGroup
+                value={selectedSource}
+                onValueChange={(value) =>
+                  form.setValue('source', value as LeadFormValues['source'], {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                }
+                className="flex flex-wrap gap-2"
+              >
+                {sourceOptions.map(({ value, label, icon }) => {
+                  const isSelected = selectedSource === value;
+
+                  return (
+                    <label
+                      key={value}
+                      htmlFor={`lead-source-${value}`}
+                      className={cn(
+                        'inline-flex h-9 items-center gap-2 rounded-full border px-3 text-sm font-medium cursor-pointer transition-all',
+                        isSelected
+                          ? 'border-primary-green-500 bg-primary-green-500/10 text-white'
+                          : 'border-white/30 bg-primary-blue-400 text-white hover:border-white/70'
+                      )}
+                    >
+                      <RadioGroupItem
+                        value={value}
+                        id={`lead-source-${value}`}
+                        className="sr-only"
+                      />
+                      <span className="flex size-4 items-center justify-center">
+                        {icon}
+                      </span>
+                      <span>{label}</span>
+                      {isSelected && (
+                        <span className="flex size-4 items-center justify-center rounded-full bg-primary-green-500 text-primary-blue-950">
+                          <Check className="size-3 text-secondary-blue-500" />
+                        </span>
+                      )}
+                    </label>
+                  );
+                })}
+              </RadioGroup>
+            </FormControl>
+          </div>
+
           <div className="flex items-center gap-3">
             {/* Follow-up Date */}
             <KFormField
@@ -310,91 +397,6 @@ const AddLead: React.FC<AddLeadProps> = ({
               placeholder="Select staff member"
               options={assignedToOptions}
             />
-          </div>
-
-          {/* Source Select */}
-          <KFormField
-            control={form.control}
-            name="source"
-            fieldType={KFormFieldType.SELECT}
-            label="Source"
-            placeholder="Select source"
-            options={[
-              { label: 'Walk In', value: 'walk_in' },
-              { label: 'Online', value: 'online' },
-              { label: 'Ads', value: 'ads' },
-            ]}
-          />
-
-          <div className="flex flex-col gap-2">
-            <Label className="text-sm leading-normal mb-1">Status</Label>
-
-            <FormControl>
-              <RadioGroup
-                value={selectedStatus}
-                onValueChange={(value) =>
-                  form.setValue(
-                    'status',
-                    value as 'new' | 'interested' | 'contacted' | 'lost'
-                  )
-                }
-                className="grid grid-cols-2 gap-3"
-              >
-                {(
-                  [
-                    {
-                      value: 'new',
-                      label: 'New',
-                      dot: 'bg-secondary-yellow-500',
-                      activeBorder: 'border-secondary-yellow-500',
-                      activeBg: 'bg-secondary-yellow-500/10',
-                    },
-                    {
-                      value: 'interested',
-                      label: 'Interested',
-                      dot: 'bg-neutral-green-500',
-                      activeBorder: 'border-neutral-green-500',
-                      activeBg: 'bg-neutral-green-500/10',
-                    },
-                    {
-                      value: 'contacted',
-                      label: 'Contacted',
-                      dot: 'bg-semantic-blue-500',
-                      activeBorder: 'border-semantic-blue-500',
-                      activeBg: 'bg-semantic-blue-500/10',
-                    },
-                    {
-                      value: 'lost',
-                      label: 'Mark Lost',
-                      dot: 'bg-alert-red-500',
-                      activeBorder: 'border-alert-red-500',
-                      activeBg: 'bg-alert-red-500/10',
-                    },
-                  ] as const
-                ).map(({ value, label, dot, activeBorder, activeBg }) => (
-                  <label
-                    key={value}
-                    htmlFor={value}
-                    className={cn(
-                      'flex items-center gap-2.5 border rounded-lg px-3 py-2.5 cursor-pointer transition-all',
-                      selectedStatus === value
-                        ? `${activeBorder} ${activeBg}`
-                        : 'border-white/40 hover:border-white/80 k-transition'
-                    )}
-                  >
-                    <RadioGroupItem
-                      value={value}
-                      id={value}
-                      className="sr-only"
-                    />
-                    <span
-                      className={cn('size-2.5 rounded-full shrink-0', dot)}
-                    />
-                    <span className="text-sm font-medium">{label}</span>
-                  </label>
-                ))}
-              </RadioGroup>
-            </FormControl>
           </div>
 
           {/* Note */}

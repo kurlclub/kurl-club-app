@@ -1,5 +1,5 @@
 export type InterestStatus = 'lost' | 'new' | 'interested' | 'contacted';
-export type LeadSource = 'walk_in' | 'online' | 'ads';
+export type LeadSource = 'walk_in' | 'online' | 'ads' | 'referral' | 'other';
 
 export interface Lead {
   id: number;

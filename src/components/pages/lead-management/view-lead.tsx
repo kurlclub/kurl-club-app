@@ -1,6 +1,14 @@
 import { Button } from '@kurlclub/ui-components';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { NotepadText, Pencil, Phone, Trash2 } from 'lucide-react';
+import {
+  NotepadText,
+  Pencil,
+  Phone,
+  Star,
+  Trash2,
+  UserPlus,
+  XCircle,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 import { FeeStatusBadge, SourceBadge } from '@/components/shared/badges';
@@ -10,17 +18,31 @@ import { useAppDialog } from '@/hooks/use-app-dialog';
 import { getAvatarColor } from '@/lib/avatar-utils';
 import { getInitials, safeFormatDate } from '@/lib/utils';
 import { useGymBranch } from '@/providers/gym-branch-provider';
-import { deleteLead } from '@/services/lead';
-import { Lead } from '@/types/lead';
+import {
+  type CreateLeadPayload,
+  deleteLead,
+  updateLead,
+} from '@/services/lead';
+import { InterestStatus, Lead } from '@/types/lead';
+import type { StaffType } from '@/types/staff';
 
 interface ViewLeadProps {
   closeSheet: () => void;
   isOpen: boolean;
   lead?: Lead | null;
   onEdit?: (lead: Lead) => void;
+  onAddMember?: (lead: Lead) => void;
+  onStatusUpdated?: (lead: Lead) => void;
 }
 
-const ViewLead = ({ closeSheet, isOpen, lead, onEdit }: ViewLeadProps) => {
+const ViewLead = ({
+  closeSheet,
+  isOpen,
+  lead,
+  onEdit,
+  onAddMember,
+  onStatusUpdated,
+}: ViewLeadProps) => {
   const avatarStyle = getAvatarColor(lead?.leadName || '');
   const initials = getInitials(lead?.leadName || '');
   const { showConfirm } = useAppDialog();
@@ -42,6 +64,107 @@ const ViewLead = ({ closeSheet, isOpen, lead, onEdit }: ViewLeadProps) => {
     },
   });
 
+  const updateLeadStatusMutation = useMutation({
+    mutationFn: ({
+      gymId,
+      leadId,
+      status,
+      payload,
+    }: {
+      gymId: number;
+      leadId: number;
+      status: InterestStatus;
+      payload: CreateLeadPayload;
+    }) =>
+      updateLead(gymId, leadId, payload).then((result) => ({ result, status })),
+    onSuccess: ({ result, status }) => {
+      queryClient.invalidateQueries({ queryKey: ['leads', gymBranch?.gymId] });
+
+      if (lead) {
+        onStatusUpdated?.({ ...lead, interest: status });
+      }
+
+      toast.success(result.message || 'Lead status updated successfully');
+    },
+    onError: (error) => {
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to update lead status'
+      );
+    },
+  });
+
+  const createStatusPayload = (
+    selectedLead: Lead,
+    status: InterestStatus
+  ): CreateLeadPayload => {
+    const payload: CreateLeadPayload = {
+      name: selectedLead.leadName,
+      phone: selectedLead.phone || '',
+      source: selectedLead.source,
+      status,
+      notes: selectedLead.note || '',
+    };
+
+    if (selectedLead.followUpDate) {
+      payload.followUpDate = selectedLead.followUpDate;
+    }
+
+    const assignedToUserType = selectedLead.assignedToUserType?.toLowerCase();
+    if (
+      selectedLead.assignedToUserId &&
+      (assignedToUserType === 'staff' || assignedToUserType === 'trainer')
+    ) {
+      payload.assignedToUserId = selectedLead.assignedToUserId;
+      payload.assignedToUserType = assignedToUserType as StaffType;
+    }
+
+    return payload;
+  };
+
+  const handleStatusChange = (
+    status: Extract<InterestStatus, 'contacted' | 'interested' | 'lost'>
+  ) => {
+    const statusLabel =
+      status === 'contacted'
+        ? 'contacted'
+        : status === 'interested'
+          ? 'interested'
+          : 'lost';
+
+    showConfirm({
+      title:
+        status === 'contacted'
+          ? 'Mark Lead as Contacted'
+          : status === 'interested'
+            ? 'Mark Lead as Interested'
+            : 'Mark Lead as Lost',
+      description: `Are you sure you want to mark this lead as ${statusLabel}?`,
+      variant: status === 'lost' ? 'destructive' : 'default',
+      confirmLabel:
+        status === 'contacted'
+          ? 'Mark Contacted'
+          : status === 'interested'
+            ? 'Mark Interested'
+            : 'Mark Lost',
+      cancelLabel: 'Cancel',
+      onConfirm: async () => {
+        if (!gymBranch?.gymId || !lead?.id) {
+          toast.error(
+            'Unable to update lead. Missing gym or lead information.'
+          );
+          return;
+        }
+
+        await updateLeadStatusMutation.mutateAsync({
+          gymId: gymBranch.gymId,
+          leadId: lead.id,
+          status,
+          payload: createStatusPayload(lead, status),
+        });
+      },
+    });
+  };
+
   const handleDelete = () => {
     showConfirm({
       title: 'Confirm Delete Lead',
@@ -62,10 +185,24 @@ const ViewLead = ({ closeSheet, isOpen, lead, onEdit }: ViewLeadProps) => {
     });
   };
 
+  const handleConvertToMember = () => {
+    if (!lead) return;
+
+    showConfirm({
+      title: 'Convert Lead to Member',
+      description: `Are you sure you want to convert ${lead.leadName} to a member?`,
+      confirmLabel: 'Convert to Member',
+      cancelLabel: 'Cancel',
+      onConfirm: () => {
+        onAddMember?.(lead);
+      },
+    });
+  };
+
   return (
     <KSheet
       className="w-112.5"
-      title="View Lead"
+      title="Lead Details"
       isOpen={isOpen}
       onClose={closeSheet}
       onCloseBtnClick={() => {
@@ -90,11 +227,13 @@ const ViewLead = ({ closeSheet, isOpen, lead, onEdit }: ViewLeadProps) => {
                   <Pencil className="h-4.5 w-4.5" />
                 </span>
               </Button>
-              <Button onClick={handleDelete} variant="ghost" size="icon">
-                <span className="w-8.5 h-8.5 flex items-center justify-center rounded-full bg-secondary-blue-500 hover:bg-secondary-blue-400 k-transition">
-                  <Trash2 className="h-4.5 w-4.5" />
-                </span>
-              </Button>
+              {lead.interest !== 'lost' && (
+                <Button onClick={handleDelete} variant="ghost" size="icon">
+                  <span className="w-8.5 h-8.5 flex items-center justify-center rounded-full bg-secondary-blue-500 hover:bg-secondary-blue-400 k-transition">
+                    <Trash2 className="h-4.5 w-4.5" />
+                  </span>
+                </Button>
+              )}
             </div>
           </div>
 
@@ -129,6 +268,77 @@ const ViewLead = ({ closeSheet, isOpen, lead, onEdit }: ViewLeadProps) => {
               <FeeStatusBadge status={lead.interest} />
             </div>
           </div>
+
+          {lead.interest === 'new' && (
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                variant="outlinePrimary"
+                type="button"
+                onClick={() => handleStatusChange('contacted')}
+              >
+                <Phone className="h-4 w-4" />
+                Mark as Contacted
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => handleStatusChange('lost')}
+              >
+                <XCircle className="h-4 w-4" />
+                Mark as Lost
+              </Button>
+            </div>
+          )}
+
+          {lead.interest === 'contacted' && (
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                variant="outlinePrimary"
+                type="button"
+                onClick={() => handleStatusChange('interested')}
+              >
+                <Star className="h-4 w-4" />
+                Mark as Interested
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => handleStatusChange('lost')}
+              >
+                <XCircle className="h-4 w-4" />
+                Mark as Lost
+              </Button>
+            </div>
+          )}
+
+          {lead.interest === 'interested' && (
+            <div className="grid grid-cols-2 gap-3">
+              <Button type="button" onClick={handleConvertToMember}>
+                <UserPlus className="h-4 w-4" />
+                Convert to Member
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => handleStatusChange('lost')}
+              >
+                <XCircle className="h-4 w-4" />
+                Mark as Lost
+              </Button>
+            </div>
+          )}
+
+          {lead.interest === 'lost' && (
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleDelete}
+              className="w-full"
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete Lead
+            </Button>
+          )}
 
           <div className="grid grid-cols-2 gap-4 p-3 rounded-lg border border-primary-blue-100/10">
             {/* Follow-up Date */}
