@@ -28,6 +28,7 @@ export default function Contents({
     staffRole === 'trainer'
       ? [
           { id: 'members', label: 'Assigned Members' },
+          { id: 'roles', label: 'Roles & Permissions' },
           { id: 'salary', label: 'Salary Configuration' },
         ]
       : [
@@ -38,7 +39,7 @@ export default function Contents({
   const { activeTab, handleTabChange } = useTabState(tabs, defaultTab);
 
   return (
-    <div className="md:px-8 pt-0 w-full max-w-[calc(100%-95px)] md:max-w-[calc(100%-300px)] lg:max-w-[calc(100%-336px)]">
+    <div className="w-full min-w-0 flex-1 px-4 pt-0 md:px-8">
       <Header
         staffId={staffId}
         staffRole={staffRole}
@@ -59,7 +60,7 @@ export default function Contents({
             <AssignedMembersTable trainerId={staffId} />
           )}
 
-          {activeTab === 'roles' && staffRole !== 'trainer' && <Permissions />}
+          {activeTab === 'roles' && <Permissions />}
 
           {activeTab === 'salary' && (
             <SalaryConfiguration staffId={staffId} staffRole={staffRole} />
