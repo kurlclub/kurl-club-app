@@ -104,6 +104,7 @@ interface CustomProps<T extends FieldValues> {
     field: ControllerRenderProps<T, FieldPath<T>>
   ) => React.ReactNode;
   type?: React.InputHTMLAttributes<HTMLInputElement>['type'];
+  valueAsNumber?: boolean;
   autoComplete?: string;
   isLogin?: boolean;
   disabledDates?: (date: Date) => boolean;
@@ -140,7 +141,20 @@ const RenderField = <T extends FieldValues>({
   } = props;
 
   switch (fieldType) {
-    case KFormFieldType.INPUT:
+    case KFormFieldType.INPUT: {
+      const inputField = props.valueAsNumber
+        ? {
+            ...field,
+            onChange: (event: React.ChangeEvent<HTMLInputElement>) => {
+              field.onChange(
+                event.target.value === ''
+                  ? Number.NaN
+                  : event.target.valueAsNumber
+              );
+            },
+          }
+        : field;
+
       return (
         <FormControl>
           <div className="flex items-stretch">
@@ -154,7 +168,7 @@ const RenderField = <T extends FieldValues>({
                 label={label ?? 'Input'}
                 id={name}
                 placeholder=" "
-                {...field}
+                {...inputField}
                 disabled={props.disabled}
                 className={className}
                 suffix={suffix}
@@ -168,6 +182,7 @@ const RenderField = <T extends FieldValues>({
           </div>
         </FormControl>
       );
+    }
 
     case KFormFieldType.TEXTAREA:
       return (

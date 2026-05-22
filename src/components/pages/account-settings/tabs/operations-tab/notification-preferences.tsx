@@ -194,6 +194,7 @@ export default function NotificationPreferences() {
                           label="days before"
                           name="paymentReminderDays"
                           type="number"
+                          valueAsNumber
                           placeholder="3"
                           className="w-24"
                           size="sm"
@@ -232,6 +233,7 @@ export default function NotificationPreferences() {
                             control={form.control}
                             name="memberExpiryDays"
                             type="number"
+                            valueAsNumber
                             placeholder="7"
                             className="w-24"
                             size="sm"

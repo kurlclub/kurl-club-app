@@ -42,6 +42,9 @@ const KInput = forwardRef<HTMLInputElement, KInputProps>(
 
     const [isFocused, setIsFocused] = useState(false);
 
+    const inputValue =
+      typeof value === 'number' && isNaN(value) ? '' : (value ?? '');
+
     const hasContent =
       (typeof value === 'number' && !isNaN(value)) ||
       (typeof value === 'string' && value.trim().length > 0);
@@ -76,7 +79,7 @@ const KInput = forwardRef<HTMLInputElement, KInputProps>(
             aria-labelledby={`floating-label-${inputId}`}
             autoComplete={props.autoComplete || 'off'}
             maxLength={maxLength}
-            value={value}
+            value={inputValue}
             onChange={handleChange}
             {...props}
           />
@@ -110,7 +113,7 @@ const KInput = forwardRef<HTMLInputElement, KInputProps>(
           placeholder=" "
           autoComplete={props.autoComplete || 'off'}
           maxLength={maxLength}
-          value={value ?? ''}
+          value={inputValue}
           onChange={handleChange}
           onFocusCapture={() => setIsFocused(true)}
           onBlurCapture={(e) => {
