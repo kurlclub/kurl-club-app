@@ -2,40 +2,99 @@
 
 import { useMemo, useState } from 'react';
 
-import { Switch } from '@/components/ui/switch';
+import { toast } from 'sonner';
 
-type PermissionAction = 'view' | 'create' | 'edit' | 'delete';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { useGymBranch } from '@/providers/gym-branch-provider';
+import {
+  useAccessModules,
+  useSubjectPermissions,
+  useUpdateSubjectPermissions,
+} from '@/services/access/access_service';
+import type {
+  AccessModuleDefinition,
+  AccessSubjectPermission,
+  AccessSubjectType,
+} from '@/types/access.types';
+import type { StaffType } from '@/types/staff';
+
+type PermissionAction = 'canView' | 'canCreate' | 'canEdit' | 'canDelete';
 type PermissionState = Record<string, Record<PermissionAction, boolean>>;
 
 const actions: { key: PermissionAction; label: string }[] = [
-  { key: 'view', label: 'View' },
-  { key: 'create', label: 'Create' },
-  { key: 'edit', label: 'Edit' },
-  { key: 'delete', label: 'Delete' },
+  { key: 'canView', label: 'View' },
+  { key: 'canCreate', label: 'Create' },
+  { key: 'canEdit', label: 'Edit' },
+  { key: 'canDelete', label: 'Delete' },
 ];
 
-const permissionModules = [
-  'Member management',
-  'Staff management',
-  'Reports',
-  'Lead management',
-  'Expense management',
-  'Attendance management',
-  'Payment management',
-  'Workout plan management',
-  'Settings management',
-  'Payroll management',
+const fallbackPermissionModules = [
+  { moduleKey: 'member_management', label: 'Member management' },
+  { moduleKey: 'staff_management', label: 'Staff management' },
+  { moduleKey: 'reports', label: 'Reports' },
+  { moduleKey: 'lead_management', label: 'Lead management' },
+  { moduleKey: 'expense_management', label: 'Expense management' },
+  { moduleKey: 'attendance_management', label: 'Attendance management' },
+  { moduleKey: 'payment_management', label: 'Payment management' },
+  { moduleKey: 'workout_plan_management', label: 'Workout plan management' },
+  { moduleKey: 'settings_management', label: 'Settings management' },
+  { moduleKey: 'payroll_management', label: 'Payroll management' },
 ];
 
-const createInitialPermissions = (checked = false): PermissionState =>
+const toTitleCase = (value: string) =>
+  value
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+const getModuleKey = (module: AccessModuleDefinition) =>
+  module.moduleKey || module.key || module.name || module.moduleName || '';
+
+const getModuleLabel = (module: AccessModuleDefinition) =>
+  module.displayName ||
+  module.moduleName ||
+  module.name ||
+  (module.moduleKey ? toTitleCase(module.moduleKey) : 'Permission module');
+
+const createInitialPermissions = (
+  modules: { moduleKey: string }[],
+  checked = false
+): PermissionState =>
   Object.fromEntries(
-    permissionModules.map((module) => [
-      module,
+    modules.map((module) => [
+      module.moduleKey,
       Object.fromEntries(
         actions.map((action) => [action.key, checked])
       ) as Record<PermissionAction, boolean>,
     ])
   ) as PermissionState;
+
+const createPermissionsFromResponse = (
+  modules: { moduleKey: string }[],
+  subjectPermissions: AccessSubjectPermission[] = []
+) => {
+  const permissionsByModule = new Map(
+    subjectPermissions.map((permission) => [permission.moduleKey, permission])
+  );
+
+  return Object.fromEntries(
+    modules.map((module) => {
+      const permission = permissionsByModule.get(module.moduleKey);
+
+      return [
+        module.moduleKey,
+        {
+          canView: Boolean(permission?.canView),
+          canCreate: Boolean(permission?.canCreate),
+          canEdit: Boolean(permission?.canEdit),
+          canDelete: Boolean(permission?.canDelete),
+        },
+      ];
+    })
+  ) as PermissionState;
+};
 
 function PermissionSwitch({
   checked,
@@ -58,44 +117,65 @@ function PermissionSwitch({
   );
 }
 
-function Permissions() {
-  const [permissions, setPermissions] = useState<PermissionState>(() =>
-    createInitialPermissions()
+function Permissions({
+  staffId,
+  staffRole,
+}: {
+  staffId: string;
+  staffRole: StaffType;
+}) {
+  const { gymBranch } = useGymBranch();
+  const gymId = gymBranch?.gymId ?? 0;
+  const subjectId = Number(staffId) || 0;
+  const subjectType = staffRole as AccessSubjectType;
+  const { data: accessModules = [], isLoading: isModulesLoading } =
+    useAccessModules();
+  const {
+    data: subjectPermissions = [],
+    isLoading: isPermissionsLoading,
+    isError: isPermissionsError,
+  } = useSubjectPermissions(gymId, subjectType, subjectId);
+  const updatePermissions = useUpdateSubjectPermissions(
+    gymId,
+    subjectType,
+    subjectId
   );
 
-  const allPermissionsEnabled = useMemo(
-    () =>
-      permissionModules.every((module) =>
-        actions.every((action) => permissions[module][action.key])
-      ),
-    [permissions]
+  const permissionModules = useMemo(() => {
+    const apiModules = accessModules
+      .map((module) => ({
+        moduleKey: getModuleKey(module),
+        label: getModuleLabel(module),
+      }))
+      .filter((module) => Boolean(module.moduleKey));
+
+    return apiModules.length > 0 ? apiModules : fallbackPermissionModules;
+  }, [accessModules]);
+
+  const serverPermissions = useMemo(
+    () => createPermissionsFromResponse(permissionModules, subjectPermissions),
+    [permissionModules, subjectPermissions]
   );
+  const [permissions, setPermissions] = useState<PermissionState>(
+    createInitialPermissions(fallbackPermissionModules)
+  );
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const activePermissions = hasUnsavedChanges ? permissions : serverPermissions;
 
   const enabledPermissionCount = useMemo(
     () =>
       permissionModules.reduce(
         (count, module) =>
           count +
-          actions.filter((action) => permissions[module][action.key]).length,
+          actions.filter(
+            (action) => activePermissions[module.moduleKey]?.[action.key]
+          ).length,
         0
       ),
-    [permissions]
+    [activePermissions, permissionModules]
   );
 
   const totalPermissionCount = permissionModules.length * actions.length;
-
-  const handleAllPermissions = (checked: boolean) => {
-    setPermissions(createInitialPermissions(checked));
-  };
-
-  const handleModulePermissions = (module: string, checked: boolean) => {
-    setPermissions((currentPermissions) => ({
-      ...currentPermissions,
-      [module]: Object.fromEntries(
-        actions.map((action) => [action.key, checked])
-      ) as Record<PermissionAction, boolean>,
-    }));
-  };
 
   const handlePermissionChange = (
     module: string,
@@ -103,13 +183,50 @@ function Permissions() {
     checked: boolean
   ) => {
     setPermissions((currentPermissions) => ({
-      ...currentPermissions,
+      ...(hasUnsavedChanges ? currentPermissions : activePermissions),
       [module]: {
-        ...currentPermissions[module],
+        ...(hasUnsavedChanges
+          ? currentPermissions[module]
+          : activePermissions[module]),
         [action]: checked,
       },
     }));
+    setHasUnsavedChanges(true);
   };
+
+  const handleSavePermissions = () => {
+    const payload = {
+      permissions: permissionModules.map((module) => ({
+        moduleKey: module.moduleKey,
+        canView: Boolean(activePermissions[module.moduleKey]?.canView),
+        canCreate: Boolean(activePermissions[module.moduleKey]?.canCreate),
+        canEdit: Boolean(activePermissions[module.moduleKey]?.canEdit),
+        canDelete: Boolean(activePermissions[module.moduleKey]?.canDelete),
+      })),
+    };
+
+    updatePermissions.mutate(payload, {
+      onSuccess: (response) => {
+        setHasUnsavedChanges(false);
+        toast.success(response.message || 'Permissions updated successfully');
+      },
+      onError: (error) => {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : 'Failed to update permissions'
+        );
+      },
+    });
+  };
+
+  const isLoading = isModulesLoading || isPermissionsLoading;
+  const canSave =
+    Boolean(gymId && subjectId && subjectType) &&
+    hasUnsavedChanges &&
+    !updatePermissions.isPending;
+
+  // TODO: Add "Enable all permissions" switch back when needed, currently removed as per design update
 
   return (
     <section className="overflow-hidden rounded-lg border border-primary-blue-300 bg-secondary-blue-500">
@@ -119,68 +236,62 @@ function Permissions() {
             Roles & Permissions
           </h5>
           <p className="mt-1 text-sm leading-normal text-white/60">
-            {enabledPermissionCount} of {totalPermissionCount} permissions
-            enabled
+            {isLoading
+              ? 'Loading permissions...'
+              : `${enabledPermissionCount} of ${totalPermissionCount} permissions enabled`}
           </p>
+          {isPermissionsError && (
+            <p className="mt-1 text-sm leading-normal text-red-300">
+              Failed to load saved permissions.
+            </p>
+          )}
         </div>
 
-        <label className="flex w-full items-center justify-between gap-3 rounded-md border border-primary-blue-300 bg-secondary-blue-400/40 px-4 py-3 sm:w-fit sm:justify-start">
-          <Switch
-            aria-label="Enable all permissions"
-            checked={allPermissionsEnabled}
-            onCheckedChange={handleAllPermissions}
-          />
-          <span className="text-sm font-normal leading-normal text-white cursor-pointer">
-            Enable all permissions
-          </span>
-        </label>
+        <div className="flex items-center gap-3">
+          <Button onClick={handleSavePermissions} disabled={!canSave}>
+            {updatePermissions.isPending ? 'Saving...' : 'Save Permissions'}
+          </Button>
+        </div>
       </div>
 
       <div className="hidden lg:block">
-        <div className="grid grid-cols-[minmax(160px,1.4fr)_repeat(5,minmax(64px,1fr))] border-b border-primary-blue-300 bg-secondary-blue-400/60 px-4 py-3 text-sm font-medium text-white/70 xl:grid-cols-[minmax(220px,1.4fr)_repeat(5,minmax(92px,1fr))] xl:px-6">
+        <div className="grid grid-cols-[minmax(160px,1.4fr)_repeat(4,minmax(64px,1fr))] border-b border-primary-blue-300 bg-secondary-blue-400/60 px-4 py-3 text-sm font-medium text-white/70 xl:grid-cols-[minmax(220px,1.4fr)_repeat(4,minmax(92px,1fr))] xl:px-6">
           <div>Management area</div>
           {actions.map((action) => (
             <div key={action.key} className="text-center">
               {action.label}
             </div>
           ))}
-          <div className="text-center">All</div>
+          {/* <div className="text-center">All</div> */}
         </div>
 
         <div className="divide-y divide-primary-blue-300">
           {permissionModules.map((module) => {
-            const moduleEnabled = actions.every(
-              (action) => permissions[module][action.key]
-            );
-
             return (
               <div
-                key={module}
-                className="grid grid-cols-[minmax(160px,1.4fr)_repeat(5,minmax(64px,1fr))] items-center px-4 py-4 xl:grid-cols-[minmax(220px,1.4fr)_repeat(5,minmax(92px,1fr))] xl:px-6"
+                key={module.moduleKey}
+                className="grid grid-cols-[minmax(160px,1.4fr)_repeat(4,minmax(64px,1fr))] items-center px-4 py-4 xl:grid-cols-[minmax(220px,1.4fr)_repeat(4,minmax(92px,1fr))] xl:px-6"
               >
                 <div className="pr-3 text-sm font-normal leading-normal text-white">
-                  {module}
+                  {module.label}
                 </div>
                 {actions.map((action) => (
                   <div key={action.key} className="flex justify-center">
                     <PermissionSwitch
-                      label={`${action.label} ${module}`}
-                      checked={permissions[module][action.key]}
+                      label={`${action.label} ${module.label}`}
+                      checked={Boolean(
+                        activePermissions[module.moduleKey]?.[action.key]
+                      )}
                       onCheckedChange={(checked) =>
-                        handlePermissionChange(module, action.key, checked)
+                        handlePermissionChange(
+                          module.moduleKey,
+                          action.key,
+                          checked
+                        )
                       }
                     />
                   </div>
                 ))}
-                <div className="flex justify-center">
-                  <PermissionSwitch
-                    label={`Enable all ${module} permissions`}
-                    checked={moduleEnabled}
-                    onCheckedChange={(checked) =>
-                      handleModulePermissions(module, checked)
-                    }
-                  />
-                </div>
               </div>
             );
           })}
@@ -189,23 +300,12 @@ function Permissions() {
 
       <div className="divide-y divide-primary-blue-300 lg:hidden">
         {permissionModules.map((module) => {
-          const moduleEnabled = actions.every(
-            (action) => permissions[module][action.key]
-          );
-
           return (
-            <div key={module} className="p-4 sm:p-5">
+            <div key={module.moduleKey} className="p-4 sm:p-5">
               <div className="mb-4 flex items-center justify-between gap-4">
                 <h6 className="min-w-0 text-sm font-medium leading-normal text-white">
-                  {module}
+                  {module.label}
                 </h6>
-                <PermissionSwitch
-                  label={`Enable all ${module} permissions`}
-                  checked={moduleEnabled}
-                  onCheckedChange={(checked) =>
-                    handleModulePermissions(module, checked)
-                  }
-                />
               </div>
               <div className="grid grid-cols-[repeat(auto-fit,minmax(128px,1fr))] gap-3">
                 {actions.map((action) => (
@@ -217,10 +317,16 @@ function Permissions() {
                       {action.label}
                     </span>
                     <Switch
-                      aria-label={`${action.label} ${module}`}
-                      checked={permissions[module][action.key]}
+                      aria-label={`${action.label} ${module.label}`}
+                      checked={Boolean(
+                        activePermissions[module.moduleKey]?.[action.key]
+                      )}
                       onCheckedChange={(checked) =>
-                        handlePermissionChange(module, action.key, checked)
+                        handlePermissionChange(
+                          module.moduleKey,
+                          action.key,
+                          checked
+                        )
                       }
                     />
                   </label>

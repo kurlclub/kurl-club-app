@@ -60,7 +60,9 @@ export default function Contents({
             <AssignedMembersTable trainerId={staffId} />
           )}
 
-          {activeTab === 'roles' && <Permissions />}
+          {activeTab === 'roles' && (
+            <Permissions staffId={staffId} staffRole={staffRole} />
+          )}
 
           {activeTab === 'salary' && (
             <SalaryConfiguration staffId={staffId} staffRole={staffRole} />
