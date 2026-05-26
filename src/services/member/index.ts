@@ -55,6 +55,7 @@ export const fetchGymMembers = async (
     params.append('isFrozen', String(filters.isFrozen));
   }
   if (filters?.trainer) params.append('trainer', filters.trainer.toString());
+  if (filters?.workoutPlan) params.append('workoutPlan', filters.workoutPlan);
   if (filters?.sortBy) params.append('sortBy', filters.sortBy);
   if (filters?.sortOrder) params.append('sortOrder', filters.sortOrder);
 

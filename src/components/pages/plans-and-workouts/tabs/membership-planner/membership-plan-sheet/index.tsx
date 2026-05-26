@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
@@ -15,7 +16,6 @@ import { membershipPlanSchema } from '@/schemas';
 import { useAllGymMembers } from '@/services/member';
 import { MembershipPlan } from '@/types/membership-plan';
 
-import { MemberList } from './member-list';
 import { Overview } from './overview';
 
 type MembershipPlanFormData = z.infer<typeof membershipPlanSchema>;
@@ -73,10 +73,10 @@ function MembershipPlanSheetInner({
   onSaveNew,
 }: PackageManageSheetProps) {
   const initialPlan = plan || DEFAULT_PLAN;
+  const router = useRouter();
   const [editedPlan, setEditedPlan] = useState<MembershipPlan>(initialPlan);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(!plan);
-  const [isMemberListVisible, setIsMemberListVisible] = useState(false);
 
   const form = useForm<MembershipPlanFormData>({
     resolver: zodResolver(membershipPlanSchema),
@@ -98,9 +98,23 @@ function MembershipPlanSheetInner({
     isOpen && plan && gymBranch?.gymId ? gymBranch.gymId : 0
   );
 
-  const planMembers = members.filter(
-    (member) => member.workoutPlan === editedPlan.planName
-  );
+  const planMembers = members.filter((member) => {
+    const memberPlanId = Number(member.packageId);
+    const currentPlanId = Number(editedPlan.membershipPlanId);
+
+    if (
+      Number.isFinite(memberPlanId) &&
+      Number.isFinite(currentPlanId) &&
+      currentPlanId > 0
+    ) {
+      return memberPlanId === currentPlanId;
+    }
+
+    return (
+      member.package.trim().toLowerCase() ===
+      editedPlan.planName.trim().toLowerCase()
+    );
+  });
 
   const handleSavePlan = async (data: MembershipPlanFormData) => {
     const updatedPlan: MembershipPlan = {
@@ -155,23 +169,15 @@ function MembershipPlanSheetInner({
     setEditedPlan(updatedPlan);
   };
 
-  const sheetTitle = (() => {
-    if (isMemberListVisible) {
-      return (
-        <div className="flex items-center">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mr-2"
-            onClick={() => setIsMemberListVisible(false)}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          Members List
-        </div>
-      );
-    }
+  const handleShowMembers = () => {
+    const packageFilter = encodeURIComponent(
+      String(editedPlan.membershipPlanId)
+    );
+    closeSheet();
+    router.push(`/members?package=${packageFilter}`);
+  };
 
+  const sheetTitle = (() => {
     if (selectedDay) {
       return (
         <div className="flex items-center">
@@ -195,10 +201,6 @@ function MembershipPlanSheetInner({
   })();
 
   const sheetFooter = (() => {
-    if (isMemberListVisible) {
-      return null;
-    }
-
     if (selectedDay && isEditMode) {
       return (
         <div className="flex justify-end gap-3">
@@ -263,30 +265,26 @@ function MembershipPlanSheetInner({
       title={sheetTitle}
       footer={sheetFooter}
     >
-      {isMemberListVisible ? (
-        <MemberList members={planMembers} />
-      ) : (
-        <FormProvider {...form}>
-          <form
-            id="membership-plan-form"
-            onSubmit={form.handleSubmit(handleSavePlan)}
-            className="space-y-5"
-          >
-            <Overview
-              plan={editedPlan}
-              planMembers={planMembers}
-              isEditMode={isEditMode}
-              isNewPlan={!plan}
-              onUpdatePlan={setEditedPlan}
-              onImmediateUpdate={handleImmediateUpdate}
-              onDelete={handleDeletePlan}
-              onEdit={() => setIsEditMode(!isEditMode)}
-              onShowMembers={() => setIsMemberListVisible(true)}
-              control={form.control}
-            />
-          </form>
-        </FormProvider>
-      )}
+      <FormProvider {...form}>
+        <form
+          id="membership-plan-form"
+          onSubmit={form.handleSubmit(handleSavePlan)}
+          className="space-y-5"
+        >
+          <Overview
+            plan={editedPlan}
+            planMembers={planMembers}
+            isEditMode={isEditMode}
+            isNewPlan={!plan}
+            onUpdatePlan={setEditedPlan}
+            onImmediateUpdate={handleImmediateUpdate}
+            onDelete={handleDeletePlan}
+            onEdit={() => setIsEditMode(!isEditMode)}
+            onShowMembers={handleShowMembers}
+            control={form.control}
+          />
+        </form>
+      </FormProvider>
     </KSheet>
   );
 }
