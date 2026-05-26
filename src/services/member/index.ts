@@ -195,6 +195,22 @@ export const updateMember = async (id: string | number, data: FormData) => {
   }
 };
 
+export type UpgradeMemberPlanPayload = {
+  newMembershipPlanId: number;
+  effectiveFrom: string;
+  amountPaid: number;
+  paymentMethod: string;
+  numberOfSessions: number;
+  perSessionRate: number;
+};
+
+export const upgradeMemberPlan = async (
+  id: string | number,
+  payload: UpgradeMemberPlanPayload
+) => {
+  return api.post<MemberUpdateResponse>(`/Member/${id}/upgrade-plan`, payload);
+};
+
 export const deleteMember = async (
   id: string | number,
   queryClient?: QueryClient

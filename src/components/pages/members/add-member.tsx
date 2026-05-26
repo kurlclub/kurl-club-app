@@ -867,27 +867,21 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                   label="Member Name"
                   maxLength={20}
                 />
-                <FieldRow>
-                  <FieldColumn>
-                    <KFormField
-                      fieldType={KFormFieldType.PHONE_INPUT}
-                      control={form.control}
-                      name="phone"
-                      label="Phone"
-                      placeholder="(555) 123-4567"
-                    />
-                  </FieldColumn>
-                  <FieldColumn>
-                    <KFormField
-                      fieldType={KFormFieldType.UI_DATE_PICKER}
-                      control={form.control}
-                      name="doj"
-                      label="Date of joining"
-                      mode="single"
-                      floating
-                    />
-                  </FieldColumn>
-                </FieldRow>
+                <KFormField
+                  fieldType={KFormFieldType.PHONE_INPUT}
+                  control={form.control}
+                  name="phone"
+                  label="Phone"
+                  placeholder="(555) 123-4567"
+                />
+                <KFormField
+                  fieldType={KFormFieldType.UI_DATE_PICKER}
+                  control={form.control}
+                  name="doj"
+                  label="Date of joining"
+                  mode="single"
+                  floating
+                />
 
                 <KFormField
                   fieldType={KFormFieldType.TEXTAREA}

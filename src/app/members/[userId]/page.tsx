@@ -29,6 +29,7 @@ export default function MemberDetailsPage({ params }: MemberDetailsPageProps) {
     originalDetails,
     error,
     updateMemberDetail,
+    setIsEditing,
   } = useMemberDetails(userId!);
 
   if (error) return <p>Error: {error}</p>;
@@ -42,6 +43,7 @@ export default function MemberDetailsPage({ params }: MemberDetailsPageProps) {
         updateMemberDetail={updateMemberDetail}
         handleSave={handleSave}
         toggleEdit={toggleEdit}
+        setIsEditing={setIsEditing}
         formOptions={formOptions || undefined}
       />
       <div className="flex-1 overflow-y-auto">
