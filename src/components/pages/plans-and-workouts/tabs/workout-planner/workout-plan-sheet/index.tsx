@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { ChevronLeft, Plus } from 'lucide-react';
@@ -8,12 +9,11 @@ import { KSheet } from '@/components/shared/form/k-sheet';
 import { Button } from '@/components/ui/button';
 import { useAppDialog } from '@/hooks/use-app-dialog';
 import { useGymBranch } from '@/providers/gym-branch-provider';
-import { useAllGymMembers } from '@/services/member';
+import { useGymMembers } from '@/services/member';
 import type { Exercise, WorkoutPlan } from '@/types/workoutplan';
 
 import { AddExercise } from './add-exercise';
 import { ExerciseList } from './exercise-list';
-import { MemberList } from './member-list';
 import { Overview } from './overview';
 import { Schedule } from './schedule';
 
@@ -69,23 +69,26 @@ function WorkoutPlanSheetInner({
   onSaveNew,
 }: WorkoutPlanSheetProps) {
   const initialPlan = plan || DEFAULT_PLAN;
+  const router = useRouter();
   const [editedPlan, setEditedPlan] = useState<WorkoutPlan>(initialPlan);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(!plan);
-  const [isMemberListVisible, setIsMemberListVisible] = useState(false);
   const [showSchedule, setShowSchedule] = useState(!!plan);
 
   const { showConfirm, showAlert } = useAppDialog();
 
   const { gymBranch } = useGymBranch();
-  // Only fetch members if sheet is open and a plan exists and gymId is present
-  const { data: members = [] } = useAllGymMembers(
-    isOpen && plan && gymBranch?.gymId ? gymBranch.gymId : 0
+  const workoutPlanFilter = plan ? String(editedPlan.planId) : undefined;
+  const { data: planMembersData } = useGymMembers(
+    isOpen && workoutPlanFilter && gymBranch?.gymId ? gymBranch.gymId : 0,
+    {
+      page: 1,
+      pageSize: 3,
+      workoutPlan: workoutPlanFilter,
+    }
   );
-
-  const planMembers = members.filter(
-    (member) => member.workoutPlan === editedPlan.planName
-  );
+  const planMembers = planMembersData?.data || [];
+  const planMemberCount = planMembersData?.pagination?.totalCount || 0;
 
   const handleSavePlan = () => {
     const hasExercises =
@@ -256,23 +259,13 @@ function WorkoutPlanSheetInner({
     setEditedPlan(updatedPlan);
   };
 
-  const sheetTitle = (() => {
-    if (isMemberListVisible) {
-      return (
-        <div className="flex items-center">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mr-2"
-            onClick={() => setIsMemberListVisible(false)}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          Members List
-        </div>
-      );
-    }
+  const handleShowMembers = () => {
+    const workoutPlan = encodeURIComponent(String(editedPlan.planId));
+    closeSheet();
+    router.push(`/members?workoutPlan=${workoutPlan}`);
+  };
 
+  const sheetTitle = (() => {
     if (selectedDay) {
       return (
         <div className="flex items-center">
@@ -296,10 +289,6 @@ function WorkoutPlanSheetInner({
   })();
 
   const sheetFooter = (() => {
-    if (isMemberListVisible) {
-      return null;
-    }
-
     if (selectedDay && isEditMode) {
       return (
         <div className="flex justify-end gap-3">
@@ -360,9 +349,7 @@ function WorkoutPlanSheetInner({
       title={sheetTitle}
       footer={sheetFooter}
     >
-      {isMemberListVisible ? (
-        <MemberList members={planMembers} />
-      ) : selectedDay ? (
+      {selectedDay ? (
         <div className="space-y-6">
           {isEditMode && (
             <AddExercise
@@ -398,13 +385,14 @@ function WorkoutPlanSheetInner({
           <Overview
             plan={editedPlan}
             planMembers={planMembers}
+            planMemberCount={planMemberCount}
             isEditMode={isEditMode}
             isNewPlan={!plan}
             onUpdatePlan={setEditedPlan}
             onImmediateUpdate={handleImmediateUpdate}
             onDelete={handleDeletePlan}
             onEdit={() => setIsEditMode(!isEditMode)}
-            onShowMembers={() => setIsMemberListVisible(true)}
+            onShowMembers={handleShowMembers}
           />
 
           {!plan && !showSchedule ? (

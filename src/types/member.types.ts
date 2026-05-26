@@ -113,6 +113,8 @@ export interface MemberListAvailableFilters {
   feeStatuses: Array<{ value: string; count: number }>;
   packages: Array<{ value: string; label: string; count: number }>;
   genders: Array<{ value: string; count: number }>;
+  trainers?: Array<{ value: string; label: string; count: number }>;
+  workoutPlans?: Array<{ value: string; label: string; count: number }>;
   sortOptions: string[];
   sortOrders: ['asc', 'desc'];
 }
@@ -476,6 +478,7 @@ export interface MemberQueryFilters {
   gender?: string;
   isFrozen?: boolean;
   trainer?: number;
+  workoutPlan?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }

@@ -20,12 +20,16 @@ type AllMembersTabProps = {
   gymId?: number;
   isImportModalOpen: boolean;
   onCloseImportModal: () => void;
+  initialPackageFilter?: string;
+  initialWorkoutPlanFilter?: string;
 };
 
 export function AllMembersTab({
   gymId,
   isImportModalOpen,
   onCloseImportModal,
+  initialPackageFilter,
+  initialWorkoutPlanFilter,
 }: AllMembersTabProps) {
   const queryClient = useQueryClient();
   const { requireLimitAccess } = useSubscriptionAccess();
@@ -34,13 +38,21 @@ export function AllMembersTab({
   const [selectedFilters, setSelectedFilters] = useState<{
     feeStatus?: string[];
     package?: string[];
+    workoutPlan?: string[];
     gender?: string[];
     isFrozen?: string[];
-  }>({});
+  }>({
+    ...(initialPackageFilter ? { package: [initialPackageFilter] } : {}),
+    ...(initialWorkoutPlanFilter
+      ? { workoutPlan: [initialWorkoutPlanFilter] }
+      : {}),
+  });
   const [memberFilters, setMemberFilters] = useState<MemberFilters>({
     page: 1,
     pageSize: 10,
     sortOrder: 'desc',
+    package: initialPackageFilter,
+    workoutPlan: initialWorkoutPlanFilter,
   });
 
   const { data, isFetching } = useGymMembers(gymId!, {
@@ -80,6 +92,16 @@ export function AllMembersTab({
             .replace(/\b\w/g, (l: string) => l.toUpperCase()),
           value: status.value,
           count: status.count,
+        })) || [],
+    },
+    {
+      columnId: 'workoutPlan',
+      title: 'Workout Plan',
+      options:
+        availableFilters?.workoutPlans?.map((plan) => ({
+          label: plan.label,
+          value: plan.value,
+          count: plan.count,
         })) || [],
     },
     {

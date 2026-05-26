@@ -17,6 +17,8 @@ import { AllMembersTab, PendingOnboardingTab } from './tabs';
 export default function Members() {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const searchParams = useSearchParams();
+  const packageFilter = searchParams.get('package') || undefined;
+  const workoutPlanFilter = searchParams.get('workoutPlan') || undefined;
   const { isOpen, openSheet, closeSheet } = useSheet();
   const { gymBranch } = useGymBranch();
   const gymId = gymBranch?.gymId;
@@ -70,9 +72,12 @@ export default function Members() {
       >
         {activeTab === 'all-members' && (
           <AllMembersTab
+            key={`${packageFilter ?? 'all'}-${workoutPlanFilter ?? 'all'}`}
             gymId={gymId}
             isImportModalOpen={isImportModalOpen}
             onCloseImportModal={() => setIsImportModalOpen(false)}
+            initialPackageFilter={packageFilter}
+            initialWorkoutPlanFilter={workoutPlanFilter}
           />
         )}
         {activeTab === 'pending-onboarding' && <PendingOnboardingTab />}
