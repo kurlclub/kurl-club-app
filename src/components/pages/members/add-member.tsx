@@ -417,15 +417,15 @@ const onboardingTypeCardMeta: Record<
     characterImage: string;
   }
 > = {
-  fresh_join: {
-    title: 'Add new member',
-    description: 'Add a completely new member',
-    characterImage: '/images/new-member.png',
-  },
   migrated_member: {
     title: 'Migrate member',
     description: 'Add an already existing member.',
-    characterImage: '/images/migrate-member.png',
+    characterImage: '/assets/png/migrate-member.png',
+  },
+  fresh_join: {
+    title: 'Add new member',
+    description: 'Add a completely new member',
+    characterImage: '/assets/png/new-member.png',
   },
 };
 
@@ -435,11 +435,11 @@ const selectedOnboardingTypeMeta: Record<
     title: string;
   }
 > = {
-  fresh_join: {
-    title: 'New Member',
-  },
   migrated_member: {
     title: 'Migrated Member',
+  },
+  fresh_join: {
+    title: 'New Member',
   },
 };
 
@@ -481,8 +481,8 @@ const OnboardingTypeCards = ({
   errorMessage?: string;
 }) => {
   const orderedOptions: OnboardingTypeValue[] = [
-    'fresh_join',
     'migrated_member',
+    'fresh_join',
   ];
 
   return (
