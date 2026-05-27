@@ -111,7 +111,7 @@ export function PersonalInfoSection({
           />
         ) : (
           <p className="text-white text-[15px] leading-[140%] font-normal">
-            {details?.fullAddress}
+            {details?.fullAddress || 'N/A'}
           </p>
         )}
       </div>
