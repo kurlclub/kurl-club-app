@@ -122,6 +122,19 @@ export default function AdministratorForm({
         </FieldColumn>
       </FieldRow>
 
+      {/* Address Details */}
+      <h5 className="text-white text-base font-normal leading-normal mt-8!">
+        Address Details
+      </h5>
+      <KFormField
+        fieldType={KFormFieldType.TEXTAREA}
+        control={form.control}
+        name="AddressLine"
+        label="Address Line"
+        disabled={isSubmitting}
+        maxLength={250}
+      />
+
       {/* User Credentials */}
       <div className="mt-8! flex items-center gap-2">
         <h5 className="text-white text-base font-normal leading-normal">
@@ -188,19 +201,6 @@ export default function AdministratorForm({
         placeholder="Enter password"
         disabled={isSubmitting}
         autoComplete="new-password"
-      />
-
-      {/* Address Details */}
-      <h5 className="text-white text-base font-normal leading-normal mt-8!">
-        Address Details
-      </h5>
-      <KFormField
-        fieldType={KFormFieldType.TEXTAREA}
-        control={form.control}
-        name="AddressLine"
-        label="Address Line"
-        disabled={isSubmitting}
-        maxLength={250}
       />
     </>
   );

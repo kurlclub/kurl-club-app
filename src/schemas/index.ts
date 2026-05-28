@@ -233,7 +233,7 @@ export const trainerFormSchema = z.object({
     .optional(),
   Gender: z.string().min(1, 'Gender selection is required'),
   AddressLine: z
-    .string()
+    .string({ error: 'Address is required.' })
     .min(1, 'Address is required.')
     .max(250, 'Address must not exceed 250 characters.'),
   BloodGroup: z.string().optional(),
@@ -275,7 +275,7 @@ export const adminstratorFormSchema = z.object({
   Doj: z.iso.datetime('Please select a valid Date of Joining.'),
   Gender: z.string().min(1, 'Gender selection is required'),
   AddressLine: z
-    .string()
+    .string({ error: 'Address is required.' })
     .min(1, 'Address is required.')
     .max(250, 'Address must not exceed 250 characters.'),
   bloodGroup: z.string().optional(),

@@ -56,6 +56,15 @@ export const staffFilters = [
     ],
   },
   {
+    columnId: 'gender',
+    title: 'Gender',
+    options: [
+      { label: 'Male', value: 'male' },
+      { label: 'Female', value: 'female' },
+      { label: 'Other', value: 'other' },
+    ],
+  },
+  {
     columnId: 'bloodGroup',
     title: 'Blood Group',
     options: [
