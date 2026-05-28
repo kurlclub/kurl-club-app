@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 
+import { Lock } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ import {
   useSubjectPermissions,
   useUpdateSubjectPermissions,
 } from '@/services/access/access_service';
+import { useStaffByID } from '@/services/staff';
 import type {
   AccessModuleDefinition,
   AccessSubjectPermission,
@@ -128,6 +130,11 @@ function Permissions({
   const gymId = gymBranch?.gymId ?? 0;
   const subjectId = Number(staffId) || 0;
   const subjectType = staffRole as AccessSubjectType;
+  const { data: staffDetails, isLoading: isStaffLoading } = useStaffByID(
+    staffId,
+    staffRole
+  );
+  const hasCredentials = Boolean(staffDetails?.username?.trim());
   const { data: accessModules = [], isLoading: isModulesLoading } =
     useAccessModules();
   const {
@@ -254,6 +261,28 @@ function Permissions({
     hasUnsavedChanges &&
     !updatePermissions.isPending;
 
+  if (!isStaffLoading && !hasCredentials) {
+    return (
+      <section className="overflow-hidden rounded-lg border border-primary-blue-300 bg-secondary-blue-500">
+        <div className="flex flex-col items-center justify-center gap-4 px-6 py-12 text-center sm:py-16">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full border border-primary-blue-300 bg-secondary-blue-400/60">
+            <Lock className="h-6 w-6 text-primary-blue-100" />
+          </div>
+          <div className="max-w-md space-y-2">
+            <h5 className="text-base font-medium leading-normal text-white">
+              Roles & Permissions are locked
+            </h5>
+            <p className="text-sm leading-normal text-white/60">
+              This {staffRole === 'trainer' ? 'trainer' : 'staff'} doesn&apos;t
+              have login credentials yet. Set a username and password from the
+              profile sidebar to unlock roles and permissions.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="overflow-hidden rounded-lg border border-primary-blue-300 bg-secondary-blue-500">
       <div className="flex flex-col gap-4 border-b border-primary-blue-300 p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between lg:p-6">
@@ -275,7 +304,7 @@ function Permissions({
 
         <div className="flex items-center gap-3">
           <label className="inline-flex items-center gap-2 text-sm text-white/80">
-            <span>Enable all</span>
+            <span>Enable all permissions</span>
             <Switch
               aria-label="Select all permissions"
               checked={isAllEnabled}

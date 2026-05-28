@@ -19,9 +19,10 @@ import { SessionPaymentCard } from './payment-card-session';
 interface PaymentCardProps {
   memberId: string | number;
   formOptions?: FormOptionsResponse | null;
+  isFrozen?: boolean;
 }
 
-function PaymentCard({ memberId, formOptions }: PaymentCardProps) {
+function PaymentCard({ memberId, formOptions, isFrozen }: PaymentCardProps) {
   const { data: paymentData, isLoading } = useMemberPaymentDetails(memberId);
   const { isOpen, openSheet, closeSheet } = useSheet();
   const {
@@ -63,12 +64,14 @@ function PaymentCard({ memberId, formOptions }: PaymentCardProps) {
           formOptions={formOptions}
           onRecordPayment={openSheet}
           onGenerateInvoice={openInvoice}
+          isFrozen={isFrozen}
         />
       ) : (
         <SessionPaymentCard
           member={member as SessionPaymentMember}
           onRecordPayment={openSheet}
           onGenerateInvoice={openInvoice}
+          isFrozen={isFrozen}
         />
       )}
 

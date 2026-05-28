@@ -4,6 +4,12 @@ import { Calendar, Clock, Edit, FileText, Info } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { formatDateTime } from '@/lib/utils';
 import { SessionPaymentMember } from '@/types/payment';
 
@@ -11,12 +17,14 @@ interface SessionPaymentCardProps {
   member: SessionPaymentMember;
   onRecordPayment: () => void;
   onGenerateInvoice: () => void;
+  isFrozen?: boolean;
 }
 
 export function SessionPaymentCard({
   member,
   onRecordPayment,
   onGenerateInvoice,
+  isFrozen,
 }: SessionPaymentCardProps) {
   const {
     sessionFee,
@@ -51,14 +59,36 @@ export function SessionPaymentCard({
             <FileText className="h-4 w-4" />
             <span>Invoice</span>
           </Button>
-          <Button
-            onClick={onRecordPayment}
-            className="bg-primary-blue-400 text-white hover:bg-primary-blue-500"
-            size="sm"
-          >
-            <Edit className="h-4 w-4" />
-            <span>Record Payment</span>
-          </Button>
+          {isFrozen ? (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span tabIndex={0}>
+                    <Button
+                      disabled
+                      className="bg-primary-blue-400 text-white hover:bg-primary-blue-500"
+                      size="sm"
+                    >
+                      <Edit className="h-4 w-4" />
+                      <span>Record Payment</span>
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Unfreeze the member to record a payment
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : (
+            <Button
+              onClick={onRecordPayment}
+              className="bg-primary-blue-400 text-white hover:bg-primary-blue-500"
+              size="sm"
+            >
+              <Edit className="h-4 w-4" />
+              <span>Record Payment</span>
+            </Button>
+          )}
         </div>
       </div>
 
