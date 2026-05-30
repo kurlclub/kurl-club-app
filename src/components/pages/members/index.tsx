@@ -11,6 +11,7 @@ import { useTabState } from '@/hooks/use-tab-state';
 import { useGymBranch } from '@/providers/gym-branch-provider';
 import { useGymMembers, usePendingOnboardingMembers } from '@/services/member';
 
+import { MemberImportDialog } from './import-members-dialog';
 import { MembersHeader } from './members-header';
 import { AllMembersTab, PendingOnboardingTab } from './tabs';
 
@@ -60,22 +61,29 @@ export default function Members() {
         activeTab={activeTab}
         onTabChange={handleTabChange}
         headerActions={
-          <MembersHeader
-            onImportClick={() => setIsImportModalOpen(true)}
-            onAddNewClick={openSheet}
-            isOpen={isOpen}
-            closeSheet={closeSheet}
-            gymId={gymId}
-            currentMemberCount={totalMemberCount}
-          />
+          <>
+            <MembersHeader
+              onImportClick={() => setIsImportModalOpen(true)}
+              onAddNewClick={openSheet}
+              isOpen={isOpen}
+              closeSheet={closeSheet}
+              gymId={gymId}
+              currentMemberCount={totalMemberCount}
+            />
+            {gymId && (
+              <MemberImportDialog
+                isOpen={isImportModalOpen}
+                onClose={() => setIsImportModalOpen(false)}
+                gymId={gymId}
+              />
+            )}
+          </>
         }
       >
         {activeTab === 'all-members' && (
           <AllMembersTab
             key={`${packageFilter ?? 'all'}-${workoutPlanFilter ?? 'all'}`}
             gymId={gymId}
-            isImportModalOpen={isImportModalOpen}
-            onCloseImportModal={() => setIsImportModalOpen(false)}
             initialPackageFilter={packageFilter}
             initialWorkoutPlanFilter={workoutPlanFilter}
           />

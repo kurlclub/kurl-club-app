@@ -1,38 +1,23 @@
 import { useState } from 'react';
 
-import { useQueryClient } from '@tanstack/react-query';
-
 import { DataTable, DataTableToolbar } from '@/components/shared/table';
-import { ImportCSVModal } from '@/components/shared/table/import-csv-modal';
 import { useDebounce } from '@/hooks/use-debounce';
-import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
 import { FilterConfig } from '@/lib/filters';
-import {
-  MemberFilters,
-  bulkImportMembers,
-  useGymMembers,
-} from '@/services/member';
-import { MemberListItem } from '@/types/member.types';
+import { MemberFilters, useGymMembers } from '@/services/member';
 
 import { columns } from '../table/all-members-columns';
 
 type AllMembersTabProps = {
   gymId?: number;
-  isImportModalOpen: boolean;
-  onCloseImportModal: () => void;
   initialPackageFilter?: string;
   initialWorkoutPlanFilter?: string;
 };
 
 export function AllMembersTab({
   gymId,
-  isImportModalOpen,
-  onCloseImportModal,
   initialPackageFilter,
   initialWorkoutPlanFilter,
 }: AllMembersTabProps) {
-  const queryClient = useQueryClient();
-  const { requireLimitAccess } = useSubscriptionAccess();
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearch = useDebounce(searchTerm, 500);
   const [selectedFilters, setSelectedFilters] = useState<{
@@ -167,86 +152,29 @@ export function AllMembersTab({
     }));
   };
 
-  const requiredFields = [
-    'name',
-    'package',
-    'email',
-    'phone',
-    'feeStatus',
-    'address',
-    'bloodGroup',
-    'dob',
-    'gender',
-  ];
-
-  const memberTransformations = (
-    row: Partial<MemberListItem>
-  ): Partial<MemberListItem> => {
-    const { ...memberData } = row;
-    return {
-      ...memberData,
-      package: row.package || 'Monthly',
-      feeStatus: row.feeStatus
-        ? ((['paid', 'unpaid', 'partially_paid'].includes(
-            row.feeStatus.toLowerCase()
-          )
-            ? row.feeStatus.toLowerCase().replace(/\s/g, '_')
-            : 'unpaid') as 'paid' | 'partially_paid' | 'unpaid')
-        : 'unpaid',
-    };
-  };
-
   return (
-    <>
-      <DataTable
-        columns={columns}
-        data={gymMembers}
-        totalCount={totalCount}
-        pageSize={memberFilters.pageSize!}
-        currentPage={memberFilters.page!}
-        onPageChange={(page) => setMemberFilters((prev) => ({ ...prev, page }))}
-        onPageSizeChange={(pageSize) =>
-          setMemberFilters((prev) => ({ ...prev, pageSize, page: 1 }))
-        }
-        isLoading={isFetching}
-        toolbar={(table) => (
-          <DataTableToolbar
-            table={table}
-            onSearch={handleSearch}
-            searchValue={searchTerm}
-            onFilterChange={handleFilterChange}
-            onResetFilters={handleResetFilters}
-            selectedFilters={selectedFilters}
-            filters={dynamicFilters}
-          />
-        )}
-      />
-
-      <ImportCSVModal<MemberListItem>
-        isOpen={isImportModalOpen}
-        onClose={onCloseImportModal}
-        onImport={async (items) => {
-          const allowed = requireLimitAccess(
-            'maxMembers',
-            totalCount + items.length,
-            {
-              title: 'Member limit reached',
-              message: 'Upgrade your plan to import more members.',
-            }
-          );
-          if (!allowed) return;
-          const result = await bulkImportMembers(items);
-          if (result.success) {
-            await queryClient.invalidateQueries({
-              queryKey: ['gymMembers'],
-            });
-          } else {
-            throw new Error(result.error);
-          }
-        }}
-        requiredFields={requiredFields}
-        transformations={memberTransformations}
-      />
-    </>
+    <DataTable
+      columns={columns}
+      data={gymMembers}
+      totalCount={totalCount}
+      pageSize={memberFilters.pageSize!}
+      currentPage={memberFilters.page!}
+      onPageChange={(page) => setMemberFilters((prev) => ({ ...prev, page }))}
+      onPageSizeChange={(pageSize) =>
+        setMemberFilters((prev) => ({ ...prev, pageSize, page: 1 }))
+      }
+      isLoading={isFetching}
+      toolbar={(table) => (
+        <DataTableToolbar
+          table={table}
+          onSearch={handleSearch}
+          searchValue={searchTerm}
+          onFilterChange={handleFilterChange}
+          onResetFilters={handleResetFilters}
+          selectedFilters={selectedFilters}
+          filters={dynamicFilters}
+        />
+      )}
+    />
   );
 }
