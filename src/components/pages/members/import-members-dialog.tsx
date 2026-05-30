@@ -361,8 +361,8 @@ export function MemberImportDialog({
               </div>
 
               <div className="text-sm text-secondary-blue-300">
-                Match your file&apos;s columns to the fields below. Required fields
-                must be mapped.
+                Match your file&apos;s columns to the fields below. Required
+                fields must be mapped.
               </div>
 
               <div className="space-y-3">
