@@ -1,11 +1,7 @@
-//TODO: Re-enable import functionality when ready
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 
-import {
-  // Download,
-  Plus,
-} from 'lucide-react';
+import { Download, Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { useGymFormOptions } from '@/hooks/use-gymform-options';
@@ -25,7 +21,7 @@ interface MembersHeaderProps {
 }
 
 export const MembersHeader = ({
-  // onImportClick,
+  onImportClick,
   onAddNewClick,
   isOpen,
   closeSheet,
@@ -63,10 +59,10 @@ export const MembersHeader = ({
   return (
     <div className="flex items-center justify-end flex-wrap gap-2">
       <div className="flex items-center space-x-2 flex-wrap">
-        {/* <Button variant="outline" className="h-10" onClick={onImportClick}>
-          <Download className=" h-4 w-4" />
+        <Button variant="outline" className="h-10" onClick={onImportClick}>
+          <Download className="h-4 w-4" />
           Import
-        </Button> */}
+        </Button>
         <Button className="h-10" onClick={handleAddNewClick}>
           <Plus className="h-4 w-4" />
           Add new

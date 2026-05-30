@@ -297,6 +297,43 @@ export const useMemberFreezeHistory = (id: string | number, enabled = true) => {
   });
 };
 
+export type ImportMembersResult = {
+  status: string;
+  message: string;
+  totalRows: number;
+  imported: number;
+  skipped: number;
+  errors: Array<{ row: number; name: string; reason: string }>;
+};
+
+export const importMembersCSV = async (
+  csvBlob: Blob,
+  gymId: number,
+  membershipPlanId: number
+): Promise<{
+  success: boolean;
+  data?: ImportMembersResult;
+  error?: string;
+}> => {
+  try {
+    const form = new FormData();
+    form.append('gymId', String(gymId));
+    form.append('membershipPlanId', String(membershipPlanId));
+    form.append('file', csvBlob, 'import.csv');
+    const response = await api.post<ImportMembersResult>(
+      '/Member/import',
+      form
+    );
+    return { success: true, data: response };
+  } catch (error) {
+    console.error('Error during member CSV import:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Import failed',
+    };
+  }
+};
+
 export const bulkImportMembers = async (members: MemberListItem[]) => {
   try {
     const response = await api.post('/Gym/bulk-import-members', members);
