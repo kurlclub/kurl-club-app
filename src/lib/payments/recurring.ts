@@ -23,9 +23,12 @@ export type ApiRecurringPaymentMember = {
   profilePicture?: string;
   photoPath?: string | null;
   currentCycle?: ApiRecurringPaymentCycle | null;
+  advanceCycle?: ApiRecurringPaymentCycle | null;
   previousCycles?: ApiRecurringPaymentCycle[] | null;
   totalDebtCycles: number;
   totalDebtAmount: number;
+  hasAdvancePayment?: boolean;
+  advancePaidAmount?: number;
   paymentStatus?: OverallPaymentStatus;
   overallPaymentStatus?: OverallPaymentStatus;
 };
@@ -66,6 +69,7 @@ export const normalizeRecurringPaymentMember = (
     ...rest,
     photoPath: photoPath ?? undefined,
     currentCycle: normalizeRecurringPaymentCycle(currentCycle),
+    advanceCycle: normalizeRecurringPaymentCycle(member.advanceCycle) ?? null,
     previousCycles: (previousCycles ?? [])
       .map((cycle) => normalizeRecurringPaymentCycle(cycle))
       .filter((cycle): cycle is PaymentCycle => Boolean(cycle)),
@@ -82,7 +86,7 @@ export const getRecurringFullSettlementAmount = (
     'totalDebtAmount' | 'currentCycle'
   > | null
 ): number =>
-  member?.totalDebtAmount ?? member?.currentCycle?.pendingAmount ?? 0;
+  member?.totalDebtAmount || member?.currentCycle?.pendingAmount || 0;
 
 export const getRecurringDisplayCycle = (
   member?: Pick<

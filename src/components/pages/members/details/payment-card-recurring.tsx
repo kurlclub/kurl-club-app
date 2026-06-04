@@ -13,7 +13,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { FormOptionsResponse } from '@/hooks/use-gymform-options';
-import { getRecurringDisplayDueDate } from '@/lib/payments/recurring';
 import {
   calculateDaysRemaining,
   formatDateTime,
@@ -47,12 +46,14 @@ export function RecurringPaymentCard({
     );
   }
 
+  const isAdvanceCyclePaid =
+    Boolean(member.hasAdvancePayment) ||
+    Boolean(member.advanceCycle?.isPaidInAdvance);
   const status = getPaymentBadgeStatus(
     currentCycle.cyclePaymentStatus,
     currentCycle.pendingAmount
   );
-  const displayDueDate =
-    getRecurringDisplayDueDate(member) || currentCycle.dueDate;
+  const displayDueDate = currentCycle.dueDate;
   const daysRemaining = calculateDaysRemaining(displayDueDate);
   const outstandingAmount = member.totalDebtAmount;
 
@@ -139,9 +140,16 @@ export function RecurringPaymentCard({
             <Calendar className="h-3 w-3" />
             Current Cycle Timeline
           </span>
-          <span className="text-secondary-blue-50 text-sm capitalize">
-            {planName}
-          </span>
+          <div className="flex flex-col items-end gap-0.5">
+            <span className="text-secondary-blue-50 text-sm capitalize">
+              {planName}
+            </span>
+            {isAdvanceCyclePaid ? (
+              <span className="text-primary-green-200 text-[11px]">
+                Next cycle paid in advance
+              </span>
+            ) : null}
+          </div>
         </div>
 
         <div className="relative">

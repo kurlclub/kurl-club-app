@@ -7,6 +7,7 @@ import { IndianRupee, Users } from 'lucide-react';
 
 import InfoCard from '@/components/shared/cards/info-card';
 import { TableSkeleton } from '@/components/shared/table';
+import { useAppDialog } from '@/hooks/use-app-dialog';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useSheet } from '@/hooks/use-sheet';
 import { FilterConfig } from '@/lib/filters';
@@ -33,6 +34,7 @@ export function CompletedTab() {
     openSheet: openInvoice,
     closeSheet: closeInvoice,
   } = useSheet();
+  const { showConfirm } = useAppDialog();
 
   const { gymBranch } = useGymBranch();
   const gymId = gymBranch?.gymId || 0;
@@ -63,8 +65,16 @@ export function CompletedTab() {
 
   const handleRecord = (member: MemberPaymentDetails) => {
     if (member.billingType === 'Recurring') {
-      setSelectedPayment(member);
-      openSheet();
+      showConfirm({
+        title: 'Current Cycle Paid',
+        description:
+          'This member has already paid for the current cycle. Do you want to collect an advance payment?',
+        confirmLabel: 'Collect Advance',
+        onConfirm: () => {
+          setSelectedPayment(member);
+          openSheet();
+        },
+      });
     }
   };
 

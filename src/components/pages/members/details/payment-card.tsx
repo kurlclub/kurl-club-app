@@ -5,6 +5,7 @@ import React from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAppDialog } from '@/hooks/use-app-dialog';
 import { FormOptionsResponse } from '@/hooks/use-gymform-options';
 import { useSheet } from '@/hooks/use-sheet';
 import { useMemberPaymentDetails } from '@/services/member';
@@ -24,6 +25,7 @@ interface PaymentCardProps {
 
 function PaymentCard({ memberId, formOptions, isFrozen }: PaymentCardProps) {
   const { data: paymentData, isLoading } = useMemberPaymentDetails(memberId);
+  const { showConfirm } = useAppDialog();
   const { isOpen, openSheet, closeSheet } = useSheet();
   const {
     isOpen: isInvoiceOpen,
@@ -56,13 +58,37 @@ function PaymentCard({ memberId, formOptions, isFrozen }: PaymentCardProps) {
 
   const member = paymentData.data;
 
+  const handleRecordRecurringPayment = (
+    recurringMember: RecurringPaymentMember
+  ) => {
+    const outstandingAmount =
+      recurringMember.totalDebtAmount ||
+      recurringMember.currentCycle?.pendingAmount ||
+      0;
+
+    if (outstandingAmount > 0) {
+      openSheet();
+      return;
+    }
+
+    showConfirm({
+      title: 'Current Cycle Paid',
+      description:
+        'This member has already paid for the current cycle. Do you want to collect an advance payment?',
+      confirmLabel: 'Collect Advance',
+      onConfirm: openSheet,
+    });
+  };
+
   return (
     <>
       {member.billingType === 'Recurring' ? (
         <RecurringPaymentCard
           member={member}
           formOptions={formOptions}
-          onRecordPayment={openSheet}
+          onRecordPayment={() =>
+            handleRecordRecurringPayment(member as RecurringPaymentMember)
+          }
           onGenerateInvoice={openInvoice}
           isFrozen={isFrozen}
         />
