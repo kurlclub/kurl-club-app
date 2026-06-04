@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 
+import { Lock } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ import {
   useSubjectPermissions,
   useUpdateSubjectPermissions,
 } from '@/services/access/access_service';
+import { useStaffByID } from '@/services/staff';
 import type {
   AccessModuleDefinition,
   AccessSubjectPermission,
@@ -128,6 +130,11 @@ function Permissions({
   const gymId = gymBranch?.gymId ?? 0;
   const subjectId = Number(staffId) || 0;
   const subjectType = staffRole as AccessSubjectType;
+  const { data: staffDetails, isLoading: isStaffLoading } = useStaffByID(
+    staffId,
+    staffRole
+  );
+  const hasCredentials = Boolean(staffDetails?.username?.trim());
   const { data: accessModules = [], isLoading: isModulesLoading } =
     useAccessModules();
   const {
@@ -194,6 +201,34 @@ function Permissions({
     setHasUnsavedChanges(true);
   };
 
+  const applyBulkChange = (
+    build: (base: PermissionState) => PermissionState
+  ) => {
+    setPermissions((currentPermissions) =>
+      build(hasUnsavedChanges ? currentPermissions : serverPermissions)
+    );
+    setHasUnsavedChanges(true);
+  };
+
+  const handleModuleAllChange = (module: string, checked: boolean) =>
+    applyBulkChange((base) => ({
+      ...base,
+      [module]: Object.fromEntries(
+        actions.map((action) => [action.key, checked])
+      ) as Record<PermissionAction, boolean>,
+    }));
+
+  const handleSelectAllChange = (checked: boolean) =>
+    applyBulkChange(() => createInitialPermissions(permissionModules, checked));
+
+  const isModuleAllEnabled = (moduleKey: string) =>
+    actions.every((action) =>
+      Boolean(activePermissions[moduleKey]?.[action.key])
+    );
+
+  const isAllEnabled =
+    totalPermissionCount > 0 && enabledPermissionCount === totalPermissionCount;
+
   const handleSavePermissions = () => {
     const payload = {
       permissions: permissionModules.map((module) => ({
@@ -226,7 +261,27 @@ function Permissions({
     hasUnsavedChanges &&
     !updatePermissions.isPending;
 
-  // TODO: Add "Enable all permissions" switch back when needed, currently removed as per design update
+  if (!isStaffLoading && !hasCredentials) {
+    return (
+      <section className="overflow-hidden rounded-lg border border-primary-blue-300 bg-secondary-blue-500">
+        <div className="flex flex-col items-center justify-center gap-4 px-6 py-12 text-center sm:py-16">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full border border-primary-blue-300 bg-secondary-blue-400/60">
+            <Lock className="h-6 w-6 text-primary-blue-100" />
+          </div>
+          <div className="max-w-md space-y-2">
+            <h5 className="text-base font-medium leading-normal text-white">
+              Roles & Permissions are locked
+            </h5>
+            <p className="text-sm leading-normal text-white/60">
+              This {staffRole === 'trainer' ? 'trainer' : 'staff'} doesn&apos;t
+              have login credentials yet. Set a username and password from the
+              profile sidebar to unlock roles and permissions.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="overflow-hidden rounded-lg border border-primary-blue-300 bg-secondary-blue-500">
@@ -248,6 +303,15 @@ function Permissions({
         </div>
 
         <div className="flex items-center gap-3">
+          <label className="inline-flex items-center gap-2 text-sm text-white/80">
+            <span>Enable all permissions</span>
+            <Switch
+              aria-label="Select all permissions"
+              checked={isAllEnabled}
+              onCheckedChange={handleSelectAllChange}
+              disabled={isLoading || permissionModules.length === 0}
+            />
+          </label>
           <Button onClick={handleSavePermissions} disabled={!canSave}>
             {updatePermissions.isPending ? 'Saving...' : 'Save Permissions'}
           </Button>
@@ -255,14 +319,14 @@ function Permissions({
       </div>
 
       <div className="hidden lg:block">
-        <div className="grid grid-cols-[minmax(160px,1.4fr)_repeat(4,minmax(64px,1fr))] border-b border-primary-blue-300 bg-secondary-blue-400/60 px-4 py-3 text-sm font-medium text-white/70 xl:grid-cols-[minmax(220px,1.4fr)_repeat(4,minmax(92px,1fr))] xl:px-6">
+        <div className="grid grid-cols-[minmax(160px,1.4fr)_repeat(5,minmax(64px,1fr))] border-b border-primary-blue-300 bg-secondary-blue-400/60 px-4 py-3 text-sm font-medium text-white/70 xl:grid-cols-[minmax(220px,1.4fr)_repeat(5,minmax(92px,1fr))] xl:px-6">
           <div>Management area</div>
           {actions.map((action) => (
             <div key={action.key} className="text-center">
               {action.label}
             </div>
           ))}
-          {/* <div className="text-center">All</div> */}
+          <div className="text-center">All</div>
         </div>
 
         <div className="divide-y divide-primary-blue-300">
@@ -270,7 +334,7 @@ function Permissions({
             return (
               <div
                 key={module.moduleKey}
-                className="grid grid-cols-[minmax(160px,1.4fr)_repeat(4,minmax(64px,1fr))] items-center px-4 py-4 xl:grid-cols-[minmax(220px,1.4fr)_repeat(4,minmax(92px,1fr))] xl:px-6"
+                className="grid grid-cols-[minmax(160px,1.4fr)_repeat(5,minmax(64px,1fr))] items-center px-4 py-4 xl:grid-cols-[minmax(220px,1.4fr)_repeat(5,minmax(92px,1fr))] xl:px-6"
               >
                 <div className="pr-3 text-sm font-normal leading-normal text-white">
                   {module.label}
@@ -292,6 +356,15 @@ function Permissions({
                     />
                   </div>
                 ))}
+                <div className="flex justify-center">
+                  <PermissionSwitch
+                    label={`All permissions for ${module.label}`}
+                    checked={isModuleAllEnabled(module.moduleKey)}
+                    onCheckedChange={(checked) =>
+                      handleModuleAllChange(module.moduleKey, checked)
+                    }
+                  />
+                </div>
               </div>
             );
           })}
@@ -306,6 +379,16 @@ function Permissions({
                 <h6 className="min-w-0 text-sm font-medium leading-normal text-white">
                   {module.label}
                 </h6>
+                <label className="inline-flex shrink-0 items-center gap-2 text-sm text-white/80">
+                  <span>All</span>
+                  <Switch
+                    aria-label={`All permissions for ${module.label}`}
+                    checked={isModuleAllEnabled(module.moduleKey)}
+                    onCheckedChange={(checked) =>
+                      handleModuleAllChange(module.moduleKey, checked)
+                    }
+                  />
+                </label>
               </div>
               <div className="grid grid-cols-[repeat(auto-fit,minmax(128px,1fr))] gap-3">
                 {actions.map((action) => (

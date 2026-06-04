@@ -169,6 +169,7 @@ export const useTrainerAssignedMembers = (
     enabled: !!gymId && !!trainerId,
     staleTime: 1000 * 60,
     retry: 1,
+    placeholderData: (previousData) => previousData,
   });
 };
 

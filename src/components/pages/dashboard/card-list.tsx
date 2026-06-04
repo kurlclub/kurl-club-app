@@ -1,12 +1,12 @@
 import React from 'react';
 
-import { IndianRupee, Users } from 'lucide-react';
+import { IndianRupee, UserPlus, Users } from 'lucide-react';
 
 import { useGymBranch } from '@/providers/gym-branch-provider';
 import { useDashboardData } from '@/services/dashboard';
 
 import InfoCard from '../../shared/cards/info-card';
-import { KDumbbell, KSkipper } from '../../shared/icons/index';
+import { KSkipper } from '../../shared/icons/index';
 
 interface CardListProps {
   fromDate?: string;
@@ -44,7 +44,7 @@ function CardList({ fromDate, toDate }: CardListProps) {
     },
     {
       id: 4,
-      icon: <KDumbbell />,
+      icon: <UserPlus size={20} strokeWidth={1.75} color="#151821" />,
       color: 'semantic-blue-500',
       title: 'New Signups',
       count: dashboardData?.newSignups || 0,
