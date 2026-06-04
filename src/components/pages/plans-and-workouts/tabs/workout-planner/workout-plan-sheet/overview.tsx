@@ -21,6 +21,7 @@ import type { WorkoutPlan } from '@/types/workoutplan';
 interface OverviewProps {
   plan: WorkoutPlan;
   planMembers?: MemberListItem[];
+  planMemberCount?: number;
   isEditMode: boolean;
   isNewPlan?: boolean;
   onUpdatePlan: (updatedPlan: WorkoutPlan) => void;
@@ -33,6 +34,7 @@ interface OverviewProps {
 export function Overview({
   plan,
   planMembers = [],
+  planMemberCount = planMembers.length,
   isEditMode,
   isNewPlan = false,
   onUpdatePlan,
@@ -95,12 +97,12 @@ export function Overview({
                     </Avatar>
                   ))}
                 </div>
-                {planMembers.length > 3 && (
+                {planMemberCount > 3 && (
                   <span className="ml-1 text-sm text-semantic-blue-500 underline">
-                    + {planMembers.length - 3} others
+                    + {planMemberCount - 3} others
                   </span>
                 )}
-                {planMembers.length === 0 && (
+                {planMemberCount === 0 && (
                   <span className="text-sm text-gray-400">
                     No members assigned
                   </span>

@@ -1,13 +1,12 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
-import { Mail, Sparkles } from 'lucide-react';
+import { Check, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -291,105 +290,79 @@ function RegisterForm() {
       </AuthWrapper>
 
       <Dialog open={isSuccessOpen} onOpenChange={setIsSuccessOpen}>
-        <DialogContent className="max-w-md border-0 bg-linear-to-br from-primary-blue-500 via-secondary-blue-500 to-primary-blue-600 text-white p-0 overflow-hidden">
-          <div className="relative px-6 pt-8 text-center">
-            <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center animate-bounce">
-                <Image
-                  src={'/assets/svg/success.svg'}
-                  alt="Success"
-                  width={32}
-                  height={32}
-                  className="w-auto"
+        <DialogContent className="max-w-sm overflow-hidden border border-white/10 bg-secondary-blue-700 p-0 text-white">
+          <div className="relative flex flex-col items-center px-6 pt-10 text-center">
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-[radial-gradient(60%_100%_at_50%_0%,rgba(211,247,2,0.16),transparent)]" />
+
+            <div className="relative mb-5">
+              <span className="absolute inset-0 animate-ping rounded-full bg-primary-green-500/20" />
+              <div className="relative flex size-16 items-center justify-center rounded-full bg-primary-green-500 shadow-[0_0_30px_-4px_rgba(211,247,2,0.6)]">
+                <Check
+                  className="size-8 text-primary-blue-500"
+                  strokeWidth={3}
                 />
               </div>
             </div>
 
-            <DialogTitle className="text-2xl font-bold">
+            <DialogTitle className="text-xl font-bold tracking-tight">
               Registration Successful!
             </DialogTitle>
-            <p className="text-sm text-white/80 mt-1">
-              Your account has been created
-            </p>
+            <DialogDescription className="mt-2 max-w-xs text-sm leading-relaxed text-white/60">
+              Thanks for registering! Our team will review your details and
+              reach out shortly to help set up your KurlClub account.
+            </DialogDescription>
           </div>
 
-          <div className="px-6 py-3 space-y-5">
-            <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg p-3">
-              <DialogDescription className="text-[14px] text-white leading-relaxed">
-                Thanks for registering! Our team will review your details and
-                contact you shortly to help set up your KurlClub account.
-              </DialogDescription>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-start gap-3 text-sm">
-                <div className="w-5 h-5 rounded-full bg-primary-green-400/20 border border-primary-green-400 flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-primary-green-300 text-xs font-bold">
-                    ✓
-                  </span>
-                </div>
-                <div>
-                  <p className="font-medium text-white">Account Created</p>
-                  <p className="text-white/70 text-xs">
-                    You can now log in once approved
-                  </p>
-                </div>
+          <div className="mt-6 space-y-2.5 px-6">
+            <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/[0.03] px-3.5 py-3">
+              <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-green-500/15 text-primary-green-500">
+                <Check className="size-4" strokeWidth={3} />
               </div>
-
-              <div className="flex items-start gap-3 text-sm">
-                <div className="w-5 h-5 rounded-full bg-primary-green-400/20 border border-primary-green-400 flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-primary-green-300 text-xs font-bold">
-                    ✓
-                  </span>
-                </div>
-                <div>
-                  <p className="font-medium text-white">Email Sent</p>
-                  <p className="text-white/70 text-xs">
-                    Check your inbox for confirmation
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-secondary-yellow-150/10 border border-secondary-yellow-150/20 rounded-lg p-3">
-              <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="h-4 w-4 text-secondary-yellow-150" />
-                <p className="text-sm font-semibold text-secondary-yellow-150">
-                  Need Help?
+              <div>
+                <p className="text-sm font-medium text-white">
+                  Account created
+                </p>
+                <p className="text-xs text-white/50">
+                  You can log in once your account is approved
                 </p>
               </div>
-              <p className="text-xs text-white/70 mb-3">
-                Our support team is ready to help you get started.
-              </p>
-              <Link
-                href="mailto:support@kurlclub.com"
-                className="inline-flex items-center gap-2 px-3 py-2 bg-primary-green-500 text-primary-blue-500 hover:bg-primary-green-600 text-sm font-medium rounded-md transition-colors"
-              >
-                <Mail className="h-3.5 w-3.5" />
-                Contact Support
-              </Link>
+            </div>
+
+            <div className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/[0.03] px-3.5 py-3">
+              <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-green-500/15 text-primary-green-500">
+                <Mail className="size-4" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-white">
+                  Confirmation email sent
+                </p>
+                <p className="text-xs text-white/50">
+                  Check your inbox for the details
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="px-6 py-4 bg-white/5 border-t border-white/10 flex gap-3">
+          <div className="mt-6 flex flex-col gap-3 border-t border-white/10 px-6 py-5">
             <Button
               type="button"
-              variant="outline"
-              onClick={() => setIsSuccessOpen(false)}
-              className="flex-1 h-10"
-            >
-              Close
-            </Button>
-            <Button
-              type="button"
+              className="h-11 w-full"
               onClick={() => {
                 setIsSuccessOpen(false);
                 window.location.href = '/auth/login';
               }}
-              className="flex-1 h-10"
             >
               Go to Login
             </Button>
+            <p className="text-center text-xs text-white/40">
+              Need help?{' '}
+              <Link
+                href="mailto:support@kurlclub.com"
+                className="inline-flex items-center gap-1 font-medium text-primary-green-500 hover:underline"
+              >
+                Contact support
+              </Link>
+            </p>
           </div>
         </DialogContent>
       </Dialog>

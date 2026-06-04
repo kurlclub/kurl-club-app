@@ -2,6 +2,8 @@
 
 import { useFormContext } from 'react-hook-form';
 
+import { Info } from 'lucide-react';
+
 import { FieldColumn, FieldRow } from '@/components/shared/form/field-layout';
 import {
   KFormField,
@@ -9,6 +11,12 @@ import {
 } from '@/components/shared/form/k-formfield';
 import ProfilePictureUploader from '@/components/shared/uploaders/profile-uploader';
 import { FormControl } from '@/components/ui/form';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { bloodGroupOptions, genderOptions } from '@/lib/constants';
 
 interface AdministratorFormProps {
@@ -114,10 +122,44 @@ export default function AdministratorForm({
         </FieldColumn>
       </FieldRow>
 
-      {/* User Credentials */}
+      {/* Address Details */}
       <h5 className="text-white text-base font-normal leading-normal mt-8!">
-        User Credentials
+        Address Details
       </h5>
+      <KFormField
+        fieldType={KFormFieldType.TEXTAREA}
+        control={form.control}
+        name="AddressLine"
+        label="Address Line"
+        disabled={isSubmitting}
+        maxLength={250}
+      />
+
+      {/* User Credentials */}
+      <div className="mt-8! flex items-center gap-2">
+        <h5 className="text-white text-base font-normal leading-normal">
+          User Credentials (Optional)
+        </h5>
+        <TooltipProvider delayDuration={100}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex items-center justify-center rounded-full   hover:text-primary-green-500 cursor-pointer"
+                aria-label="User credentials info"
+              >
+                <Info className="h-3.5 w-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent
+              side="top"
+              className="max-w-56 bg-secondary-blue-900"
+            >
+              Add credentials to give separate login for staff/trainer.
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
       <div
         aria-hidden
         style={{
@@ -159,19 +201,6 @@ export default function AdministratorForm({
         placeholder="Enter password"
         disabled={isSubmitting}
         autoComplete="new-password"
-      />
-
-      {/* Address Details */}
-      <h5 className="text-white text-base font-normal leading-normal mt-8!">
-        Address Details
-      </h5>
-      <KFormField
-        fieldType={KFormFieldType.TEXTAREA}
-        control={form.control}
-        name="AddressLine"
-        label="Address Line"
-        disabled={isSubmitting}
-        maxLength={250}
       />
     </>
   );

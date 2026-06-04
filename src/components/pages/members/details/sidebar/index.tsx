@@ -16,16 +16,19 @@ import { PersonalInfoSection } from './personal-info-section';
 type SectionKey = 'basicDetails' | 'personalInfo';
 
 export function Sidebar({
+  memberId,
   isEditing,
   details,
   updateMemberDetail,
   handleSave,
   toggleEdit,
+  setIsEditing,
   formOptions,
 }: {
   memberId: string;
   isEditing: boolean;
   toggleEdit: () => void;
+  setIsEditing: (isEditing: boolean) => void;
   details: MemberDetails | null;
   handleSave: () => void;
   updateMemberDetail: <K extends keyof MemberDetails>(
@@ -70,9 +73,11 @@ export function Sidebar({
       key: 'basicDetails' as SectionKey,
       content: (
         <BasicDetailsSection
+          memberId={memberId}
           isEditing={isEditing}
           details={details}
           onUpdate={updateMemberDetail}
+          setIsEditing={setIsEditing}
           formOptions={formOptions || undefined}
         />
       ),

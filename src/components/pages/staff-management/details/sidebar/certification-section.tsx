@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 
 import { X } from 'lucide-react';
 
@@ -23,11 +23,21 @@ export function CertificationSection({
 }: EditableSectionProps) {
   const { gymBranch } = useGymBranch();
   const { formOptions } = useGymFormOptions(gymBranch?.gymId);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Parse certifications from JSON string
   const certifications = details?.certification
     ? JSON.parse(details.certification)
     : [];
+
+  const filteredCertificates = useMemo(() => {
+    const allCertificates = formOptions?.certificatesOptions ?? [];
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+    if (!normalizedSearch) return allCertificates;
+    return allCertificates.filter((certificate) =>
+      certificate.name.toLowerCase().includes(normalizedSearch)
+    );
+  }, [formOptions?.certificatesOptions, searchTerm]);
 
   const handleAddCertification = (certificationName: string) => {
     if (!certifications.includes(certificationName)) {
@@ -57,15 +67,15 @@ export function CertificationSection({
               <Badge
                 key={index}
                 variant="secondary"
-                className="bg-primary-blue-400/60 text-white flex items-center gap-1 px-2 py-1"
+                className="bg-primary-blue-400/60 text-white flex items-start gap-1 px-2 py-1 max-w-full min-w-0 text-wrap break-words"
               >
-                {cert}
+                <span className="min-w-0 break-words">{cert}</span>
                 {isEditing && (
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    className="h-4 w-4 p-0 hover:bg-transparent"
+                    className="h-4 w-4 p-0 hover:bg-transparent shrink-0"
                     onClick={() => handleRemoveCertification(cert)}
                   >
                     <X className="h-3 w-3" />
@@ -83,12 +93,27 @@ export function CertificationSection({
         {/* Add certification dropdown in edit mode */}
         {isEditing && (
           <div className="mt-2">
-            <Select onValueChange={handleAddCertification}>
+            <Select
+              onValueChange={handleAddCertification}
+              onOpenChange={(open) => {
+                if (!open) setSearchTerm('');
+              }}
+            >
               <SelectTrigger className="border-0 border-b rounded-none focus:outline-hidden focus:shadow-none focus:ring-0 p-0 h-auto text-[15px] text-white font-normal leading-normal pb-2 border-primary-blue-300 focus:border-white hover:border-white k-transition focus:outline-0">
                 <SelectValue placeholder="Add certification..." />
               </SelectTrigger>
               <SelectContent className="shad-select-content">
-                {formOptions?.certificatesOptions?.map((certificate) => (
+                <div className="sticky top-0 z-10 px-2 py-2 bg-secondary-blue-700 border-b border-primary-blue-400">
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
+                    onKeyDown={(event) => event.stopPropagation()}
+                    placeholder="Search certifications..."
+                    className="w-full h-9 px-3 rounded-md border border-primary-blue-400 bg-secondary-blue-500 text-sm text-white placeholder:text-primary-blue-100 outline-none focus:border-primary-green-700"
+                  />
+                </div>
+                {filteredCertificates.map((certificate) => (
                   <SelectItem
                     className="shad-select-item"
                     key={certificate.id}
@@ -98,6 +123,11 @@ export function CertificationSection({
                     {certificate.name}
                   </SelectItem>
                 ))}
+                {filteredCertificates.length === 0 && (
+                  <div className="px-3 py-2 text-sm text-primary-blue-100">
+                    No results found.
+                  </div>
+                )}
               </SelectContent>
             </Select>
           </div>

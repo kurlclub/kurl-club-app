@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/dialog';
 import { Form } from '@/components/ui/form';
 import { updateStaff } from '@/services/staff';
-import { StaffDetails } from '@/types/staff';
+import { StaffDetails, StaffType } from '@/types/staff';
 
 const setCredentialsSchema = z.object({
   username: z.string().email('Please enter a valid username email').optional(),
@@ -32,6 +32,7 @@ interface StaffCredentialsDialogProps {
   onOpenChange: (open: boolean) => void;
   id: number;
   details: StaffDetails | null;
+  role?: StaffType;
   currentUsername?: string | null;
   onSuccess?: (username: string) => void;
 }
@@ -41,6 +42,7 @@ export function StaffCredentialsDialog({
   onOpenChange,
   id,
   details,
+  role = 'staff',
   currentUsername,
   onSuccess,
 }: StaffCredentialsDialogProps) {
@@ -59,6 +61,15 @@ export function StaffCredentialsDialog({
     () => (hasUsername ? 'Reset Password' : 'Set Username & Password'),
     [hasUsername]
   );
+
+  useEffect(() => {
+    if (!open) return;
+
+    form.reset({
+      username: currentUsername || '',
+      password: '',
+    });
+  }, [currentUsername, form, open]);
 
   const onSubmit = async (data: SetCredentialsData) => {
     if (!details) {
@@ -104,7 +115,7 @@ export function StaffCredentialsDialog({
 
       formData.append('Password', data.password);
 
-      const response = await updateStaff(id, formData, 'staff');
+      const response = await updateStaff(id, formData, role);
 
       if (response.status === 'Success') {
         toast.success(

@@ -15,7 +15,7 @@ import { adminstratorFormSchema, trainerFormSchema } from '@/schemas';
 import { createStaff } from '@/services/staff';
 import { StaffType } from '@/types/staff';
 
-import StaffForm from './staff-forms';
+import StaffForm, { StaffTypeCards } from './staff-forms';
 
 type CreateStaffDetailsProps = {
   closeSheet: () => void;
@@ -27,6 +27,48 @@ type CreateStaffDetailsProps = {
 type TrainerFormValues = z.infer<typeof trainerFormSchema>;
 type AdministratorFormValues = z.infer<typeof adminstratorFormSchema>;
 
+const selectedStaffTypeMeta: Record<
+  StaffType,
+  {
+    title: string;
+  }
+> = {
+  trainer: {
+    title: 'Trainer',
+  },
+  staff: {
+    title: 'Staff',
+  },
+};
+
+const StaffSheetTitle = ({
+  staffType,
+  onChange,
+}: {
+  staffType?: StaffType;
+  onChange: () => void;
+}) => {
+  const title = staffType
+    ? `Add ${selectedStaffTypeMeta[staffType].title}`
+    : 'Choose Staff Type';
+
+  return (
+    <div className="flex items-center gap-3 pr-10">
+      <span className="min-w-0 truncate">{title}</span>
+      {staffType && (
+        <Button
+          type="button"
+          variant="outlinePrimary"
+          size="sm"
+          onClick={onChange}
+        >
+          Change
+        </Button>
+      )}
+    </div>
+  );
+};
+
 export const AddStaff: React.FC<CreateStaffDetailsProps> = ({
   isOpen,
   closeSheet,
@@ -35,7 +77,7 @@ export const AddStaff: React.FC<CreateStaffDetailsProps> = ({
 }) => {
   const { gymBranch } = useGymBranch();
   const queryClient = useQueryClient();
-  const [staffType, setStaffType] = useState<StaffType>('trainer');
+  const [staffType, setStaffType] = useState<StaffType>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { requireLimitAccess } = useSubscriptionAccess();
 
@@ -74,13 +116,24 @@ export const AddStaff: React.FC<CreateStaffDetailsProps> = ({
     },
   });
 
-  const activeForm = staffType === 'trainer' ? trainerForm : adminForm;
+  const activeForm =
+    staffType === 'trainer'
+      ? trainerForm
+      : staffType === 'staff'
+        ? adminForm
+        : null;
   const activeId =
-    staffType === 'trainer' ? 'trainer-form' : 'administrator-form';
+    staffType === 'trainer'
+      ? 'trainer-form'
+      : staffType === 'staff'
+        ? 'administrator-form'
+        : undefined;
 
   const handleSubmit = async (
     data: TrainerFormValues | AdministratorFormValues
   ) => {
+    if (!staffType || !activeForm) return;
+
     const limitKey = staffType === 'trainer' ? 'maxTrainers' : 'maxStaffs';
     const currentCount = staffType === 'trainer' ? trainerCount : staffCount;
     const allowed = requireLimitAccess(limitKey, currentCount, {
@@ -100,11 +153,22 @@ export const AddStaff: React.FC<CreateStaffDetailsProps> = ({
 
       if (key === 'ProfilePicture' && value instanceof File) {
         formData.append(key, value);
-      } else if (key === 'Certification' && Array.isArray(value)) {
+      } else if (
+        key === 'Certification' &&
+        Array.isArray(value) &&
+        value.length > 0
+      ) {
         const labels = value.map((cert) => cert.label);
         formData.append(key, JSON.stringify(labels));
+      } else if (key === 'Certification') {
+        // Certifications are optional - skip when none are selected
       } else if (key === 'Email' && (!value || value === '')) {
         // Skip empty email - don't append to FormData
+      } else if (
+        (key === 'BloodGroup' || key === 'bloodGroup') &&
+        (!value || value === '')
+      ) {
+        // Blood group is optional - skip when empty
       } else if (
         (key === 'Username' || key === 'Password') &&
         (!value || value === '')
@@ -124,6 +188,7 @@ export const AddStaff: React.FC<CreateStaffDetailsProps> = ({
     if (result.success) {
       toast.success(result.success);
       activeForm.reset();
+      setStaffType(undefined);
       closeSheet();
       queryClient.invalidateQueries({
         queryKey: ['gymStaffs', gymBranch?.gymId],
@@ -136,11 +201,19 @@ export const AddStaff: React.FC<CreateStaffDetailsProps> = ({
   };
 
   const handleReset = () => {
-    if (staffType === 'trainer') {
-      trainerForm.reset();
-    } else {
-      adminForm.reset();
-    }
+    trainerForm.reset();
+    adminForm.reset();
+    setStaffType(undefined);
+  };
+
+  const handleChangeStaffType = () => {
+    setStaffType(undefined);
+  };
+
+  const handleClose = () => {
+    activeForm?.reset();
+    setStaffType(undefined);
+    closeSheet();
   };
 
   const footer = (
@@ -155,10 +228,7 @@ export const AddStaff: React.FC<CreateStaffDetailsProps> = ({
       </Button>
       <div className="flex justify-center gap-3">
         <Button
-          onClick={() => {
-            activeForm.reset();
-            closeSheet();
-          }}
+          onClick={handleClose}
           type="button"
           variant="secondary"
           className="h-11.5 min-w-22.5"
@@ -170,7 +240,7 @@ export const AddStaff: React.FC<CreateStaffDetailsProps> = ({
           form={activeId}
           type="submit"
           className="h-11.5 min-w-18.25"
-          disabled={isSubmitting}
+          disabled={isSubmitting || !staffType}
         >
           {isSubmitting ? 'Adding...' : 'Add'}
         </Button>
@@ -180,31 +250,41 @@ export const AddStaff: React.FC<CreateStaffDetailsProps> = ({
 
   return (
     <KSheet
-      className="w-112.5"
+      className="w-[536px]"
       isOpen={isOpen}
       onClose={closeSheet}
-      title="Add New Staff"
+      title={
+        <StaffSheetTitle
+          staffType={staffType}
+          onChange={handleChangeStaffType}
+        />
+      }
       footer={footer}
+      onCloseBtnClick={handleClose}
     >
-      {staffType === 'trainer' ? (
+      {!staffType ? (
+        <StaffTypeCards value={staffType} onSelect={setStaffType} />
+      ) : staffType === 'trainer' ? (
         <FormProvider {...trainerForm}>
-          <StaffForm
-            staffType={staffType}
-            onStaffTypeChange={setStaffType}
-            onSubmit={handleSubmit}
-            isSubmitting={isSubmitting}
-            gymId={gymBranch?.gymId}
-          />
+          <div>
+            <StaffForm
+              staffType={staffType}
+              onSubmit={handleSubmit}
+              isSubmitting={isSubmitting}
+              gymId={gymBranch?.gymId}
+            />
+          </div>
         </FormProvider>
       ) : (
         <FormProvider {...adminForm}>
-          <StaffForm
-            staffType={staffType}
-            onStaffTypeChange={setStaffType}
-            onSubmit={handleSubmit}
-            isSubmitting={isSubmitting}
-            gymId={gymBranch?.gymId}
-          />
+          <div>
+            <StaffForm
+              staffType={staffType}
+              onSubmit={handleSubmit}
+              isSubmitting={isSubmitting}
+              gymId={gymBranch?.gymId}
+            />
+          </div>
         </FormProvider>
       )}
     </KSheet>

@@ -11,12 +11,15 @@ import { useTabState } from '@/hooks/use-tab-state';
 import { useGymBranch } from '@/providers/gym-branch-provider';
 import { useGymMembers, usePendingOnboardingMembers } from '@/services/member';
 
+import { MemberImportDialog } from './import-members-dialog';
 import { MembersHeader } from './members-header';
 import { AllMembersTab, PendingOnboardingTab } from './tabs';
 
 export default function Members() {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const searchParams = useSearchParams();
+  const packageFilter = searchParams.get('package') || undefined;
+  const workoutPlanFilter = searchParams.get('workoutPlan') || undefined;
   const { isOpen, openSheet, closeSheet } = useSheet();
   const { gymBranch } = useGymBranch();
   const gymId = gymBranch?.gymId;
@@ -58,21 +61,31 @@ export default function Members() {
         activeTab={activeTab}
         onTabChange={handleTabChange}
         headerActions={
-          <MembersHeader
-            onImportClick={() => setIsImportModalOpen(true)}
-            onAddNewClick={openSheet}
-            isOpen={isOpen}
-            closeSheet={closeSheet}
-            gymId={gymId}
-            currentMemberCount={totalMemberCount}
-          />
+          <>
+            <MembersHeader
+              onImportClick={() => setIsImportModalOpen(true)}
+              onAddNewClick={openSheet}
+              isOpen={isOpen}
+              closeSheet={closeSheet}
+              gymId={gymId}
+              currentMemberCount={totalMemberCount}
+            />
+            {gymId && (
+              <MemberImportDialog
+                isOpen={isImportModalOpen}
+                onClose={() => setIsImportModalOpen(false)}
+                gymId={gymId}
+              />
+            )}
+          </>
         }
       >
         {activeTab === 'all-members' && (
           <AllMembersTab
+            key={`${packageFilter ?? 'all'}-${workoutPlanFilter ?? 'all'}`}
             gymId={gymId}
-            isImportModalOpen={isImportModalOpen}
-            onCloseImportModal={() => setIsImportModalOpen(false)}
+            initialPackageFilter={packageFilter}
+            initialWorkoutPlanFilter={workoutPlanFilter}
           />
         )}
         {activeTab === 'pending-onboarding' && <PendingOnboardingTab />}

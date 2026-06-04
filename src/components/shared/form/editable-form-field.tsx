@@ -73,9 +73,9 @@ export function EditableFormField(props: EditableFormFieldProps) {
         ) : (
           <div className="flex items-center gap-1">
             <p className="text-white text-[15px] leading-[140%] font-normal">
-              {displayValue}
+              {displayValue || 'N/A'}
             </p>
-            {suffix && (
+            {suffix && displayValue && (
               <span className="block text-white text-[15px] leading-[140%] font-normal">
                 {suffix}
               </span>
@@ -127,7 +127,9 @@ export function EditableFormField(props: EditableFormFieldProps) {
           </Select>
         ) : (
           <p className="text-white text-[15px] leading-[140%] font-normal">
-            {options.find((opt) => opt.value === value)?.label || value}
+            {options.find((opt) => opt.value === value)?.label ||
+              value ||
+              'N/A'}
           </p>
         )}
       </div>

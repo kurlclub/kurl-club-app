@@ -230,18 +230,25 @@ export const trainerFormSchema = z.object({
         value: z.string(),
       })
     )
-    .min(1, 'Certification is required'),
+    .optional(),
   Gender: z.string().min(1, 'Gender selection is required'),
   AddressLine: z
-    .string()
+    .string({ error: 'Address is required.' })
     .min(1, 'Address is required.')
     .max(250, 'Address must not exceed 250 characters.'),
-  BloodGroup: z.string().min(1, 'Blood group selection is required'),
-  Username: z.string().email('Please enter a valid email address'),
+  BloodGroup: z.string().optional(),
+  Username: z
+    .string()
+    .email('Please enter a valid email address')
+    .optional()
+    .or(z.literal('')),
   Password: z
     .string()
-    .min(1, 'Password is required')
-    .min(6, 'Password must be at least 6 characters'),
+    .optional()
+    .or(z.literal(''))
+    .refine((value) => !value || value.length >= 6, {
+      message: 'Password must be at least 6 characters',
+    }),
 });
 
 export const adminstratorFormSchema = z.object({
@@ -268,10 +275,10 @@ export const adminstratorFormSchema = z.object({
   Doj: z.iso.datetime('Please select a valid Date of Joining.'),
   Gender: z.string().min(1, 'Gender selection is required'),
   AddressLine: z
-    .string()
+    .string({ error: 'Address is required.' })
     .min(1, 'Address is required.')
     .max(250, 'Address must not exceed 250 characters.'),
-  bloodGroup: z.string().min(1, 'Blood group selection is required'),
+  bloodGroup: z.string().optional(),
   Username: z
     .string()
     .email('Please enter a valid email address')

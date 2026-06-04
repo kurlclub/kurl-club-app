@@ -55,6 +55,7 @@ export const fetchGymMembers = async (
     params.append('isFrozen', String(filters.isFrozen));
   }
   if (filters?.trainer) params.append('trainer', filters.trainer.toString());
+  if (filters?.workoutPlan) params.append('workoutPlan', filters.workoutPlan);
   if (filters?.sortBy) params.append('sortBy', filters.sortBy);
   if (filters?.sortOrder) params.append('sortOrder', filters.sortOrder);
 
@@ -168,6 +169,7 @@ export const useTrainerAssignedMembers = (
     enabled: !!gymId && !!trainerId,
     staleTime: 1000 * 60,
     retry: 1,
+    placeholderData: (previousData) => previousData,
   });
 };
 
@@ -193,6 +195,22 @@ export const updateMember = async (id: string | number, data: FormData) => {
     console.error('Error updating member:', error);
     throw error;
   }
+};
+
+export type UpgradeMemberPlanPayload = {
+  newMembershipPlanId: number;
+  effectiveFrom: string;
+  amountPaid: number;
+  paymentMethod: string;
+  numberOfSessions: number;
+  perSessionRate: number;
+};
+
+export const upgradeMemberPlan = async (
+  id: string | number,
+  payload: UpgradeMemberPlanPayload
+) => {
+  return api.post<MemberUpdateResponse>(`/Member/${id}/upgrade-plan`, payload);
 };
 
 export const deleteMember = async (
@@ -278,6 +296,43 @@ export const useMemberFreezeHistory = (id: string | number, enabled = true) => {
     enabled: !!id && enabled,
     staleTime: 1000 * 60,
   });
+};
+
+export type ImportMembersResult = {
+  status: string;
+  message: string;
+  totalRows: number;
+  imported: number;
+  skipped: number;
+  errors: Array<{ row: number; name: string; reason: string }>;
+};
+
+export const importMembersCSV = async (
+  csvBlob: Blob,
+  gymId: number,
+  membershipPlanId: number
+): Promise<{
+  success: boolean;
+  data?: ImportMembersResult;
+  error?: string;
+}> => {
+  try {
+    const form = new FormData();
+    form.append('gymId', String(gymId));
+    form.append('membershipPlanId', String(membershipPlanId));
+    form.append('file', csvBlob, 'import.csv');
+    const response = await api.post<ImportMembersResult>(
+      '/Member/import',
+      form
+    );
+    return { success: true, data: response };
+  } catch (error) {
+    console.error('Error during member CSV import:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Import failed',
+    };
+  }
 };
 
 export const bulkImportMembers = async (members: MemberListItem[]) => {

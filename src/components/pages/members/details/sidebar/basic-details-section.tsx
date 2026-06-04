@@ -20,6 +20,8 @@ import type {
   MemberDetails,
 } from '@/types/member.types';
 
+import { PlanUpgradeDialog } from './plan-upgrade-dialog';
+
 export interface EditableSectionProps {
   isEditing: boolean;
   details: MemberDetails | null;
@@ -30,13 +32,20 @@ export interface EditableSectionProps {
 }
 
 export function BasicDetailsSection({
+  memberId,
   isEditing,
   details,
   onUpdate,
+  setIsEditing,
   formOptions,
-}: EditableSectionProps & { formOptions?: FormOptionsResponse }) {
+}: EditableSectionProps & {
+  memberId: string;
+  setIsEditing: (isEditing: boolean) => void;
+  formOptions?: FormOptionsResponse;
+}) {
   const options = formOptions;
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
 
   return (
     <Fragment>
@@ -65,26 +74,46 @@ export function BasicDetailsSection({
       />
 
       {/* PACKAGE  */}
-      <EditableFormField
-        type="select"
-        label="Package"
-        value={
-          isEditing
-            ? details?.membershipPlanId
-              ? String(details.membershipPlanId)
-              : undefined
-            : options?.membershipPlans.find(
-                (plan) => plan.membershipPlanId === details?.membershipPlanId
-              )?.planName || 'Not Selected'
-        }
-        isEditing={isEditing}
-        onChange={(value) => onUpdate('membershipPlanId', Number(value))}
-        options={
-          options?.membershipPlans.map((plan) => ({
-            value: String(plan.membershipPlanId),
-            label: plan.planName,
-          })) || []
-        }
+      <div className={isEditing ? 'grid grid-cols-[1fr_auto] gap-3' : ''}>
+        <EditableFormField
+          type="select"
+          label="Package"
+          value={
+            options?.membershipPlans.find(
+              (plan) => plan.membershipPlanId === details?.membershipPlanId
+            )?.planName || 'Not Selected'
+          }
+          isEditing={false}
+          onChange={() => {}}
+          options={
+            options?.membershipPlans.map((plan) => ({
+              value: plan.planName,
+              label: plan.planName,
+            })) || []
+          }
+        />
+        {isEditing && (
+          <div className="flex items-end pb-3">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-9"
+              onClick={() => setUpgradeDialogOpen(true)}
+              disabled={!details || !options?.membershipPlans.length}
+            >
+              Upgrade
+            </Button>
+          </div>
+        )}
+      </div>
+
+      <PlanUpgradeDialog
+        open={upgradeDialogOpen}
+        onOpenChange={setUpgradeDialogOpen}
+        memberId={memberId}
+        member={details}
+        onUpgradeSuccess={() => setIsEditing(false)}
+        plans={options?.membershipPlans || []}
       />
 
       {/* WORKOUT_PLAN  */}

@@ -52,7 +52,11 @@ function Contents({
       /> */}
       <div className="grid grid-cols-1 [@media(max-width:900px)]:grid-cols-1 sm:grid-cols-2 md:grid-cols-1 xl:grid-cols-2 gap-4 mt-3">
         <Chart />
-        <PaymentCard memberId={memberId} formOptions={formOptions} />
+        <PaymentCard
+          memberId={memberId}
+          formOptions={formOptions}
+          isFrozen={details?.isFrozen}
+        />
       </div>
       {/* <PlannerSection memberDetails={originalDetails || details} /> */}
     </div>

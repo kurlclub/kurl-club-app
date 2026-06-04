@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
 import { getProfilePictureSrc, safeFormatDate } from '@/lib/utils';
-import { Lead } from '@/types/lead';
+import { Lead, LeadSource } from '@/types/lead';
 
 const ActionsCell: React.FC<{ lead: Lead; onView?: (lead: Lead) => void }> = ({
   lead,
@@ -102,7 +102,7 @@ export const getLeadColumns = (opts?: {
     accessorKey: 'source',
     header: 'Source',
     cell: ({ row }) => {
-      const status = row.getValue('source') as 'walk_in' | 'online' | 'ads';
+      const status = row.getValue('source') as LeadSource;
       return (
         <div className="w-[120px]">
           <SourceBadge status={status} />

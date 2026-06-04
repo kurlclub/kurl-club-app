@@ -31,6 +31,10 @@ const AddPayment = ({ open, onOpenChange, members }: AddPaymentProps) => {
   const [isPaymentDetailsOpen, setIsPaymentDetailsOpen] = useState(false);
   const [isPaymentSuccessOpen, setIsPaymentSuccessOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [completedPayment, setCompletedPayment] = useState<{
+    members: PayrollRow[];
+    total: number;
+  } | null>(null);
   const paymentMonth = useMemo(() => getPaymentMonth(), []);
 
   const unpaidMembers = useMemo(
@@ -89,7 +93,6 @@ const AddPayment = ({ open, onOpenChange, members }: AddPaymentProps) => {
 
   const handleOpenPaymentDetails = () => {
     if (selectedCount === 0) return;
-    onOpenChange(false);
     setIsPaymentDetailsOpen(true);
   };
 
@@ -143,6 +146,7 @@ const AddPayment = ({ open, onOpenChange, members }: AddPaymentProps) => {
       return;
     }
 
+    setCompletedPayment({ members: selectedMembers, total: totalAmountToPay });
     setIsPaymentDetailsOpen(false);
     setIsPaymentSuccessOpen(true);
   };
@@ -151,7 +155,9 @@ const AddPayment = ({ open, onOpenChange, members }: AddPaymentProps) => {
     setIsPaymentSuccessOpen(openState);
 
     if (!openState) {
+      setCompletedPayment(null);
       setSelectedIds([]);
+      onOpenChange(false);
     }
   };
 
@@ -200,7 +206,7 @@ const AddPayment = ({ open, onOpenChange, members }: AddPaymentProps) => {
               </span>
             </div>
 
-            <div className="max-h-90 space-y-1 overflow-y-auto p-2">
+            <div className="max-h-75 space-y-1 overflow-y-auto p-2">
               {unpaidMembers.length === 0 ? (
                 <div className="rounded-lg bg-primary-blue-400/25 px-3 py-4 text-center text-sm text-secondary-blue-100">
                   No unpaid staffs available.
@@ -274,8 +280,8 @@ const AddPayment = ({ open, onOpenChange, members }: AddPaymentProps) => {
 
       <PaymentSuccess
         details={null}
-        selectedMembers={selectedMembers}
-        totalAmount={totalAmountToPay}
+        selectedMembers={completedPayment?.members ?? selectedMembers}
+        totalAmount={completedPayment?.total ?? totalAmountToPay}
         open={isPaymentSuccessOpen}
         onOpenChange={handleCloseSuccess}
       />

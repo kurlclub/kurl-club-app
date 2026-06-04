@@ -9,6 +9,59 @@ type Params = Record<string, string | number | boolean>;
 let isRefreshing = false;
 let refreshPromise: Promise<string | null> | null = null;
 
+type ApiErrorPayload = {
+  status?: string;
+  message?: string | string[];
+  title?: string;
+  detail?: string;
+  error?: string | string[];
+  errors?: Record<string, string | string[]> | string | string[];
+  feature?: string;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const formatErrorValue = (value: unknown): string | undefined => {
+  if (typeof value === 'string') return value;
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => formatErrorValue(item))
+      .filter(Boolean)
+      .join(', ');
+  }
+
+  return undefined;
+};
+
+const getApiErrorMessage = (payload: unknown): string | undefined => {
+  if (typeof payload === 'string') return payload;
+  if (!isRecord(payload)) return undefined;
+
+  const directMessage =
+    formatErrorValue(payload.message) || formatErrorValue(payload.error);
+  if (directMessage) return directMessage;
+
+  if (payload.errors) {
+    if (isRecord(payload.errors)) {
+      const errors = Object.entries(payload.errors)
+        .map(([field, value]) => {
+          const message = formatErrorValue(value);
+          return message ? `${field}: ${message}` : undefined;
+        })
+        .filter(Boolean)
+        .join('; ');
+
+      if (errors) return errors;
+    }
+
+    const errors = formatErrorValue(payload.errors);
+    if (errors) return errors;
+  }
+
+  return formatErrorValue(payload.detail) || formatErrorValue(payload.title);
+};
+
 const getStorageItem = (key: string): string | null => {
   if (typeof window === 'undefined') return null;
   try {
@@ -179,21 +232,17 @@ const baseFetch: typeof fetch = async (url, options = {}) => {
 
   if (!response.ok) {
     let errorMessage = 'Unknown API error';
-    let errorPayload:
-      | {
-          status?: string;
-          message?: string;
-          feature?: string;
-        }
-      | undefined;
+    let errorPayload: ApiErrorPayload | undefined;
 
     try {
       const responseText = await response.text();
       if (responseText) {
         try {
-          const error = JSON.parse(responseText);
-          errorPayload = error;
-          errorMessage = error.message || errorMessage;
+          const error = JSON.parse(responseText) as unknown;
+          if (isRecord(error)) {
+            errorPayload = error as ApiErrorPayload;
+          }
+          errorMessage = getApiErrorMessage(error) || errorMessage;
         } catch {
           errorMessage = responseText;
         }

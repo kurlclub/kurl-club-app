@@ -8,12 +8,14 @@ import { StudioLayout } from '@/components/shared/layout';
 import { DataTable, DataTableToolbar } from '@/components/shared/table';
 import { Button } from '@/components/ui/button';
 import { useFilterableList } from '@/hooks/use-filterable-list';
+import { useMemberForm } from '@/hooks/use-member-form';
 import { useSheet } from '@/hooks/use-sheet';
-import { searchItems } from '@/lib/utils';
+import { searchItems, toUtcDateOnlyISOString } from '@/lib/utils';
 import { useGymBranch } from '@/providers/gym-branch-provider';
 import { useLeads } from '@/services/lead';
 import { Lead } from '@/types/lead';
 
+import AddMember from '../members/add-member';
 import AddLead from './add-lead';
 import { getLeadColumns } from './table/lead-list-columns';
 import ViewLead from './view-lead';
@@ -35,8 +37,10 @@ const tableFilters = [
     title: 'Source',
     options: [
       { label: 'Walk In', value: 'walk_in' },
+      { label: 'Referral', value: 'referral' },
       { label: 'Online', value: 'online' },
       { label: 'Ads', value: 'ads' },
+      { label: 'Other', value: 'other' },
     ],
   },
 ];
@@ -48,8 +52,14 @@ export default function LeadManagement() {
     openSheet: openViewSheet,
     closeSheet: closeViewSheet,
   } = useSheet();
+  const {
+    isOpen: isAddMemberOpen,
+    openSheet: openAddMemberSheet,
+    closeSheet: closeAddMemberSheet,
+  } = useSheet();
   const { gymBranch } = useGymBranch();
   const { data: leadApiData = [], isLoading } = useLeads(gymBranch?.gymId);
+  const memberForm = useMemberForm(gymBranch?.gymId);
 
   const leads = useMemo<Lead[]>(() => {
     const normalizeSource = (source?: string): Lead['source'] => {
@@ -57,7 +67,12 @@ export default function LeadManagement() {
       if (normalized === 'walk in' || normalized === 'walkin') {
         return 'walk_in';
       }
-      if (normalized === 'online' || normalized === 'ads') {
+      if (
+        normalized === 'online' ||
+        normalized === 'ads' ||
+        normalized === 'referral' ||
+        normalized === 'other'
+      ) {
         return normalized;
       }
       return 'online';
@@ -111,6 +126,47 @@ export default function LeadManagement() {
   >({});
 
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+
+  const handleAddMemberFromLead = (lead: Lead) => {
+    memberForm.setExistingPhotoUrl?.(lead.photoPath || null);
+    memberForm.setExistingIdCopyUrl?.(null);
+    memberForm.form.reset({
+      profilePicture: null,
+      memberName: lead.leadName || '',
+      onboardingType: 'fresh_join',
+      email: '',
+      phone: lead.phone || '',
+      dob: '',
+      doj: toUtcDateOnlyISOString(new Date()),
+      height: '',
+      weight: '',
+      address: '',
+      gender: '',
+      membershipPlanId: '',
+      feeStatus: '',
+      personalTrainer: '',
+      bloodGroup: '',
+      workoutPlanId: '',
+      amountPaid: '',
+      joiningFee: '',
+      modeOfPayment: '',
+      isDiscounted: false,
+      discountedAmount: '',
+      currentPackageStartDate: '',
+      customSessionRate: '',
+      numberOfSessions: '',
+      idType: '',
+      idNumber: '',
+      idCopyPath: null,
+      fitnessGoal: '',
+      medicalHistory: lead.note || '',
+      emergencyContactName: '',
+      emergencyContactPhone: '',
+      emergencyContactRelation: '',
+    });
+    closeViewSheet();
+    openAddMemberSheet();
+  };
 
   const onFilterChange = (columnId: string, values: string[] | undefined) => {
     setSelectedFilters((prev) => ({ ...prev, [columnId]: values }));
@@ -184,11 +240,19 @@ export default function LeadManagement() {
           closeViewSheet();
         }}
         lead={selectedLead}
+        onAddMember={handleAddMemberFromLead}
+        onStatusUpdated={setSelectedLead}
         onEdit={(lead) => {
           setEditingLead(lead);
           closeViewSheet();
           openSheet();
         }}
+      />
+      <AddMember
+        isOpen={isAddMemberOpen}
+        closeSheet={closeAddMemberSheet}
+        gymId={gymBranch?.gymId}
+        memberForm={memberForm}
       />
       <DataTable
         columns={columns}

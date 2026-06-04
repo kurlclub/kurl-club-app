@@ -303,6 +303,8 @@ export function SecurityTab() {
                   name="email"
                   label="Email Address"
                   placeholder="Enter your email"
+                  className="gst-input"
+                  disabled
                 />
                 <div className="flex items-center gap-2 pt-2">
                   <Button

@@ -6,6 +6,12 @@ import { FeeStatusBadge } from '@/components/shared/badges/fee-status-badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { FormOptionsResponse } from '@/hooks/use-gymform-options';
 import { getRecurringDisplayDueDate } from '@/lib/payments/recurring';
 import {
@@ -21,6 +27,7 @@ interface RecurringPaymentCardProps {
   formOptions?: FormOptionsResponse | null;
   onRecordPayment: () => void;
   onGenerateInvoice: () => void;
+  isFrozen?: boolean;
 }
 
 export function RecurringPaymentCard({
@@ -28,6 +35,7 @@ export function RecurringPaymentCard({
   formOptions,
   onRecordPayment,
   onGenerateInvoice,
+  isFrozen,
 }: RecurringPaymentCardProps) {
   const { currentCycle, membershipPlanId } = member;
 
@@ -92,14 +100,36 @@ export function RecurringPaymentCard({
             <FileText className="h-4 w-4" />
             <span>Invoice</span>
           </Button>
-          <Button
-            onClick={onRecordPayment}
-            className="bg-primary-blue-400 text-white hover:bg-primary-blue-500"
-            size="sm"
-          >
-            <Edit className="h-4 w-4" />
-            <span>Record Payment</span>
-          </Button>
+          {isFrozen ? (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span tabIndex={0}>
+                    <Button
+                      disabled
+                      className="bg-primary-blue-400 text-white hover:bg-primary-blue-500"
+                      size="sm"
+                    >
+                      <Edit className="h-4 w-4" />
+                      <span>Record Payment</span>
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Unfreeze the member to record a payment
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : (
+            <Button
+              onClick={onRecordPayment}
+              className="bg-primary-blue-400 text-white hover:bg-primary-blue-500"
+              size="sm"
+            >
+              <Edit className="h-4 w-4" />
+              <span>Record Payment</span>
+            </Button>
+          )}
         </div>
       </div>
 

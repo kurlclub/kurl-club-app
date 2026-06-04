@@ -47,14 +47,34 @@ export function useMemberDetails(
   const handleSave = useCallback(async () => {
     if (!details) return false;
 
-    // Validate required fields
-    if (!details.height || details.height <= 0) {
-      toast.error('Height is required and must be greater than 0');
+    // Validate required fields (everything else is optional)
+    if (!details.memberName?.trim()) {
+      toast.error('Name is required');
       return false;
     }
 
-    if (!details.weight || details.weight <= 0) {
-      toast.error('Weight is required and must be greater than 0');
+    if (!details.phone?.trim()) {
+      toast.error('Phone number is required');
+      return false;
+    }
+
+    if (!details.doj || details.doj === 'N/A') {
+      toast.error('Date of joining is required');
+      return false;
+    }
+
+    if (!details.fullAddress?.trim()) {
+      toast.error('Address is required');
+      return false;
+    }
+
+    if (!details.membershipPlanId || details.membershipPlanId <= 0) {
+      toast.error('Package is required');
+      return false;
+    }
+
+    if (!details.feeStatus) {
+      toast.error('Fee status is required');
       return false;
     }
 

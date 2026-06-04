@@ -142,7 +142,7 @@ export function StaffHeader({
           </div>
         )}
 
-        {!isTrainer && !hasUsername && details?.id && (
+        {!hasUsername && details?.id && (
           <Button
             variant="outline"
             size="sm"
@@ -150,7 +150,7 @@ export function StaffHeader({
             className="h-8 text-xs"
           >
             <Key className="h-3 w-3 mr-1" />
-            Add Username
+            Add Credential
           </Button>
         )}
       </div>
@@ -163,12 +163,13 @@ export function StaffHeader({
         />
       )}
 
-      {!isTrainer && details?.id && (
+      {details?.id && (
         <StaffCredentialsDialog
           open={showStaffCredentialsDialog}
           onOpenChange={setShowStaffCredentialsDialog}
           id={details.id}
           details={details}
+          role={isTrainer ? 'trainer' : 'staff'}
           currentUsername={details.username ?? null}
           onSuccess={(username) => onUpdate('username', username)}
         />
