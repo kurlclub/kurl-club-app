@@ -69,16 +69,20 @@ export interface PaymentCycle {
   amountPaid: number;
   pendingAmount: number;
   cyclePaymentStatus: FeeStatus;
-  lastAmountPaid: number | null;
-  lastAmountPaidDate: string | null;
+  lastAmountPaid?: number | null;
+  lastAmountPaidDate?: string | null;
+  isPaidInAdvance?: boolean;
 }
 
 export interface RecurringPaymentMember extends BaseMember {
   billingType: 'Recurring';
   currentCycle?: PaymentCycle;
+  advanceCycle?: PaymentCycle | null;
   previousCycles?: PaymentCycle[];
   totalDebtCycles: number;
   totalDebtAmount: number;
+  hasAdvancePayment?: boolean;
+  advancePaidAmount?: number;
   overallPaymentStatus: OverallPaymentStatus;
 }
 

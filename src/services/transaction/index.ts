@@ -9,6 +9,7 @@ export interface PaymentRequest {
   amount: number;
   paymentMethod: string;
   paymentType: number;
+  discountAmount?: number;
 }
 
 export interface PaymentHistory {

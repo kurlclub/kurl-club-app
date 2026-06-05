@@ -23,6 +23,7 @@ import { KTabs } from '@/components/shared/form/k-tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { useAppDialog } from '@/hooks/use-app-dialog';
 import {
@@ -42,6 +43,8 @@ import type { RecurringPaymentMember } from '@/types/payment';
 import { PaymentHistory } from '../shared/payment-history';
 
 type PaymentFormData = z.infer<typeof paymentFormSchema>;
+type PaymentAction = 'partial' | 'full';
+type PaymentFlowMode = 'outstanding' | 'advance';
 
 type ManagePaymentSheetProps = {
   open: boolean;
@@ -55,14 +58,26 @@ export function ManagePaymentSheet({
   member,
 }: ManagePaymentSheetProps) {
   const [showHistory, setShowHistory] = useState(false);
-  const [paymentType, setPaymentType] = useState<'partial' | 'full'>('partial');
+  const [paymentType, setPaymentType] = useState<PaymentAction>('partial');
+  const [isDiscounted, setIsDiscounted] = useState(false);
   const currentCyclePending = member?.currentCycle?.pendingAmount || 0;
   const settlementAmount = getRecurringFullSettlementAmount(member);
+  const hasOutstanding = settlementAmount > 0;
+  const paymentMode: PaymentFlowMode = hasOutstanding
+    ? 'outstanding'
+    : 'advance';
+  const fullPaymentAmount = hasOutstanding
+    ? settlementAmount
+    : member?.currentCycle?.planFee || 0;
   const displayDueDate = getRecurringDisplayDueDate(member);
-  const unsettledCycles = member?.totalDebtCycles || 0;
+  const unsettledCycles = member?.totalDebtCycles || (hasOutstanding ? 1 : 0);
   const isOverdue = member?.overallPaymentStatus === 'Overdue';
   const dueDateLabel = isOverdue ? 'Oldest Due Date' : 'Due Date';
-  const amountLabel = isOverdue ? 'Total Outstanding' : 'Current Pending';
+  const amountLabel = hasOutstanding
+    ? isOverdue
+      ? 'Total Outstanding'
+      : 'Current Pending'
+    : 'Advance Full Amount';
   const planLabel =
     member?.membershipPlanName || `Plan ${member?.membershipPlanId ?? ''}`;
   const { gymBranch } = useGymBranch();
@@ -84,19 +99,74 @@ export function ManagePaymentSheet({
   const paymentMethod = useWatch({ control: form.control, name: 'method' });
 
   const amountNum = Number(amountValue) || 0;
+  const discountAmount =
+    paymentType === 'full' && isDiscounted
+      ? Math.max(0, fullPaymentAmount - amountNum)
+      : 0;
+  const isOutstandingFlow = paymentMode === 'outstanding';
 
   const isPartialPaymentValid =
     amountNum >= 1 &&
-    amountNum <= currentCyclePending &&
+    (!isOutstandingFlow || amountNum <= currentCyclePending) &&
     Boolean(paymentMethod);
+  const isFullPaymentValid =
+    fullPaymentAmount > 0 &&
+    Boolean(paymentMethod) &&
+    (!isDiscounted || (amountNum > 0 && amountNum < fullPaymentAmount));
+
+  const resetPaymentForm = () => {
+    form.reset();
+    setIsDiscounted(false);
+  };
+
+  const getPartialPaymentCopy = () => ({
+    title: isOutstandingFlow
+      ? 'Confirm Partial Payment'
+      : 'Confirm Advance Payment',
+    description: `Record ₹${amountNum.toLocaleString()} ${isOutstandingFlow ? 'payment' : 'advance payment'} for ${member?.memberName}?`,
+    confirmLabel: isOutstandingFlow ? 'Record Payment' : 'Collect Advance',
+  });
+
+  const getFullPaymentAmount = () =>
+    isDiscounted ? amountNum : fullPaymentAmount;
+
+  const getFullPaymentCopy = (paymentAmount: number) => {
+    if (!isOutstandingFlow) {
+      return {
+        title: 'Confirm Advance Full Payment',
+        description: isDiscounted
+          ? `Record ₹${paymentAmount.toLocaleString()} advance full payment for ${member?.memberName} with ₹${discountAmount.toLocaleString()} discount?`
+          : `Record ₹${paymentAmount.toLocaleString()} advance full payment for ${member?.memberName}?`,
+        confirmLabel: 'Collect Advance',
+      };
+    }
+
+    if (isDiscounted) {
+      return {
+        title: 'Confirm Full Payment',
+        description: `Record ₹${paymentAmount.toLocaleString()} full settlement for ${member?.memberName} with ₹${discountAmount.toLocaleString()} discount?`,
+        confirmLabel: 'Record Payment',
+      };
+    }
+
+    return {
+      title: 'Confirm Full Payment',
+      description:
+        unsettledCycles > 1
+          ? `Settle ₹${paymentAmount.toLocaleString()} across ${unsettledCycles} unsettled cycles for ${member?.memberName}?`
+          : `Are you sure you want to settle ₹${paymentAmount.toLocaleString()} for ${member?.memberName}?`,
+      confirmLabel: unsettledCycles > 1 ? 'Settle All Dues' : 'Mark Paid',
+    };
+  };
 
   const handlePartialPayment = () => {
     if (!member || !gymBranch?.gymId) return;
+    const copy = getPartialPaymentCopy();
 
     showConfirm({
-      title: 'Confirm Partial Payment',
-      description: `Record ₹${amountNum} payment for ${member.memberName}?`,
-      confirmLabel: 'Record Payment',
+      title: copy.title,
+      description: copy.description,
+      confirmLabel: copy.confirmLabel,
       onConfirm: async () => {
         await recordPartialPayment({
           memberId: member.memberId,
@@ -107,36 +177,35 @@ export function ManagePaymentSheet({
           paymentType: 0,
         });
 
-        form.reset();
+        resetPaymentForm();
         onOpenChange(false);
       },
     });
   };
 
   const handleFullPayment = () => {
-    if (!member || !gymBranch?.gymId || !paymentMethod || settlementAmount <= 0)
+    if (!member || !gymBranch?.gymId || !paymentMethod || !isFullPaymentValid)
       return;
 
-    const settlementDescription =
-      unsettledCycles > 1
-        ? `Settle ₹${settlementAmount.toLocaleString()} across ${unsettledCycles} unsettled cycles for ${member.memberName}?`
-        : `Are you sure you want to settle ₹${settlementAmount.toLocaleString()} for ${member.memberName}?`;
+    const paymentAmount = getFullPaymentAmount();
+    const copy = getFullPaymentCopy(paymentAmount);
 
     showConfirm({
-      title: 'Confirm Full Payment',
-      description: settlementDescription,
-      confirmLabel: unsettledCycles > 1 ? 'Settle All Dues' : 'Mark Paid',
+      title: copy.title,
+      description: copy.description,
+      confirmLabel: copy.confirmLabel,
       onConfirm: async () => {
         await recordFullPayment({
           memberId: member.memberId,
           gymId: gymBranch.gymId,
           membershipPlanId: member.membershipPlanId,
-          amount: settlementAmount,
+          amount: paymentAmount,
           paymentMethod,
           paymentType: 1,
+          ...(discountAmount > 0 ? { discountAmount } : {}),
         });
 
-        form.reset();
+        resetPaymentForm();
         onOpenChange(false);
       },
     });
@@ -156,6 +225,7 @@ export function ManagePaymentSheet({
       onClose={() => {
         setShowHistory(false);
         setPaymentType('partial');
+        resetPaymentForm();
         onOpenChange(false);
       }}
       title={showHistory ? 'Payment History' : 'Manage Payment'}
@@ -230,7 +300,7 @@ export function ManagePaymentSheet({
                       {amountLabel}
                     </div>
                     <div className="text-white">
-                      ₹{settlementAmount.toLocaleString()}
+                      ₹{fullPaymentAmount.toLocaleString()}
                     </div>
                   </div>
                 </div>
@@ -250,11 +320,25 @@ export function ManagePaymentSheet({
           <KTabs
             variant="underline"
             value={paymentType}
-            onTabChange={(value) => setPaymentType(value as 'partial' | 'full')}
-            items={[
-              { id: 'partial', label: 'Partial Payment', icon: Plus },
-              { id: 'full', label: 'Full Settlement', icon: CreditCard },
-            ]}
+            onTabChange={(value) => {
+              setPaymentType(value as PaymentAction);
+              resetPaymentForm();
+            }}
+            items={
+              isOutstandingFlow
+                ? [
+                    { id: 'partial', label: 'Partial Payment', icon: Plus },
+                    { id: 'full', label: 'Full Settlement', icon: CreditCard },
+                  ]
+                : [
+                    { id: 'partial', label: 'Advance Payment', icon: Plus },
+                    {
+                      id: 'full',
+                      label: 'Advance Full Amount',
+                      icon: CreditCard,
+                    },
+                  ]
+            }
           />
 
           {/* Payment Actions */}
@@ -265,7 +349,9 @@ export function ManagePaymentSheet({
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm flex items-center gap-2 text-white">
                       <Plus className="w-4 h-4" />
-                      Record Partial Payment
+                      {isOutstandingFlow
+                        ? 'Record Partial Payment'
+                        : 'Record Advance Payment'}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -281,9 +367,11 @@ export function ManagePaymentSheet({
                           size="sm"
                         />
                         <div className="mt-1 text-xs text-primary-blue-200">
-                          {settlementAmount > currentCyclePending
-                            ? `Current cycle max: ₹${currentCyclePending.toLocaleString()}`
-                            : `Maximum: ₹${currentCyclePending.toLocaleString()}`}
+                          {isOutstandingFlow
+                            ? settlementAmount > currentCyclePending
+                              ? `Current cycle max: ₹${currentCyclePending.toLocaleString()}`
+                              : `Maximum: ₹${currentCyclePending.toLocaleString()}`
+                            : 'Collect any advance amount for a future cycle.'}
                         </div>
                       </div>
                       <KFormField
@@ -308,7 +396,9 @@ export function ManagePaymentSheet({
                       ) : (
                         <div className="flex items-center gap-2">
                           <Plus className="w-4 h-4" />
-                          Add Payment
+                          {isOutstandingFlow
+                            ? 'Add Payment'
+                            : 'Collect Advance'}
                         </div>
                       )}
                     </Button>
@@ -319,10 +409,56 @@ export function ManagePaymentSheet({
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm flex items-center gap-2 text-white">
                       <CreditCard className="w-4 h-4" />
-                      Full Settlement
+                      {isOutstandingFlow
+                        ? 'Full Settlement'
+                        : 'Advance Full Amount'}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
+                    <div className="rounded-md border border-primary-blue-400/70 bg-primary-blue-500/30 p-3">
+                      <div className="text-xs text-primary-blue-200">
+                        {isOutstandingFlow
+                          ? 'Settlement Amount'
+                          : 'Advance Full Amount'}
+                      </div>
+                      <div className="text-xl font-bold text-white">
+                        ₹{fullPaymentAmount.toLocaleString()}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="apply-discount"
+                        checked={isDiscounted}
+                        onCheckedChange={(checked) => {
+                          setIsDiscounted(Boolean(checked));
+                          if (!checked) {
+                            form.setValue('amount', '');
+                          }
+                        }}
+                      />
+                      <label
+                        htmlFor="apply-discount"
+                        className="text-sm text-primary-blue-100"
+                      >
+                        Apply Discount
+                      </label>
+                      {isDiscounted && discountAmount > 0 ? (
+                        <span className="text-xs font-medium text-primary-green-200">
+                          Discount: ₹{discountAmount.toLocaleString()}
+                        </span>
+                      ) : null}
+                    </div>
+                    {isDiscounted ? (
+                      <KFormField
+                        fieldType={KFormFieldType.INPUT}
+                        control={form.control}
+                        name="amount"
+                        label="Amount Paid (₹)"
+                        type="number"
+                        placeholder="0"
+                        size="sm"
+                      />
+                    ) : null}
                     <div className="flex w-full items-center gap-3">
                       <div className="w-full sm:w-2/3">
                         <KFormField
@@ -336,23 +472,27 @@ export function ManagePaymentSheet({
                       </div>
                       <div className="flex flex-col items-center w-full sm:w-1/3">
                         <div className="text-xs text-primary-blue-200">
-                          Amount
+                          {isDiscounted ? 'Amount Paid' : 'Amount'}
                         </div>
                         <div className="text-base font-bold text-white">
-                          ₹{settlementAmount.toLocaleString()}
+                          ₹{getFullPaymentAmount().toLocaleString()}
                         </div>
                       </div>
                     </div>
-                    {unsettledCycles > 1 ? (
+                    {isDiscounted && amountNum >= fullPaymentAmount ? (
+                      <div className="text-xs text-alert-red-300">
+                        Enter an amount below the{' '}
+                        {isOutstandingFlow ? 'settlement' : 'advance'} amount to
+                        apply a discount.
+                      </div>
+                    ) : unsettledCycles > 1 ? (
                       <div className="text-xs text-primary-blue-200">
                         Clears all unsettled recurring cycles for this member.
                       </div>
                     ) : null}
                     <Button
                       className="w-full"
-                      disabled={
-                        settlementAmount <= 0 || !paymentMethod || isProcessing
-                      }
+                      disabled={!isFullPaymentValid || isProcessing}
                       onClick={handleFullPayment}
                     >
                       {isProcessing ? (
@@ -363,7 +503,8 @@ export function ManagePaymentSheet({
                       ) : (
                         <div className="flex items-center gap-2">
                           <Handshake className="w-4 h-4" />
-                          Settle ₹{settlementAmount.toLocaleString()}
+                          {isOutstandingFlow ? 'Settle' : 'Collect'} ₹
+                          {getFullPaymentAmount().toLocaleString()}
                         </div>
                       )}
                     </Button>
