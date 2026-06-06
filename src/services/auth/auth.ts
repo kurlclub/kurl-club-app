@@ -65,23 +65,17 @@ type AccessMeResponse = {
   } | null;
 };
 
-interface SelfOnboardingRequest {
+interface CompleteOnboardingRequest {
   contactName: string;
   email: string;
   phoneNumber: string;
-  gymName: string;
-  gymLocation: string;
-  region: string;
+  password: string;
 }
 
-interface SelfOnboardingResponse {
+interface OnboardingApiResponse {
   status: string;
   message: string;
-  data: {
-    email: string;
-    contactName: string;
-    phoneNumber: string;
-  };
+  data?: unknown;
 }
 
 const buildUserDetails = ({
@@ -317,9 +311,34 @@ export const resetPassword = async (
   return response;
 };
 
-export const submitSelfOnboarding = async (payload: SelfOnboardingRequest) => {
-  const response = await api.post<SelfOnboardingResponse>(
-    '/User/SelfOnboarding',
+export const sendSelfOnboardingOtp = async (phoneNumber: string) => {
+  const response = await api.post<OnboardingApiResponse>(
+    '/User/SelfOnboarding/send-otp',
+    { phoneNumber },
+    { skipAuth: true }
+  );
+
+  return response;
+};
+
+export const verifySelfOnboardingOtp = async (
+  phoneNumber: string,
+  otpCode: string
+) => {
+  const response = await api.post<OnboardingApiResponse>(
+    '/User/SelfOnboarding/verify-otp',
+    { phoneNumber, otpCode },
+    { skipAuth: true }
+  );
+
+  return response;
+};
+
+export const completeSelfOnboarding = async (
+  payload: CompleteOnboardingRequest
+) => {
+  const response = await api.post<OnboardingApiResponse>(
+    '/User/SelfOnboarding/complete',
     payload,
     { skipAuth: true }
   );

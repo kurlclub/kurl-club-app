@@ -139,6 +139,7 @@ export const createPaymentColumns = (
         safeParseDate(dueDate)?.toLocaleDateString('en-GB', {
           day: 'numeric',
           month: 'short',
+          year: 'numeric',
         }) || '-';
 
       let statusColor = 'text-primary-blue-100';

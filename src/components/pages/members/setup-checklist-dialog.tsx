@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 
-import { Check, Dumbbell, ExternalLink, Package, Users } from 'lucide-react';
+import { Check, ExternalLink, Package } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 
 import KDialog from '@/components/shared/form/k-dialog';
@@ -141,13 +141,9 @@ export const SetupChecklistDialog = ({
   onProceed,
 }: SetupChecklistDialogProps) => {
   const hasPackages = (formOptions?.membershipPlans?.length ?? 0) > 0;
-  const hasTrainers = (formOptions?.trainers?.length ?? 0) > 0;
-  const hasWorkoutPlans = (formOptions?.workoutPlans?.length ?? 0) > 0;
 
-  const completionCount = [hasPackages, hasTrainers, hasWorkoutPlans].filter(
-    Boolean
-  ).length;
-  const allComplete = hasPackages && hasTrainers && hasWorkoutPlans;
+  const completionCount = [hasPackages].filter(Boolean).length;
+  const allComplete = hasPackages;
 
   const footer = allComplete ? null : (
     <div className="flex justify-end gap-3">
@@ -227,7 +223,7 @@ export const SetupChecklistDialog = ({
                   Setup Progress
                 </span>
                 <span className="text-sm text-primary-blue-100">
-                  {completionCount}/3
+                  {completionCount}/1
                 </span>
               </div>
               <div className="h-2 bg-secondary-blue-600 rounded-full overflow-hidden">
@@ -235,7 +231,7 @@ export const SetupChecklistDialog = ({
                   className="h-full bg-gradient-to-r from-neutral-green-400 to-neutral-green-600 rounded-full"
                   initial={{ width: 0 }}
                   animate={{
-                    width: `${(completionCount / 3) * 100}%`,
+                    width: `${completionCount * 100}%`,
                   }}
                   transition={{ duration: 0.8, ease: 'easeOut' }}
                 />
@@ -250,26 +246,6 @@ export const SetupChecklistDialog = ({
                 href="/plans-and-workouts?tab=membership-plans"
                 icon={Package}
                 delay={0}
-                onClose={onClose}
-              />
-
-              <ChecklistItem
-                completed={hasTrainers}
-                title="Trainers"
-                description="Add trainers to assign to members"
-                href="/staff-management"
-                icon={Users}
-                delay={0.1}
-                onClose={onClose}
-              />
-
-              <ChecklistItem
-                completed={hasWorkoutPlans}
-                title="Workout Plans"
-                description="Create workout plans for members"
-                href="/plans-and-workouts?tab=workout-plans"
-                icon={Dumbbell}
-                delay={0.2}
                 onClose={onClose}
               />
             </div>
