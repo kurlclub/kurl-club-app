@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import Image from 'next/image';
 
+import AuthBanner from './auth-banner';
+
 export const metadata: Metadata = {
   title: 'Authentication',
   description: 'Secure login to KurlClub Admin - Gym Management System',
@@ -18,14 +20,7 @@ export default function AuthLayout({
   return (
     <main className="grid w-full bg-background-dark h-screen grid-cols-1 gap-8 p-6 md:grid-cols-2 md:p-8">
       <span className="h-[calc(100vh-64px)] w-full hidden md:block">
-        <Image
-          src="/assets/png/login-banner.png"
-          alt="login-banner"
-          className="object-cover object-bottom-left w-full h-full rounded-xl"
-          height={1000}
-          width={1000}
-          priority
-        />
+        <AuthBanner />
       </span>
 
       <div className="flex flex-col items-end justify-between w-full h-full gap-4">
