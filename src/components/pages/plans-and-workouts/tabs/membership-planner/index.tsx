@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 
-import { Plus } from 'lucide-react';
+import { CheckCircle2, Package, Plus, Users } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -108,11 +108,46 @@ export function PackageManager() {
             <Skeleton key={i} className="w-full h-[400px] rounded-xl" />
           ))
         ) : plans.length === 0 ? (
-          <div className="col-span-full text-center py-10">
-            <p className="text-gray-400">
-              No membership plans available. Click &quot;Create Plan&quot; to
-              add one.
-            </p>
+          <div className="col-span-full rounded-lg border border-secondary-blue-400 bg-secondary-blue-500 p-6 md:p-8">
+            <div className="mx-auto flex max-w-2xl flex-col items-center text-center">
+              <div className="flex size-14 items-center justify-center rounded-full bg-primary-green-500/10">
+                <Package className="size-7 text-primary-green-500" />
+              </div>
+              <h2 className="mt-4 text-xl font-semibold text-white">
+                Start by creating a membership package
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-secondary-blue-100">
+                Your gym is created, but it needs at least one package before
+                members can be added. Create a package now, then continue to
+                member onboarding.
+              </p>
+
+              <div className="mt-6 grid w-full gap-3 sm:grid-cols-2">
+                <div className="rounded-lg border border-primary-green-500/30 bg-primary-green-500/5 p-4 text-left">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="size-5 text-primary-green-500" />
+                    <p className="font-medium text-white">Gym created</p>
+                  </div>
+                  <p className="mt-2 text-sm text-secondary-blue-100">
+                    Your location is ready for setup.
+                  </p>
+                </div>
+                <div className="rounded-lg border border-secondary-blue-400 bg-secondary-blue-600 p-4 text-left">
+                  <div className="flex items-center gap-3">
+                    <Users className="size-5 text-neutral-ochre-500" />
+                    <p className="font-medium text-white">Next: add members</p>
+                  </div>
+                  <p className="mt-2 text-sm text-secondary-blue-100">
+                    Member forms unlock after a package exists.
+                  </p>
+                </div>
+              </div>
+
+              <Button className="mt-6" onClick={handleCreatePlan}>
+                <Plus className="size-4" />
+                Create first package
+              </Button>
+            </div>
           </div>
         ) : (
           plans.map((plan, index) => (

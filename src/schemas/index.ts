@@ -357,20 +357,6 @@ export const addGymSchema = z.object({
   ContactNumber1: z.string().min(1, 'Contact number 1 is required'),
   ContactNumber2: z.string().optional(),
   Email: z.string().email('Invalid email format'),
-  socialLinks: z
-    .array(
-      z.object({
-        url: z
-          .string()
-          .refine(
-            (val) => val === '' || z.string().url().safeParse(val).success,
-            {
-              message: 'Please enter a valid URL',
-            }
-          ),
-      })
-    )
-    .optional(),
   ProfilePicture: z.instanceof(File).optional().nullable(),
 });
 
