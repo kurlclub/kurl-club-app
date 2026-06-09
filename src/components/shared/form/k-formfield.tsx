@@ -267,6 +267,7 @@ const RenderField = <T extends FieldValues>({
       return (
         <FormControl>
           <InputOTP
+            autoFocus
             maxLength={6}
             pattern={REGEXP_ONLY_DIGITS_AND_CHARS}
             value={field.value}
