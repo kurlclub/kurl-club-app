@@ -45,7 +45,7 @@ const DEFAULT_VALUES: AddGymFormValues = {
   ProfilePicture: null,
 };
 
-const GYM_SETUP_URL = '/plans-and-workouts';
+const POST_GYM_REDIRECT_URL = '/dashboard';
 
 function AddGym({ isOpen, closeSheet, onGymAdded }: AddGymProps) {
   const router = useRouter();
@@ -116,7 +116,7 @@ function AddGym({ isOpen, closeSheet, onGymAdded }: AddGymProps) {
         form.reset(DEFAULT_VALUES);
         closeSheet();
         onGymAdded?.(gymId);
-        router.replace(GYM_SETUP_URL);
+        router.replace(POST_GYM_REDIRECT_URL);
       } else {
         toast.error(result.error || 'Failed to add gym');
       }
