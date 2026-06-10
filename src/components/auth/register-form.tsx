@@ -29,7 +29,7 @@ import {
 } from '@/services/auth/auth';
 
 const OTP_EXPIRY_SECONDS = 300;
-const RESEND_COOLDOWN_SECONDS = 40;
+const RESEND_COOLDOWN_SECONDS = 60;
 
 const phoneSchema = z.object({
   phoneNumber: z
@@ -124,8 +124,14 @@ function RegisterForm() {
     return () => clearInterval(id);
   }, [step, expirySeconds, resendSeconds]);
 
-  const startTimers = () => {
-    setExpirySeconds(OTP_EXPIRY_SECONDS);
+  const startTimers = (expiresAt?: string) => {
+    const secondsUntilExpiry = expiresAt
+      ? Math.max(
+          0,
+          Math.round((new Date(expiresAt).getTime() - Date.now()) / 1000)
+        )
+      : OTP_EXPIRY_SECONDS;
+    setExpirySeconds(secondsUntilExpiry || OTP_EXPIRY_SECONDS);
     setResendSeconds(RESEND_COOLDOWN_SECONDS);
   };
 
@@ -136,7 +142,7 @@ function RegisterForm() {
       toast.success(response?.message || 'OTP sent via WhatsApp');
       setPhoneNumber(data.phoneNumber);
       otpForm.reset({ otpCode: '' });
-      startTimers();
+      startTimers(response?.expiresAt);
       setStep('otp');
     } catch (error) {
       toast.error(
@@ -154,7 +160,7 @@ function RegisterForm() {
       const response = await sendSelfOnboardingOtp(phoneNumber);
       toast.success(response?.message || 'OTP resent');
       otpForm.reset({ otpCode: '' });
-      startTimers();
+      startTimers(response?.expiresAt);
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : 'Failed to resend OTP'
@@ -333,7 +339,7 @@ function RegisterForm() {
             <button
               type="button"
               onClick={handleChangeNumber}
-              className="font-medium text-primary-green-500 hover:underline"
+              className="font-medium cursor-pointer text-primary-green-500 hover:underline"
             >
               Change
             </button>

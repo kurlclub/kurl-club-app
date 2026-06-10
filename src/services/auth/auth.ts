@@ -75,6 +75,7 @@ interface CompleteOnboardingRequest {
 interface OnboardingApiResponse {
   status: string;
   message: string;
+  expiresAt?: string;
   data?: unknown;
 }
 
