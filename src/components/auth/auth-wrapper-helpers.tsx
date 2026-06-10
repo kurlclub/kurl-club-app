@@ -14,7 +14,7 @@ export const AuthHeader = ({ authTitle, authDesc }: AuthHeaderProps) => {
       <h5 className="text-white text-[32px] font-semibold leading-normal">
         {authTitle}
       </h5>
-      <p className="text-primary-blue-50 text-[15px] font-normal leading-normal">
+      <p className="text-white/70 text-[15px] font-normal leading-normal">
         {authDesc}
       </p>
     </div>

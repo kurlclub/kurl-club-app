@@ -35,9 +35,7 @@ export const MembersHeader = ({
   const { requireLimitAccess } = useSubscriptionAccess();
 
   const hasPackages = (formOptions?.membershipPlans?.length ?? 0) > 0;
-  const hasTrainers = (formOptions?.trainers?.length ?? 0) > 0;
-  const hasWorkoutPlans = (formOptions?.workoutPlans?.length ?? 0) > 0;
-  const allSetupComplete = hasPackages && hasTrainers && hasWorkoutPlans;
+  const allSetupComplete = hasPackages;
   const cameFromSetup = searchParams.get('setup') === 'true';
 
   const handleAddNewClick = () => {
@@ -89,9 +87,7 @@ export const MembersHeader = ({
             onProceed={() => {
               // Check if setup is complete and proceed
               const currentlyComplete =
-                (formOptions?.membershipPlans?.length ?? 0) > 0 &&
-                (formOptions?.trainers?.length ?? 0) > 0 &&
-                (formOptions?.workoutPlans?.length ?? 0) > 0;
+                (formOptions?.membershipPlans?.length ?? 0) > 0;
               if (currentlyComplete) {
                 setShowAddMemberForm(true);
               }

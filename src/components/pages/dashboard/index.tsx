@@ -10,6 +10,7 @@ import { AttendanceStats } from '@/components/pages/dashboard/insights/attendanc
 import OutstandingPayment from '@/components/pages/dashboard/insights/outstanding-payment';
 import Payments from '@/components/pages/dashboard/insights/payments';
 import SkipperStats from '@/components/pages/dashboard/insights/skipper-stats';
+import SetupChecklist from '@/components/pages/dashboard/setup-checklist';
 import { MultiStepLoader } from '@/components/shared/loaders/multi-step-loader';
 import { toUtcDateOnlyISOString } from '@/lib/utils';
 import { useAuth } from '@/providers/auth-provider';
@@ -65,6 +66,7 @@ function Dashboard() {
 
   return (
     <div className="p-5 md:p-8 bg-background-dark">
+      <SetupChecklist />
       <CardList fromDate={dateRange.fromDate} toDate={dateRange.toDate} />
       <div className="flex flex-col gap-4 mt-7">
         <div className="flex items-center justify-between gap-4">
