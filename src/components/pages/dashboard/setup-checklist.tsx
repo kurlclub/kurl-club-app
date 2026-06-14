@@ -10,6 +10,7 @@ import {
   Dumbbell,
   Store,
   Ticket,
+  UserCog,
   UserPlus,
 } from 'lucide-react';
 import { Dialog as DialogPrimitive } from 'radix-ui';
@@ -175,7 +176,7 @@ function SetupChecklist() {
             </div>
 
             {/* Right: title, description and step cards */}
-            <div className="flex flex-col gap-[32px] px-6 py-[50px]">
+            <div className="flex flex-col gap-[28px] px-6 py-[50px]">
               <div className="flex flex-col gap-2.5">
                 <h2 className="text-2xl font-bold uppercase tracking-tight text-white">
                   Get started with{' '}
@@ -189,6 +190,19 @@ function SetupChecklist() {
               </div>
 
               <div className="flex flex-col gap-3">{steps.map(renderStep)}</div>
+
+              {/* Escape hatch: reach Profile to switch gyms / open settings. */}
+              <Link
+                href="/account-settings"
+                className="group inline-flex items-center justify-center gap-1.5 text-sm font-medium text-white/50 transition-colors hover:text-primary-green-500"
+              >
+                <UserCog size={16} strokeWidth={1.75} />
+                Go to Profile to switch gym or settings
+                <ArrowRight
+                  size={15}
+                  className="transition-transform group-hover:translate-x-0.5"
+                />
+              </Link>
             </div>
           </div>
         </DialogPrimitive.Content>
