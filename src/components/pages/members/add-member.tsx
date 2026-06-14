@@ -497,7 +497,7 @@ const OnboardingTypeCards = ({
               key={optionValue}
               type="button"
               onClick={() => onSelect(optionValue)}
-              className={`relative text-left rounded-[14px] border transition-all overflow-hidden min-h-27.5 ${
+              className={`relative text-left cursor-pointer rounded-[14px] border transition-all overflow-hidden min-h-27.5 ${
                 isSelected
                   ? 'border-primary-green-500'
                   : 'border-secondary-blue-400 hover:border-secondary-blue-300'
@@ -813,6 +813,20 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
               const firstError = Object.keys(
                 errors
               )[0] as keyof CreateMemberDetailsData;
+
+              const errorField = document.querySelector(
+                `[data-field-name="${firstError}"]`
+              );
+
+              if (errorField) {
+                errorField.scrollIntoView({
+                  behavior: 'smooth',
+                  block: 'center',
+                });
+              }
+
+              // Focus works for native inputs; the scroll above covers
+              // custom controls (select, phone, date) that don't take focus.
               form.setFocus(firstError);
             })}
           >

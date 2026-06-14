@@ -391,7 +391,7 @@ export function KFormField<T extends FieldValues>(props: CustomProps<T>) {
       control={control}
       name={name}
       render={({ field }) => (
-        <FormItem className="w-full">
+        <FormItem className="w-full" data-field-name={name}>
           {fieldType === KFormFieldType.SKELETON && label && (
             <FormLabel>{label}</FormLabel>
           )}
