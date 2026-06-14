@@ -191,6 +191,29 @@ export const createMemberSchema = z
         });
       }
     }
+
+    // If discount is applied, ensure a valid discount amount is provided
+    if (data.isDiscounted) {
+      if (
+        !data.discountedAmount ||
+        String(data.discountedAmount).trim() === ''
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Discount amount is required',
+          path: ['discountedAmount'],
+        });
+      } else {
+        const discount = Number(String(data.discountedAmount));
+        if (Number.isNaN(discount) || discount <= 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Discount amount must be a number greater than 0',
+            path: ['discountedAmount'],
+          });
+        }
+      }
+    }
   });
 
 export const workoutPlanSchema = z.object({

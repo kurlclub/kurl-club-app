@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
+import { KInput } from '@/components/shared/form/k-input';
+import { KSelect } from '@/components/shared/form/k-select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,14 +24,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -68,6 +62,11 @@ const API_FIELDS: ApiField[] = [
 
 const NONE_VALUE = '__none__';
 
+// Spreadsheets always use the first row as column headings, which XLSX strips
+// out of the parsed data. We expose row numbers that match what the user sees
+// in Excel (row 1 = header, row 2 = first member).
+const HEADER_ROWS = 1;
+
 interface MemberImportDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -89,6 +88,8 @@ export function MemberImportDialog({
   const [fileHeaders, setFileHeaders] = useState<string[]>([]);
   const [mapping, setMapping] = useState<Record<string, string>>({});
   const [selectedPlanId, setSelectedPlanId] = useState<string>('');
+  const [importStart, setImportStart] = useState<string>('');
+  const [importEnd, setImportEnd] = useState<string>('');
   const [mapErrors, setMapErrors] = useState<Record<string, string>>({});
   const [isImporting, setIsImporting] = useState(false);
   const [importResult, setImportResult] = useState<ImportMembersResult | null>(
@@ -147,12 +148,50 @@ export function MemberImportDialog({
     if (file) parseFile(file);
   };
 
+  // Start/End rows are 1-based sheet rows, matching what the user sees in Excel
+  // (row 1 is the header). Empty start => first member row. Empty end => last row.
+  const firstDataRow = HEADER_ROWS + 1; // e.g. row 2
+  const totalSheetRows = fileRows.length + HEADER_ROWS; // includes the header row
+
+  const parsedStart = Number(importStart);
+  const hasValidStart =
+    importStart.trim() !== '' &&
+    Number.isInteger(parsedStart) &&
+    parsedStart > 0;
+  const parsedEnd = Number(importEnd);
+  const hasValidEnd =
+    importEnd.trim() !== '' && Number.isInteger(parsedEnd) && parsedEnd > 0;
+
+  const startRow = hasValidStart ? parsedStart : firstDataRow;
+  const endRow = hasValidEnd ? parsedEnd : totalSheetRows;
+  const startIndex = startRow - firstDataRow; // 0-based index into fileRows
+  const endIndex = endRow - HEADER_ROWS; // exclusive (endRow is inclusive in sheet terms)
+  const rowsToImportCount = Math.max(0, endIndex - startIndex);
+
   const handleImport = async () => {
     const errors: Record<string, string> = {};
     API_FIELDS.filter((f) => f.required).forEach(({ apiName, label }) => {
       if (!mapping[apiName]) errors[apiName] = `${label} is required`;
     });
     if (!selectedPlanId) errors['plan'] = 'Membership plan is required';
+    if (importStart.trim() !== '' && !hasValidStart) {
+      errors['start'] = 'Enter a valid number greater than 0';
+    } else if (hasValidStart && parsedStart < firstDataRow) {
+      errors['start'] =
+        `Start row must be ${firstDataRow} or more (row 1 is the header)`;
+    } else if (hasValidStart && parsedStart > totalSheetRows) {
+      errors['start'] = `Start row cannot exceed ${totalSheetRows}`;
+    }
+    if (importEnd.trim() !== '' && !hasValidEnd) {
+      errors['end'] = 'Enter a valid number greater than 0';
+    } else if (hasValidEnd && parsedEnd < firstDataRow) {
+      errors['end'] =
+        `End row must be ${firstDataRow} or more (row 1 is the header)`;
+    } else if (hasValidEnd && parsedEnd > totalSheetRows) {
+      errors['end'] = `End row cannot exceed ${totalSheetRows}`;
+    } else if (hasValidEnd && hasValidStart && parsedEnd < parsedStart) {
+      errors['end'] = 'End row cannot be less than start row';
+    }
     if (Object.keys(errors).length > 0) {
       setMapErrors(errors);
       return;
@@ -161,7 +200,8 @@ export function MemberImportDialog({
     setIsImporting(true);
 
     try {
-      const csvBlob = buildMappedCsv(fileRows, mapping);
+      const rowsToImport = fileRows.slice(startIndex, endIndex);
+      const csvBlob = buildMappedCsv(rowsToImport, mapping);
       const result = await importMembersCSV(
         csvBlob,
         gymId,
@@ -227,6 +267,8 @@ export function MemberImportDialog({
     setFileHeaders([]);
     setMapping({});
     setSelectedPlanId('');
+    setImportStart('');
+    setImportEnd('');
     setMapErrors({});
     setImportResult(null);
     setImportError('');
@@ -330,34 +372,68 @@ export function MemberImportDialog({
               </div>
 
               {/* Membership Plan */}
-              <div className="space-y-1">
-                <Label className="text-sm font-medium">
-                  Membership Plan <span className="text-alert-red-500">*</span>
-                </Label>
-                <Select
+              <div className="space-y-1 mx-[2px]">
+                <KSelect
+                  label="Membership Plan"
                   value={selectedPlanId}
                   onValueChange={setSelectedPlanId}
-                >
-                  <SelectTrigger className="shad-select-trigger">
-                    <SelectValue placeholder="Select a membership plan" />
-                  </SelectTrigger>
-                  <SelectContent className="shad-select-content">
-                    {formOptions?.membershipPlans?.map((plan) => (
-                      <SelectItem
-                        key={plan.membershipPlanId}
-                        value={String(plan.membershipPlanId)}
-                        className="shad-select-item"
-                      >
-                        {plan.planName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={
+                    formOptions?.membershipPlans?.map((plan) => ({
+                      label: plan.planName,
+                      value: String(plan.membershipPlanId),
+                    })) ?? []
+                  }
+                />
                 {mapErrors['plan'] && (
-                  <p className="text-alert-red-500 text-xs px-1">
+                  <p className="text-alert-red-400 text-sm before:content-['*'] before:mr-px">
                     {mapErrors['plan']}
                   </p>
                 )}
+              </div>
+
+              {/* Range of members to import */}
+              <div className="space-y-1 mx-[2px]">
+                <div className="flex gap-3">
+                  <div className="flex-1 space-y-1">
+                    <KInput
+                      label="Start row"
+                      type="number"
+                      min={firstDataRow}
+                      max={totalSheetRows}
+                      value={importStart}
+                      onChange={(e) => setImportStart(e.target.value)}
+                      suffix={`of ${totalSheetRows}`}
+                    />
+                    {mapErrors['start'] && (
+                      <p className="text-alert-red-400 text-sm before:content-['*'] before:mr-px">
+                        {mapErrors['start']}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <KInput
+                      label="End row"
+                      type="number"
+                      min={firstDataRow}
+                      max={totalSheetRows}
+                      value={importEnd}
+                      onChange={(e) => setImportEnd(e.target.value)}
+                      suffix={`of ${totalSheetRows}`}
+                    />
+                    {mapErrors['end'] && (
+                      <p className="text-alert-red-400 text-sm before:content-['*'] before:mr-px">
+                        {mapErrors['end']}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <p className="text-xs text-secondary-blue-300 px-1">
+                  Row numbers match your sheet (row 1 is the header). Leave both
+                  empty to import all members.{' '}
+                  {rowsToImportCount > 0
+                    ? `Importing sheet rows ${startRow}–${endRow} (${rowsToImportCount} of ${fileRows.length} members).`
+                    : 'No rows selected to import.'}
+                </p>
               </div>
 
               <div className="text-sm text-secondary-blue-300">
@@ -382,7 +458,9 @@ export function MemberImportDialog({
                       }`}
                     />
                     <div className="flex-1 space-y-1">
-                      <Select
+                      <KSelect
+                        label="Select column"
+                        size="sm"
                         value={mapping[apiName] ?? NONE_VALUE}
                         onValueChange={(val) =>
                           setMapping((prev) => {
@@ -392,28 +470,14 @@ export function MemberImportDialog({
                             return next;
                           })
                         }
-                      >
-                        <SelectTrigger className="shad-select-trigger h-8 text-sm">
-                          <SelectValue placeholder="Select column" />
-                        </SelectTrigger>
-                        <SelectContent className="shad-select-content">
-                          <SelectItem
-                            value={NONE_VALUE}
-                            className="shad-select-item text-secondary-blue-300"
-                          >
-                            — Not mapped —
-                          </SelectItem>
-                          {fileHeaders.map((header) => (
-                            <SelectItem
-                              key={header}
-                              value={header}
-                              className="shad-select-item"
-                            >
-                              {header}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        options={[
+                          { label: '— Not mapped —', value: NONE_VALUE },
+                          ...fileHeaders.map((header) => ({
+                            label: header,
+                            value: header,
+                          })),
+                        ]}
+                      />
                       {mapErrors[apiName] && (
                         <p className="text-alert-red-500 text-xs px-1">
                           {mapErrors[apiName]}
@@ -547,10 +611,13 @@ export function MemberImportDialog({
               </Button>
             )}
             {step === 'map' && (
-              <Button onClick={handleImport} disabled={isImporting}>
+              <Button
+                onClick={handleImport}
+                disabled={isImporting || rowsToImportCount === 0}
+              >
                 {isImporting
                   ? 'Importing...'
-                  : `Import ${fileRows.length} rows`}
+                  : `Import ${rowsToImportCount} rows`}
               </Button>
             )}
             {step === 'results' && importError && (

@@ -313,6 +313,7 @@ const AddLead: React.FC<AddLeadProps> = ({
             fieldType={KFormFieldType.INPUT}
             label="Lead Name"
             placeholder="Enter lead name"
+            mandetory
           />
 
           {/* Phone Number with Country Code */}
@@ -321,6 +322,7 @@ const AddLead: React.FC<AddLeadProps> = ({
             name="phone"
             fieldType={KFormFieldType.PHONE_INPUT}
             label="Phone Number"
+            mandetory
           />
 
           <div className="flex flex-col gap-2 p-3 rounded-lg bg-secondary-blue-500">

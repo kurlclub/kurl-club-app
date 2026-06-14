@@ -29,12 +29,18 @@ interface WorkoutPlanSheetProps {
 const DEFAULT_PLAN: WorkoutPlan = {
   planId: 0,
   gymId: 0,
-  planName: 'New Workout Plan',
-  description: 'Add a description for your workout plan',
-  duration: 60,
+  planName: '',
+  description: '',
+  duration: NaN,
   difficultyLevel: 'beginner',
   isDefault: false,
   workouts: [],
+};
+
+type OverviewErrors = {
+  planName?: string;
+  description?: string;
+  duration?: string;
 };
 
 export function WorkoutPlanSheet({
@@ -74,6 +80,14 @@ function WorkoutPlanSheetInner({
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(!plan);
   const [showSchedule, setShowSchedule] = useState(!!plan);
+  const [errors, setErrors] = useState<OverviewErrors>({});
+
+  const handleUpdatePlan = (updatedPlan: WorkoutPlan) => {
+    setEditedPlan(updatedPlan);
+    if (Object.keys(errors).length > 0) {
+      setErrors({});
+    }
+  };
 
   const { showConfirm, showAlert } = useAppDialog();
 
@@ -91,6 +105,27 @@ function WorkoutPlanSheetInner({
   const planMemberCount = planMembersData?.pagination?.totalCount || 0;
 
   const handleSavePlan = () => {
+    const validationErrors: OverviewErrors = {};
+    if (!editedPlan.planName?.trim()) {
+      validationErrors.planName = 'Plan name is required';
+    }
+    if (!editedPlan.description?.trim()) {
+      validationErrors.description = 'Description is required';
+    }
+    if (
+      editedPlan.duration === undefined ||
+      Number.isNaN(editedPlan.duration) ||
+      editedPlan.duration <= 0
+    ) {
+      validationErrors.duration = 'Duration must be greater than 0';
+    }
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+    setErrors({});
+
     const hasExercises =
       !!editedPlan.workouts &&
       editedPlan.workouts.some(
@@ -285,7 +320,7 @@ function WorkoutPlanSheetInner({
       );
     }
 
-    return editedPlan.planName;
+    return editedPlan.planName || 'New Workout Plan';
   })();
 
   const sheetFooter = (() => {
@@ -388,7 +423,8 @@ function WorkoutPlanSheetInner({
             planMemberCount={planMemberCount}
             isEditMode={isEditMode}
             isNewPlan={!plan}
-            onUpdatePlan={setEditedPlan}
+            errors={errors}
+            onUpdatePlan={handleUpdatePlan}
             onImmediateUpdate={handleImmediateUpdate}
             onDelete={handleDeletePlan}
             onEdit={() => setIsEditMode(!isEditMode)}

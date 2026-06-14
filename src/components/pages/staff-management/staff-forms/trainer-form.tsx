@@ -59,6 +59,7 @@ export default function TrainerForm({ gymId, isSubmitting }: TrainerFormProps) {
         placeholder="John Doe"
         disabled={isSubmitting}
         maxLength={30}
+        mandetory
       />
       {/* Email */}
       <KFormField
@@ -75,6 +76,7 @@ export default function TrainerForm({ gymId, isSubmitting }: TrainerFormProps) {
         name="Phone"
         fieldType={KFormFieldType.PHONE_INPUT}
         label="Phone Number"
+        mandetory
         disabled={isSubmitting}
       />
       <FieldRow>
@@ -84,6 +86,7 @@ export default function TrainerForm({ gymId, isSubmitting }: TrainerFormProps) {
             control={form.control}
             name="Gender"
             label="Gender"
+            mandetory
             options={genderOptions}
             disabled={isSubmitting}
           />
@@ -106,6 +109,7 @@ export default function TrainerForm({ gymId, isSubmitting }: TrainerFormProps) {
             control={form.control}
             name="Doj"
             label="Date of joining"
+            mandetory
             mode="single"
             floating
             disabled={isSubmitting}
@@ -147,6 +151,7 @@ export default function TrainerForm({ gymId, isSubmitting }: TrainerFormProps) {
         control={form.control}
         name="AddressLine"
         label="Address Line"
+        mandetory
         disabled={isSubmitting}
         maxLength={250}
       />

@@ -56,6 +56,7 @@ export default function AdministratorForm({
         name="Name"
         fieldType={KFormFieldType.INPUT}
         label="Full Name"
+        mandetory
         placeholder="John Doe"
         disabled={isSubmitting}
         maxLength={30}
@@ -75,6 +76,7 @@ export default function AdministratorForm({
         name="Phone"
         fieldType={KFormFieldType.PHONE_INPUT}
         label="Phone Number"
+        mandetory
         disabled={isSubmitting}
       />
       <FieldRow>
@@ -84,6 +86,7 @@ export default function AdministratorForm({
             control={form.control}
             name="Gender"
             label="Gender"
+            mandetory
             options={genderOptions}
             disabled={isSubmitting}
           />
@@ -106,6 +109,7 @@ export default function AdministratorForm({
             control={form.control}
             name="Doj"
             label="Date of joining"
+            mandetory
             mode="single"
             floating
             disabled={isSubmitting}
@@ -131,6 +135,7 @@ export default function AdministratorForm({
         control={form.control}
         name="AddressLine"
         label="Address Line"
+        mandetory
         disabled={isSubmitting}
         maxLength={250}
       />

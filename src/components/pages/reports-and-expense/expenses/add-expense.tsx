@@ -3,8 +3,10 @@
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { z } from 'zod/v4';
 
 import {
   KFormField,
@@ -31,6 +33,23 @@ const ENTRY_TYPE_OPTIONS: SelectOption[] = [
   { label: 'Expense', value: 'expense' },
   { label: 'Income', value: 'income' },
 ];
+
+const expenseFormSchema = z.object({
+  entryType: z.enum(['expense', 'income']),
+  categoryId: z.string().min(1, 'Category is required'),
+  amount: z
+    .string()
+    .min(1, 'Amount is required')
+    .refine((val) => Number(val) > 0, 'Enter a valid amount greater than 0'),
+  expenseDate: z
+    .string()
+    .min(1, 'Expense date is required')
+    .refine(
+      (val) => !Number.isNaN(Date.parse(val)),
+      'Enter a valid expense date'
+    ),
+  description: z.string(),
+});
 
 type AddExpenseProps = {
   isOpen: boolean;
@@ -113,7 +132,11 @@ const toExpenseDateTimeISOString = (
   dateValue: string,
   timeSource: Date = new Date()
 ) => {
-  const [year, month, day] = dateValue.split('-').map(Number);
+  // The date input may hand back either "YYYY-MM-DD" or a full ISO datetime
+  // (e.g. "2026-06-14T00:00:00.000Z") once a date is edited, so normalize to
+  // the date part before splitting.
+  const datePart = dateValue.split('T')[0];
+  const [year, month, day] = datePart.split('-').map(Number);
   if (!year || !month || !day) return '';
 
   const date = new Date(
@@ -170,6 +193,7 @@ const AddExpense = ({ isOpen, closeSheet, expenseToEdit }: AddExpenseProps) => {
     availableCategories.find((category) => category.isDefault)?.id ??
     availableCategories[0]?.id;
   const form = useForm<ExpenseFormValues>({
+    resolver: zodResolver(expenseFormSchema),
     defaultValues: createInitialValues(),
   });
   const selectedCategoryId = useWatch({
@@ -503,6 +527,7 @@ const AddExpense = ({ isOpen, closeSheet, expenseToEdit }: AddExpenseProps) => {
               name="entryType"
               label="Type"
               options={ENTRY_TYPE_OPTIONS}
+              mandetory
             />
 
             <KFormField
@@ -511,6 +536,7 @@ const AddExpense = ({ isOpen, closeSheet, expenseToEdit }: AddExpenseProps) => {
               name="categoryId"
               label="Category"
               options={categoryOptions}
+              mandetory
             />
           </div>
 
@@ -527,6 +553,7 @@ const AddExpense = ({ isOpen, closeSheet, expenseToEdit }: AddExpenseProps) => {
               name="amount"
               label="Amount"
               type="number"
+              mandetory
             />
 
             <KFormField
@@ -534,6 +561,7 @@ const AddExpense = ({ isOpen, closeSheet, expenseToEdit }: AddExpenseProps) => {
               control={form.control}
               name="expenseDate"
               label="Expense date"
+              mandetory
             />
           </div>
 

@@ -268,7 +268,24 @@ function MembershipPlanSheetInner({
       <FormProvider {...form}>
         <form
           id="membership-plan-form"
-          onSubmit={form.handleSubmit(handleSavePlan)}
+          onSubmit={form.handleSubmit(handleSavePlan, (errors) => {
+            const firstError = Object.keys(
+              errors
+            )[0] as keyof MembershipPlanFormData;
+
+            const errorField = document.querySelector(
+              `[data-field-name="${firstError}"]`
+            );
+
+            if (errorField) {
+              errorField.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+              });
+            }
+
+            form.setFocus(firstError);
+          })}
           className="space-y-5"
         >
           <Overview
