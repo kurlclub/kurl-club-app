@@ -21,6 +21,7 @@ export const KSelect = React.forwardRef<
     className?: string;
     size?: 'sm' | 'default';
     enableSearch?: boolean;
+    mandetory?: boolean;
   }
 >(
   (
@@ -32,6 +33,7 @@ export const KSelect = React.forwardRef<
       className,
       size = 'default',
       enableSearch = false,
+      mandetory = false,
       ...props
     },
     ref
@@ -122,6 +124,7 @@ export const KSelect = React.forwardRef<
             }`}
           >
             {label}
+            {mandetory && <span className="text-alert-red-500 ml-px">*</span>}
           </label>
         )}
       </div>

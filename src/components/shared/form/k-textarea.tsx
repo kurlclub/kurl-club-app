@@ -6,10 +6,14 @@ import { cn } from '@/lib/utils';
 
 interface KTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label: string;
+  mandetory?: boolean;
 }
 
 const KTextarea = forwardRef<HTMLTextAreaElement, KTextareaProps>(
-  ({ className, label, value, defaultValue, onChange, ...props }, ref) => {
+  (
+    { className, label, value, defaultValue, onChange, mandetory, ...props },
+    ref
+  ) => {
     const [isFocused, setIsFocused] = useState(false);
     const localRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -74,6 +78,7 @@ const KTextarea = forwardRef<HTMLTextAreaElement, KTextareaProps>(
           )}
         >
           {label}
+          {mandetory && <span className="text-alert-red-500 ml-px">*</span>}
         </label>
       </div>
     );

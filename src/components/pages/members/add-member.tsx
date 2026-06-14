@@ -143,6 +143,7 @@ const PaymentFields = ({
             name="feeStatus"
             label="Fee Status"
             options={feeStatusOptions}
+            mandetory
           />
         </FieldColumn>
         {feeStatus !== 'unpaid' && (
@@ -154,6 +155,7 @@ const PaymentFields = ({
               label="Amount Paid"
               type="number"
               maxLength={10}
+              mandetory
               suffix={
                 effectiveTotal > 0
                   ? `/ ${effectiveTotal.toLocaleString(undefined, {
@@ -196,6 +198,7 @@ const PaymentFields = ({
           placeholder="Enter discount amount"
           maxLength={10}
           suffix={`Max: ${totalAmount.toLocaleString()}`}
+          mandetory
         />
       )}
 
@@ -266,6 +269,7 @@ const PaymentFields = ({
             name="modeOfPayment"
             label="Mode of Payment"
             options={paymentModeOptions}
+            mandetory
           />
         </>
       )}
@@ -880,6 +884,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                   name="memberName"
                   label="Member Name"
                   maxLength={20}
+                  mandetory
                 />
                 <KFormField
                   fieldType={KFormFieldType.PHONE_INPUT}
@@ -887,6 +892,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                   name="phone"
                   label="Phone"
                   placeholder="(555) 123-4567"
+                  mandetory
                 />
                 <KFormField
                   fieldType={KFormFieldType.UI_DATE_PICKER}
@@ -895,6 +901,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                   label="Date of joining"
                   mode="single"
                   floating
+                  mandetory
                 />
 
                 <KFormField
@@ -903,6 +910,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                   name="address"
                   label="Address Line"
                   maxLength={250}
+                  mandetory
                 />
 
                 <OptionalSection title="Additional Personal Details">
@@ -975,6 +983,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                     label: plan.planName,
                     value: String(plan.membershipPlanId),
                   }))}
+                  mandetory
                 />
 
                 {isMigratedMember && selectedPlan && (
@@ -993,6 +1002,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                         dojDate.setHours(0, 0, 0, 0);
                         return date < dojDate;
                       }}
+                      mandetory
                     />
                     <InfoBanner
                       variant="info"

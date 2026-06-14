@@ -9,10 +9,14 @@ import { cn } from '@/lib/utils';
 interface KPasswordProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
   isLogin?: boolean;
+  mandetory?: boolean;
 }
 
 const KPassword = forwardRef<HTMLInputElement, KPasswordProps>(
-  ({ className, label, onChange, isLogin = false, ...props }, ref) => {
+  (
+    { className, label, onChange, isLogin = false, mandetory, ...props },
+    ref
+  ) => {
     const [isFocused, setIsFocused] = useState(false);
     const [hasContent, setHasContent] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -43,6 +47,7 @@ const KPassword = forwardRef<HTMLInputElement, KPasswordProps>(
             className="text-sm text-primary-blue-100 cursor-default"
           >
             {label}
+            {mandetory && <span className="text-alert-red-500 ml-px">*</span>}
           </label>
 
           <input
@@ -115,6 +120,7 @@ const KPassword = forwardRef<HTMLInputElement, KPasswordProps>(
           )}
         >
           {label}
+          {mandetory && <span className="text-alert-red-500 ml-px">*</span>}
         </label>
       </div>
     );

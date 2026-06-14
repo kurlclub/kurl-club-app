@@ -165,6 +165,7 @@ const AddSupport: React.FC<AddSupportProps> = ({
             fieldType={KFormFieldType.INPUT}
             label="Subject"
             placeholder="Enter support subject"
+            mandetory
           />
 
           {/* Description */}
@@ -175,6 +176,7 @@ const AddSupport: React.FC<AddSupportProps> = ({
             label="Description"
             placeholder="Describe your issue in detail"
             maxLength={500}
+            mandetory
           />
 
           {/* Category (Optional) */}

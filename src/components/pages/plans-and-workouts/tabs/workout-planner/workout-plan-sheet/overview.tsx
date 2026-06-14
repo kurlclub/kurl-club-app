@@ -24,6 +24,11 @@ interface OverviewProps {
   planMemberCount?: number;
   isEditMode: boolean;
   isNewPlan?: boolean;
+  errors?: {
+    planName?: string;
+    description?: string;
+    duration?: string;
+  };
   onUpdatePlan: (updatedPlan: WorkoutPlan) => void;
   onImmediateUpdate: (updatedPlan: WorkoutPlan) => void;
   onDelete: () => void;
@@ -37,6 +42,7 @@ export function Overview({
   planMemberCount = planMembers.length,
   isEditMode,
   isNewPlan = false,
+  errors = {},
   onUpdatePlan,
   onImmediateUpdate,
   onEdit,
@@ -161,27 +167,42 @@ export function Overview({
       </div>
       {isEditMode ? (
         <div className="space-y-4">
-          <KInput
-            label="Name"
-            placeholder=" "
-            value={plan.planName}
-            maxLength={30}
-            onChange={(e) =>
-              onUpdatePlan({ ...plan, planName: e.target.value })
-            }
-            disabled={!isEditMode}
-            mandetory
-          />
+          <div className="space-y-1">
+            <KInput
+              label="Name"
+              placeholder=" "
+              value={plan.planName}
+              maxLength={30}
+              onChange={(e) =>
+                onUpdatePlan({ ...plan, planName: e.target.value })
+              }
+              disabled={!isEditMode}
+              mandetory
+            />
+            {errors.planName && (
+              <p className="text-alert-red-400 text-sm before:content-['*'] before:mr-px">
+                {errors.planName}
+              </p>
+            )}
+          </div>
 
-          <KTextarea
-            label="Description"
-            value={plan.description}
-            maxLength={250}
-            onChange={(e) =>
-              onUpdatePlan({ ...plan, description: e.target.value })
-            }
-            disabled={!isEditMode}
-          />
+          <div className="space-y-1">
+            <KTextarea
+              label="Description"
+              value={plan.description}
+              maxLength={250}
+              onChange={(e) =>
+                onUpdatePlan({ ...plan, description: e.target.value })
+              }
+              disabled={!isEditMode}
+              mandetory
+            />
+            {errors.description && (
+              <p className="text-alert-red-400 text-sm before:content-['*'] before:mr-px">
+                {errors.description}
+              </p>
+            )}
+          </div>
 
           <div className="flex flex-col md:flex-row gap-4">
             <KSelect
@@ -201,20 +222,27 @@ export function Overview({
               className="border-white! rounded-lg!"
             />
 
-            <KInput
-              label="Duration (days)"
-              type="number"
-              placeholder={undefined}
-              value={plan.duration}
-              onChange={(e) =>
-                onUpdatePlan({
-                  ...plan,
-                  duration: Number.parseInt(e.target.value),
-                })
-              }
-              disabled={!isEditMode}
-              mandetory
-            />
+            <div className="w-full space-y-1">
+              <KInput
+                label="Duration (days)"
+                type="number"
+                placeholder={undefined}
+                value={plan.duration}
+                onChange={(e) =>
+                  onUpdatePlan({
+                    ...plan,
+                    duration: Number.parseInt(e.target.value),
+                  })
+                }
+                disabled={!isEditMode}
+                mandetory
+              />
+              {errors.duration && (
+                <p className="text-alert-red-400 text-sm before:content-['*'] before:mr-px">
+                  {errors.duration}
+                </p>
+              )}
+            </div>
           </div>
         </div>
       ) : (
