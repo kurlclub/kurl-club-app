@@ -317,6 +317,7 @@ export const useCheckInMember = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['attendance-records'] });
       queryClient.invalidateQueries({ queryKey: ['attendance-dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['member-analytics'] });
     },
   });
 };
@@ -328,6 +329,7 @@ export const useCheckOutMember = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['attendance-records'] });
       queryClient.invalidateQueries({ queryKey: ['attendance-dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['member-analytics'] });
     },
   });
 };
@@ -464,6 +466,9 @@ export const useAttendanceRealtimeSync = (
 
             queryClient.invalidateQueries({
               queryKey: ['attendance-dashboard', gymId],
+            });
+            queryClient.invalidateQueries({
+              queryKey: ['member-analytics', gymId],
             });
             onUpdate?.(update);
           }
