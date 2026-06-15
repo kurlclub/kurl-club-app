@@ -106,8 +106,25 @@ export default function StaffForm({
   return (
     <form
       id={activeId}
-      onSubmit={form.handleSubmit((data) =>
-        onSubmit(data as TrainerFormValues | AdministratorFormValues)
+      onSubmit={form.handleSubmit(
+        (data) => onSubmit(data as TrainerFormValues | AdministratorFormValues),
+        (errors) => {
+          const firstError = Object.keys(errors)[0];
+          if (!firstError) return;
+
+          const errorField = document.querySelector(
+            `[data-field-name="${firstError}"]`
+          );
+
+          if (errorField) {
+            errorField.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center',
+            });
+          }
+
+          form.setFocus(firstError);
+        }
       )}
       className="space-y-4"
     >

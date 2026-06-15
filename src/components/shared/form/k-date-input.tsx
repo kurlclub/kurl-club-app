@@ -11,10 +11,22 @@ interface KDateInputProps extends Omit<
   label: string;
   className?: string;
   size?: 'sm' | 'default';
+  mandetory?: boolean;
 }
 
 const KDateInput = forwardRef<HTMLInputElement, KDateInputProps>(
-  ({ className, label, onChange, value, size = 'default', ...props }, ref) => {
+  (
+    {
+      className,
+      label,
+      onChange,
+      value,
+      size = 'default',
+      mandetory,
+      ...props
+    },
+    ref
+  ) => {
     const [isFocused, setIsFocused] = useState(false);
     const ISO_DATE_OR_DATETIME_PATTERN = /^\d{4}-\d{2}-\d{2}(?:[T\s].*)?$/;
 
@@ -176,6 +188,7 @@ const KDateInput = forwardRef<HTMLInputElement, KDateInputProps>(
           )}
         >
           {label}
+          {mandetory && <span className="text-alert-red-500 ml-px">*</span>}
         </label>
         {/* {!hasContent && !isFocused && (
           <div

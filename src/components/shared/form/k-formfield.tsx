@@ -111,6 +111,14 @@ interface CustomProps<T extends FieldValues> {
   [key: string]: unknown;
 }
 
+// Red asterisk overlay for field types whose floating label we can't control
+// directly (phone input has no label, the date picker is an external component).
+const MandatoryMark = () => (
+  <span className="absolute right-3 top-1 z-10 text-alert-red-500 text-sm pointer-events-none">
+    *
+  </span>
+);
+
 const RenderField = <T extends FieldValues>({
   field,
   props,
@@ -194,6 +202,7 @@ const RenderField = <T extends FieldValues>({
             {...field}
             disabled={props.disabled}
             maxLength={maxLength}
+            mandetory={mandetory}
           />
         </FormControl>
       );
@@ -208,29 +217,37 @@ const RenderField = <T extends FieldValues>({
             {...field}
             disabled={props.disabled}
             isLogin={props.isLogin}
+            mandetory={mandetory}
           />
         </FormControl>
       );
 
     case KFormFieldType.PHONE_INPUT:
       return (
-        <FormControl>
-          <PhoneInput
-            defaultCountry="IN"
-            placeholder={placeholder}
-            international
-            withCountryCallingCode
-            value={field.value as E164Number | undefined}
-            onChange={field.onChange}
-            className={`peer ${className ? className : 'input-phone'}`}
-            countrySelectProps={{
-              className: 'country-select',
-              tabIndex: -1,
-            }}
-            smartCaret={false}
-            inputComponent={CustomPhoneInput}
-          />
-        </FormControl>
+        <div className="relative">
+          <FormControl>
+            <PhoneInput
+              defaultCountry="IN"
+              placeholder={placeholder}
+              international
+              withCountryCallingCode
+              value={field.value as E164Number | undefined}
+              onChange={field.onChange}
+              className={`peer ${className ? className : 'input-phone'}`}
+              countrySelectProps={{
+                className: 'country-select',
+                tabIndex: -1,
+              }}
+              smartCaret={false}
+              inputComponent={CustomPhoneInput}
+            />
+          </FormControl>
+          {mandetory && (
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 z-10 text-alert-red-500 text-base pointer-events-none">
+              *
+            </span>
+          )}
+        </div>
       );
 
     case KFormFieldType.SELECT:
@@ -244,6 +261,7 @@ const RenderField = <T extends FieldValues>({
             className={className}
             enableSearch={props.enableSearch}
             size={size}
+            mandetory={mandetory}
           >
             {children}
           </KSelect>
@@ -317,31 +335,34 @@ const RenderField = <T extends FieldValues>({
 
     case KFormFieldType.UI_DATE_PICKER:
       return (
-        <FormControl>
-          <UIDatePicker
-            captionLayout="dropdown"
-            numberOfMonths={numberOfMonths}
-            label={floating ? label : dateLabel}
-            floating={floating}
-            showPresets={showPresets}
-            showYearSelector={showYearSelector}
-            onDateChange={(date) => {
-              if (mode === 'single' && date instanceof Date) {
-                field.onChange(toUtcDateOnlyISOString(date));
-              } else {
-                field.onChange(date);
+        <div className="relative">
+          <FormControl>
+            <UIDatePicker
+              captionLayout="dropdown"
+              numberOfMonths={numberOfMonths}
+              label={floating ? label : dateLabel}
+              floating={floating}
+              showPresets={showPresets}
+              showYearSelector={showYearSelector}
+              onDateChange={(date) => {
+                if (mode === 'single' && date instanceof Date) {
+                  field.onChange(toUtcDateOnlyISOString(date));
+                } else {
+                  field.onChange(date);
+                }
+              }}
+              value={
+                mode === 'single' && typeof field.value === 'string'
+                  ? safeParseDate(field.value)
+                  : field.value
               }
-            }}
-            value={
-              mode === 'single' && typeof field.value === 'string'
-                ? safeParseDate(field.value)
-                : field.value
-            }
-            mode={mode ?? 'range'}
-            className={className}
-            icon={iconSrc}
-          />
-        </FormControl>
+              mode={mode ?? 'range'}
+              className={className}
+              icon={iconSrc}
+            />
+          </FormControl>
+          {mandetory && <MandatoryMark />}
+        </div>
       );
 
     case KFormFieldType.DATE_INPUT:
@@ -354,6 +375,7 @@ const RenderField = <T extends FieldValues>({
             disabled={props.disabled}
             className={className}
             size={size}
+            mandetory={mandetory}
           />
         </FormControl>
       );
@@ -391,7 +413,7 @@ export function KFormField<T extends FieldValues>(props: CustomProps<T>) {
       control={control}
       name={name}
       render={({ field }) => (
-        <FormItem className="w-full">
+        <FormItem className="w-full" data-field-name={name}>
           {fieldType === KFormFieldType.SKELETON && label && (
             <FormLabel>{label}</FormLabel>
           )}

@@ -385,6 +385,7 @@ export default function DeviceManagement() {
                 control={form.control}
                 name="deviceName"
                 label="Device Name"
+                mandetory
               />
               <KFormField
                 fieldType={KFormFieldType.SELECT}
@@ -392,12 +393,14 @@ export default function DeviceManagement() {
                 name="deviceProvider"
                 label="Device Provider"
                 options={[...DEVICE_PROVIDER_OPTIONS]}
+                mandetory
               />
               <KFormField
                 fieldType={KFormFieldType.INPUT}
                 control={form.control}
                 name="deviceSerialNumber"
                 label="Device Serial Number"
+                mandetory
               />
               <KFormField
                 fieldType={KFormFieldType.SELECT}
@@ -410,6 +413,7 @@ export default function DeviceManagement() {
                   { label: 'INOUT', value: 'INOUT' },
                   { label: 'DEVICE', value: 'DEVICE' },
                 ]}
+                mandetory
               />
               <KFormField
                 fieldType={KFormFieldType.INPUT}
