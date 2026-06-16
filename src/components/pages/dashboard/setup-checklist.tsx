@@ -2,12 +2,12 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import {
   ArrowRight,
   CircleCheck,
-  Dumbbell,
   Store,
   Ticket,
   UserCog,
@@ -22,6 +22,8 @@ import { useDashboardData } from '@/services/dashboard';
 interface SetupStep {
   id: string;
   title: string;
+  /** Short "why" line shown under the title to guide the admin. */
+  description: string;
   href: string;
   icon: React.ReactNode;
   /** Accent classes for the icon badge. */
@@ -30,17 +32,29 @@ interface SetupStep {
   done: boolean;
 }
 
+/**
+ * Routes the admin must be able to reach with the modal out of the way —
+ * the three setup actions and Profile/settings (the escape hatch below).
+ * Everywhere else the modal overlays and blocks until setup is complete.
+ */
+const SETUP_ROUTES = ['/account-settings', '/plans-and-workouts', '/members'];
+
 function SetupChecklist() {
+  const pathname = usePathname();
   const { gymBranch } = useGymBranch();
   const gymId = gymBranch?.gymId || 0;
 
-  const { formOptions } = useGymFormOptions(gymId || undefined);
-  const { data: dashboardData } = useDashboardData(gymId);
+  const { formOptions, loading: formLoading } = useGymFormOptions(
+    gymId || undefined
+  );
+  const { data: dashboardData, isLoading: dashboardLoading } =
+    useDashboardData(gymId);
 
   const steps: SetupStep[] = [
     {
       id: 'gym',
       title: 'Add gym details',
+      description: "Your gym's name, location & branding — already set up.",
       href: '/account-settings',
       icon: <Store size={20} strokeWidth={1.75} />,
       accent: 'bg-primary-green-500/15 text-primary-green-500',
@@ -50,6 +64,8 @@ function SetupChecklist() {
     {
       id: 'membership',
       title: 'Add membership plans',
+      description:
+        'Add pricing, duration & billing so every new member is enrolled into the right plan.',
       href: '/plans-and-workouts',
       icon: <Ticket size={20} strokeWidth={1.75} />,
       accent: 'bg-[#8b7cf6]/15 text-[#8b7cf6]',
@@ -57,17 +73,10 @@ function SetupChecklist() {
       done: (formOptions?.membershipPlans?.length ?? 0) > 0,
     },
     {
-      id: 'workout',
-      title: 'Add workout plans',
-      href: '/plans-and-workouts?tab=workout-plans',
-      icon: <Dumbbell size={20} strokeWidth={1.75} />,
-      accent: 'bg-semantic-blue-500/15 text-semantic-blue-500',
-      required: false,
-      done: (formOptions?.workoutPlans?.length ?? 0) > 0,
-    },
-    {
       id: 'members',
       title: 'Add members',
+      description:
+        'Add your first member and KurlClub starts tracking revenue, payments & attendance.',
       href: '/members',
       icon: <UserPlus size={20} strokeWidth={1.75} />,
       accent: 'bg-neutral-ochre-500/15 text-neutral-ochre-500',
@@ -79,8 +88,15 @@ function SetupChecklist() {
   const allDone = steps.every((s) => s.done);
   const nextStep = steps.find((s) => !s.done);
 
-  // Show until every step is complete; there's no manual close.
-  if (!gymId || allDone) return null;
+  // Step aside on the setup/settings routes so the admin can actually complete
+  // each step and reach Profile; the modal blocks every other route until done.
+  const onSetupRoute = SETUP_ROUTES.some((r) => pathname.startsWith(r));
+
+  // Wait until both queries settle before deciding — otherwise the steps read
+  // as "not done" on first render and the modal flashes open then shut for an
+  // already-configured gym. Show until every step is complete; no manual close.
+  if (!gymId || formLoading || dashboardLoading || allDone || onSetupRoute)
+    return null;
 
   const renderStep = (step: SetupStep) => {
     const isNext = step.id === nextStep?.id;
@@ -93,12 +109,21 @@ function SetupChecklist() {
           {step.icon}
         </span>
 
-        <p
-          className={`flex-1 text-base font-medium ${step.done ? 'text-white' : 'text-white/45'}`}
-        >
-          {step.title}
-          {step.required && <span className="ml-1 text-alert-red-400">*</span>}
-        </p>
+        <div className="min-w-0 flex-1">
+          <p
+            className={`text-base font-medium ${step.done ? 'text-white' : 'text-white/45'}`}
+          >
+            {step.title}
+            {step.required && (
+              <span className="ml-1 text-alert-red-400">*</span>
+            )}
+          </p>
+          {step.description && (
+            <p className="mt-0.5 text-[13px] leading-snug text-white/40">
+              {step.description}
+            </p>
+          )}
+        </div>
 
         {step.done ? (
           <CircleCheck
@@ -183,9 +208,8 @@ function SetupChecklist() {
                   <span className="text-primary-green-500">Kurl</span>
                 </h2>
                 <p className="text-[15px] leading-relaxed text-secondary-pink-50">
-                  Add your first member and KurlClub will start filling this
-                  screen with revenue, payments, attendance &amp; member
-                  activity
+                  Finish these steps to get your gym up and running on KurlClub
+                  — it only takes a couple of minutes.
                 </p>
               </div>
 
