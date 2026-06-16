@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { useGymBranch } from '@/providers/gym-branch-provider';
+import { useSubscription } from '@/providers/subscription-provider';
 import {
   useAccessModules,
   useSubjectPermissions,
@@ -127,6 +128,7 @@ function Permissions({
   staffRole: StaffType;
 }) {
   const { gymBranch } = useGymBranch();
+  const { staffLoginEnabled } = useSubscription();
   const gymId = gymBranch?.gymId ?? 0;
   const subjectId = Number(staffId) || 0;
   const subjectType = staffRole as AccessSubjectType;
@@ -273,9 +275,20 @@ function Permissions({
               Roles & Permissions are locked
             </h5>
             <p className="text-sm leading-normal text-white/60">
-              This {staffRole === 'trainer' ? 'trainer' : 'staff'} doesn&apos;t
-              have login credentials yet. Set a username and password from the
-              profile sidebar to unlock roles and permissions.
+              {staffLoginEnabled ? (
+                <>
+                  This {staffRole === 'trainer' ? 'trainer' : 'staff'}{' '}
+                  doesn&apos;t have login credentials yet. Set a username and
+                  password from the profile sidebar to unlock roles and
+                  permissions.
+                </>
+              ) : (
+                <>
+                  Staff login isn&apos;t included in your current plan. Upgrade
+                  to give staff and trainers their own login with roles and
+                  permissions.
+                </>
+              )}
             </p>
           </div>
         </div>

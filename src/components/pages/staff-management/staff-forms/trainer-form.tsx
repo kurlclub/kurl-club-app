@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/tooltip';
 import { useGymFormOptions } from '@/hooks/use-gymform-options';
 import { bloodGroupOptions, genderOptions } from '@/lib/constants';
+import { useSubscription } from '@/providers/subscription-provider';
 
 interface TrainerFormProps {
   gymId?: number;
@@ -28,6 +29,7 @@ interface TrainerFormProps {
 export default function TrainerForm({ gymId, isSubmitting }: TrainerFormProps) {
   const { formOptions } = useGymFormOptions(gymId);
   const form = useFormContext();
+  const { staffLoginEnabled } = useSubscription();
 
   return (
     <>
@@ -156,11 +158,13 @@ export default function TrainerForm({ gymId, isSubmitting }: TrainerFormProps) {
         maxLength={250}
       />
 
-      {/* User Credentials */}
-      <div className="mt-8! flex items-center gap-2">
-        <h5 className="text-white text-base font-normal leading-normal">
-          User Credentials (Optional)
-        </h5>
+      {/* User Credentials — only when the plan includes staff login */}
+      {staffLoginEnabled && (
+        <>
+          <div className="mt-8! flex items-center gap-2">
+            <h5 className="text-white text-base font-normal leading-normal">
+              User Credentials (Optional)
+            </h5>
         <TooltipProvider delayDuration={100}>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -214,15 +218,17 @@ export default function TrainerForm({ gymId, isSubmitting }: TrainerFormProps) {
         autoComplete="off"
         type="email"
       />
-      <KFormField
-        control={form.control}
-        name="Password"
-        fieldType={KFormFieldType.PASSWORD}
-        label="Password"
-        placeholder="Enter password"
-        disabled={isSubmitting}
-        autoComplete="new-password"
-      />
+          <KFormField
+            control={form.control}
+            name="Password"
+            fieldType={KFormFieldType.PASSWORD}
+            label="Password"
+            placeholder="Enter password"
+            disabled={isSubmitting}
+            autoComplete="new-password"
+          />
+        </>
+      )}
     </>
   );
 }

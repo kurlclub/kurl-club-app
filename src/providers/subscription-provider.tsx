@@ -47,6 +47,8 @@ type SubscriptionContextValue = {
   daysRemaining: number | null;
   isExpired: boolean;
   isExpiring: boolean;
+  /** Raw plan capability for giving staff/trainers their own login. */
+  staffLoginEnabled: boolean;
   hasFeatureAccess: (feature: SubscriptionAccessKey) => boolean;
   requireFeatureAccess: (
     feature: SubscriptionAccessKey,
@@ -81,6 +83,14 @@ export function SubscriptionProvider({
 }) {
   const { user, entitlements, isLoading } = useAuth();
   const subscription = entitlements?.subscriptionPlan ?? null;
+  // Admins have full access by default (per the Access/me contract and the
+  // mobile app) — feature gating only applies to staff/trainer roles.
+  const isAdmin = (entitlements?.role ?? '').toLowerCase() === 'admin';
+  // Staff login is a hard plan capability, NOT covered by the admin bypass
+  // below — read the raw flag. When the plan excludes it, the credentials UI
+  // is hidden everywhere (adding/editing staff & trainers).
+  const staffLoginEnabled =
+    subscription?.features.staffManagement.staffLogin ?? false;
 
   const usageLimits = useMemo(
     () => subscription?.limits ?? DEFAULT_SUBSCRIPTION_LIMITS,
@@ -120,9 +130,13 @@ export function SubscriptionProvider({
         return false;
       }
 
+      // Mirror the mobile app: admins are never feature-gated (the status
+      // check above still blocks them on an expired/absent subscription).
+      if (isAdmin) return true;
+
       return hasSubscriptionAccess(subscription, feature);
     },
-    [status, subscription]
+    [status, subscription, isAdmin]
   );
 
   const requireFeatureAccess = useCallback(
@@ -248,6 +262,7 @@ export function SubscriptionProvider({
       daysRemaining,
       isExpired,
       isExpiring,
+      staffLoginEnabled,
       hasFeatureAccess,
       requireFeatureAccess,
       hasPermissionAccess: hasPermissionAccessForModule,
@@ -270,6 +285,7 @@ export function SubscriptionProvider({
       openUpgradeModal,
       requireFeatureAccess,
       requireLimitAccess,
+      staffLoginEnabled,
       status,
       subscription,
       usageLimits,
