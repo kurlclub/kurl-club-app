@@ -15,6 +15,7 @@ import {
   safeDateFormat,
   toUtcDateOnlyISOString,
 } from '@/lib/utils';
+import { useSubscription } from '@/providers/subscription-provider';
 import { EditableSectionProps } from '@/types/staff';
 
 import { StaffCredentialsDialog } from './staff-credentials-dialog';
@@ -28,6 +29,7 @@ export function StaffHeader({
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [showStaffCredentialsDialog, setShowStaffCredentialsDialog] =
     useState(false);
+  const { staffLoginEnabled } = useSubscription();
   const isTrainer = details?.trainerId !== undefined;
   const hasUsername = Boolean(details?.username?.trim());
   const displayId =
@@ -120,7 +122,7 @@ export function StaffHeader({
           Staff ID: <span className="uppercase ml-1">{displayId}</span>
         </Badge>
 
-        {(isTrainer || hasUsername) && details?.username && (
+        {staffLoginEnabled && (isTrainer || hasUsername) && details?.username && (
           <div className="space-y-2">
             <p className="text-xs text-primary-blue-100">Username</p>
             <p className="text-sm text-white">{details.username}</p>
@@ -142,7 +144,7 @@ export function StaffHeader({
           </div>
         )}
 
-        {!hasUsername && details?.id && (
+        {staffLoginEnabled && !hasUsername && details?.id && (
           <Button
             variant="outline"
             size="sm"
@@ -155,7 +157,7 @@ export function StaffHeader({
         )}
       </div>
 
-      {isTrainer && details?.id && (
+      {staffLoginEnabled && isTrainer && details?.id && (
         <UpdatePasswordDialog
           open={showPasswordDialog}
           onOpenChange={setShowPasswordDialog}
@@ -163,7 +165,7 @@ export function StaffHeader({
         />
       )}
 
-      {details?.id && (
+      {staffLoginEnabled && details?.id && (
         <StaffCredentialsDialog
           open={showStaffCredentialsDialog}
           onOpenChange={setShowStaffCredentialsDialog}
