@@ -4,6 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import React, { ReactNode, useEffect } from 'react';
 
 import Loading from '@/app/loading';
+import SetupChecklist from '@/components/pages/dashboard/setup-checklist';
 import { SubscriptionRouteGuard } from '@/components/shared/subscription';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { useAuth } from '@/providers/auth-provider';
@@ -66,6 +67,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           <SubscriptionRouteGuard>{children}</SubscriptionRouteGuard>
         </div>
       </SidebarInset>
+      {/* App-wide setup gate: overlays every route until setup is complete,
+          stepping aside on the setup/settings routes (see SETUP_ROUTES). */}
+      <SetupChecklist />
     </SidebarProvider>
   );
 };
