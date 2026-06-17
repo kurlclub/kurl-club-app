@@ -25,6 +25,7 @@ export default function StaffDetailsPage({ params }: StaffDetailsPageProps) {
 
   const {
     isEditing,
+    isSaving,
     handleSave,
     toggleEdit,
     details,
@@ -40,6 +41,7 @@ export default function StaffDetailsPage({ params }: StaffDetailsPageProps) {
     <main className="flex h-full min-w-0 flex-auto gap-4 bg-background-dark p-0 md:gap-0">
       <Sidebar
         isEditing={isEditing}
+        isSaving={isSaving}
         details={details}
         updateStaffDetail={updateStaffDetail}
         staffRole={staffRole}
@@ -50,6 +52,7 @@ export default function StaffDetailsPage({ params }: StaffDetailsPageProps) {
         staffRole={staffRole}
         staffId={staffId}
         isEditing={isEditing}
+        isSaving={isSaving}
         handleSave={handleSave}
         toggleEdit={toggleEdit}
       />

@@ -16,6 +16,7 @@ import PaymentCard from './payment-card';
 function Contents({
   memberId,
   isEditing,
+  isSaving,
   handleSave,
   toggleEdit,
   details,
@@ -24,6 +25,7 @@ function Contents({
 }: {
   memberId: string;
   isEditing: boolean;
+  isSaving: boolean;
   handleSave: () => Promise<boolean>;
   toggleEdit: () => void;
   details: MemberDetails | null;
@@ -35,6 +37,7 @@ function Contents({
       <Header
         memberId={memberId}
         isEditing={isEditing}
+        isSaving={isSaving}
         handleSave={handleSave}
         toggleEdit={toggleEdit}
         isFrozen={details?.isFrozen}

@@ -23,6 +23,7 @@ export default function MemberDetailsPage({ params }: MemberDetailsPageProps) {
 
   const {
     isEditing,
+    isSaving,
     handleSave,
     toggleEdit,
     details,
@@ -39,6 +40,7 @@ export default function MemberDetailsPage({ params }: MemberDetailsPageProps) {
       <Sidebar
         memberId={userId || ''}
         isEditing={isEditing}
+        isSaving={isSaving}
         details={details}
         updateMemberDetail={updateMemberDetail}
         handleSave={handleSave}
@@ -50,6 +52,7 @@ export default function MemberDetailsPage({ params }: MemberDetailsPageProps) {
         <Contents
           memberId={userId || ''}
           isEditing={isEditing}
+          isSaving={isSaving}
           handleSave={handleSave}
           toggleEdit={toggleEdit}
           details={details}
