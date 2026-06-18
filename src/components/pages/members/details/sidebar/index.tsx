@@ -18,6 +18,7 @@ type SectionKey = 'basicDetails' | 'personalInfo';
 export function Sidebar({
   memberId,
   isEditing,
+  isSaving = false,
   details,
   updateMemberDetail,
   handleSave,
@@ -27,6 +28,7 @@ export function Sidebar({
 }: {
   memberId: string;
   isEditing: boolean;
+  isSaving?: boolean;
   toggleEdit: () => void;
   setIsEditing: (isEditing: boolean) => void;
   details: MemberDetails | null;
@@ -137,7 +139,9 @@ export function Sidebar({
           </div>
           <div className="flex items-center gap-2 md:hidden">
             {isEditing ? (
-              <Button onClick={handleSave}>Save</Button>
+              <Button onClick={handleSave} disabled={isSaving}>
+                {isSaving ? 'Saving...' : 'Save'}
+              </Button>
             ) : (
               <Button onClick={toggleEdit} className="h-10" variant="outline">
                 Edit

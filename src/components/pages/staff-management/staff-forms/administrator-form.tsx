@@ -149,59 +149,59 @@ export default function AdministratorForm({
             <h5 className="text-white text-base font-normal leading-normal">
               User Credentials (Optional)
             </h5>
-        <TooltipProvider delayDuration={100}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                className="inline-flex items-center justify-center rounded-full   hover:text-primary-green-500 cursor-pointer"
-                aria-label="User credentials info"
-              >
-                <Info className="h-3.5 w-3.5" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent
-              side="top"
-              className="max-w-56 bg-secondary-blue-900"
-            >
-              Add credentials to give separate login for staff/trainer.
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
-      <div
-        aria-hidden
-        style={{
-          position: 'absolute',
-          left: '-9999px',
-          width: '1px',
-          height: '1px',
-          overflow: 'hidden',
-        }}
-      >
-        <input
-          name="__fake_username"
-          type="text"
-          autoComplete="username"
-          tabIndex={-1}
-        />
-        <input
-          name="__fake_password"
-          type="password"
-          autoComplete="new-password"
-          tabIndex={-1}
-        />
-      </div>
-      <KFormField
-        control={form.control}
-        name="Username"
-        fieldType={KFormFieldType.INPUT}
-        label="Username (Email) - Optional"
-        placeholder="staff@example.com"
-        disabled={isSubmitting}
-        autoComplete="off"
-        type="email"
-      />
+            <TooltipProvider delayDuration={100}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="inline-flex items-center justify-center rounded-full   hover:text-primary-green-500 cursor-pointer"
+                    aria-label="User credentials info"
+                  >
+                    <Info className="h-3.5 w-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="top"
+                  className="max-w-56 bg-secondary-blue-900"
+                >
+                  Add credentials to give separate login for staff/trainer.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          <div
+            aria-hidden
+            style={{
+              position: 'absolute',
+              left: '-9999px',
+              width: '1px',
+              height: '1px',
+              overflow: 'hidden',
+            }}
+          >
+            <input
+              name="__fake_username"
+              type="text"
+              autoComplete="username"
+              tabIndex={-1}
+            />
+            <input
+              name="__fake_password"
+              type="password"
+              autoComplete="new-password"
+              tabIndex={-1}
+            />
+          </div>
+          <KFormField
+            control={form.control}
+            name="Username"
+            fieldType={KFormFieldType.INPUT}
+            label="Username (Email) - Optional"
+            placeholder="staff@example.com"
+            disabled={isSubmitting}
+            autoComplete="off"
+            type="email"
+          />
           <KFormField
             control={form.control}
             name="Password"

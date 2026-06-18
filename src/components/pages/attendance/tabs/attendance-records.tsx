@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -59,6 +59,8 @@ export default function AttendanceRecords() {
   const attendanceRecords = attendanceResponse?.data || [];
   const checkInMutation = useCheckInMember();
   const checkOutMutation = useCheckOutMember();
+  const checkingOutRef = useRef<Set<number>>(new Set());
+  const [checkingOutIds, setCheckingOutIds] = useState<Set<number>>(new Set());
 
   const [isManualMode, setIsManualMode] = useState(() => {
     const saved = localStorage.getItem('attendance-manual-mode');
@@ -130,12 +132,28 @@ export default function AttendanceRecords() {
     }
   };
 
+  const setCheckingOut = (memberId: number, value: boolean) => {
+    setCheckingOutIds((prev) => {
+      const next = new Set(prev);
+      if (value) {
+        next.add(memberId);
+      } else {
+        next.delete(memberId);
+      }
+      return next;
+    });
+  };
+
   const handleCheckOut = async (member: {
     id: number;
     name: string;
     identifier: string;
   }) => {
     if (!gymBranch?.gymId || !user?.userId) return;
+
+    if (checkingOutRef.current.has(member.id)) return;
+    checkingOutRef.current.add(member.id);
+    setCheckingOut(member.id, true);
 
     try {
       await checkOutMutation.mutateAsync({
@@ -157,6 +175,9 @@ export default function AttendanceRecords() {
       toast.success('Member checked out successfully');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Check-out failed');
+    } finally {
+      checkingOutRef.current.delete(member.id);
+      setCheckingOut(member.id, false);
     }
   };
 
@@ -170,6 +191,10 @@ export default function AttendanceRecords() {
 
     const member = members.find((m) => m.memberId === memberId);
     if (!member) return;
+
+    if (checkingOutRef.current.has(member.memberId)) return;
+    checkingOutRef.current.add(member.memberId);
+    setCheckingOut(member.memberId, true);
 
     try {
       await checkOutMutation.mutateAsync({
@@ -193,6 +218,9 @@ export default function AttendanceRecords() {
       toast.success('Member checked out successfully');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Check-out failed');
+    } finally {
+      checkingOutRef.current.delete(member.memberId);
+      setCheckingOut(member.memberId, false);
     }
   };
 
@@ -260,7 +288,7 @@ export default function AttendanceRecords() {
         records={attendanceRecords}
         columns={
           effectiveManualMode
-            ? manualModeColumns(handleQuickCheckOut)
+            ? manualModeColumns(handleQuickCheckOut, checkingOutIds)
             : attendanceColumns
         }
         filters={filters}

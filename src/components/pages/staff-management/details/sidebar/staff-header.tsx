@@ -122,27 +122,29 @@ export function StaffHeader({
           Staff ID: <span className="uppercase ml-1">{displayId}</span>
         </Badge>
 
-        {staffLoginEnabled && (isTrainer || hasUsername) && details?.username && (
-          <div className="space-y-2">
-            <p className="text-xs text-primary-blue-100">Username</p>
-            <p className="text-sm text-white">{details.username}</p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (isTrainer) {
-                  setShowPasswordDialog(true);
-                } else {
-                  setShowStaffCredentialsDialog(true);
-                }
-              }}
-              className="h-8 text-xs"
-            >
-              <Key className="h-3 w-3 mr-1" />
-              {isTrainer ? 'Update Password' : 'Reset Password'}
-            </Button>
-          </div>
-        )}
+        {staffLoginEnabled &&
+          (isTrainer || hasUsername) &&
+          details?.username && (
+            <div className="space-y-2">
+              <p className="text-xs text-primary-blue-100">Username</p>
+              <p className="text-sm text-white">{details.username}</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (isTrainer) {
+                    setShowPasswordDialog(true);
+                  } else {
+                    setShowStaffCredentialsDialog(true);
+                  }
+                }}
+                className="h-8 text-xs"
+              >
+                <Key className="h-3 w-3 mr-1" />
+                {isTrainer ? 'Update Password' : 'Reset Password'}
+              </Button>
+            </div>
+          )}
 
         {staffLoginEnabled && !hasUsername && details?.id && (
           <Button
