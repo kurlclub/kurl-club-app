@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
@@ -48,6 +49,7 @@ export function StaffCredentialsDialog({
 }: StaffCredentialsDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const hasUsername = Boolean(currentUsername?.trim());
+  const queryClient = useQueryClient();
 
   const form = useForm<SetCredentialsData>({
     resolver: zodResolver(setCredentialsSchema),
@@ -122,6 +124,7 @@ export function StaffCredentialsDialog({
           response.message || 'Staff credentials updated successfully.'
         );
         onSuccess?.(usernameToSend);
+        queryClient.invalidateQueries({ queryKey: ['staff'] });
         form.reset({
           username: usernameToSend,
           password: '',

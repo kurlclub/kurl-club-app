@@ -14,6 +14,7 @@ import { StaffType } from '@/types/staff';
 
 interface HeaderProps {
   isEditing: boolean;
+  isSaving?: boolean;
   handleSave: () => void;
   toggleEdit: () => void;
   staffId: string;
@@ -22,6 +23,7 @@ interface HeaderProps {
 
 function Header({
   isEditing,
+  isSaving = false,
   handleSave,
   toggleEdit,
   staffId,
@@ -60,10 +62,16 @@ function Header({
       <div className="flex items-center gap-2">
         {isEditing ? (
           <>
-            <Button variant="secondary" onClick={toggleEdit}>
+            <Button
+              variant="secondary"
+              onClick={toggleEdit}
+              disabled={isSaving}
+            >
               Cancel
             </Button>
-            <Button onClick={handleSave}>Save Changes</Button>
+            <Button onClick={handleSave} disabled={isSaving}>
+              {isSaving ? 'Saving...' : 'Save Changes'}
+            </Button>
           </>
         ) : (
           <>

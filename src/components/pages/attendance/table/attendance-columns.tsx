@@ -211,7 +211,8 @@ const baseColumns: ColumnDef<AttendanceRecordResponse>[] = [
 export const attendanceColumns = baseColumns;
 
 export const manualModeColumns = (
-  onCheckOut: (memberId: number) => void
+  onCheckOut: (memberId: number) => void,
+  checkingOutIds?: Set<number>
 ): ColumnDef<AttendanceRecordResponse>[] => [
   ...baseColumns,
   {
@@ -219,6 +220,7 @@ export const manualModeColumns = (
     header: 'Actions',
     cell: ({ row }) => {
       const isActive = !row.original.checkOutTime;
+      const isCheckingOut = checkingOutIds?.has(row.original.memberId) ?? false;
       return (
         <div className="min-w-[100px]">
           {isActive ? (
@@ -227,9 +229,10 @@ export const manualModeColumns = (
               variant="outline"
               className="h-7 gap-1 border-semantic-blue-500 text-semantic-blue-500 hover:bg-semantic-blue-500/10"
               onClick={() => onCheckOut(row.original.memberId)}
+              disabled={isCheckingOut}
             >
               <LogOut size={14} />
-              Check Out
+              {isCheckingOut ? 'Checking Out...' : 'Check Out'}
             </Button>
           ) : (
             <span className="text-xs text-gray-500 dark:text-gray-400">

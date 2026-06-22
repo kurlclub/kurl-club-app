@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -13,6 +13,8 @@ import { useInvalidateFormOptions } from './use-gymform-options';
 
 export function useStaffDetails(userId: string | number, role?: string) {
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const isSavingRef = useRef(false);
   const [draftDetails, setDraftDetails] = useState<StaffDetails | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { gymBranch } = useGymBranch();
@@ -35,6 +37,10 @@ export function useStaffDetails(userId: string | number, role?: string) {
   const handleSave = useCallback(async () => {
     const detailsToSave = draftDetails ?? details;
     if (!detailsToSave) return false;
+
+    if (isSavingRef.current) return false;
+    isSavingRef.current = true;
+    setIsSaving(true);
 
     try {
       const formData = new FormData();
@@ -86,6 +92,9 @@ export function useStaffDetails(userId: string | number, role?: string) {
       setError('Failed to save staff details');
       toast.error('An error occurred while updating the staff details.');
       return false;
+    } finally {
+      isSavingRef.current = false;
+      setIsSaving(false);
     }
   }, [
     details,
@@ -113,6 +122,7 @@ export function useStaffDetails(userId: string | number, role?: string) {
   return {
     details,
     isEditing,
+    isSaving,
     loading,
     error,
     updateStaffDetail,

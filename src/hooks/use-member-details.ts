@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -17,6 +17,10 @@ export function useMemberDetails(
   initialData?: MemberDetails
 ) {
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  // Synchronous guard: React state updates are async, so rapid clicks could
+  // slip past an isSaving state check and fire duplicate API calls.
+  const isSavingRef = useRef(false);
   const [details, setDetails] = useState<MemberDetails | null>(null);
   const [originalDetails, setOriginalDetails] = useState<MemberDetails | null>(
     null
@@ -46,6 +50,9 @@ export function useMemberDetails(
 
   const handleSave = useCallback(async () => {
     if (!details) return false;
+
+    // Ignore re-entrant calls while a save is already in flight
+    if (isSavingRef.current) return false;
 
     // Validate required fields (everything else is optional)
     if (!details.memberName?.trim()) {
@@ -77,6 +84,9 @@ export function useMemberDetails(
       toast.error('Fee status is required');
       return false;
     }
+
+    isSavingRef.current = true;
+    setIsSaving(true);
 
     try {
       const formData = new FormData();
@@ -154,6 +164,9 @@ export function useMemberDetails(
       setError('Failed to save member details');
       toast.error('An error occurred while updating the member details.');
       return false;
+    } finally {
+      isSavingRef.current = false;
+      setIsSaving(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [details, userId]);
@@ -176,6 +189,7 @@ export function useMemberDetails(
     details,
     originalDetails,
     isEditing,
+    isSaving,
     loading,
     error,
     updateMemberDetail,

@@ -13,12 +13,14 @@ export default function Contents({
   staffId,
   staffRole,
   isEditing,
+  isSaving,
   handleSave,
   toggleEdit,
 }: {
   staffId: string;
   staffRole: StaffType;
   isEditing: boolean;
+  isSaving: boolean;
   handleSave: () => Promise<boolean>;
   toggleEdit: () => void;
 }) {
@@ -44,6 +46,7 @@ export default function Contents({
         staffId={staffId}
         staffRole={staffRole}
         isEditing={isEditing}
+        isSaving={isSaving}
         handleSave={handleSave}
         toggleEdit={toggleEdit}
       />
