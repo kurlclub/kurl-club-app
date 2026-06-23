@@ -128,3 +128,47 @@ export const getRecurringDisplayDueDate = (
     'currentCycle' | 'previousCycles' | 'overallPaymentStatus'
   > | null
 ): string | undefined => getRecurringDisplayCycle(member)?.dueDate;
+
+export interface RecurringPaymentSummary {
+  amountPaid: number;
+  totalBilled: number;
+  pendingAmount: number;
+  progress: number; // 0–100
+}
+
+export const getRecurringPaymentSummary = (
+  member?: Pick<
+    RecurringPaymentMember,
+    'currentCycle' | 'previousCycles' | 'overallPaymentStatus' | 'totalDebtAmount'
+  > | null
+): RecurringPaymentSummary | undefined => {
+  if (!member?.currentCycle) return undefined;
+
+  // Non-overdue: the current cycle is the whole story.
+  if (member.overallPaymentStatus !== 'Overdue') {
+    const { amountPaid, planFee, pendingAmount } = member.currentCycle;
+    const progress = planFee > 0 ? Math.min((amountPaid / planFee) * 100, 100) : 0;
+    return { amountPaid, totalBilled: planFee, pendingAmount, progress };
+  }
+
+  // Overdue: aggregate across every unsettled cycle so the row reflects the
+  // member's full outstanding debt, not just the current cycle.
+  const unsettledCycles = [member.currentCycle, ...(member.previousCycles ?? [])]
+    .filter((cycle): cycle is PaymentCycle => Boolean(cycle))
+    .filter((cycle) => cycle.cyclePaymentStatus !== 'paid');
+
+  const amountPaid = unsettledCycles.reduce(
+    (sum, cycle) => sum + (cycle.amountPaid ?? 0),
+    0
+  );
+  const pendingAmount =
+    member.totalDebtAmount ||
+    unsettledCycles.reduce((sum, cycle) => sum + (cycle.pendingAmount ?? 0), 0);
+  // PaymentCycle carries no discountAmount; totalDebtAmount already nets out
+  // discounts, so deriving billed from paid + pending keeps the bar coherent.
+  const totalBilled = amountPaid + pendingAmount;
+  const progress =
+    totalBilled > 0 ? Math.min((amountPaid / totalBilled) * 100, 100) : 0;
+
+  return { amountPaid, totalBilled, pendingAmount, progress };
+};

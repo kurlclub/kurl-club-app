@@ -16,7 +16,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
-import { getRecurringDisplayDueDate } from '@/lib/payments/recurring';
+import {
+  getRecurringDisplayDueDate,
+  getRecurringPaymentSummary,
+} from '@/lib/payments/recurring';
 import {
   calculateDaysRemaining,
   getPaymentBadgeStatus,
@@ -170,16 +173,15 @@ export const createPaymentColumns = (
     accessorKey: 'currentCycle.paymentSummary',
     header: 'Payment Summary',
     cell: ({ row }) => {
-      const { currentCycle } = row.original;
-      if (!currentCycle) return <div className="min-w-[180px]">-</div>;
-      const { pendingAmount, amountPaid, planFee } = currentCycle;
-      const progress = planFee > 0 ? (amountPaid / planFee) * 100 : 0;
+      const summary = getRecurringPaymentSummary(row.original);
+      if (!summary) return <div className="min-w-[180px]">-</div>;
+      const { amountPaid, totalBilled, pendingAmount, progress } = summary;
 
       return (
         <div className="min-w-[180px] pr-4">
           <div className="flex justify-between text-sm mb-1">
             <span className="text-white">₹{amountPaid}</span>
-            <span className="text-primary-blue-200">₹{planFee}</span>
+            <span className="text-primary-blue-200">₹{totalBilled}</span>
           </div>
           <div className="w-full bg-primary-blue-300/30 rounded-full h-1.5 mb-1">
             <div
