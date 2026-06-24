@@ -41,7 +41,7 @@ export type MemberAnalyticsResponse = {
   topPerformers: Array<{
     memberId: number;
     memberIdentifier: string;
-    name: string;
+    memberName: string;
     photoPath: string | null;
     visits: number;
     streak: number;
@@ -49,7 +49,7 @@ export type MemberAnalyticsResponse = {
   atRiskMembers: Array<{
     memberId: number;
     memberIdentifier: string;
-    name: string;
+    memberName: string;
     photoPath: string | null;
     visits: number;
     lastVisitDate: string | null;
