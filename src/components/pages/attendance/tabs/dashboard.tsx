@@ -25,6 +25,7 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
+import { formatWallClockTime, parseWallClockDate } from '@/lib/utils';
 import { useGymBranch } from '@/providers/gym-branch-provider';
 import {
   AttendanceRecordResponse,
@@ -258,13 +259,13 @@ function LiveActivityFeed({
   const getActivityTime = (activity: AttendanceRecordResponse) => {
     const timestamp =
       activity.checkOutTime || activity.checkInTime || activity.date;
-    const date = new Date(timestamp);
-    if (Number.isNaN(date.getTime())) {
+    const date = parseWallClockDate(timestamp);
+    if (!date) {
       return { primary: '--', secondary: 'Invalid time' };
     }
 
     return {
-      primary: format(date, 'HH:mm'),
+      primary: formatWallClockTime(timestamp),
       secondary: `${formatDistanceToNowStrict(date, { addSuffix: true })}`,
     };
   };

@@ -404,6 +404,60 @@ export const formatDateTime = (
 };
 
 /**
+ * Formats the time portion of a timestamp WITHOUT applying any timezone shift.
+ *
+ * Attendance check-in/check-out timestamps come from the backend as local
+ * wall-clock time but are labelled with a `Z` (UTC) suffix. Converting them to
+ * the viewer's local timezone therefore double-shifts the value (e.g. a real
+ * 09:14 AM check-in stored as "...T09:14:01Z" would render as 02:44 PM in IST).
+ * To show the time exactly as recorded, we format using the UTC timezone so the
+ * raw HH:mm is preserved regardless of the viewer's location.
+ *
+ * @param dateValue - The timestamp to format.
+ * @param fallback - Text to return when the value is missing/invalid (default: '--').
+ * @returns The wall-clock time string (e.g. "09:14 AM") or the fallback.
+ */
+export const formatWallClockTime = (
+  dateValue: string | null | undefined,
+  fallback: string = '--'
+): string => {
+  const date = safeParseDate(dateValue);
+  if (!date) return fallback;
+
+  return date.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'UTC',
+  });
+};
+
+/**
+ * Reinterprets a backend timestamp that carries local wall-clock time under a
+ * `Z` (UTC) label as a real instant in the viewer's local timezone.
+ *
+ * Use this when you need the actual moment for relative calculations such as
+ * "5 minutes ago" — see {@link formatWallClockTime} for the display-only case.
+ *
+ * @param dateValue - The timestamp to reinterpret.
+ * @returns A Date whose local time equals the recorded wall-clock, or undefined.
+ */
+export const parseWallClockDate = (
+  dateValue: string | null | undefined
+): Date | undefined => {
+  const date = safeParseDate(dateValue);
+  if (!date) return undefined;
+
+  return new Date(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate(),
+    date.getUTCHours(),
+    date.getUTCMinutes(),
+    date.getUTCSeconds()
+  );
+};
+
+/**
  * Calculates age from a date of birth string.
  *
  * @param dob - Date of birth in ISO string format.
