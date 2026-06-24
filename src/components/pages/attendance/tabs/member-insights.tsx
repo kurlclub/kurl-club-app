@@ -295,14 +295,14 @@ export default function MemberInsights() {
   const { data: analyticsData } = useMemberAnalytics(gymBranch?.gymId);
 
   const topPerformers = (analyticsData?.topPerformers || []).map((member) => ({
-    memberName: member.name,
+    memberName: member.memberName,
     photoPath: member.photoPath,
     streak: member.streak,
     visits: member.visits,
   }));
 
   const atRiskMembers = (analyticsData?.atRiskMembers || []).map((member) => ({
-    memberName: member.name,
+    memberName: member.memberName,
     photoPath: member.photoPath,
     lastVisit:
       member.daysAgo === null
