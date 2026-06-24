@@ -75,7 +75,7 @@ const NetProfitBanner = ({ report, className }: NetProfitBannerProps) => {
   return (
     <div
       className={cn(
-        'rounded-xl border border-white/30 p-4 flex flex-col lg:flex-row gap-4 lg:items-center justify-between bg-linear-to-l from-[#90A8ED]/35 to-[#11141C] relative',
+        'rounded-xl border border-white/30 p-4 flex flex-col lg:flex-row gap-4 lg:items-center justify-between bg-linear-to-l from-semantic-blue-500/35 to-primary-blue-500 relative',
         className
       )}
     >

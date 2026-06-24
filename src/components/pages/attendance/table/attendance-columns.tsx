@@ -6,7 +6,7 @@ import { Clock, LogOut } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
-import { safeFormatDate, safeParseDate } from '@/lib/utils';
+import { formatWallClockTime, safeFormatDate } from '@/lib/utils';
 import type { AttendanceRecordResponse } from '@/services/attendance';
 
 const StatusBadge = ({ status }: { status: string }) => {
@@ -108,14 +108,7 @@ const baseColumns: ColumnDef<AttendanceRecordResponse>[] = [
     accessorKey: 'checkInTime',
     header: 'Check In',
     cell: ({ row }) => {
-      const checkInTime = row.original.checkInTime;
-      const parsedCheckIn = safeParseDate(checkInTime);
-      const time = checkInTime
-        ? parsedCheckIn?.toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit',
-          }) || '--'
-        : '--';
+      const time = formatWallClockTime(row.original.checkInTime);
       const isManual = row.original.mode === 'manual';
       const recordedBy = row.original.recordedBy;
 
@@ -143,13 +136,7 @@ const baseColumns: ColumnDef<AttendanceRecordResponse>[] = [
     cell: ({ row }) => {
       const checkOutTime = row.original.checkOutTime;
       const isActive = !checkOutTime;
-      const parsedCheckOut = safeParseDate(checkOutTime);
-      const time = checkOutTime
-        ? parsedCheckOut?.toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit',
-          }) || '--'
-        : null;
+      const time = checkOutTime ? formatWallClockTime(checkOutTime) : null;
       const isManual = row.original.mode === 'manual';
       const recordedBy = row.original.recordedBy;
 

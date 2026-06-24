@@ -52,7 +52,10 @@ export function AttendanceStats({ fromDate, toDate }: AttendanceStatsProps) {
       <CardContent className="p-0 pr-5 pb-5 k-chart">
         <ChartContainer config={chartConfig} className="w-full sm:h-[235px]">
           <BarChart accessibilityLayer data={chartData}>
-            <CartesianGrid stroke="#414349" vertical={false} />
+            <CartesianGrid
+              stroke="var(--color-primary-blue-400)"
+              vertical={false}
+            />
             <XAxis
               dataKey="date"
               tickLine={false}
@@ -91,7 +94,7 @@ export function AttendanceStats({ fromDate, toDate }: AttendanceStatsProps) {
                     dx={0}
                     dy={3}
                     textAnchor="end"
-                    fill="#b5b6b9"
+                    fill="var(--color-primary-blue-100)"
                   >
                     {payload.value}
                   </text>
@@ -106,7 +109,11 @@ export function AttendanceStats({ fromDate, toDate }: AttendanceStatsProps) {
                 />
               }
             />
-            <Bar dataKey="count" fill="#EBFB8B" radius={[6, 6, 0, 0]} />
+            <Bar
+              dataKey="count"
+              fill="var(--color-primary-green-200)"
+              radius={[6, 6, 0, 0]}
+            />
           </BarChart>
         </ChartContainer>
       </CardContent>

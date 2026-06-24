@@ -263,14 +263,26 @@ export function HistoryTab() {
   const stats = [
     {
       id: 1,
-      icon: <Receipt size={20} strokeWidth={1.75} color="#151821" />,
+      icon: (
+        <Receipt
+          size={20}
+          strokeWidth={1.75}
+          color="var(--color-semantic-blue-150)"
+        />
+      ),
       color: 'primary-green-500',
       title: 'Total Payments',
       count: summary?.totalPayments || 0,
     },
     {
       id: 2,
-      icon: <IndianRupee size={20} strokeWidth={1.75} color="#151821" />,
+      icon: (
+        <IndianRupee
+          size={20}
+          strokeWidth={1.75}
+          color="var(--color-semantic-blue-150)"
+        />
+      ),
       color: 'primary-green-500',
       title: 'Total Revenue',
       count: summary?.totalRevenue || 0,

@@ -297,6 +297,8 @@ export function useSubscriptionPayment({
           }),
         },
         theme: {
+          // Razorpay renders in an external iframe and cannot resolve our CSS
+          // variables, so this must stay a literal hex (= --color-secondary-blue-700).
           color: '#1c1f24',
         },
         modal: {

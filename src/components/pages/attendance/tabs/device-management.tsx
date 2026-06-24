@@ -315,21 +315,39 @@ export default function DeviceManagement() {
   const stats = [
     {
       id: 1,
-      icon: <FingerprintPattern size={20} strokeWidth={1.75} color="#151821" />,
+      icon: (
+        <FingerprintPattern
+          size={20}
+          strokeWidth={1.75}
+          color="var(--color-semantic-blue-150)"
+        />
+      ),
       color: 'semantic-blue-500',
       title: 'Total Devices',
       count: devices.length,
     },
     {
       id: 2,
-      icon: <Wifi size={20} strokeWidth={1.75} color="#151821" />,
+      icon: (
+        <Wifi
+          size={20}
+          strokeWidth={1.75}
+          color="var(--color-semantic-blue-150)"
+        />
+      ),
       color: 'primary-green-500',
       title: 'Online',
       count: onlineDevices,
     },
     {
       id: 3,
-      icon: <WifiOff size={20} strokeWidth={1.75} color="#151821" />,
+      icon: (
+        <WifiOff
+          size={20}
+          strokeWidth={1.75}
+          color="var(--color-semantic-blue-150)"
+        />
+      ),
       color: 'alert-red-400',
       title: 'Offline',
       count: offlineDevices,

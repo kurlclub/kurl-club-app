@@ -15,7 +15,7 @@ const InfoCard = ({
   return (
     <div
       className="rounded-lg w-full border border-white/30 px-4 py-4 flex flex-col 
-bg-linear-to-l from-[#90A8ED]/30 to-[#11141C] relative"
+bg-linear-to-l from-semantic-blue-500/30 to-primary-blue-500 relative"
     >
       <div className="flex items-center gap-2">
         <span className="text-secondary-blue-200 text-[13px] leading-normal uppercase">
