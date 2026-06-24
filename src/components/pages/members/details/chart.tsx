@@ -97,7 +97,10 @@ export function Chart() {
       <CardContent className="p-0 pr-5 pb-5 k-chart">
         <ChartContainer config={chartConfig} className="w-full h-[235px]">
           <BarChart accessibilityLayer data={chartData}>
-            <CartesianGrid stroke="#414349" vertical={false} />
+            <CartesianGrid
+              stroke="var(--color-primary-blue-400)"
+              vertical={false}
+            />
             <XAxis
               dataKey="day"
               tickLine={false}
@@ -128,7 +131,7 @@ export function Chart() {
                     dx={0}
                     dy={3}
                     textAnchor="end"
-                    fill="#b5b6b9"
+                    fill="var(--color-primary-blue-100)"
                   >
                     {`${
                       payload.value > 0 &&
@@ -148,7 +151,7 @@ export function Chart() {
             <Bar
               className="hello"
               dataKey="hours"
-              fill="#EBFB8B"
+              fill="var(--color-primary-green-200)"
               radius={[6, 6, 0, 0]}
             />
           </BarChart>

@@ -57,28 +57,52 @@ function StatsCards({
   const stats = [
     {
       id: 1,
-      icon: <Users size={20} strokeWidth={1.75} color="#151821" />,
+      icon: (
+        <Users
+          size={20}
+          strokeWidth={1.75}
+          color="var(--color-semantic-blue-150)"
+        />
+      ),
       color: 'primary-green-500',
       title: 'Currently Active',
       count: dashboardData?.currentlyActive ?? 0,
     },
     {
       id: 2,
-      icon: <UserCheck size={20} strokeWidth={1.75} color="#151821" />,
+      icon: (
+        <UserCheck
+          size={20}
+          strokeWidth={1.75}
+          color="var(--color-semantic-blue-150)"
+        />
+      ),
       color: 'semantic-blue-500',
       title: "Today's Check-ins",
       count: dashboardData?.totalCheckIns ?? 0,
     },
     {
       id: 3,
-      icon: <UserX size={20} strokeWidth={1.75} color="#151821" />,
+      icon: (
+        <UserX
+          size={20}
+          strokeWidth={1.75}
+          color="var(--color-semantic-blue-150)"
+        />
+      ),
       color: 'secondary-yellow-150',
       title: "Today's Check-outs",
       count: dashboardData?.totalCheckOuts ?? 0,
     },
     {
       id: 4,
-      icon: <Timer size={20} strokeWidth={1.75} color="#151821" />,
+      icon: (
+        <Timer
+          size={20}
+          strokeWidth={1.75}
+          color="var(--color-semantic-blue-150)"
+        />
+      ),
       color: 'alert-red-400',
       title: 'Avg Session',
       count: `${dashboardData?.avgSessionMinutes ?? 0}m`,
@@ -126,25 +150,28 @@ function TodaysSummary({
     {
       name: 'Check-ins',
       value: dashboardData?.totalCheckIns ?? 0,
-      fill: '#EBFB8B',
+      fill: 'var(--color-primary-green-200)',
     },
     {
       name: 'Check-outs',
       value: dashboardData?.totalCheckOuts ?? 0,
-      fill: '#90A8ED',
+      fill: 'var(--color-semantic-blue-500)',
     },
     {
       name: 'Currently Active',
       value: dashboardData?.currentlyActive ?? 0,
-      fill: '#96AF01',
+      fill: 'var(--color-primary-green-700)',
     },
   ];
 
   const chartConfig = {
     value: { label: 'Count' },
-    checkins: { label: 'Check-ins', color: '#EBFB8B' },
-    checkouts: { label: 'Check-outs', color: '#90A8ED' },
-    active: { label: 'Currently Active', color: '#96AF01' },
+    checkins: { label: 'Check-ins', color: 'var(--color-primary-green-200)' },
+    checkouts: { label: 'Check-outs', color: 'var(--color-semantic-blue-500)' },
+    active: {
+      label: 'Currently Active',
+      color: 'var(--color-primary-green-700)',
+    },
   } satisfies ChartConfig;
 
   return (
@@ -183,24 +210,24 @@ function TodaysSummary({
         <div className="flex flex-col flex-1 w-full justify-center gap-2 text-white">
           <div className="bg-primary-blue-400 rounded-lg p-3 space-y-2">
             <StatItem
-              color="#EBFB8B"
+              color="var(--color-primary-green-200)"
               label="Check-ins"
               value={dashboardData?.totalCheckIns ?? 0}
             />
             <StatItem
-              color="#90A8ED"
+              color="var(--color-semantic-blue-500)"
               label="Check-outs"
               value={dashboardData?.totalCheckOuts ?? 0}
             />
           </div>
           <div className="bg-primary-blue-400 rounded-lg p-3 space-y-2">
             <StatItem
-              color="#96AF01"
+              color="var(--color-primary-green-700)"
               label="Currently Active"
               value={dashboardData?.currentlyActive ?? 0}
             />
             <StatItem
-              color="#96AF01"
+              color="var(--color-primary-green-700)"
               label="Unique Members"
               value={dashboardData?.currentlyActive ?? 0}
             />

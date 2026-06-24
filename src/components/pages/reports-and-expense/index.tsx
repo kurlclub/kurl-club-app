@@ -137,7 +137,7 @@ const PreviewExpenseSidebar = () => (
                 className="flex items-center justify-between gap-2 rounded-lg border border-primary-blue-400/40 bg-primary-blue-400/15 px-3 py-2"
               >
                 <div className="min-w-0 flex items-center gap-2.5">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-green-500 text-[11px] font-semibold text-[#0A1020]">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-green-500 text-[11px] font-semibold text-on-accent">
                     ₹
                   </div>
                   <div className="min-w-0">
@@ -155,7 +155,7 @@ const PreviewExpenseSidebar = () => (
                     className={`text-base font-semibold ${
                       item.amount.startsWith('-')
                         ? 'text-alert-red-400'
-                        : 'text-[#6BC160]'
+                        : 'text-neutral-green-300'
                     }`}
                   >
                     {item.amount}

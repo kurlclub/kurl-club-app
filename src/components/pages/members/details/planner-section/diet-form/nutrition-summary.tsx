@@ -32,15 +32,15 @@ const chartConfig = {
   },
   protein: {
     label: 'Protein',
-    color: '#c0e102',
+    color: 'var(--color-primary-green-600)',
   },
   carbs: {
     label: 'Carbs',
-    color: '#679cf1',
+    color: 'var(--color-chart-carbs)',
   },
   fat: {
     label: 'Fat',
-    color: '#db9e56',
+    color: 'var(--color-neutral-ochre-400)',
   },
 } satisfies ChartConfig;
 

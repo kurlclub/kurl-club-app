@@ -528,6 +528,6 @@ export const formatAmount = (amount: number): string => {
  * Payment chart color constants.
  */
 export const PAYMENT_CHART_COLORS = {
-  UNPAID: '#F7FF93',
-  PAID: '#96AF01',
+  UNPAID: 'var(--color-status-unpaid)',
+  PAID: 'var(--color-primary-green-700)',
 } as const;

@@ -356,7 +356,7 @@ const ExpenseTracker = ({
   return (
     <aside
       className={cn(
-        'rounded-lg border border-secondary-blue-500 bg-[#25282F] p-5 w-full xl:max-w-100 xl:sticky xl:top-17.5 xl:h-[calc(100vh-180px)] overflow-hidden',
+        'rounded-lg border border-secondary-blue-500 bg-surface-expense p-5 w-full xl:max-w-100 xl:sticky xl:top-17.5 xl:h-[calc(100vh-180px)] overflow-hidden',
         className
       )}
     >
@@ -395,7 +395,7 @@ const ExpenseTracker = ({
           </div>
           <div className="rounded-md border border-primary-blue-400/40 bg-primary-blue-400/10 px-2 py-1 text-[11px] text-primary-blue-100">
             Income:{' '}
-            <span className="font-semibold text-[#6BC160]">
+            <span className="font-semibold text-neutral-green-300">
               {formatCurrency(summary.totalIncome)}
             </span>
           </div>
@@ -404,7 +404,9 @@ const ExpenseTracker = ({
             <span
               className={cn(
                 'font-semibold',
-                summary.netProfit >= 0 ? 'text-[#6BC160]' : 'text-alert-red-400'
+                summary.netProfit >= 0
+                  ? 'text-neutral-green-300'
+                  : 'text-alert-red-400'
               )}
             >
               {formatCurrency(summary.netProfit)}
@@ -464,7 +466,7 @@ const ExpenseTracker = ({
                       >
                         <div className="min-w-0 flex items-center gap-2.5">
                           <div
-                            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-[#0A1020]"
+                            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-on-accent"
                             style={{ backgroundColor: categoryColor }}
                           >
                             {categoryIcon}
@@ -490,7 +492,7 @@ const ExpenseTracker = ({
                               'text-base font-semibold',
                               isExpense
                                 ? 'text-alert-red-400'
-                                : 'text-[#6BC160]'
+                                : 'text-neutral-green-300'
                             )}
                           >
                             {isExpense ? '-' : '+'}

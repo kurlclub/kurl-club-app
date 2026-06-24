@@ -68,7 +68,7 @@ function SetupChecklist() {
         'Add pricing, duration & billing so every new member is enrolled into the right plan.',
       href: '/plans-and-workouts',
       icon: <Ticket size={20} strokeWidth={1.75} />,
-      accent: 'bg-[#8b7cf6]/15 text-[#8b7cf6]',
+      accent: 'bg-accent-violet/15 text-accent-violet',
       required: true,
       done: (formOptions?.membershipPlans?.length ?? 0) > 0,
     },

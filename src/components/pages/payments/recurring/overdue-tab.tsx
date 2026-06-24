@@ -133,14 +133,26 @@ export function OverdueTab() {
   const stats = [
     {
       id: 1,
-      icon: <Users size={20} strokeWidth={1.75} color="#151821" />,
+      icon: (
+        <Users
+          size={20}
+          strokeWidth={1.75}
+          color="var(--color-semantic-blue-150)"
+        />
+      ),
       color: 'alert-red-400',
       title: 'Overdue members',
       count: summary?.totalMembers || 0,
     },
     {
       id: 2,
-      icon: <IndianRupee size={20} strokeWidth={1.75} color="#151821" />,
+      icon: (
+        <IndianRupee
+          size={20}
+          strokeWidth={1.75}
+          color="var(--color-semantic-blue-150)"
+        />
+      ),
       color: 'secondary-pink-500',
       title: 'Overdue amount',
       count: summary?.totalDebt || 0,

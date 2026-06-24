@@ -15,25 +15,25 @@ const ProfitChart = ({ report, className }: ProfitChartProps) => {
       label: 'Memberships',
       value: report.revenueFlow.memberships,
       color: 'bg-secondary-yellow-500',
-      mutedColor: 'bg-[#7F879A]',
+      mutedColor: 'bg-chart-muted',
     },
     {
       label: 'Per session',
       value: report.revenueFlow.perSession,
       color: 'bg-secondary-pink-500',
-      mutedColor: 'bg-[#7F879A]',
+      mutedColor: 'bg-chart-muted',
     },
     {
       label: 'Joining fees',
       value: report.revenueFlow.joiningFees,
       color: 'bg-neutral-green-400',
-      mutedColor: 'bg-[#7F879A]',
+      mutedColor: 'bg-chart-muted',
     },
     {
       label: 'Other collection',
       value: report.revenueFlow.otherCollection,
       color: 'bg-semantic-blue-300',
-      mutedColor: 'bg-[#7F879A]',
+      mutedColor: 'bg-chart-muted',
     },
   ];
   const total = data.reduce((acc, item) => acc + item.value, 0);
