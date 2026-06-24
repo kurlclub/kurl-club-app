@@ -23,14 +23,26 @@ function CardList({ fromDate, toDate }: CardListProps) {
   const cards = [
     {
       id: 1,
-      icon: <Users size={20} strokeWidth={1.75} color="#151821" />,
+      icon: (
+        <Users
+          size={20}
+          strokeWidth={1.75}
+          color="var(--color-semantic-blue-150)"
+        />
+      ),
       color: 'primary-green-500',
       title: 'Active members',
       count: dashboardData?.totalMembers || 0,
     },
     {
       id: 2,
-      icon: <IndianRupee size={20} strokeWidth={1.75} color="#151821" />,
+      icon: (
+        <IndianRupee
+          size={20}
+          strokeWidth={1.75}
+          color="var(--color-semantic-blue-150)"
+        />
+      ),
       color: 'secondary-pink-500',
       title: 'Outstanding payments',
       count: dashboardData?.outstandingPaymentsCount || 0,
@@ -44,7 +56,13 @@ function CardList({ fromDate, toDate }: CardListProps) {
     },
     {
       id: 4,
-      icon: <UserPlus size={20} strokeWidth={1.75} color="#151821" />,
+      icon: (
+        <UserPlus
+          size={20}
+          strokeWidth={1.75}
+          color="var(--color-semantic-blue-150)"
+        />
+      ),
       color: 'semantic-blue-500',
       title: 'New Signups',
       count: dashboardData?.newSignups || 0,

@@ -143,14 +143,26 @@ export function CompletedTab() {
   const stats = [
     {
       id: 1,
-      icon: <Users size={20} strokeWidth={1.75} color="#151821" />,
+      icon: (
+        <Users
+          size={20}
+          strokeWidth={1.75}
+          color="var(--color-semantic-blue-150)"
+        />
+      ),
       color: 'primary-green-500',
       title: 'Paid members',
       count: summary?.totalMembers || 0,
     },
     {
       id: 2,
-      icon: <IndianRupee size={20} strokeWidth={1.75} color="#151821" />,
+      icon: (
+        <IndianRupee
+          size={20}
+          strokeWidth={1.75}
+          color="var(--color-semantic-blue-150)"
+        />
+      ),
       color: 'primary-green-500',
       title: 'Revenue collected',
       count: summary?.totalDebt || 0,

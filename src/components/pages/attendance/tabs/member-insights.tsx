@@ -229,28 +229,52 @@ function SummaryStats({
   const stats = [
     {
       id: 1,
-      icon: <Users size={20} strokeWidth={1.75} color="#151821" />,
+      icon: (
+        <Users
+          size={20}
+          strokeWidth={1.75}
+          color="var(--color-semantic-blue-150)"
+        />
+      ),
       color: 'semantic-blue-500',
       title: 'Total Members',
       count: summary?.totalMembers ?? 0,
     },
     {
       id: 2,
-      icon: <UserCheck size={20} strokeWidth={1.75} color="#151821" />,
+      icon: (
+        <UserCheck
+          size={20}
+          strokeWidth={1.75}
+          color="var(--color-semantic-blue-150)"
+        />
+      ),
       color: 'primary-green-500',
       title: 'Active Members',
       count: summary?.activeMembers ?? 0,
     },
     {
       id: 3,
-      icon: <Percent size={20} strokeWidth={1.75} color="#151821" />,
+      icon: (
+        <Percent
+          size={20}
+          strokeWidth={1.75}
+          color="var(--color-semantic-blue-150)"
+        />
+      ),
       color: 'secondary-yellow-150',
       title: 'Avg Attendance',
       count: `${summary?.averageAttendanceRate ?? 0}%`,
     },
     {
       id: 4,
-      icon: <TrendingUp size={20} strokeWidth={1.75} color="#151821" />,
+      icon: (
+        <TrendingUp
+          size={20}
+          strokeWidth={1.75}
+          color="var(--color-semantic-blue-150)"
+        />
+      ),
       color: 'alert-red-400',
       title: 'Top Performers',
       count: summary?.topPerformerCount ?? 0,

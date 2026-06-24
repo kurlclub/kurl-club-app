@@ -145,7 +145,7 @@ export const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
       badge: 'Expired',
       icon: <AlertTriangle className="h-4 w-4" />,
       cardClass:
-        'border-alert-red-400/70 bg-gradient-to-br from-alert-red-500 via-alert-red-600 to-[#8F1420]',
+        'border-alert-red-400/70 bg-gradient-to-br from-alert-red-500 via-alert-red-600 to-alert-red-gradient',
       badgeClass: 'border-white/45 bg-black/20 text-white',
       titleClass: 'text-white',
       descriptionClass: 'text-white/95',

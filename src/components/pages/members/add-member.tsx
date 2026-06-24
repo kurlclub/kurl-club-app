@@ -508,7 +508,7 @@ const OnboardingTypeCards = ({
               }`}
             >
               <div
-                className="absolute inset-0 bg-linear-to-br from-[#141720] via-[#1C1F24] to-[#282D35]"
+                className="absolute inset-0 bg-linear-to-br from-gradient-dark-start via-secondary-blue-700 to-gradient-dark-end"
                 style={{ zIndex: 0 }}
               />
               <div className="relative p-4" style={{ zIndex: 1 }}>

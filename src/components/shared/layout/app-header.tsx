@@ -23,10 +23,10 @@ export function AppHeader() {
         <SidebarTrigger className="-ml-1" />
         <Separator
           orientation="vertical"
-          className="mr-2 data-[orientation=vertical]:h-4 bg-[#747578]"
+          className="mr-2 data-[orientation=vertical]:h-4 bg-divider-muted"
         />
         <div className="flex flex-col text-left leading-tight">
-          <span className="text-sm font-medium leading-normal text-[#747578]">
+          <span className="text-sm font-medium leading-normal text-divider-muted">
             Hey, {userName}
           </span>
           <span className="text-base font-semibold">{getGreeting()}</span>
@@ -36,7 +36,7 @@ export function AppHeader() {
         {/* <NotificationBell count={notificationCount} onClick={() => {}} /> */}
         {/* <Separator
           orientation="vertical"
-          className="mx-2 data-[orientation=vertical]:h-4 bg-[#747578] md:flex"
+          className="mx-2 data-[orientation=vertical]:h-4 bg-divider-muted md:flex"
         /> */}
         <QuickActionsButton />
       </div>
