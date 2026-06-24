@@ -36,6 +36,7 @@ export type MemberStatus =
   | 'Overdue'
   | 'NoCycles'
   | 'Expired';
+export type MembershipState = 'active' | 'inactive';
 export type OnboardingStatus = 'Pending' | 'Approved' | 'Rejected';
 
 export interface MembershipPlan extends Omit<
@@ -92,6 +93,8 @@ export interface MemberListItem {
   package: string;
   packageId: number;
   status: MemberStatus;
+  membershipState: MembershipState;
+  isFrozen?: boolean;
   photoPath: string | null;
   profilePicture?: string | File | null;
   personalTrainer?: number;
@@ -175,6 +178,7 @@ export interface MemberDetails {
   sessionPaymentInfo: SessionPaymentInfo | null;
   paymentCycleInfo: PaymentCycleInfo | null;
   isFrozen?: boolean;
+  membershipState?: MembershipState;
 }
 
 export interface MemberDetailsResponse {

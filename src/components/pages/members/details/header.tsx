@@ -25,6 +25,7 @@ import {
   unfreezeMember,
   useMemberFreezeHistory,
 } from '@/services/member';
+import type { MembershipState } from '@/types/member.types';
 
 import { FreezeMemberDialog } from './freeze-member-dialog';
 
@@ -35,6 +36,7 @@ interface HeaderProps {
   toggleEdit: () => void;
   memberId: string;
   isFrozen?: boolean;
+  membershipState?: MembershipState;
 }
 
 function Header({
@@ -44,6 +46,7 @@ function Header({
   toggleEdit,
   memberId,
   isFrozen = false,
+  membershipState,
 }: HeaderProps) {
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -134,7 +137,7 @@ function Header({
 
   return (
     <div className="flex sticky pt-4 md:pt-6.5 pb-4 z-20 drop-shadow-xl -top-px w-full items-center bg-primary-blue-500 justify-between gap-3 flex-wrap">
-      <MemberStatusBadge status="active" />
+      <MemberStatusBadge status={membershipState ?? 'active'} />
       <div className="flex items-center gap-2">
         {isEditing ? (
           <>

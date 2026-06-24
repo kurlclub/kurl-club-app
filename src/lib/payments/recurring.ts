@@ -139,7 +139,10 @@ export interface RecurringPaymentSummary {
 export const getRecurringPaymentSummary = (
   member?: Pick<
     RecurringPaymentMember,
-    'currentCycle' | 'previousCycles' | 'overallPaymentStatus' | 'totalDebtAmount'
+    | 'currentCycle'
+    | 'previousCycles'
+    | 'overallPaymentStatus'
+    | 'totalDebtAmount'
   > | null
 ): RecurringPaymentSummary | undefined => {
   if (!member?.currentCycle) return undefined;
@@ -147,13 +150,17 @@ export const getRecurringPaymentSummary = (
   // Non-overdue: the current cycle is the whole story.
   if (member.overallPaymentStatus !== 'Overdue') {
     const { amountPaid, planFee, pendingAmount } = member.currentCycle;
-    const progress = planFee > 0 ? Math.min((amountPaid / planFee) * 100, 100) : 0;
+    const progress =
+      planFee > 0 ? Math.min((amountPaid / planFee) * 100, 100) : 0;
     return { amountPaid, totalBilled: planFee, pendingAmount, progress };
   }
 
   // Overdue: aggregate across every unsettled cycle so the row reflects the
   // member's full outstanding debt, not just the current cycle.
-  const unsettledCycles = [member.currentCycle, ...(member.previousCycles ?? [])]
+  const unsettledCycles = [
+    member.currentCycle,
+    ...(member.previousCycles ?? []),
+  ]
     .filter((cycle): cycle is PaymentCycle => Boolean(cycle))
     .filter((cycle) => cycle.cyclePaymentStatus !== 'paid');
 
