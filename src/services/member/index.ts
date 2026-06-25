@@ -213,6 +213,29 @@ export const upgradeMemberPlan = async (
   return api.post<MemberUpdateResponse>(`/Member/${id}/upgrade-plan`, payload);
 };
 
+export type RejoinMemberPayload = {
+  rejoinDate: string;
+  newMembershipPlanId: number;
+  duesCollected: number;
+  joiningFee: number;
+  planFeePaid: number;
+  paymentMethod: string;
+  performedBy: number;
+  notes: string;
+};
+
+export type RejoinMemberResponse = {
+  status?: string;
+  message?: string;
+};
+
+export const rejoinMember = async (
+  id: string | number,
+  payload: RejoinMemberPayload
+) => {
+  return api.post<RejoinMemberResponse>(`/Member/${id}/rejoin`, payload);
+};
+
 export const deleteMember = async (
   id: string | number,
   queryClient?: QueryClient
