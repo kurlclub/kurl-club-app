@@ -56,11 +56,11 @@ const getBillingOptions = (plans: PricingPlan[]) => {
   ];
 };
 
-const triggerConfetti = () => {
+const triggerConfetti = (origin: { x: number; y: number }) => {
   confetti({
     particleCount: 30,
     spread: 50,
-    origin: { x: 0.5, y: 0.3 },
+    origin,
     colors: ['#FFD700', '#FFA500', '#FF8C00', '#d3f702', '#96af01', '#61a800'],
     ticks: 150,
     gravity: 1,
@@ -80,13 +80,22 @@ export function Pricing({
   const [selectedPlan, setSelectedPlan] = useState<PricingPlan | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-  const switchRef = useRef<HTMLButtonElement>(null);
+  const yearlyButtonRef = useRef<HTMLButtonElement>(null);
 
   const handleCycleChange = (cycle: BillingCycle) => {
     setBillingCycle(cycle);
-    if (cycle === 'yearly') {
-      triggerConfetti();
-    }
+    if (cycle !== 'yearly') return;
+
+    // Burst from the 12-M button's actual on-screen position.
+    const rect = yearlyButtonRef.current?.getBoundingClientRect();
+    triggerConfetti(
+      rect
+        ? {
+            x: (rect.left + rect.width / 2) / window.innerWidth,
+            y: (rect.top + rect.height / 2) / window.innerHeight,
+          }
+        : { x: 0.5, y: 0.3 }
+    );
   };
 
   const plans = pricingData?.plans || [];
@@ -140,58 +149,48 @@ export function Pricing({
   };
 
   return (
-    <div className="relative mx-auto max-w-6xl py-6">
-      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden rounded-3xl">
-        <div className="absolute -left-20 top-0 h-64 w-64 rounded-full bg-primary-green-500/10 blur-3xl" />
-        <div className="absolute -right-16 bottom-0 h-72 w-72 rounded-full bg-semantic-blue-500/15 blur-3xl" />
-      </div>
-
-      <div className="mb-8 text-center">
-        {offer?.enabled && (
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary-green-500/30 bg-linear-to-r from-primary-green-500/20 to-secondary-green-600/20 px-4 py-1.5 shadow-[0_0_0_1px_rgba(211,247,2,0.08)]">
-            <Star className="h-3.5 w-3.5 text-primary-green-300" />
-            <span className="text-xs font-semibold tracking-wide text-primary-green-200">
+    <div className="py-2">
+      {/* Header: title + billing toggle */}
+      <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="space-y-1.5">
+          {offer?.enabled && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-primary-green-500/30 bg-primary-green-500/10 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-primary-green-200">
+              <Star className="h-3 w-3" />
               {offer.durationMonths} Months Free Trial
             </span>
-          </div>
-        )}
-        <h2 className="mb-2 text-3xl font-bold tracking-tight text-white md:text-4xl">
-          {title}
-        </h2>
-        <p className="mx-auto max-w-2xl text-sm text-secondary-blue-200 md:text-base">
-          {finalDescription}
-        </p>
-      </div>
+          )}
+          <h3 className="text-lg font-semibold text-white">{title}</h3>
+          <p className="max-w-xl text-sm text-secondary-blue-200">
+            {finalDescription}
+          </p>
+        </div>
 
-      <div className="mb-8 flex justify-center">
-        <div className="inline-flex rounded-xl border border-secondary-blue-400 bg-secondary-blue-650 p-1 shadow-inner shadow-black/25">
+        <div className="inline-flex shrink-0 self-start rounded-lg border border-secondary-blue-400 bg-secondary-blue-700 p-1 lg:self-end">
           {billingOptions.map(({ key, label, savings }) => (
             <button
               key={key}
-              ref={key === 'yearly' ? switchRef : null}
+              ref={key === 'yearly' ? yearlyButtonRef : undefined}
+              type="button"
               disabled={isPaying}
               onClick={() => handleCycleChange(key)}
               className={cn(
-                'relative rounded-lg px-4 py-2 text-xs font-semibold tracking-wide transition-all duration-250 disabled:cursor-not-allowed disabled:opacity-60 sm:px-5',
+                'rounded-md px-4 py-1.5 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60',
                 billingCycle === key
-                  ? 'bg-primary-green-300 text-primary-blue-700 shadow-lg shadow-primary-green-500/30'
-                  : 'text-secondary-blue-100 hover:bg-secondary-blue-600 hover:text-white'
+                  ? 'bg-primary-green-300 text-primary-blue-700'
+                  : 'text-secondary-blue-200 hover:text-white'
               )}
             >
               {label}
               {savings > 0 && (
-                <span className="ml-1 text-[10px] opacity-90">
-                  {billingCycle === key
-                    ? `Save ${savings}%`
-                    : `(${savings}% off)`}
-                </span>
+                <span className="ml-1 opacity-80">{savings}% off</span>
               )}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="mx-auto grid max-w-5xl grid-cols-1 gap-5 lg:grid-cols-2">
+      {/* Plans — single row on desktop, stacked on mobile */}
+      <div className="flex flex-col gap-4 lg:flex-row">
         {plans.map((plan, index) => (
           <PlanCard
             key={plan.id}
@@ -240,14 +239,6 @@ export function Pricing({
         title={paymentFailure.title}
         message={paymentFailure.message}
       />
-
-      {offer?.enabled && (
-        <div className="mt-5 text-center">
-          <p className="text-sm italic text-secondary-blue-200">
-            Limited-time offer • Terms & conditions apply*
-          </p>
-        </div>
-      )}
     </div>
   );
 }

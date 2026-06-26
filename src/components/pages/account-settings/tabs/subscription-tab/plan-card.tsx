@@ -1,6 +1,6 @@
 import NumberFlow from '@number-flow/react';
 import { motion } from 'framer-motion';
-import { Check, Star } from 'lucide-react';
+import { Check } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -59,14 +59,6 @@ const getSavings = (plan: PricingPlan, cycle: BillingCycle): number => {
   return Math.round(((fullPrice - current) / fullPrice) * 100);
 };
 
-const getPlainText = (value?: string) => {
-  if (!value) return '';
-  return value
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-};
-
 export function PlanCard({
   plan,
   index,
@@ -78,131 +70,91 @@ export function PlanCard({
   const savings = getSavings(plan, billingCycle);
   const priceSuffix = getPriceSuffix(billingCycle);
   const isFreePlan = currentPrice === 0;
-  const planDescription = getPlainText(plan.description);
   const previewFeatures = plan.features.slice(0, 4);
-  const billedAmount =
-    billingCycle === 'monthly'
-      ? plan.pricing.monthly
-      : billingCycle === '6months'
-        ? plan.pricing.sixMonths
-        : plan.pricing.yearly;
-  const billedLabel =
-    billingCycle === 'monthly'
-      ? 'Billed monthly'
-      : billingCycle === '6months'
-        ? 'Billed every 6 months'
-        : 'Billed yearly';
+  const extraFeatures = plan.features.length - previewFeatures.length;
 
   return (
     <motion.div
-      initial={{ y: 10, opacity: 0 }}
+      initial={{ y: 8, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.3, delay: index * 0.05 }}
+      transition={{ duration: 0.25, delay: index * 0.04 }}
       className={cn(
-        'group relative flex h-full flex-col overflow-visible rounded-lg border p-5 transition-all duration-300',
+        'flex h-full min-w-0 flex-1 flex-col rounded-xl border bg-secondary-blue-600 p-5',
         plan.popular
-          ? 'scale-[1.015] border-primary-green-400 bg-linear-to-br from-secondary-blue-500 via-secondary-blue-600 to-primary-blue-600 pt-7 shadow-[0_18px_50px_rgba(211,247,2,0.2)]'
-          : 'border-secondary-blue-400 bg-linear-to-b from-secondary-blue-500 to-secondary-blue-650 hover:border-primary-green-300 hover:shadow-[0_14px_38px_rgba(0,0,0,0.35)]'
+          ? 'border-primary-green-500/70'
+          : 'border-secondary-blue-400'
       )}
     >
-      {plan.popular && (
-        <div className="absolute left-1/2 top-0 z-30 -translate-x-1/2 -translate-y-1/2">
-          <span className="inline-flex items-center gap-1 rounded-full bg-linear-to-r from-primary-green-300 to-primary-green-600 px-3.5 py-1 text-xs font-bold text-secondary-blue-700 shadow-lg">
-            <Star className="h-3 w-3 fill-current" />
-            {plan.badge}
+      {/* Header: name + popular marker */}
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <h3 className="truncate text-base font-semibold text-white">
+          {plan.name}
+        </h3>
+        {plan.popular && (
+          <span className="shrink-0 rounded-full bg-primary-green-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-green-300 ring-1 ring-primary-green-500/30">
+            {plan.badge || 'Popular'}
           </span>
-        </div>
+        )}
+      </div>
+      {plan.subtitle && (
+        <p className="text-xs font-medium uppercase tracking-[0.1em] text-secondary-blue-300">
+          {plan.subtitle}
+        </p>
       )}
 
-      <div className="relative z-10 mb-4">
-        <div className="mb-3 flex items-center justify-between gap-4">
-          <div>
-            <h3 className="text-xl font-bold leading-tight text-white">
-              {plan.name}
-            </h3>
-            <p className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-primary-green-300">
-              {plan.subtitle}
-            </p>
-            {planDescription && (
-              <p className="mt-2 max-w-[24ch] line-clamp-2 text-xs leading-relaxed text-secondary-blue-200">
-                {planDescription}
-              </p>
-            )}
-          </div>
-          <div className="text-right">
-            {isFreePlan ? (
-              <p className="text-3xl font-bold leading-none text-primary-green-300">
-                Free
-              </p>
-            ) : (
-              <div className="flex items-end gap-1">
-                <span className="pb-1 text-sm text-secondary-blue-300">₹</span>
-                <NumberFlow
-                  value={currentPrice}
-                  className="text-3xl font-bold leading-none text-white"
-                  transformTiming={{ duration: 300, easing: 'ease-out' }}
-                  willChange
-                />
-                <span className="pb-1 text-xs text-secondary-blue-200 whitespace-nowrap">
-                  {priceSuffix}
-                </span>
-              </div>
-            )}
-            {!isFreePlan && (
-              <p className="mt-1 text-xs text-secondary-blue-300 whitespace-nowrap">
-                +GST (18%) included
-              </p>
-            )}
-            {billingCycle !== 'monthly' && !isFreePlan && savings > 0 && (
-              <span className="mt-1 inline-block rounded-full border border-primary-green-400/30 bg-primary-green-500/15 px-2 py-0.5 text-[10px] font-semibold text-primary-green-200">
-                Save {savings}%
-              </span>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center justify-between rounded-lg border border-secondary-blue-400/70 bg-secondary-blue-700/55 px-3 py-2 text-[11px] text-secondary-blue-200">
-          <span>{billedLabel}</span>
-          <span className="font-semibold text-white">
-            {billedAmount === 0 ? 'Free' : `₹${billedAmount}`}
+      {/* Price */}
+      <div className="mt-4 flex items-end gap-1">
+        {isFreePlan ? (
+          <span className="text-2xl font-bold leading-none text-primary-green-300">
+            Free
           </span>
-        </div>
-        <p className="mt-2 text-center text-[10px] text-secondary-blue-300">
-          {isFreePlan
-            ? 'No payment required during trial'
-            : 'Starts after your trial period'}
-        </p>
+        ) : (
+          <>
+            <span className="pb-1 text-sm text-secondary-blue-300">₹</span>
+            <NumberFlow
+              value={currentPrice}
+              className="text-3xl font-bold leading-none text-white tabular-nums"
+              transformTiming={{ duration: 300, easing: 'ease-out' }}
+              willChange
+            />
+            <span className="pb-1 text-xs text-secondary-blue-300">
+              {priceSuffix}
+            </span>
+          </>
+        )}
+        {!isFreePlan && billingCycle !== 'monthly' && savings > 0 && (
+          <span className="mb-1 ml-1 rounded-full bg-primary-green-500/15 px-2 py-0.5 text-[10px] font-semibold text-primary-green-300">
+            Save {savings}%
+          </span>
+        )}
       </div>
+      <p className="mt-1 text-[11px] text-secondary-blue-300">
+        {isFreePlan ? 'No payment during trial' : 'GST (18%) included'}
+      </p>
 
-      <ul className="relative z-10 mb-5 space-y-2">
+      {/* Features */}
+      <ul className="mt-5 space-y-2.5 border-t border-secondary-blue-400/50 pt-5">
         {previewFeatures.map((feature, idx) => (
-          <li key={idx} className="flex items-center gap-2.5">
-            <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-green-500/15 ring-1 ring-primary-green-500/20">
-              <Check className="h-2.5 w-2.5 text-primary-green-500" />
-            </div>
-            <span className="text-xs font-medium leading-tight text-secondary-blue-100">
+          <li key={idx} className="flex items-start gap-2.5">
+            <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary-green-500" />
+            <span className="text-xs leading-snug text-secondary-blue-100">
               {feature}
             </span>
           </li>
         ))}
+        {extraFeatures > 0 && (
+          <li className="pl-[26px] text-xs text-secondary-blue-300">
+            +{extraFeatures} more in details
+          </li>
+        )}
       </ul>
 
-      <p className="relative z-10 mb-5 text-xs text-secondary-blue-200">
-        {plan.features.length > previewFeatures.length
-          ? `+${plan.features.length - previewFeatures.length} more features in details`
-          : 'View complete feature and limits in details'}
-      </p>
-
+      {/* CTA */}
       <Button
         variant={plan.popular ? 'default' : 'outline'}
         disabled={disabled}
         onClick={() => onChoosePlan(plan)}
-        className={cn(
-          'relative z-10 mt-auto flex h-11 w-full items-center justify-center rounded-xl text-sm font-semibold transition-all duration-300',
-          disabled && 'cursor-not-allowed opacity-60',
-          plan.popular
-            ? 'bg-primary-green-400 text-primary-blue-800 shadow-[0_10px_24px_rgba(211,247,2,0.25)] hover:bg-primary-green-300'
-            : 'border-2 border-primary-green-500/80 text-primary-green-300 hover:bg-primary-green-500 hover:text-primary-blue-800'
-        )}
+        className="mt-6 w-full"
       >
         Choose Plan
       </Button>
