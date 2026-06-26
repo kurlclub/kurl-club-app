@@ -7,17 +7,13 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 import {
+  SettingsDirtyActions,
+  SettingsSection,
+} from '@/components/pages/account-settings/components';
+import {
   KFormField,
   KFormFieldType,
 } from '@/components/shared/form/k-formfield';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import {
   COUNTRY_CODES,
   CURRENCIES,
@@ -123,71 +119,48 @@ export default function RegionalSettings({ gymId }: RegionalSettingsProps) {
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
-        <Card className="bg-white dark:bg-secondary-blue-500 border-gray-200 dark:border-primary-blue-400">
-          <CardHeader>
-            <div className="flex items-start justify-between">
-              <div className="flex items-start gap-3">
-                <Globe className="h-5 w-5 text-primary-green-600 dark:text-primary-green-500 mt-1" />
-                <div>
-                  <CardTitle className="text-gray-900 dark:text-white">
-                    Currency & Regional Settings
-                  </CardTitle>
-                  <CardDescription className="text-gray-600 dark:text-secondary-blue-200">
-                    Configure currency, timezone, and format preferences
-                  </CardDescription>
-                </div>
-              </div>
-              {isDirty && (
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => form.reset()}
-                    disabled={isSaving || isPrefilling}
-                  >
-                    Discard
-                  </Button>
-                  <Button
-                    type="submit"
-                    size="sm"
-                    disabled={isSaving || isPrefilling || !gymId}
-                  >
-                    {isSaving ? 'Saving...' : 'Save Changes'}
-                  </Button>
-                </div>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <KFormField
-                fieldType={KFormFieldType.SELECT}
-                control={form.control}
-                name="currency"
-                label="Currency"
-                options={CURRENCIES}
-                className="bg-gray-50 dark:bg-primary-blue-400"
+        <SettingsSection
+          icon={Globe}
+          title="Currency & Regional Settings"
+          description="Configure currency, region, and country code preferences"
+          headerAction={
+            isDirty ? (
+              <SettingsDirtyActions
+                onDiscard={() => form.reset()}
+                onSave={form.handleSubmit(onSubmit)}
+                isSaving={isSaving}
+                isBusy={isSaving || isPrefilling || !gymId}
               />
-              <KFormField
-                fieldType={KFormFieldType.SELECT}
-                control={form.control}
-                name="region"
-                label="Region"
-                options={REGIONS}
-                className="bg-gray-50 dark:bg-primary-blue-400"
-              />
-              <KFormField
-                fieldType={KFormFieldType.SELECT}
-                control={form.control}
-                name="countryCode"
-                label="Country Code"
-                options={COUNTRY_CODES}
-                className="bg-gray-50 dark:bg-primary-blue-400"
-              />
-            </div>
-          </CardContent>
-        </Card>
+            ) : undefined
+          }
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <KFormField
+              fieldType={KFormFieldType.SELECT}
+              control={form.control}
+              name="currency"
+              label="Currency"
+              options={CURRENCIES}
+              className="bg-gray-50 dark:bg-primary-blue-400"
+            />
+            <KFormField
+              fieldType={KFormFieldType.SELECT}
+              control={form.control}
+              name="region"
+              label="Region"
+              options={REGIONS}
+              className="bg-gray-50 dark:bg-primary-blue-400"
+            />
+            <KFormField
+              fieldType={KFormFieldType.SELECT}
+              control={form.control}
+              name="countryCode"
+              label="Country Code"
+              options={COUNTRY_CODES}
+              className="bg-gray-50 dark:bg-primary-blue-400"
+            />
+          </div>
+        </SettingsSection>
       </form>
     </FormProvider>
   );

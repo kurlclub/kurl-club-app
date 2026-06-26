@@ -18,7 +18,14 @@ interface GymDetailsWithRegionalSettings {
   currency?: string;
   region?: string;
   countryCode?: string;
+  inactiveAfterDays?: number;
+  skipperDays?: number;
   gymSettings?: GymSettingsCurrencyRegion[];
+}
+
+export interface MemberActivitySettings {
+  inactiveAfterDays: number | null;
+  skipperDays: number | null;
 }
 
 type CreateGymResponse = {
@@ -78,6 +85,64 @@ export const getGymCurrencyRegion = async (gymId: number) => {
     region: root?.region || nested?.region || 'IND',
     countryCode: root?.countryCode || nested?.countryCode || '+91',
   };
+};
+
+export const getMemberActivitySettings = async (
+  gymId: number
+): Promise<MemberActivitySettings> => {
+  const response = await api.get<ApiResponse<GymDetailsWithRegionalSettings>>(
+    `/Gym/${gymId}`
+  );
+
+  const root = response.data;
+
+  return {
+    inactiveAfterDays: root?.inactiveAfterDays ?? null,
+    skipperDays: root?.skipperDays ?? null,
+  };
+};
+
+export const updateInactiveDays = async (
+  gymId: number,
+  inactiveAfterDays: number
+) => {
+  try {
+    const response = await api.put<ApiResponse<null>>(
+      `/Gym/${gymId}/inactive-days`,
+      { inactiveAfterDays }
+    );
+    return {
+      success: response.message || 'Inactivity threshold updated.',
+    };
+  } catch (error) {
+    console.error('Error updating inactive days:', error);
+    return {
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Failed to update inactivity threshold.',
+    };
+  }
+};
+
+export const updateSkipperDays = async (gymId: number, skipperDays: number) => {
+  try {
+    const response = await api.put<ApiResponse<{ skipperDays?: number }>>(
+      `/Gym/${gymId}/skipper-days`,
+      { skipperDays }
+    );
+    return {
+      success: response.message || 'Skipper threshold updated.',
+    };
+  } catch (error) {
+    console.error('Error updating skipper days:', error);
+    return {
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Failed to update skipper threshold.',
+    };
+  }
 };
 
 type DeleteCheckBlockers = {

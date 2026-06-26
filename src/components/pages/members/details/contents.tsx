@@ -41,6 +41,9 @@ function Contents({
         handleSave={handleSave}
         toggleEdit={toggleEdit}
         isFrozen={details?.isFrozen}
+        membershipState={details?.membershipState}
+        member={details}
+        plans={formOptions?.membershipPlans ?? []}
       />
       {/* TODO: Total hours functionality not implemented yet */}
       {/* <InfoCard

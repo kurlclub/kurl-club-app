@@ -8,6 +8,7 @@ import {
   AlertTriangle,
   Fingerprint,
   Loader2,
+  RotateCcw,
   Snowflake,
   Trash2,
   Unlock,
@@ -18,6 +19,7 @@ import MemberStatusBadge from '@/components/shared/badges/member-status-badge';
 import { KEdit } from '@/components/shared/icons';
 import { Button } from '@/components/ui/button';
 import { useAppDialog } from '@/hooks/use-app-dialog';
+import { FormOptionsResponse } from '@/hooks/use-gymform-options';
 import { formatDateTime } from '@/lib/utils';
 import {
   deleteMember,
@@ -25,8 +27,10 @@ import {
   unfreezeMember,
   useMemberFreezeHistory,
 } from '@/services/member';
+import type { MemberDetails, MembershipState } from '@/types/member.types';
 
 import { FreezeMemberDialog } from './freeze-member-dialog';
+import { RejoinMemberDialog } from './rejoin-member-dialog';
 
 interface HeaderProps {
   isEditing: boolean;
@@ -35,6 +39,9 @@ interface HeaderProps {
   toggleEdit: () => void;
   memberId: string;
   isFrozen?: boolean;
+  membershipState?: MembershipState;
+  member?: MemberDetails | null;
+  plans?: FormOptionsResponse['membershipPlans'];
 }
 
 function Header({
@@ -44,6 +51,9 @@ function Header({
   toggleEdit,
   memberId,
   isFrozen = false,
+  membershipState,
+  member,
+  plans = [],
 }: HeaderProps) {
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -52,6 +62,8 @@ function Header({
     'now' | 'history'
   >('now');
   const [freezeDialogKey, setFreezeDialogKey] = useState(0);
+  const [isRejoinOpen, setIsRejoinOpen] = useState(false);
+  const isInactive = membershipState === 'inactive';
 
   const { showConfirm } = useAppDialog();
   const { data: freezeHistory = [] } = useMemberFreezeHistory(
@@ -134,7 +146,19 @@ function Header({
 
   return (
     <div className="flex sticky pt-4 md:pt-6.5 pb-4 z-20 drop-shadow-xl -top-px w-full items-center bg-primary-blue-500 justify-between gap-3 flex-wrap">
-      <MemberStatusBadge status="active" />
+      <div className="flex items-center gap-2">
+        <MemberStatusBadge status={membershipState ?? 'active'} />
+        {isInactive && (
+          <Button
+            className="h-7.5 rounded-full px-3 text-sm"
+            disabled={!memberId}
+            onClick={() => setIsRejoinOpen(true)}
+          >
+            <RotateCcw className="h-4 w-4" />
+            Rejoin
+          </Button>
+        )}
+      </div>
       <div className="flex items-center gap-2">
         {isEditing ? (
           <>
@@ -251,6 +275,13 @@ function Header({
         activeFreeze={activeFreeze}
         onUnfreeze={handleUnfreezeMember}
         isUnfreezing={unfreezeMutation.isPending}
+      />
+      <RejoinMemberDialog
+        memberId={memberId}
+        open={isRejoinOpen}
+        onOpenChange={setIsRejoinOpen}
+        member={member}
+        plans={plans}
       />
     </div>
   );

@@ -6,6 +6,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { Eye } from 'lucide-react';
 
 import { FeeStatusBadge } from '@/components/shared/badges/fee-status-badge';
+import MembershipStateDot from '@/components/shared/badges/membership-state-dot';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
@@ -43,21 +44,68 @@ export const columns: ColumnDef<MemberListItem>[] = [
       const name = row.getValue<string>('memberName') || 'Unknown';
       const avatarStyle = getAvatarColor(name);
       const initials = getInitials(name);
+      const isFrozen = !!row.original.isFrozen;
+      const frostId = `frost-${row.original.memberId}`;
 
       return (
-        <div className="flex items-center gap-2 w-[140px]">
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="font-medium" style={avatarStyle}>
-              {initials}
-            </AvatarFallback>
-            <AvatarImage
-              src={getProfilePictureSrc(
-                row.original.profilePicture,
-                row.original.photoPath
-              )}
-              alt={name}
+        <div className="flex items-center gap-2 w-35">
+          <div className="relative shrink-0">
+            {isFrozen && (
+              <svg aria-hidden className="absolute h-0 w-0" focusable="false">
+                <defs>
+                  <filter id={frostId}>
+                    <feTurbulence
+                      type="fractalNoise"
+                      baseFrequency="0.013 0.017"
+                      numOctaves={2}
+                      seed={7}
+                      result="noise"
+                    />
+                    <feDisplacementMap
+                      in="SourceGraphic"
+                      in2="noise"
+                      scale={4}
+                      xChannelSelector="R"
+                      yChannelSelector="G"
+                    />
+                  </filter>
+                </defs>
+              </svg>
+            )}
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="font-medium" style={avatarStyle}>
+                {initials}
+              </AvatarFallback>
+              <AvatarImage
+                src={getProfilePictureSrc(
+                  row.original.profilePicture,
+                  row.original.photoPath
+                )}
+                alt={name}
+                style={isFrozen ? { filter: `url(#${frostId})` } : undefined}
+              />
+            </Avatar>
+            {isFrozen && (
+              <>
+                {/* frosted-glass sheen + icy refraction texture */}
+                <span className="pointer-events-none absolute inset-0 z-5 rounded-lg bg-linear-to-br from-white/30 via-semantic-blue-100/10 to-semantic-blue-300/25 mix-blend-overlay" />
+                <span className="pointer-events-none absolute inset-0 z-5 rounded-lg bg-radial from-white/25 to-transparent opacity-70 mix-blend-screen" />
+                {/* sparkly snowflake border frame */}
+                <span
+                  aria-label="Frozen"
+                  title="Frozen"
+                  className="pointer-events-none absolute -inset-1 z-6 bg-cover bg-center mix-blend-screen"
+                  style={{
+                    backgroundImage: "url('/assets/png/snow-flake-border.png')",
+                  }}
+                />
+              </>
+            )}
+            <MembershipStateDot
+              state={row.original.membershipState}
+              className="absolute -bottom-0.5 -right-0.5 z-10"
             />
-          </Avatar>
+          </div>
           <span>{name}</span>
         </div>
       );
@@ -82,7 +130,7 @@ export const columns: ColumnDef<MemberListItem>[] = [
         | 'partially_paid'
         | 'unpaid';
       return (
-        <div className="w-[120px]">
+        <div className="w-30">
           <FeeStatusBadge status={status} />
         </div>
       );
@@ -95,7 +143,7 @@ export const columns: ColumnDef<MemberListItem>[] = [
     accessorKey: 'email',
     header: 'Email',
     cell: ({ row }) => (
-      <div className="w-[120px] truncate">{row.getValue('email')}</div>
+      <div className="w-30 truncate">{row.getValue('email')}</div>
     ),
     enableHiding: true,
     meta: {
@@ -105,7 +153,7 @@ export const columns: ColumnDef<MemberListItem>[] = [
   {
     accessorKey: 'phone',
     header: 'Phone',
-    cell: ({ row }) => <div className="w-[100px]">{row.getValue('phone')}</div>,
+    cell: ({ row }) => <div className="w-25">{row.getValue('phone')}</div>,
   },
   {
     accessorKey: 'bloodGroup',
@@ -125,25 +173,21 @@ export const columns: ColumnDef<MemberListItem>[] = [
       const capitalizedGender = gender
         ? gender.charAt(0).toUpperCase() + gender.slice(1)
         : '';
-      return <div className="w-[70px]">{capitalizedGender}</div>;
+      return <div className="w-17.5">{capitalizedGender}</div>;
     },
   },
   {
     accessorKey: 'doj',
     header: 'Date of Joining',
     cell: ({ row }) => (
-      <div className="w-[100px]">
-        {safeFormatDate(row.getValue<string>('doj'))}
-      </div>
+      <div className="w-25">{safeFormatDate(row.getValue<string>('doj'))}</div>
     ),
   },
   {
     accessorKey: 'dob',
     header: 'Date of Birth',
     cell: ({ row }) => (
-      <div className="w-[100px]">
-        {safeFormatDate(row.getValue<string>('dob'))}
-      </div>
+      <div className="w-25">{safeFormatDate(row.getValue<string>('dob'))}</div>
     ),
   },
   {

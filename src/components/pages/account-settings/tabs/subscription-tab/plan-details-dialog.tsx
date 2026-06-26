@@ -155,7 +155,7 @@ export function PlanDetailsDialog({
                 )}
                 {!isFreePlan && (
                   <p className="mt-1 text-xs text-secondary-blue-300 whitespace-nowrap">
-                    +GST (18%) included
+                    + Applicable taxes
                   </p>
                 )}
               </div>

@@ -8,6 +8,12 @@ import { z } from 'zod';
 
 import { NotificationPreferencesSkeleton } from '@/components/pages/account-settings/account-settings-skeletons';
 import {
+  SettingsDirtyActions,
+  SettingsGroup,
+  SettingsRow,
+  SettingsSection,
+} from '@/components/pages/account-settings/components';
+import {
   type NotificationFormValues,
   getDefaultNotificationFormValues,
   getNotificationFormValues,
@@ -18,15 +24,6 @@ import {
   KFormField,
   KFormFieldType,
 } from '@/components/shared/form/k-formfield';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import {
   type NotificationSettings,
@@ -120,227 +117,176 @@ export default function NotificationPreferences() {
   }
 
   return (
-    <Card className="bg-secondary-blue-500/80 backdrop-blur-sm border-secondary-blue-400 relative overflow-hidden">
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48ZmlsdGVyIGlkPSJub2lzZSI+PGZlVHVyYnVsZW5jZSB0eXBlPSJmcmFjdGFsTm9pc2UiIGJhc2VGcmVxdWVuY3k9IjAuOSIgbnVtT2N0YXZlcz0iNCIgc3RpdGNoVGlsZXM9InN0aXRjaCIvPjwvZmlsdGVyPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWx0ZXI9InVybCgjbm9pc2UpIiBvcGFjaXR5PSIwLjA1Ii8+PC9zdmc+')] opacity-30 pointer-events-none" />
-      <CardHeader className="relative z-10">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start gap-3">
-            <Bell className="h-5 w-5 text-primary-green-500 mt-1" />
-            <div>
-              <CardTitle className="text-white">
-                Notification Preferences
-              </CardTitle>
-              <CardDescription className="text-secondary-blue-200">
-                Configure automated alerts and reminders for payments and
-                membership expiry
-              </CardDescription>
-            </div>
-          </div>
-          {isDirty && (
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => form.reset()}
-                disabled={isBusy}
-              >
-                Discard
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                onClick={form.handleSubmit(onSubmit)}
-                disabled={isBusy}
-              >
-                {isSaving ? 'Saving...' : 'Save Changes'}
-              </Button>
-            </div>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className="relative z-10">
-        <FormProvider {...form}>
-          <form className="space-y-6">
-            {/* Alert Types */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-medium text-white">Alert Types</h3>
+    <SettingsSection
+      icon={Bell}
+      title="Notification Preferences"
+      description="Configure automated alerts and reminders for payments and membership expiry"
+      headerAction={
+        isDirty ? (
+          <SettingsDirtyActions
+            onDiscard={() => form.reset()}
+            onSave={form.handleSubmit(onSubmit)}
+            isSaving={isSaving}
+            isBusy={isBusy}
+          />
+        ) : undefined
+      }
+    >
+      <FormProvider {...form}>
+        <form className="space-y-6">
+          {/* Alert Types */}
+          <div>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-secondary-blue-200 mb-3">
+              Alert Types
+            </h3>
 
+            <SettingsGroup>
               {/* Payment Reminders */}
-              <div className="flex items-center gap-4 p-4 rounded-lg border border-secondary-blue-400 bg-secondary-blue-700">
-                <Switch
-                  checked={paymentRemindersEnabled}
-                  onCheckedChange={(checked) =>
-                    form.setValue('paymentReminders', checked, {
-                      shouldDirty: true,
-                    })
-                  }
-                />
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-white">
-                        Payment Reminders
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        Send reminders before payment due date
-                      </p>
-                    </div>
-                    {paymentRemindersEnabled && (
-                      <div className="flex items-center gap-2">
-                        <KFormField
-                          fieldType={KFormFieldType.INPUT}
-                          control={form.control}
-                          label="days before"
-                          name="paymentReminderDays"
-                          type="number"
-                          valueAsNumber
-                          placeholder="3"
-                          className="w-24"
-                          size="sm"
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <SettingsRow
+                leading={
+                  <Switch
+                    checked={paymentRemindersEnabled}
+                    onCheckedChange={(checked) =>
+                      form.setValue('paymentReminders', checked, {
+                        shouldDirty: true,
+                      })
+                    }
+                  />
+                }
+                label="Payment Reminders"
+                description="Send reminders before payment due date"
+                control={
+                  paymentRemindersEnabled ? (
+                    <KFormField
+                      fieldType={KFormFieldType.INPUT}
+                      control={form.control}
+                      label="days before"
+                      name="paymentReminderDays"
+                      type="number"
+                      valueAsNumber
+                      placeholder="3"
+                      className="w-24"
+                      size="sm"
+                    />
+                  ) : undefined
+                }
+              />
 
               {/* Member Expiry */}
-              <div className="flex items-center gap-4 p-4 rounded-lg border border-secondary-blue-400 bg-secondary-blue-700">
-                <Switch
-                  checked={memberExpiryEnabled}
-                  onCheckedChange={(checked) =>
-                    form.setValue('memberExpiry', checked, {
-                      shouldDirty: true,
-                    })
-                  }
-                />
-                <div className="flex-1">
-                  <div className="flex flex-col gap-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-white">
-                          Membership Expiry Alerts
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          Alert when memberships are about to expire
-                        </p>
-                      </div>
-                      {memberExpiryEnabled && (
-                        <div className="flex items-center gap-2">
-                          <KFormField
-                            fieldType={KFormFieldType.INPUT}
-                            control={form.control}
-                            name="memberExpiryDays"
-                            type="number"
-                            valueAsNumber
-                            placeholder="7"
-                            className="w-24"
-                            size="sm"
-                            label="days before"
-                          />
-                        </div>
-                      )}
-                    </div>
-                    {memberExpiryEnabled && (
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          id="notifyOnExpiryDay"
-                          checked={form.watch('notifyOnExpiryDay')}
-                          onCheckedChange={(checked) =>
-                            form.setValue(
-                              'notifyOnExpiryDay',
-                              checked as boolean,
-                              {
-                                shouldDirty: true,
-                              }
-                            )
-                          }
-                        />
-                        <label
-                          htmlFor="notifyOnExpiryDay"
-                          className="text-xs text-gray-300 cursor-pointer"
-                        >
-                          Also notify on expiry day
-                        </label>
-                      </div>
-                    )}
+              <SettingsRow
+                leading={
+                  <Switch
+                    checked={memberExpiryEnabled}
+                    onCheckedChange={(checked) =>
+                      form.setValue('memberExpiry', checked, {
+                        shouldDirty: true,
+                      })
+                    }
+                  />
+                }
+                label="Membership Expiry Alerts"
+                description="Alert when memberships are about to expire"
+                control={
+                  memberExpiryEnabled ? (
+                    <KFormField
+                      fieldType={KFormFieldType.INPUT}
+                      control={form.control}
+                      name="memberExpiryDays"
+                      type="number"
+                      valueAsNumber
+                      placeholder="7"
+                      className="w-24"
+                      size="sm"
+                      label="days before"
+                    />
+                  ) : undefined
+                }
+              >
+                {memberExpiryEnabled && (
+                  <div className="flex items-center gap-3 pl-[3.25rem]">
+                    <Switch
+                      id="notifyOnExpiryDay"
+                      className="scale-90"
+                      checked={form.watch('notifyOnExpiryDay')}
+                      onCheckedChange={(checked) =>
+                        form.setValue('notifyOnExpiryDay', checked, {
+                          shouldDirty: true,
+                        })
+                      }
+                    />
+                    <label
+                      htmlFor="notifyOnExpiryDay"
+                      className="text-xs text-gray-300 cursor-pointer"
+                    >
+                      Also notify on expiry day
+                    </label>
                   </div>
-                </div>
-              </div>
+                )}
+              </SettingsRow>
 
               {/* Low Attendance */}
-              <div className="flex items-center gap-4 p-4 rounded-lg border border-secondary-blue-400 bg-secondary-blue-700">
+              <SettingsRow
+                divider={false}
+                leading={
+                  <Switch
+                    checked={lowAttendanceEnabled}
+                    onCheckedChange={(checked) =>
+                      form.setValue('lowAttendance', checked, {
+                        shouldDirty: true,
+                      })
+                    }
+                  />
+                }
+                label="Low Attendance Alerts"
+                description="Notify when members haven't visited recently"
+              />
+            </SettingsGroup>
+          </div>
+
+          {/* Notification Channels */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-secondary-blue-200">
+              Notification Channels
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="flex items-center gap-3 p-3 rounded-lg border border-secondary-blue-400 bg-secondary-blue-700">
                 <Switch
-                  checked={lowAttendanceEnabled}
+                  checked={form.watch('emailNotifications')}
                   onCheckedChange={(checked) =>
-                    form.setValue('lowAttendance', checked, {
+                    form.setValue('emailNotifications', checked, {
                       shouldDirty: true,
                     })
                   }
                 />
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-white">
-                        Low Attendance Alerts
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        Notify when members haven&apos;t visited recently
-                      </p>
-                    </div>
-                  </div>
+                <div>
+                  <p className="text-sm font-medium text-white">
+                    Email Notifications
+                  </p>
+                  <p className="text-xs text-gray-400">Send alerts via email</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 rounded-lg border border-secondary-blue-400 bg-secondary-blue-700">
+                <Switch
+                  checked={form.watch('whatsappNotifications')}
+                  onCheckedChange={(checked) =>
+                    form.setValue('whatsappNotifications', checked, {
+                      shouldDirty: true,
+                    })
+                  }
+                />
+                <div>
+                  <p className="text-sm font-medium text-white">
+                    WhatsApp Notifications
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    Send alerts via WhatsApp
+                  </p>
                 </div>
               </div>
             </div>
-
-            {/* Notification Channels */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-medium text-white">
-                Notification Channels
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-center gap-3 p-4 rounded-lg border border-secondary-blue-400 bg-secondary-blue-700">
-                  <Switch
-                    checked={form.watch('emailNotifications')}
-                    onCheckedChange={(checked) =>
-                      form.setValue('emailNotifications', checked, {
-                        shouldDirty: true,
-                      })
-                    }
-                  />
-                  <div>
-                    <p className="text-sm font-medium text-white">
-                      Email Notifications
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      Send alerts via email
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 p-4 rounded-lg border border-secondary-blue-400 bg-secondary-blue-700">
-                  <Switch
-                    checked={form.watch('whatsappNotifications')}
-                    onCheckedChange={(checked) =>
-                      form.setValue('whatsappNotifications', checked, {
-                        shouldDirty: true,
-                      })
-                    }
-                  />
-                  <div>
-                    <p className="text-sm font-medium text-white">
-                      WhatsApp Notifications
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      Send alerts via WhatsApp
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </form>
-        </FormProvider>
-      </CardContent>
-    </Card>
+          </div>
+        </form>
+      </FormProvider>
+    </SettingsSection>
   );
 }
