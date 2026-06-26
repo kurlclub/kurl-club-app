@@ -6,8 +6,8 @@ import { motion } from 'framer-motion';
 import { Check, Loader2, Pencil, Receipt, X } from 'lucide-react';
 
 import { SettingsSection } from '@/components/pages/account-settings/components';
+import { FeeStatusBadge } from '@/components/shared/badges';
 import { KInput } from '@/components/shared/form/k-input';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGst } from '@/hooks/use-gst';
@@ -110,13 +110,13 @@ function BillingInformation({
           contentClassName="space-y-6"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="p-4 bg-secondary-blue-600 rounded-lg">
+            <div className="p-4 bg-secondary-blue-700 rounded-lg border border-secondary-blue-400">
               <p className="font-medium text-white mb-1">Next billing date</p>
               <p className="text-sm text-secondary-blue-200">
                 {nextBillingDate}
               </p>
             </div>
-            <div className="p-4 bg-secondary-blue-600 rounded-lg">
+            <div className="p-4 bg-secondary-blue-700 rounded-lg border border-secondary-blue-400">
               <p className="font-medium text-white mb-1">Billing cycle</p>
               <p className="text-sm text-secondary-blue-200">
                 {billingCycleLabel}
@@ -216,7 +216,7 @@ function BillingInformation({
                   Full billing history with invoice preview and download access
                 </p>
               </div>
-              <div className="rounded-full border border-secondary-blue-400 bg-secondary-blue-600 px-3 py-1 text-xs font-medium text-secondary-blue-200">
+              <div className="rounded-full border border-secondary-blue-400 bg-secondary-blue-700 px-3 py-1 text-xs font-medium text-secondary-blue-200">
                 {totalInvoices} invoices
               </div>
             </div>
@@ -226,7 +226,7 @@ function BillingInformation({
                 Array.from({ length: 3 }).map((_, index) => (
                   <div
                     key={index}
-                    className="rounded-xl border border-secondary-blue-400 bg-secondary-blue-600 p-4"
+                    className="rounded-xl border border-secondary-blue-400 bg-secondary-blue-700 p-4"
                   >
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                       <Skeleton className="h-4 w-24" />
@@ -248,7 +248,7 @@ function BillingInformation({
                   return (
                     <div
                       key={invoice.id}
-                      className="rounded-xl border border-secondary-blue-400 bg-secondary-blue-600 p-4"
+                      className="rounded-xl border border-secondary-blue-400 bg-secondary-blue-700 p-4"
                     >
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div className="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -287,12 +287,7 @@ function BillingInformation({
                                   invoice.currency
                                 )}
                               </p>
-                              <Badge
-                                variant="outline"
-                                className="border-secondary-green-500/40 bg-secondary-green-500/10 px-2 py-1 text-xs text-secondary-green-300"
-                              >
-                                Paid
-                              </Badge>
+                              <FeeStatusBadge status="paid" className="h-6" />
                             </div>
                           </div>
                         </div>
@@ -326,7 +321,7 @@ function BillingInformation({
                   );
                 })
               ) : (
-                <div className="rounded-xl border border-secondary-blue-400 bg-secondary-blue-600 p-6 text-center text-sm text-secondary-blue-200">
+                <div className="rounded-xl border border-secondary-blue-400 bg-secondary-blue-700 p-6 text-center text-sm text-secondary-blue-200">
                   No invoice history available yet.
                 </div>
               )}

@@ -101,7 +101,7 @@ function InputGridSkeleton({ columns = 2 }: { columns?: 1 | 2 | 3 }) {
 
 function PricingPlanCardSkeleton() {
   return (
-    <div className="flex-1 rounded-xl border border-secondary-blue-400 bg-secondary-blue-600 p-5">
+    <div className="flex-1 rounded-xl border border-secondary-blue-400 bg-secondary-blue-700 p-5">
       <Skeleton className="h-5 w-28" />
       <Skeleton className="mt-2 h-3 w-20" />
       <Skeleton className="mt-4 h-9 w-32" />

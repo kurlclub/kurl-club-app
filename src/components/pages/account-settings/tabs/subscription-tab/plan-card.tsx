@@ -79,23 +79,25 @@ export function PlanCard({
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.25, delay: index * 0.04 }}
       className={cn(
-        'flex h-full min-w-0 flex-1 flex-col rounded-xl border bg-secondary-blue-600 p-5',
+        'relative flex h-full min-w-0 flex-1 flex-col overflow-hidden rounded-xl border bg-secondary-blue-700 p-5',
         plan.popular
           ? 'border-primary-green-500/70'
           : 'border-secondary-blue-400'
       )}
     >
-      {/* Header: name + popular marker */}
-      <div className="mb-1 flex items-center justify-between gap-2">
-        <h3 className="truncate text-base font-semibold text-white">
-          {plan.name}
-        </h3>
-        {plan.popular && (
-          <span className="shrink-0 rounded-full bg-primary-green-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-green-300 ring-1 ring-primary-green-500/30">
+      {/* Popular: compact brushed-metal corner tab (absolute, no layout impact) */}
+      {plan.popular && (
+        <div className="absolute right-0 top-0 z-20 rounded-bl-[10px] border-b border-l border-white/10 bg-gradient-to-b from-secondary-blue-400 via-secondary-blue-600 to-secondary-blue-800 px-2.5 py-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]">
+          <span className="bg-gradient-to-b from-white to-secondary-blue-200 bg-clip-text text-[9px] font-bold uppercase italic leading-none tracking-[0.06em] text-transparent">
             {plan.badge || 'Popular'}
           </span>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Header */}
+      <h3 className="mb-1 truncate pr-20 text-base font-semibold text-white">
+        {plan.name}
+      </h3>
       {plan.subtitle && (
         <p className="text-xs font-medium uppercase tracking-[0.1em] text-secondary-blue-300">
           {plan.subtitle}
@@ -129,7 +131,7 @@ export function PlanCard({
         )}
       </div>
       <p className="mt-1 text-[11px] text-secondary-blue-300">
-        {isFreePlan ? 'No payment during trial' : 'GST (18%) included'}
+        {isFreePlan ? 'No payment during trial' : '+ Applicable taxes'}
       </p>
 
       {/* Features */}
@@ -151,7 +153,7 @@ export function PlanCard({
 
       {/* CTA */}
       <Button
-        variant={plan.popular ? 'default' : 'outline'}
+        variant={plan.popular ? 'default' : 'outlinePrimary'}
         disabled={disabled}
         onClick={() => onChoosePlan(plan)}
         className="mt-6 w-full"
