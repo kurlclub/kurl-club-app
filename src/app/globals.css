@@ -1,9 +1,39 @@
 @import 'tailwindcss';
 @import '@kurlclub/ui-components/styles';
 
+/*
+ * Numeric glyphs (0-9) render in Space Grotesk everywhere, while words stay in
+ * Figtree. The unicode-range restricts this face to digits, so listing it first
+ * in the font stack makes the browser use it only for numbers. (next/font can't
+ * set unicode-range, so this is declared manually.)
+ */
+@font-face {
+  font-family: 'Space Grotesk Number';
+  src: url('/fonts/SpaceGrotesk-VariableFont_wght.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0030-0039;
+}
+
+/*
+ * Unlayered + declared after the @kurlclub import so it wins by source order
+ * over its `body { font-family: var(--font-figtree) }` rule. Space Grotesk is
+ * listed first (it only covers digits via unicode-range), Figtree handles the
+ * rest. `--font-figtree` is provided by next/font on <html>.
+ */
+body {
+  font-family: 'Space Grotesk Number', var(--font-figtree), sans-serif;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme {
+  /* Space Grotesk (digits only) layered before Figtree → numbers in Space Grotesk, words in Figtree. */
+  --font-sans: 'Space Grotesk Number', var(--font-figtree), sans-serif;
+  --font-mono:
+    'Space Grotesk Number', ui-monospace, SFMono-Regular, Menlo, monospace;
+
   --breakpoint-*: initial;
   --breakpoint-sm: 767px;
   --breakpoint-md: 991px;
@@ -340,7 +370,7 @@
 
 @layer utilities {
   body {
-    font-family: var(--font-figtree), sans-serif;
+    font-family: 'Space Grotesk Number', var(--font-figtree), sans-serif;
     background-color: var(--background);
     color: var(--primary-text);
   }
