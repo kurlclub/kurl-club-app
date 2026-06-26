@@ -48,10 +48,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${figtree.className} bg-secondary-blue-500 antialiased`}
-      >
+    <html lang="en" className={figtree.variable} suppressHydrationWarning>
+      <head>
+        {/* Preload the digit font (Space Grotesk) to avoid a flash of Figtree numbers. */}
+        <link
+          rel="preload"
+          href="/fonts/SpaceGrotesk-VariableFont_wght.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+      </head>
+      <body className="bg-secondary-blue-500 antialiased">
         <AppProviders>
           <AppLayout>{children}</AppLayout>
         </AppProviders>
