@@ -4,6 +4,8 @@ export {
   syncSelectedSettingsGymId,
 } from './selection-utils';
 export {
+  getAttendanceSettingsFormValues,
+  getDefaultAttendanceSettingsFormValues,
   getDefaultInvoiceSettingsFormValues,
   getDefaultMemberActivityFormValues,
   getDefaultNotificationFormValues,
@@ -12,6 +14,7 @@ export {
   getNotificationFormValues,
 } from './form-defaults';
 export type {
+  AttendanceSettingsFormValues,
   InvoiceSettingsFormValues,
   MemberActivityFormValues,
   NotificationFormValues,

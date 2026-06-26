@@ -10,18 +10,15 @@ import { toast } from 'sonner';
 import { z } from 'zod/v4';
 
 import {
+  SettingsEmptyState,
+  SettingsSection,
+} from '@/components/pages/account-settings/components';
+import {
   KFormField,
   KFormFieldType,
 } from '@/components/shared/form/k-formfield';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -263,35 +260,30 @@ export function SecurityTab() {
   return (
     <div className="space-y-6">
       {/* Password */}
-      <Card className="bg-white dark:bg-secondary-blue-500 border-gray-200 dark:border-secondary-blue-400 py-2">
-        <CardHeader className="pb-4">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <CardTitle className="text-gray-900 dark:text-white flex items-center gap-2">
-                <Key className="h-5 w-5" />
-                Password
-              </CardTitle>
-              <CardDescription className="text-gray-600 dark:text-secondary-blue-200 text-[15px]">
-                {passwordStep === 'idle'
-                  ? 'Change your account password'
-                  : passwordStep === 'email'
-                    ? 'Enter your email to receive a one-time password'
-                    : passwordStep === 'otp'
-                      ? `Enter the 6-digit code sent to ${savedEmail}`
-                      : 'Set your new password'}
-              </CardDescription>
-            </div>
-            {passwordStep === 'idle' && (
-              <Button onClick={handleStartChangePassword} variant="outline">
-                Change Password
-              </Button>
-            )}
-          </div>
-        </CardHeader>
-
+      <SettingsSection
+        icon={Key}
+        title="Password"
+        description={
+          passwordStep === 'idle'
+            ? 'Change your account password'
+            : passwordStep === 'email'
+              ? 'Enter your email to receive a one-time password'
+              : passwordStep === 'otp'
+                ? `Enter the 6-digit code sent to ${savedEmail}`
+                : 'Set your new password'
+        }
+        contentClassName={passwordStep === 'idle' ? 'hidden' : undefined}
+        headerAction={
+          passwordStep === 'idle' ? (
+            <Button onClick={handleStartChangePassword} variant="outline">
+              Change Password
+            </Button>
+          ) : undefined
+        }
+      >
         {/* Step: Email */}
         {passwordStep === 'email' && (
-          <CardContent className="space-y-4">
+          <div className="space-y-4">
             <Form {...emailForm}>
               <form
                 onSubmit={emailForm.handleSubmit(onEmailSubmit)}
@@ -320,12 +312,12 @@ export function SecurityTab() {
                 </div>
               </form>
             </Form>
-          </CardContent>
+          </div>
         )}
 
         {/* Step: OTP */}
         {passwordStep === 'otp' && (
-          <CardContent className="space-y-4">
+          <div className="space-y-4">
             <Form {...otpForm}>
               <form
                 onSubmit={otpForm.handleSubmit(onOtpSubmit)}
@@ -390,12 +382,12 @@ export function SecurityTab() {
                 </div>
               </form>
             </Form>
-          </CardContent>
+          </div>
         )}
 
         {/* Step: New Password */}
         {passwordStep === 'password' && (
-          <CardContent className="space-y-4">
+          <div className="space-y-4">
             <Form {...newPasswordForm}>
               <form
                 onSubmit={newPasswordForm.handleSubmit(onNewPasswordSubmit)}
@@ -432,31 +424,22 @@ export function SecurityTab() {
                 </div>
               </form>
             </Form>
-          </CardContent>
+          </div>
         )}
-      </Card>
+      </SettingsSection>
 
       {/* Active Sessions */}
-      <Card className="bg-white dark:bg-secondary-blue-500 border-gray-200 dark:border-secondary-blue-400 py-2">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-gray-900 dark:text-white flex items-center gap-2">
-                <Monitor className="h-5 w-5" />
-                Active Sessions
-                {!isLoadingSessions && (
-                  <Badge variant="secondary" className="ml-2">
-                    {totalSessions}
-                  </Badge>
-                )}
-              </CardTitle>
-              <CardDescription className="text-gray-600 dark:text-secondary-blue-200 text-[15px]">
-                Manage devices where you&apos;re currently logged in
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
+      <SettingsSection
+        icon={Monitor}
+        title="Active Sessions"
+        description="Manage devices where you're currently logged in"
+        headerAction={
+          !isLoadingSessions ? (
+            <Badge variant="secondary">{totalSessions}</Badge>
+          ) : undefined
+        }
+      >
+        <div>
           <div className="space-y-3">
             {isLoadingSessions ? (
               // Loading state
@@ -478,9 +461,11 @@ export function SecurityTab() {
                 </div>
               ))
             ) : sessions.length === 0 ? (
-              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                No active sessions found
-              </div>
+              <SettingsEmptyState
+                icon={Monitor}
+                title="No active sessions"
+                hint="Devices you sign in from will appear here"
+              />
             ) : (
               sessions.map((session) => (
                 <div
@@ -561,8 +546,8 @@ export function SecurityTab() {
               Revoke All Other Sessions
             </Button>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </SettingsSection>
     </div>
   );
 }

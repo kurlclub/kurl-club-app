@@ -6,6 +6,10 @@ import { Badge } from '@kurlclub/ui-components';
 import { motion } from 'framer-motion';
 import { Building2, Check, Plus, User } from 'lucide-react';
 
+import {
+  SettingsEmptyState,
+  SettingsSubNav,
+} from '@/components/pages/account-settings/components';
 import { BusinessProfileTab } from '@/components/pages/account-settings/tabs/business-profile-tab';
 import OperationsTab from '@/components/pages/account-settings/tabs/operations-tab';
 import {
@@ -16,7 +20,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
 import { useAuth } from '@/providers/auth-provider';
 import { useGymBranch } from '@/providers/gym-branch-provider';
@@ -40,6 +43,12 @@ export function ProfileAndGymsTab() {
   const [selectedSettingsGymId, setSelectedSettingsGymId] = useState<
     number | null
   >(initialSelectedGymId);
+  const [gymSection, setGymSection] = useState<'business' | 'operations'>(
+    'business'
+  );
+  const selectedGymName = user?.clubs?.find(
+    (club) => club.gymId === selectedSettingsGymId
+  )?.gymName;
   const previousGlobalGymIdRef = useRef<number | null>(globalGymId);
   const clubCount = user?.clubs?.length ?? 0;
   const maxClubs = usageLimits.maxClubs;
@@ -220,19 +229,24 @@ export function ProfileAndGymsTab() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.2 }}
+              className="space-y-6"
             >
-              <Tabs defaultValue="business" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="business">Business Profile</TabsTrigger>
-                  <TabsTrigger value="operations">Operations</TabsTrigger>
-                </TabsList>
-                <TabsContent value="business">
-                  <BusinessProfileTab />
-                </TabsContent>
-                <TabsContent value="operations">
-                  <OperationsTab />
-                </TabsContent>
-              </Tabs>
+              <SettingsSubNav
+                contextLabel={selectedGymName}
+                value={gymSection}
+                onValueChange={(value) =>
+                  setGymSection(value as 'business' | 'operations')
+                }
+                items={[
+                  { value: 'business', label: 'Business Profile' },
+                  { value: 'operations', label: 'Operations' },
+                ]}
+              />
+              {gymSection === 'business' ? (
+                <BusinessProfileTab />
+              ) : (
+                <OperationsTab />
+              )}
             </motion.div>
           </SettingsGymScopeProvider>
         ) : (
@@ -242,17 +256,11 @@ export function ProfileAndGymsTab() {
             transition={{ duration: 0.3 }}
           >
             <Card className="bg-secondary-blue-500 border-secondary-blue-400">
-              <CardContent className="flex flex-col items-center justify-center py-16">
-                <div className="size-16 rounded-full bg-primary-green-500/10 flex items-center justify-center mb-4">
-                  <Building2 className="h-8 w-8 text-primary-green-500" />
-                </div>
-                <p className="text-secondary-blue-200 text-center font-medium">
-                  Select a gym to manage
-                </p>
-                <p className="text-xs text-secondary-blue-300 text-center mt-1">
-                  Choose from your gyms on the left
-                </p>
-              </CardContent>
+              <SettingsEmptyState
+                icon={Building2}
+                title="Select a gym to manage"
+                hint="Choose from your gyms on the left"
+              />
             </Card>
           </motion.div>
         )}
