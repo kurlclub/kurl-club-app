@@ -9,6 +9,12 @@ import { z } from 'zod';
 
 import { MemberActivitySkeleton } from '@/components/pages/account-settings/account-settings-skeletons';
 import {
+  SettingsDirtyActions,
+  SettingsGroup,
+  SettingsRow,
+  SettingsSection,
+} from '@/components/pages/account-settings/components';
+import {
   type MemberActivityFormValues,
   getDefaultMemberActivityFormValues,
   getMemberActivityFormValues,
@@ -26,11 +32,6 @@ import {
   updateInactiveDays,
   updateSkipperDays,
 } from '@/services/gym';
-
-import { SettingsDirtyActions } from './components/settings-dirty-actions';
-import { SettingsGroup } from './components/settings-group';
-import { SettingsRow } from './components/settings-row';
-import { SettingsSection } from './components/settings-section';
 
 const memberActivitySchema = z.object({
   inactiveAfterDays: z.number().min(1).max(365),

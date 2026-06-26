@@ -8,6 +8,12 @@ import { z } from 'zod';
 
 import { NotificationPreferencesSkeleton } from '@/components/pages/account-settings/account-settings-skeletons';
 import {
+  SettingsDirtyActions,
+  SettingsGroup,
+  SettingsRow,
+  SettingsSection,
+} from '@/components/pages/account-settings/components';
+import {
   type NotificationFormValues,
   getDefaultNotificationFormValues,
   getNotificationFormValues,
@@ -24,11 +30,6 @@ import {
   getNotificationSettings,
   updateNotificationSettings,
 } from '@/services/notification';
-
-import { SettingsDirtyActions } from './components/settings-dirty-actions';
-import { SettingsGroup } from './components/settings-group';
-import { SettingsRow } from './components/settings-row';
-import { SettingsSection } from './components/settings-section';
 
 const notificationSchema = z.object({
   paymentReminders: z.boolean(),
