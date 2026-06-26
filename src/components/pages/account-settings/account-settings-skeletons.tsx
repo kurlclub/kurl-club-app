@@ -101,27 +101,20 @@ function InputGridSkeleton({ columns = 2 }: { columns?: 1 | 2 | 3 }) {
 
 function PricingPlanCardSkeleton() {
   return (
-    <div className="rounded-2xl border border-secondary-blue-400/45 bg-secondary-blue-600/40 p-5 md:p-6">
-      <div className="space-y-4">
-        <Skeleton className="h-7 w-28 rounded-full" />
-        <div className="space-y-3">
-          <Skeleton className="h-8 w-40" />
-          <Skeleton className="h-4 w-52 max-w-full" />
-        </div>
-        <div className="space-y-2">
-          <Skeleton className="h-10 w-32" />
-          <Skeleton className="h-4 w-24" />
-        </div>
-        <div className="space-y-3 pt-2">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="flex items-center gap-3">
-              <Skeleton className="h-4 w-4 rounded-full" />
-              <Skeleton className="h-4 flex-1" />
-            </div>
-          ))}
-        </div>
-        <Skeleton className="mt-4 h-11 w-full" />
+    <div className="flex-1 rounded-xl border border-secondary-blue-400 bg-secondary-blue-600 p-5">
+      <Skeleton className="h-5 w-28" />
+      <Skeleton className="mt-2 h-3 w-20" />
+      <Skeleton className="mt-4 h-9 w-32" />
+      <Skeleton className="mt-1 h-3 w-24" />
+      <div className="mt-5 space-y-2.5 border-t border-secondary-blue-400/50 pt-5">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div key={index} className="flex items-center gap-2.5">
+            <Skeleton className="h-4 w-4 rounded-full" />
+            <Skeleton className="h-3.5 flex-1" />
+          </div>
+        ))}
       </div>
+      <Skeleton className="mt-6 h-9 w-full" />
     </div>
   );
 }
@@ -205,14 +198,14 @@ export function NotificationPreferencesSkeleton() {
 
 export function InvoiceSettingsSkeleton() {
   return (
-    <Card className="bg-white dark:bg-secondary-blue-500 border-gray-200 dark:border-primary-blue-400">
+    <Card className={darkCardClassName}>
       <CardHeader>
-        <SectionHeaderSkeleton light />
+        <SectionHeaderSkeleton />
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-6">
           <div className="space-y-3">
-            <SectionLabelSkeleton light />
+            <SectionLabelSkeleton />
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
               {Array.from({ length: 3 }).map((_, index) => (
                 <TemplateCardSkeleton key={index} />
@@ -221,19 +214,19 @@ export function InvoiceSettingsSkeleton() {
           </div>
 
           <div className="space-y-3">
-            <SectionLabelSkeleton light />
+            <SectionLabelSkeleton />
             <InputGridSkeleton columns={2} />
-            <Skeleton className={cn('h-3 w-48', lightSkeletonClassName)} />
+            <Skeleton className="h-3 w-48" />
           </div>
 
           <div className="space-y-3">
-            <SectionLabelSkeleton light />
+            <SectionLabelSkeleton />
             <InputGridSkeleton columns={2} />
           </div>
 
           <div className="space-y-2">
-            <Skeleton className={cn('h-4 w-32', lightSkeletonClassName)} />
-            <Skeleton className={cn('h-24 w-full', lightSkeletonClassName)} />
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-24 w-full" />
           </div>
         </div>
       </CardContent>
@@ -243,17 +236,17 @@ export function InvoiceSettingsSkeleton() {
 
 export function SubscriptionPlansSkeleton() {
   return (
-    <div className="space-y-8 px-2 py-6">
-      <div className="space-y-3 text-center">
-        <Skeleton className="mx-auto h-8 w-56" />
-        <Skeleton className="mx-auto h-4 w-80 max-w-full" />
+    <div className="py-2">
+      <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="space-y-2">
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-4 w-72 max-w-full" />
+        </div>
+        <Skeleton className="h-9 w-56 rounded-lg" />
       </div>
 
-      <div className="flex justify-center">
-        <Skeleton className="h-11 w-64 rounded-xl" />
-      </div>
-
-      <div className="mx-auto grid max-w-5xl grid-cols-1 gap-5 lg:grid-cols-2">
+      <div className="flex flex-col gap-4 lg:flex-row">
+        <PricingPlanCardSkeleton />
         <PricingPlanCardSkeleton />
         <PricingPlanCardSkeleton />
       </div>
