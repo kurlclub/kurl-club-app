@@ -1,4 +1,4 @@
-import InvoiceSettings from '../business-profile-tab/invoice-settings';
+import InvoiceSettings from './invoice-settings';
 import MemberActivity from './member-activity';
 import NotificationPreferences from './notification-preferences';
 
