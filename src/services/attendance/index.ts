@@ -9,6 +9,7 @@ import {
   AttendanceRealtimeUpdate,
   attendanceSignalRService,
 } from '@/services/attendance/signalr';
+import { ApiResponse } from '@/types';
 
 // Types
 export type DashboardData = {
@@ -524,3 +525,48 @@ export const ATTENDANCE_POLLING = {
   FALLBACK_POLLING_INTERVAL_MS,
   SAFETY_REFRESH_INTERVAL_MS,
 } as const;
+
+// ---- Attendance & access settings (automation) ----
+
+export type AttendanceSettings = {
+  deviceProvider: string;
+  serialNumber: string;
+  doorControllerId?: string;
+  unlockDuration?: number;
+  liveSync: boolean;
+  allowManualAttendance: boolean;
+  autoUnlockOnManualCheckin: boolean;
+  alertOnDeniedAttempts: boolean;
+};
+
+export const getAttendanceSettings = async (
+  gymId: number
+): Promise<AttendanceSettings | null> => {
+  const response = await api.get<ApiResponse<AttendanceSettings>>(
+    `/Attendance/gym/${gymId}/settings`
+  );
+  return response.data ?? null;
+};
+
+export const updateAttendanceSettings = async (
+  gymId: number,
+  settings: AttendanceSettings
+) => {
+  try {
+    const response = await api.put<ApiResponse<AttendanceSettings>>(
+      `/Attendance/gym/${gymId}/settings`,
+      settings
+    );
+    return {
+      success: response.message || 'Attendance settings updated.',
+    };
+  } catch (error) {
+    console.error('Error updating attendance settings:', error);
+    return {
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Failed to update attendance settings.',
+    };
+  }
+};

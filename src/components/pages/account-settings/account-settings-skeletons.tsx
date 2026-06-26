@@ -167,6 +167,24 @@ export function MemberActivitySkeleton() {
   );
 }
 
+export function AttendanceSettingsSkeleton() {
+  return (
+    <Card className={darkCardClassName}>
+      <CardHeader className="relative z-10 pb-4">
+        <SectionHeaderSkeleton />
+      </CardHeader>
+      <CardContent className="relative z-10 pt-0">
+        <div className="rounded-xl border border-secondary-blue-400 bg-secondary-blue-700 px-4">
+          <CompactRowSkeleton showLeadingToggle />
+          <CompactRowSkeleton showLeadingToggle />
+          <CompactRowSkeleton showLeadingToggle />
+          <CompactRowSkeleton showLeadingToggle divider={false} />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function NotificationPreferencesSkeleton() {
   return (
     <Card className={darkCardClassName}>
