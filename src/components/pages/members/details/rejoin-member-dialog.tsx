@@ -77,7 +77,8 @@ export function RejoinMemberDialog({
   });
 
   const selectedPlan = useMemo(
-    () => plans.find((plan) => String(plan.membershipPlanId) === selectedPlanId),
+    () =>
+      plans.find((plan) => String(plan.membershipPlanId) === selectedPlanId),
     [plans, selectedPlanId]
   );
 
@@ -147,7 +148,7 @@ export function RejoinMemberDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="bg-primary-blue-500 border-secondary-blue-500 text-white sm:max-w-[560px]">
+      <DialogContent className="bg-primary-blue-500 border-secondary-blue-500 text-white sm:max-w-140">
         <DialogHeader>
           <DialogTitle>Rejoin Member</DialogTitle>
           <DialogDescription>

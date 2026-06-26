@@ -1,3 +1,4 @@
+import type { MemberActivitySettings } from '@/services/gym';
 import type { InvoiceSettings } from '@/services/invoice';
 import type { NotificationSettings } from '@/services/notification';
 
@@ -53,6 +54,36 @@ export const getNotificationFormValues = (
     emailNotifications: settings.channels?.email ?? defaults.emailNotifications,
     whatsappNotifications:
       settings.channels?.whatsApp ?? defaults.whatsappNotifications,
+  };
+};
+
+export interface MemberActivityFormValues {
+  inactiveAfterDays: number;
+  skipperDays: number;
+}
+
+const memberActivityFormDefaults: MemberActivityFormValues = {
+  inactiveAfterDays: 30,
+  skipperDays: 4,
+};
+
+export const getDefaultMemberActivityFormValues =
+  (): MemberActivityFormValues => ({
+    ...memberActivityFormDefaults,
+  });
+
+export const getMemberActivityFormValues = (
+  settings?: MemberActivitySettings | null
+): MemberActivityFormValues => {
+  const defaults = getDefaultMemberActivityFormValues();
+
+  if (!settings) {
+    return defaults;
+  }
+
+  return {
+    inactiveAfterDays: settings.inactiveAfterDays ?? defaults.inactiveAfterDays,
+    skipperDays: settings.skipperDays ?? defaults.skipperDays,
   };
 };
 

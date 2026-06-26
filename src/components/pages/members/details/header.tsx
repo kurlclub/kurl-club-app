@@ -18,8 +18,8 @@ import { toast } from 'sonner';
 import MemberStatusBadge from '@/components/shared/badges/member-status-badge';
 import { KEdit } from '@/components/shared/icons';
 import { Button } from '@/components/ui/button';
-import { FormOptionsResponse } from '@/hooks/use-gymform-options';
 import { useAppDialog } from '@/hooks/use-app-dialog';
+import { FormOptionsResponse } from '@/hooks/use-gymform-options';
 import { formatDateTime } from '@/lib/utils';
 import {
   deleteMember,
@@ -150,7 +150,7 @@ function Header({
         <MemberStatusBadge status={membershipState ?? 'active'} />
         {isInactive && (
           <Button
-            className="h-[30px] rounded-full px-3 text-sm"
+            className="h-7.5 rounded-full px-3 text-sm"
             disabled={!memberId}
             onClick={() => setIsRejoinOpen(true)}
           >

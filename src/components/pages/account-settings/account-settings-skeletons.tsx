@@ -53,59 +53,10 @@ function SectionLabelSkeleton({ light = false }: { light?: boolean }) {
   );
 }
 
-function ToggleRowSkeleton({
-  light = false,
-  showTrailingInput = false,
-  showExtraOption = false,
-}: {
-  light?: boolean;
-  showTrailingInput?: boolean;
-  showExtraOption?: boolean;
-}) {
-  return (
-    <div className={cn('p-4', darkRowClassName)}>
-      <div className="flex items-start gap-4">
-        <Skeleton className="mt-1 h-6 w-11 rounded-full shrink-0" />
-        <div className="flex-1 space-y-3">
-          <div className="flex items-start justify-between gap-4">
-            <div className="space-y-2">
-              <Skeleton
-                className={cn('h-4 w-40', light && lightSkeletonClassName)}
-              />
-              <Skeleton
-                className={cn(
-                  'h-3 w-56 max-w-full',
-                  light && lightSkeletonClassName
-                )}
-              />
-            </div>
-            {showTrailingInput ? (
-              <Skeleton
-                className={cn(
-                  'h-9 w-24 shrink-0',
-                  light && lightSkeletonClassName
-                )}
-              />
-            ) : null}
-          </div>
-          {showExtraOption ? (
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-4 w-4 rounded-sm shrink-0" />
-              <Skeleton
-                className={cn('h-3 w-32', light && lightSkeletonClassName)}
-              />
-            </div>
-          ) : null}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function ChannelCardSkeleton() {
   return (
-    <div className={cn('flex items-start gap-3 p-4', darkRowClassName)}>
-      <Skeleton className="mt-1 h-6 w-11 rounded-full shrink-0" />
+    <div className={cn('flex items-start gap-3 p-3', darkRowClassName)}>
+      <Skeleton className="mt-0.5 h-6 w-11 rounded-full shrink-0" />
       <div className="space-y-2">
         <Skeleton className="h-4 w-36" />
         <Skeleton className="h-3 w-28" />
@@ -175,6 +126,54 @@ function PricingPlanCardSkeleton() {
   );
 }
 
+function CompactRowSkeleton({
+  showLeadingToggle = false,
+  showTrailingInput = false,
+  divider = true,
+}: {
+  showLeadingToggle?: boolean;
+  showTrailingInput?: boolean;
+  divider?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        'flex items-center justify-between gap-4 py-3.5',
+        divider && 'border-b border-secondary-blue-400/60'
+      )}
+    >
+      <div className="flex items-start gap-3">
+        {showLeadingToggle && (
+          <Skeleton className="mt-0.5 h-6 w-11 rounded-full shrink-0" />
+        )}
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-40" />
+          <Skeleton className="h-3 w-64 max-w-full" />
+        </div>
+      </div>
+      <Skeleton
+        className={cn('shrink-0', showTrailingInput ? 'h-9 w-24' : 'h-5 w-28')}
+      />
+    </div>
+  );
+}
+
+export function MemberActivitySkeleton() {
+  return (
+    <Card className={darkCardClassName}>
+      <CardHeader className="relative z-10 pb-4">
+        <SectionHeaderSkeleton />
+      </CardHeader>
+      <CardContent className="relative z-10 pt-0">
+        <div className="rounded-xl border border-secondary-blue-400 bg-secondary-blue-700 px-4">
+          <CompactRowSkeleton showTrailingInput />
+          <CompactRowSkeleton showTrailingInput divider={false} />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function NotificationPreferencesSkeleton() {
   return (
     <Card className={darkCardClassName}>
@@ -182,17 +181,19 @@ export function NotificationPreferencesSkeleton() {
       <CardHeader className="relative z-10">
         <SectionHeaderSkeleton />
       </CardHeader>
-      <CardContent className="relative z-10 space-y-6">
-        <div className="space-y-4">
+      <CardContent className="relative z-10 space-y-6 pt-0">
+        <div className="space-y-3">
           <SectionLabelSkeleton />
-          <ToggleRowSkeleton showTrailingInput />
-          <ToggleRowSkeleton showTrailingInput showExtraOption />
-          <ToggleRowSkeleton />
+          <div className="rounded-xl border border-secondary-blue-400 bg-secondary-blue-700 px-4">
+            <CompactRowSkeleton showLeadingToggle showTrailingInput />
+            <CompactRowSkeleton showLeadingToggle showTrailingInput />
+            <CompactRowSkeleton showLeadingToggle divider={false} />
+          </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           <SectionLabelSkeleton />
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <ChannelCardSkeleton />
             <ChannelCardSkeleton />
           </div>

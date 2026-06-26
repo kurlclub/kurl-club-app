@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { InvoiceSettingsSkeleton } from '@/components/pages/account-settings/account-settings-skeletons';
+import { SettingsDirtyActions } from '@/components/pages/account-settings/tabs/operations-tab/components/settings-dirty-actions';
 import {
   type InvoiceSettingsFormValues,
   getDefaultInvoiceSettingsFormValues,
@@ -313,20 +314,12 @@ export default function InvoiceSettings() {
                 </div>
               </div>
               {isDirty && (
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => form.reset()}
-                    disabled={isBusy}
-                  >
-                    Discard
-                  </Button>
-                  <Button type="submit" size="sm" disabled={isBusy}>
-                    {isSaving ? 'Saving...' : 'Save Changes'}
-                  </Button>
-                </div>
+                <SettingsDirtyActions
+                  onDiscard={() => form.reset()}
+                  onSave={form.handleSubmit(onSubmit)}
+                  isSaving={isSaving}
+                  isBusy={isBusy}
+                />
               )}
             </div>
           </CardHeader>

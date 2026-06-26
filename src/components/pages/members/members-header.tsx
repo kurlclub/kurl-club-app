@@ -9,6 +9,7 @@ import { useMemberForm } from '@/hooks/use-member-form';
 import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
 
 import AddFrom from './add-member';
+import { InactiveDaysButton } from './inactive-days-button';
 import { SetupChecklistDialog } from './setup-checklist-dialog';
 
 interface MembersHeaderProps {
@@ -57,6 +58,7 @@ export const MembersHeader = ({
   return (
     <div className="flex items-center justify-end flex-wrap gap-2">
       <div className="flex items-center space-x-2 flex-wrap">
+        <InactiveDaysButton gymId={gymId} />
         <Button variant="outline" className="h-10" onClick={onImportClick}>
           <Download className="h-4 w-4" />
           Import
