@@ -99,14 +99,32 @@ const redirectToLogin = (): void => {
   window.location.href = '/auth/login';
 };
 
-const refreshAccessToken = async (): Promise<string | null> => {
+// Serialize refresh across tabs so a rotating refresh token is never used twice.
+async function withRefreshLock<T>(fn: () => Promise<T>): Promise<T> {
+  if (typeof navigator === 'undefined' || !('locks' in navigator)) {
+    return fn();
+  }
+  let result!: T;
+  await navigator.locks.request('kc-token-refresh', async () => {
+    result = await fn();
+  });
+  return result;
+}
+
+const refreshAccessToken = async (
+  staleToken: string | null
+): Promise<string | null> => {
   if (isRefreshing && refreshPromise) {
     return refreshPromise;
   }
 
   isRefreshing = true;
-  refreshPromise = (async () => {
+  refreshPromise = withRefreshLock(async () => {
     try {
+      // Another tab may have already refreshed while we waited for the lock.
+      const current = getStorageItem('accessToken');
+      if (current && current !== staleToken) return current;
+
       const refreshToken = getStorageItem('refreshToken');
       if (!refreshToken) {
         clearStorage();
@@ -121,9 +139,12 @@ const refreshAccessToken = async (): Promise<string | null> => {
         signal: AbortSignal.timeout(10000),
       });
 
+      // Only a definitive 401/403 logs out; 5xx/network are transient.
       if (!response.ok) {
-        clearStorage();
-        redirectToLogin();
+        if (response.status === 401 || response.status === 403) {
+          clearStorage();
+          redirectToLogin();
+        }
         return null;
       }
 
@@ -132,34 +153,30 @@ const refreshAccessToken = async (): Promise<string | null> => {
       const newRefreshToken = data?.data?.refreshToken;
 
       if (!newAccessToken || typeof newAccessToken !== 'string') {
-        clearStorage();
-        redirectToLogin();
         return null;
       }
 
       setStorageItem('accessToken', newAccessToken);
 
-      // Server uses rotating refresh tokens — MUST save the new one or next refresh fails
+      // Rotating tokens: persist the new refresh token or the next refresh fails.
       if (newRefreshToken && typeof newRefreshToken === 'string') {
         setStorageItem('refreshToken', newRefreshToken);
       }
 
-      // Update cookie
       if (typeof document !== 'undefined') {
         document.cookie = `accessToken=${newAccessToken}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Strict`;
       }
 
       return newAccessToken;
     } catch (error) {
-      console.error('Token refresh failed:', error);
-      clearStorage();
-      redirectToLogin();
+      // Network/timeout — transient, keep the session.
+      console.error('Token refresh failed (transient, session kept):', error);
       return null;
     } finally {
       isRefreshing = false;
       refreshPromise = null;
     }
-  })();
+  });
 
   return refreshPromise;
 };
@@ -219,9 +236,9 @@ const baseFetch: typeof fetch = async (url, options = {}) => {
     typeof window !== 'undefined' &&
     !isRetry
   ) {
-    const newToken = await refreshAccessToken();
+    const newToken = await refreshAccessToken(accessToken);
     if (newToken) {
-      // Retry with new token (mark as retry to prevent infinite loop)
+      // Retry once with the new token.
       return baseFetch(url, {
         ...options,
         isRetry: true,

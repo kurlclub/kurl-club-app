@@ -79,6 +79,10 @@ interface OnboardingApiResponse {
   data?: unknown;
 }
 
+// HTTP status off an api error; undefined for network/timeout (treated as transient).
+const getErrorStatus = (error: unknown): number | undefined =>
+  (error as { response?: { status?: number } })?.response?.status;
+
 const buildUserDetails = ({
   uid,
   payload,
@@ -197,6 +201,7 @@ export const getUserByUid = async (uid: string, currentGymId?: number) => {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get user',
+      status: getErrorStatus(error),
     };
   }
 };
@@ -217,6 +222,7 @@ export const getAccessMe = async () => {
       success: false,
       error:
         error instanceof Error ? error.message : 'Failed to get access data',
+      status: getErrorStatus(error),
     };
   }
 };
@@ -231,11 +237,16 @@ export const fetchAppSession = async (
   ]);
 
   if (!userResult.success || !userResult.data) {
-    throw new Error(userResult.error || 'Failed to get user');
+    throw Object.assign(new Error(userResult.error || 'Failed to get user'), {
+      status: (userResult as { status?: number }).status,
+    });
   }
 
   if (!accessResult.success || !accessResult.data) {
-    throw new Error(accessResult.error || 'Failed to get access data');
+    throw Object.assign(
+      new Error(accessResult.error || 'Failed to get access data'),
+      { status: (accessResult as { status?: number }).status }
+    );
   }
 
   const entitlements: AuthEntitlements = accessResult.data;
