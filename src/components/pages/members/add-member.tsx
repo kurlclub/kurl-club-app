@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { FormControl, FormLabel } from '@/components/ui/form';
+import { useCurrency } from '@/hooks/use-currency';
 import { useGymFormOptions } from '@/hooks/use-gymform-options';
 import { useMemberForm } from '@/hooks/use-member-form';
 import {
@@ -66,38 +67,41 @@ const PaymentWarnings = ({
   showDiscountError: boolean;
   effectiveTotal: number;
   paidAmount: number;
-}) => (
-  <>
-    {showDiscountError && (
-      <InfoBanner
-        variant="error"
-        icon="🚫"
-        message="Discount must be less than package amount"
-      />
-    )}
-    {showPaidWarning && (
-      <InfoBanner
-        variant="warning"
-        icon="⚠️"
-        message={`Status is "Paid" but amount (₹${paidAmount.toLocaleString()}) doesn't match effective total (₹${effectiveTotal.toLocaleString()}). Change status to "Partial" or adjust amount.`}
-      />
-    )}
-    {showPartialWarning && (
-      <InfoBanner
-        variant="warning"
-        icon="⚠️"
-        message={`Status is "Partial" but amount is ${paidAmount === 0 ? 'zero' : 'equal to effective total'}. Change to "${paidAmount === 0 ? 'Unpaid' : 'Paid'}".`}
-      />
-    )}
-    {showOverpaymentError && (
-      <InfoBanner
-        variant="error"
-        icon="🚫"
-        message={`Amount (₹${paidAmount.toLocaleString()}) exceeds effective total (₹${effectiveTotal.toLocaleString()}) by ₹${(paidAmount - effectiveTotal).toLocaleString()}`}
-      />
-    )}
-  </>
-);
+}) => {
+  const { currencySymbol } = useCurrency();
+  return (
+    <>
+      {showDiscountError && (
+        <InfoBanner
+          variant="error"
+          icon="🚫"
+          message="Discount must be less than package amount"
+        />
+      )}
+      {showPaidWarning && (
+        <InfoBanner
+          variant="warning"
+          icon="⚠️"
+          message={`Status is "Paid" but amount (${currencySymbol}${paidAmount.toLocaleString()}) doesn't match effective total (${currencySymbol}${effectiveTotal.toLocaleString()}). Change status to "Partial" or adjust amount.`}
+        />
+      )}
+      {showPartialWarning && (
+        <InfoBanner
+          variant="warning"
+          icon="⚠️"
+          message={`Status is "Partial" but amount is ${paidAmount === 0 ? 'zero' : 'equal to effective total'}. Change to "${paidAmount === 0 ? 'Unpaid' : 'Paid'}".`}
+        />
+      )}
+      {showOverpaymentError && (
+        <InfoBanner
+          variant="error"
+          icon="🚫"
+          message={`Amount (${currencySymbol}${paidAmount.toLocaleString()}) exceeds effective total (${currencySymbol}${effectiveTotal.toLocaleString()}) by ${currencySymbol}${(paidAmount - effectiveTotal).toLocaleString()}`}
+        />
+      )}
+    </>
+  );
+};
 
 const PaymentFields = ({
   form,
@@ -108,6 +112,7 @@ const PaymentFields = ({
   totalAmount: number;
   paymentSectionRef?: React.RefObject<HTMLDivElement | null>;
 }) => {
+  const { currencySymbol } = useCurrency();
   const amountPaid = form.watch('amountPaid');
   const feeStatus = form.watch('feeStatus') || '';
   const isDiscounted = form.watch('isDiscounted');
@@ -207,18 +212,23 @@ const PaymentFields = ({
         <div className="text-sm space-y-2 p-4 bg-secondary-blue-500/30 rounded-lg border border-secondary-blue-400">
           <div className="flex justify-between">
             <span className="text-gray-400">Package Amount:</span>
-            <span className="text-white">₹{totalAmount.toLocaleString()}</span>
+            <span className="text-white">
+              {currencySymbol}
+              {totalAmount.toLocaleString()}
+            </span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-400">Discount Applied:</span>
             <span className="text-alert-red-400">
-              -₹{discount.toLocaleString()}
+              -{currencySymbol}
+              {discount.toLocaleString()}
             </span>
           </div>
           <div className="flex justify-between border-t border-secondary-blue-400 pt-2">
             <span className="text-white font-semibold">Effective Total:</span>
             <span className="text-primary-green-500 font-semibold">
-              ₹{effectiveTotal.toLocaleString()}
+              {currencySymbol}
+              {effectiveTotal.toLocaleString()}
             </span>
           </div>
 
@@ -226,7 +236,10 @@ const PaymentFields = ({
             <>
               <div className="flex justify-between text-gray-300">
                 <span>Amount Paid:</span>
-                <span>₹{paidAmount.toLocaleString()}</span>
+                <span>
+                  {currencySymbol}
+                  {paidAmount.toLocaleString()}
+                </span>
               </div>
               <div className="flex justify-between border-t border-secondary-blue-400 pt-2">
                 <span className="text-white font-semibold">Pending:</span>
@@ -237,7 +250,8 @@ const PaymentFields = ({
                       : 'text-alert-orange-400'
                   }`}
                 >
-                  ₹{Math.max(0, effectiveTotal - paidAmount).toLocaleString()}
+                  {currencySymbol}
+                  {Math.max(0, effectiveTotal - paidAmount).toLocaleString()}
                 </span>
               </div>
             </>
@@ -286,6 +300,7 @@ const PerSessionPayment = ({
   selectedPlan: MembershipPlanSubset;
   paymentSectionRef: React.RefObject<HTMLDivElement | null>;
 }) => {
+  const { currencySymbol } = useCurrency();
   const customRate = form.watch('customSessionRate');
   const numberOfSessions = form.watch('numberOfSessions');
 
@@ -306,14 +321,14 @@ const PerSessionPayment = ({
           control={form.control}
           name="customSessionRate"
           label="Custom Session Rate (Optional)"
-          placeholder={`Default: ₹${selectedPlan.fee}`}
+          placeholder={`Default: ${currencySymbol}${selectedPlan.fee}`}
           type="number"
         />
         <InfoBanner
           variant="info"
           icon="💡"
           title="Per Session Billing:"
-          message={`Leave empty to use plan's default rate of ₹${selectedPlan.fee} per session`}
+          message={`Leave empty to use plan's default rate of ${currencySymbol}${selectedPlan.fee} per session`}
         />
       </div>
       <KFormField
@@ -628,6 +643,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
   onboardingId,
   memberForm: externalMemberForm,
 }) => {
+  const { currencySymbol } = useCurrency();
   const paymentSectionRef = React.useRef<HTMLDivElement>(null);
   const { formOptions } = useGymFormOptions(gymId);
   const internalMemberForm = useMemberForm(gymId, onboardingId);
@@ -1009,7 +1025,7 @@ export const AddMember: React.FC<CreateMemberDetailsProps> = ({
                       icon="ℹ️"
                       message={
                         migratedRecurringCalculation
-                          ? `Auto total till today: ₹${migratedRecurringCalculation.total.toLocaleString()} (${migratedRecurringCalculation.cycles} cycle${migratedRecurringCalculation.cycles > 1 ? 's' : ''})`
+                          ? `Auto total till today: ${currencySymbol}${migratedRecurringCalculation.total.toLocaleString()} (${migratedRecurringCalculation.cycles} cycle${migratedRecurringCalculation.cycles > 1 ? 's' : ''})`
                           : 'Select current package start date to auto-calculate total amount.'
                       }
                     />

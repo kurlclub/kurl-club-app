@@ -8,7 +8,9 @@ import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
 import { getProfilePictureSrc } from '@/lib/utils';
 import { OutstandingPayments } from '@/types';
 
-export const paymentColumns: ColumnDef<OutstandingPayments>[] = [
+export const createPaymentColumns = (
+  currencySymbol: string = '₹'
+): ColumnDef<OutstandingPayments>[] => [
   {
     accessorKey: 'memberIdentifier',
     header: 'Member ID',
@@ -53,7 +55,10 @@ export const paymentColumns: ColumnDef<OutstandingPayments>[] = [
     cell: ({ row }) => {
       const amount = row.getValue<number>('amount') ?? 0;
       return (
-        <div className="min-w-[70px]">₹{amount.toLocaleString('en-IN')}</div>
+        <div className="min-w-[70px]">
+          {currencySymbol}
+          {amount.toLocaleString('en-IN')}
+        </div>
       );
     },
   },

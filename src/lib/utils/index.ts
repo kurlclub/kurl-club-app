@@ -567,15 +567,16 @@ export const getUrgencyConfig = (daysRemaining: number) => {
  * Formats currency amounts with K/L suffixes for large numbers.
  *
  * @param amount - The amount to format.
+ * @param currencySymbol - Symbol to prefix (defaults to `₹`).
  * @returns Formatted currency string.
  */
-export const formatAmount = (amount: number): string => {
+export const formatAmount = (amount: number, currencySymbol = '₹'): string => {
   if (amount >= 100000) {
-    return `₹${(amount / 100000).toFixed(0)}L`;
+    return `${currencySymbol}${(amount / 100000).toFixed(0)}L`;
   } else if (amount >= 1000) {
-    return `₹${(amount / 1000).toFixed(0)}K`;
+    return `${currencySymbol}${(amount / 1000).toFixed(0)}K`;
   }
-  return `₹${amount}`;
+  return `${currencySymbol}${amount}`;
 };
 
 /**
@@ -585,3 +586,61 @@ export const PAYMENT_CHART_COLORS = {
   UNPAID: 'var(--color-status-unpaid)',
   PAID: 'var(--color-primary-green-700)',
 } as const;
+
+/**
+ * Coerces an unknown input into a finite number.
+ *
+ * Strings are parsed with the built-in `Number` constructor. Invalid, empty,
+ * or non-finite inputs fall back to the provided default.
+ */
+export const toFiniteNumber = (value: unknown, fallback = 0): number => {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : fallback;
+  }
+
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+
+  return fallback;
+};
+
+/**
+ * Formats a number with locale-aware grouping separators.
+ *
+ * The app defaults to Indian grouping for financial values, but callers can
+ * override the locale or decimal precision when needed.
+ */
+export const formatGroupedNumber = (
+  value: number,
+  options?: {
+    locale?: string;
+    minimumFractionDigits?: number;
+    maximumFractionDigits?: number;
+  }
+): string =>
+  new Intl.NumberFormat(options?.locale ?? 'en-IN', {
+    minimumFractionDigits: options?.minimumFractionDigits,
+    maximumFractionDigits: options?.maximumFractionDigits,
+  }).format(toFiniteNumber(value));
+
+/**
+ * Formats a number using compact notation such as `1.2K` or `3.4L`.
+ *
+ * Intended for dense UI surfaces like charts and summary cards where the full
+ * grouped value would take too much space.
+ */
+export const formatCompactNumber = (
+  value: number,
+  options?: {
+    locale?: string;
+    minimumFractionDigits?: number;
+    maximumFractionDigits?: number;
+  }
+): string =>
+  new Intl.NumberFormat(options?.locale ?? 'en-IN', {
+    notation: 'compact',
+    minimumFractionDigits: options?.minimumFractionDigits,
+    maximumFractionDigits: options?.maximumFractionDigits ?? 1,
+  }).format(toFiniteNumber(value));

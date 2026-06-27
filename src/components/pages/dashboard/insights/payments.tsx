@@ -10,6 +10,7 @@ import {
 } from 'recharts';
 
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
+import { useCurrency } from '@/hooks/use-currency';
 import { PAYMENT_CHART_COLORS, formatAmount } from '@/lib/utils';
 import { useGymBranch } from '@/providers/gym-branch-provider';
 import { useDashboardData } from '@/services/dashboard';
@@ -34,6 +35,7 @@ interface PaymentsProps {
 }
 
 function CustomTooltip({ active, payload, total }: CustomTooltipProps) {
+  const { currencySymbol } = useCurrency();
   if (active && payload?.[0]) {
     const data = payload[0].payload;
     if (!data) return null;
@@ -49,7 +51,7 @@ function CustomTooltip({ active, payload, total }: CustomTooltipProps) {
         </div>
 
         <p className="text-secondary-blue-200 text-xs">
-          {formatAmount(data.amount)}
+          {formatAmount(data.amount, currencySymbol)}
         </p>
 
         <p className="text-secondary-blue-200 text-xs">
@@ -63,6 +65,7 @@ function CustomTooltip({ active, payload, total }: CustomTooltipProps) {
 }
 
 function Payments({ fromDate, toDate }: PaymentsProps) {
+  const { currencySymbol } = useCurrency();
   const { gymBranch } = useGymBranch();
   const { data: dashboardData } = useDashboardData(
     gymBranch?.gymId || 0,
@@ -95,7 +98,7 @@ function Payments({ fromDate, toDate }: PaymentsProps) {
     },
     {
       label: 'Total outstanding',
-      value: `₹${totalOutstanding.toLocaleString()}`,
+      value: `${currencySymbol}${totalOutstanding.toLocaleString()}`,
       color: PAYMENT_CHART_COLORS.UNPAID,
     },
     {
@@ -105,7 +108,7 @@ function Payments({ fromDate, toDate }: PaymentsProps) {
     },
     {
       label: 'Total paid',
-      value: `₹${totalPaid.toLocaleString()}`,
+      value: `${currencySymbol}${totalPaid.toLocaleString()}`,
       color: PAYMENT_CHART_COLORS.PAID,
     },
   ];
@@ -124,7 +127,9 @@ function Payments({ fromDate, toDate }: PaymentsProps) {
             {isEmpty ? (
               <div className="w-[220px] h-[220px] rounded-full border border-secondary-blue-400/70 bg-linear-to-br from-secondary-blue-400/20 via-secondary-blue-600/10 to-secondary-blue-700/20 flex flex-col items-center justify-center text-center px-6">
                 <div className="w-14 h-14 rounded-full bg-secondary-blue-400/30 border border-secondary-blue-300/40 mb-3 flex items-center justify-center">
-                  <span className="text-xl text-secondary-blue-100">₹</span>
+                  <span className="text-xl text-secondary-blue-100">
+                    {currencySymbol}
+                  </span>
                 </div>
                 <p className="text-white text-sm font-medium">
                   No payment activity
@@ -169,7 +174,7 @@ function Payments({ fromDate, toDate }: PaymentsProps) {
                             fontSize={32}
                             fontWeight="bold"
                           >
-                            {formatAmount(totalOutstanding)}
+                            {formatAmount(totalOutstanding, currencySymbol)}
                           </tspan>
                           <tspan x="50%" dy="-2.4em" fontSize={15}>
                             Unpaid

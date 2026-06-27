@@ -1,4 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
+import { useCurrency } from '@/hooks/use-currency';
 import { formatDateTime } from '@/lib/utils';
 import type { PaymentHistory } from '@/services/transaction';
 
@@ -13,6 +14,7 @@ export function PaymentListItem({
   isSelected,
   onSelect,
 }: PaymentListItemProps) {
+  const { currencySymbol } = useCurrency();
   return (
     <Card
       className={`cursor-pointer transition-all ${
@@ -27,7 +29,8 @@ export function PaymentListItem({
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-0.5">
               <div className="text-white font-semibold text-base">
-                ₹{payment.amount.toLocaleString()}
+                {currencySymbol}
+                {payment.amount.toLocaleString()}
               </div>
               {isSelected && (
                 <div className="h-1.5 w-1.5 rounded-full bg-primary-green-400 animate-pulse" />

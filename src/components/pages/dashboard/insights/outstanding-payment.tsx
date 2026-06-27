@@ -3,10 +3,11 @@ import Link from 'next/link';
 import { KViewMore } from '@/components/shared/icons';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useCurrency } from '@/hooks/use-currency';
 import { useGymBranch } from '@/providers/gym-branch-provider';
 import { useDashboardData } from '@/services/dashboard';
 
-import { paymentColumns } from './table/payment-column';
+import { createPaymentColumns } from './table/payment-column';
 import { PaymentTable } from './table/payment-table';
 
 interface OutstandingPaymentProps {
@@ -15,6 +16,7 @@ interface OutstandingPaymentProps {
 }
 
 function OutstandingPayment({ fromDate, toDate }: OutstandingPaymentProps) {
+  const { currencySymbol } = useCurrency();
   const { gymBranch } = useGymBranch();
   const { data: dashboardData } = useDashboardData(
     gymBranch?.gymId || 0,
@@ -40,7 +42,10 @@ function OutstandingPayment({ fromDate, toDate }: OutstandingPaymentProps) {
 
       {/* Table Content */}
       <CardContent className="p-5 pt-0 k-chart">
-        <PaymentTable columns={paymentColumns} data={outstandingPayments} />
+        <PaymentTable
+          columns={createPaymentColumns(currencySymbol)}
+          data={outstandingPayments}
+        />
       </CardContent>
 
       {/* Bottom Black Shade */}

@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useAppDialog } from '@/hooks/use-app-dialog';
+import { useCurrency } from '@/hooks/use-currency';
 import {
   useInvoiceManagement,
   usePaymentHistory,
@@ -82,6 +83,7 @@ export function InvoiceGenerator({
   const { exportInvoice, sendInvoiceEmail, isExporting, isSending } =
     useInvoiceManagement();
   const { showConfirm } = useAppDialog();
+  const { currencySymbol } = useCurrency();
 
   const handlePaymentSelect = async (paymentId: number) => {
     // Avoid re-fetching if same payment is already selected
@@ -125,7 +127,7 @@ export function InvoiceGenerator({
 
     showConfirm({
       title: 'Send Invoice Email',
-      description: `Send payment receipt for ₹${payment.amount} to ${member.memberName}?`,
+      description: `Send payment receipt for ${currencySymbol}${payment.amount} to ${member.memberName}?`,
       confirmLabel: 'Send Email',
       onConfirm: async () => {
         await sendInvoiceEmail(selectedPayment);

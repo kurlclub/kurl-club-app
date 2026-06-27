@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useCurrency } from '@/hooks/use-currency';
 import { getAvatarColor } from '@/lib/avatar-utils';
 import { getInitials, safeFormatDate } from '@/lib/utils';
 import type { PayrollRow } from '@/types/payroll-management';
@@ -25,13 +26,15 @@ const PayRollDetails = ({
   setIsDetailsOpen,
   onMakePayment,
 }: PayRollDetailsProps) => {
+  const { currencySymbol } = useCurrency();
+
   if (!details) return null;
 
   const avatarStyle = getAvatarColor(details.name);
-  const paymentAmount = formatCurrency(details.salary || 0);
+  const paymentAmount = formatCurrency(details.salary || 0, currencySymbol);
   const totalPaidValue =
     details.paidTotal ?? (details.isPaid ? details.salary : 0);
-  const totalPaidAmount = formatCurrency(totalPaidValue || 0);
+  const totalPaidAmount = formatCurrency(totalPaidValue || 0, currencySymbol);
   const paymentDate = details.lastPaidDate
     ? safeFormatDate(details.lastPaidDate, 'en-GB')
     : 'Not paid yet';

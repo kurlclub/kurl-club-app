@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useCurrency } from '@/hooks/use-currency';
 import { useDebounce } from '@/hooks/use-debounce';
 import { cn } from '@/lib/utils';
 import {
@@ -164,6 +165,7 @@ const ExpenseTracker = ({
   className,
 }: ExpenseTrackerProps) => {
   const { data: categories = [] } = useExpenseCategories();
+  const { currencySymbol } = useCurrency();
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebounce(searchQuery, 350);
   const [filterOpen, setFilterOpen] = useState(false);
@@ -390,13 +392,13 @@ const ExpenseTracker = ({
           <div className="rounded-md border border-primary-blue-400/40 bg-primary-blue-400/10 px-2 py-1 text-[11px] text-primary-blue-100">
             Expense:{' '}
             <span className="font-semibold text-alert-red-400">
-              {formatCurrency(summary.totalExpense)}
+              {formatCurrency(summary.totalExpense, currencySymbol)}
             </span>
           </div>
           <div className="rounded-md border border-primary-blue-400/40 bg-primary-blue-400/10 px-2 py-1 text-[11px] text-primary-blue-100">
             Income:{' '}
             <span className="font-semibold text-neutral-green-300">
-              {formatCurrency(summary.totalIncome)}
+              {formatCurrency(summary.totalIncome, currencySymbol)}
             </span>
           </div>
           <div className="rounded-md border border-primary-blue-400/40 bg-primary-blue-400/10 px-2 py-1 text-[11px] text-primary-blue-100">
@@ -409,7 +411,7 @@ const ExpenseTracker = ({
                   : 'text-alert-red-400'
               )}
             >
-              {formatCurrency(summary.netProfit)}
+              {formatCurrency(summary.netProfit, currencySymbol)}
             </span>
           </div>
         </div>
@@ -496,7 +498,7 @@ const ExpenseTracker = ({
                             )}
                           >
                             {isExpense ? '-' : '+'}
-                            {formatCurrency(expense.amount)}
+                            {formatCurrency(expense.amount, currencySymbol)}
                           </div>
                           <p className="text-[11px] text-primary-blue-100">
                             {expenseTime}

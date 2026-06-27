@@ -20,6 +20,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { useCurrency } from '@/hooks/use-currency';
 import { useUpsertStaffSalary } from '@/hooks/use-payroll';
 import { useStaffSalaryDetails } from '@/services/staff';
 import { StaffType } from '@/types/staff';
@@ -52,6 +53,7 @@ function SalaryConfiguration({ staffId, staffRole }: SalaryConfigurationProps) {
     isError,
   } = useStaffSalaryDetails(staffId, staffRole);
   const upsertSalaryMutation = useUpsertStaffSalary();
+  const { currencySymbol } = useCurrency();
   const isSaving = upsertSalaryMutation.isPending;
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
 
@@ -206,7 +208,7 @@ function SalaryConfiguration({ staffId, staffRole }: SalaryConfigurationProps) {
 
           {hasValidSalary && (
             <p className="text-xs text-gray-500 dark:text-secondary-blue-200 -mt-4">
-              {formatCurrency(numericSalary)} per month
+              {formatCurrency(numericSalary, currencySymbol)} per month
             </p>
           )}
 

@@ -26,6 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { useAppDialog } from '@/hooks/use-app-dialog';
+import { useCurrency } from '@/hooks/use-currency';
 import {
   usePaymentHistory,
   usePaymentManagement,
@@ -81,6 +82,7 @@ export function ManagePaymentSheet({
   const planLabel =
     member?.membershipPlanName || `Plan ${member?.membershipPlanId ?? ''}`;
   const { gymBranch } = useGymBranch();
+  const { currencySymbol } = useCurrency();
   const { recordPartialPayment, recordFullPayment, isProcessing } =
     usePaymentManagement();
   const { data: paymentHistory = [], isLoading: isHistoryLoading } =
@@ -123,7 +125,7 @@ export function ManagePaymentSheet({
     title: isOutstandingFlow
       ? 'Confirm Partial Payment'
       : 'Confirm Advance Payment',
-    description: `Record ₹${amountNum.toLocaleString()} ${isOutstandingFlow ? 'payment' : 'advance payment'} for ${member?.memberName}?`,
+    description: `Record ${currencySymbol}${amountNum.toLocaleString()} ${isOutstandingFlow ? 'payment' : 'advance payment'} for ${member?.memberName}?`,
     confirmLabel: isOutstandingFlow ? 'Record Payment' : 'Collect Advance',
   });
 
@@ -135,8 +137,8 @@ export function ManagePaymentSheet({
       return {
         title: 'Confirm Advance Full Payment',
         description: isDiscounted
-          ? `Record ₹${paymentAmount.toLocaleString()} advance full payment for ${member?.memberName} with ₹${discountAmount.toLocaleString()} discount?`
-          : `Record ₹${paymentAmount.toLocaleString()} advance full payment for ${member?.memberName}?`,
+          ? `Record ${currencySymbol}${paymentAmount.toLocaleString()} advance full payment for ${member?.memberName} with ${currencySymbol}${discountAmount.toLocaleString()} discount?`
+          : `Record ${currencySymbol}${paymentAmount.toLocaleString()} advance full payment for ${member?.memberName}?`,
         confirmLabel: 'Collect Advance',
       };
     }
@@ -144,7 +146,7 @@ export function ManagePaymentSheet({
     if (isDiscounted) {
       return {
         title: 'Confirm Full Payment',
-        description: `Record ₹${paymentAmount.toLocaleString()} full settlement for ${member?.memberName} with ₹${discountAmount.toLocaleString()} discount?`,
+        description: `Record ${currencySymbol}${paymentAmount.toLocaleString()} full settlement for ${member?.memberName} with ${currencySymbol}${discountAmount.toLocaleString()} discount?`,
         confirmLabel: 'Record Payment',
       };
     }
@@ -153,8 +155,8 @@ export function ManagePaymentSheet({
       title: 'Confirm Full Payment',
       description:
         unsettledCycles > 1
-          ? `Settle ₹${paymentAmount.toLocaleString()} across ${unsettledCycles} unsettled cycles for ${member?.memberName}?`
-          : `Are you sure you want to settle ₹${paymentAmount.toLocaleString()} for ${member?.memberName}?`,
+          ? `Settle ${currencySymbol}${paymentAmount.toLocaleString()} across ${unsettledCycles} unsettled cycles for ${member?.memberName}?`
+          : `Are you sure you want to settle ${currencySymbol}${paymentAmount.toLocaleString()} for ${member?.memberName}?`,
       confirmLabel: unsettledCycles > 1 ? 'Settle All Dues' : 'Mark Paid',
     };
   };
@@ -265,7 +267,8 @@ export function ManagePaymentSheet({
                       Current Cycle Fee
                     </div>
                     <div className="text-white">
-                      ₹{member.currentCycle?.planFee || 0}
+                      {currencySymbol}
+                      {member.currentCycle?.planFee || 0}
                     </div>
                   </div>
                 </div>
@@ -300,7 +303,8 @@ export function ManagePaymentSheet({
                       {amountLabel}
                     </div>
                     <div className="text-white">
-                      ₹{fullPaymentAmount.toLocaleString()}
+                      {currencySymbol}
+                      {fullPaymentAmount.toLocaleString()}
                     </div>
                   </div>
                 </div>
@@ -361,7 +365,7 @@ export function ManagePaymentSheet({
                           fieldType={KFormFieldType.INPUT}
                           control={form.control}
                           name="amount"
-                          label="Amount (₹)"
+                          label={`Amount (${currencySymbol})`}
                           type="number"
                           placeholder="0"
                           size="sm"
@@ -369,8 +373,8 @@ export function ManagePaymentSheet({
                         <div className="mt-1 text-xs text-primary-blue-200">
                           {isOutstandingFlow
                             ? settlementAmount > currentCyclePending
-                              ? `Current cycle max: ₹${currentCyclePending.toLocaleString()}`
-                              : `Maximum: ₹${currentCyclePending.toLocaleString()}`
+                              ? `Current cycle max: ${currencySymbol}${currentCyclePending.toLocaleString()}`
+                              : `Maximum: ${currencySymbol}${currentCyclePending.toLocaleString()}`
                             : 'Collect any advance amount for a future cycle.'}
                         </div>
                       </div>
@@ -422,7 +426,8 @@ export function ManagePaymentSheet({
                           : 'Advance Full Amount'}
                       </div>
                       <div className="text-xl font-bold text-white">
-                        ₹{fullPaymentAmount.toLocaleString()}
+                        {currencySymbol}
+                        {fullPaymentAmount.toLocaleString()}
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -444,7 +449,8 @@ export function ManagePaymentSheet({
                       </label>
                       {isDiscounted && discountAmount > 0 ? (
                         <span className="text-xs font-medium text-primary-green-200">
-                          Discount: ₹{discountAmount.toLocaleString()}
+                          Discount: {currencySymbol}
+                          {discountAmount.toLocaleString()}
                         </span>
                       ) : null}
                     </div>
@@ -453,7 +459,7 @@ export function ManagePaymentSheet({
                         fieldType={KFormFieldType.INPUT}
                         control={form.control}
                         name="amount"
-                        label="Amount Paid (₹)"
+                        label={`Amount Paid (${currencySymbol})`}
                         type="number"
                         placeholder="0"
                         size="sm"
@@ -475,7 +481,8 @@ export function ManagePaymentSheet({
                           {isDiscounted ? 'Amount Paid' : 'Amount'}
                         </div>
                         <div className="text-base font-bold text-white">
-                          ₹{getFullPaymentAmount().toLocaleString()}
+                          {currencySymbol}
+                          {getFullPaymentAmount().toLocaleString()}
                         </div>
                       </div>
                     </div>
@@ -503,7 +510,8 @@ export function ManagePaymentSheet({
                       ) : (
                         <div className="flex items-center gap-2">
                           <Handshake className="w-4 h-4" />
-                          {isOutstandingFlow ? 'Settle' : 'Collect'} ₹
+                          {isOutstandingFlow ? 'Settle' : 'Collect'}{' '}
+                          {currencySymbol}
                           {getFullPaymentAmount().toLocaleString()}
                         </div>
                       )}
