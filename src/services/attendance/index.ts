@@ -119,6 +119,7 @@ export type BiometricDeviceResponse = {
   manufacturer: string;
   createdAt: string;
   modifiedAt: string;
+  isOnline: boolean;
 };
 
 export type BiometricDevicesApiResponse = {
