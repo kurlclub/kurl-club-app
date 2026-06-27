@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Download, Loader2, Plus } from 'lucide-react';
+import { Download, Filter, Loader2, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod/v4';
 
@@ -17,7 +17,6 @@ import { FeatureLockOverlay } from '@/components/shared/subscription';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useCurrency } from '@/hooks/use-currency';
 import { useSheet } from '@/hooks/use-sheet';
 import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
 import { toUtcDateOnlyISOString } from '@/lib/utils';
@@ -121,58 +120,94 @@ const previewExpensesByDate = [
 ];
 
 const PreviewExpenseSidebar = () => {
-  const { currencySymbol } = useCurrency();
+  const fmt = (value: number) => `₹${Math.abs(value).toLocaleString('en-IN')}`;
 
   return (
-    <aside className="rounded-lg border border-secondary-blue-500 bg-secondary-blue-500 p-5 w-full xl:max-w-100 xl:sticky xl:top-17.5 xl:h-[calc(100vh-180px)] overflow-hidden flex flex-col">
-      <h3 className="text-[28px] leading-none font-semibold text-white">
-        Expenses
-      </h3>
-      <div className="mt-4 flex-1 min-h-0 space-y-5 overflow-y-auto pr-1">
-        {previewExpensesByDate.map((section) => (
-          <div key={section.date} className="space-y-3">
-            <h4 className="text-[32px] leading-none font-semibold text-white">
-              {section.date}
-            </h4>
-            <div className="space-y-2">
-              {section.items.map((item, index) => (
-                <div
-                  key={`${item.title}-${index}`}
-                  className="flex items-center justify-between gap-2 rounded-lg border border-primary-blue-400/40 bg-primary-blue-400/15 px-3 py-2"
-                >
-                  <div className="min-w-0 flex items-center gap-2.5">
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-green-500 text-[11px] font-semibold text-on-accent">
-                      {currencySymbol}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate text-base font-medium text-white">
-                        {item.title}
-                      </p>
-                      <p className="truncate text-sm text-primary-blue-100">
+    <aside className="flex flex-col rounded-xl border border-white/10 bg-primary-blue-400/40 p-4 w-full xl:max-w-100 xl:sticky xl:top-17.5 xl:h-[calc(100vh-180px)] overflow-hidden">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-lg font-semibold text-white">Expenses</h3>
+        <Button type="button" variant="secondary" className="h-9 gap-2">
+          <Filter className="h-4 w-4" />
+          Filter
+        </Button>
+      </div>
+
+      <div className="mt-3 grid grid-cols-3 divide-x divide-white/10 rounded-lg border border-white/10 bg-secondary-blue-700">
+        <div className="px-3 py-2.5">
+          <p className="text-[11px] text-white/50">Money in</p>
+          <p className="mt-0.5 text-sm font-semibold tabular-nums text-neutral-green-300">
+            {fmt(previewReport.totalRevenue)}
+          </p>
+        </div>
+        <div className="px-3 py-2.5">
+          <p className="text-[11px] text-white/50">Money out</p>
+          <p className="mt-0.5 text-sm font-semibold tabular-nums text-alert-red-400">
+            {fmt(previewReport.totalExpenses)}
+          </p>
+        </div>
+        <div className="px-3 py-2.5">
+          <p className="text-[11px] text-white/50">Net</p>
+          <p
+            className={`mt-0.5 text-sm font-semibold tabular-nums ${
+              previewReport.netProfit >= 0
+                ? 'text-neutral-green-300'
+                : 'text-alert-red-400'
+            }`}
+          >
+            {previewReport.netProfit < 0 ? '−' : ''}
+            {fmt(previewReport.netProfit)}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-3 -mr-1 min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+        {previewExpensesByDate.map((section) => {
+          const [month, day] = section.date.split(' ');
+          return (
+            <div key={section.date} className="flex gap-3">
+              <div className="flex w-12 shrink-0 flex-col items-center rounded-lg bg-secondary-blue-700 py-2">
+                <span className="text-[10px] font-medium uppercase tracking-wide text-primary-green-500">
+                  {month}
+                </span>
+                <span className="text-xl font-bold leading-none text-white">
+                  {day}
+                </span>
+              </div>
+              <div className="min-w-0 flex-1 border-l border-white/10 pl-3">
+                {section.items.map((item, index) => (
+                  <div
+                    key={`${item.title}-${index}`}
+                    className="flex w-full items-start justify-between gap-2 px-1.5 py-2"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="size-2 shrink-0 rounded-full bg-white/25" />
+                        <p className="truncate text-sm font-medium text-white">
+                          {item.title}
+                        </p>
+                      </div>
+                      <p className="mt-0.5 truncate text-xs text-white/50">
                         {item.notes}
                       </p>
                     </div>
-                  </div>
-
-                  <div className="text-right">
-                    <div
-                      className={`text-base font-semibold ${
-                        item.amount.startsWith('-')
-                          ? 'text-alert-red-400'
-                          : 'text-neutral-green-300'
-                      }`}
-                    >
-                      {item.amount}
+                    <div className="shrink-0 text-right">
+                      <p
+                        className={`text-sm font-semibold tabular-nums ${
+                          item.amount.startsWith('-')
+                            ? 'text-alert-red-400'
+                            : 'text-neutral-green-300'
+                        }`}
+                      >
+                        {item.amount}
+                      </p>
+                      <p className="text-[11px] text-white/45">{item.time}</p>
                     </div>
-                    <p className="text-[11px] text-primary-blue-100">
-                      {item.time}
-                    </p>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </aside>
   );

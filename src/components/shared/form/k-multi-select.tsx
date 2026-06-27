@@ -30,6 +30,7 @@ type KMultiSelectProps = {
   selected: Option[];
   onChange: (selected: Option[]) => void;
   placeholder?: string;
+  searchPlaceholder?: string;
   className?: string;
   badgeClassName?: string;
   emptyMessage?: string;
@@ -44,6 +45,7 @@ export function KMultiSelect({
   selected,
   onChange,
   placeholder = 'Select options...',
+  searchPlaceholder = 'Search certifications...',
   className,
   badgeClassName,
   emptyMessage = 'No options found.',
@@ -150,7 +152,7 @@ export function KMultiSelect({
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             className="w-full px-3 py-2 bg-secondary-blue-500 text-white placeholder:text-primary-blue-100 border border-primary-blue-400 rounded-md outline-none focus:border-primary-green-700"
-            placeholder="Search certifications..."
+            placeholder={searchPlaceholder}
             disabled={disabled || isMaxSelected}
             onKeyDown={handleKeyDown}
             autoFocus
