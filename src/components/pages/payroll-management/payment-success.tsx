@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useCurrency } from '@/hooks/use-currency';
 import { formatPaymentDateTime } from '@/lib/payroll-utils';
 import type { PaymentItem } from '@/types/payroll-management';
 import { formatCurrency } from '@/utils/format-currency';
@@ -28,6 +29,7 @@ const PaymentSuccess = ({
   totalAmount,
   paymentMethod = 'Cash',
 }: PaymentSuccessProps) => {
+  const { currencySymbol } = useCurrency();
   const members = selectedMembers?.length
     ? selectedMembers
     : details
@@ -39,7 +41,7 @@ const PaymentSuccess = ({
   const isBulkPayment = members.length > 1;
   const paidAmountValue =
     totalAmount ?? members.reduce((sum, item) => sum + (item.salary || 0), 0);
-  const paidAmount = formatCurrency(paidAmountValue);
+  const paidAmount = formatCurrency(paidAmountValue, currencySymbol);
   const { formattedDate, formattedTime } = formatPaymentDateTime();
   const primaryMember = members[0];
 

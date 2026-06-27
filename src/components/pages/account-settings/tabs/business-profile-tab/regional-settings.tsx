@@ -1,59 +1,48 @@
-import { useEffect, useState } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
+'use client';
 
-import { zodResolver } from '@hookform/resolvers/zod';
+import dynamic from 'next/dynamic';
+import { useEffect, useState } from 'react';
+
+import { useQueryClient } from '@tanstack/react-query';
 import { Globe } from 'lucide-react';
 import { toast } from 'sonner';
-import { z } from 'zod';
 
 import {
   SettingsDirtyActions,
   SettingsSection,
 } from '@/components/pages/account-settings/components';
 import {
-  KFormField,
-  KFormFieldType,
-} from '@/components/shared/form/k-formfield';
-import {
-  COUNTRY_CODES,
-  CURRENCIES,
-  REGIONS,
-} from '@/lib/constants/regional-options';
+  COUNTRIES,
+  type Country,
+  resolveDefaultCountry,
+} from '@/lib/constants/countries';
 import { getGymCurrencyRegion, updateGymCurrencyRegion } from '@/services/gym';
 
-const regionalSettingsSchema = z.object({
-  currency: z.string().min(1, 'Currency is required'),
-  region: z.string().min(1, 'Region is required'),
-  countryCode: z.string().min(1, 'Country code is required'),
-});
+import { CountrySelect } from './country-select';
 
-type RegionalSettingsForm = z.infer<typeof regionalSettingsSchema>;
+// Lazy-loaded (client-only) so the world-atlas dataset never reaches other routes.
+const RegionMap = dynamic(() => import('./region-map'), { ssr: false });
 
 interface RegionalSettingsProps {
   gymId?: number;
 }
 
+const FALLBACK_COUNTRY =
+  COUNTRIES.find((country) => country.cca2 === 'IN') ?? COUNTRIES[0];
+
 export default function RegionalSettings({ gymId }: RegionalSettingsProps) {
+  const queryClient = useQueryClient();
+
   const [isPrefilling, setIsPrefilling] = useState(false);
-
-  const form = useForm<RegionalSettingsForm>({
-    resolver: zodResolver(regionalSettingsSchema),
-    defaultValues: {
-      currency: 'INR',
-      region: 'IND',
-      countryCode: '+91',
-    },
-  });
-
-  const isSaving = form.formState.isSubmitting;
+  const [isSaving, setIsSaving] = useState(false);
+  // `saved` is the persisted baseline; `selected` is the in-progress choice.
+  const [saved, setSaved] = useState<Country>(FALLBACK_COUNTRY);
+  const [selected, setSelected] = useState<Country>(FALLBACK_COUNTRY);
 
   useEffect(() => {
     if (!gymId) {
-      form.reset({
-        currency: 'INR',
-        region: 'IND',
-        countryCode: '+91',
-      });
+      setSaved(FALLBACK_COUNTRY);
+      setSelected(FALLBACK_COUNTRY);
       return;
     }
 
@@ -65,11 +54,14 @@ export default function RegionalSettings({ gymId }: RegionalSettingsProps) {
         const data = await getGymCurrencyRegion(gymId);
         if (!isMounted) return;
 
-        form.reset({
-          currency: data.currency,
-          region: data.region,
-          countryCode: data.countryCode,
-        });
+        const country =
+          resolveDefaultCountry({
+            region: data.region,
+            currency: data.currency,
+          }) ?? FALLBACK_COUNTRY;
+
+        setSaved(country);
+        setSelected(country);
       } catch (error) {
         if (!isMounted) return;
         toast.error(
@@ -87,23 +79,27 @@ export default function RegionalSettings({ gymId }: RegionalSettingsProps) {
     return () => {
       isMounted = false;
     };
-  }, [gymId, form]);
+  }, [gymId]);
 
-  const onSubmit = async (data: RegionalSettingsForm) => {
+  const isDirty = selected.cca2 !== saved.cca2;
+
+  const handleSave = async () => {
     if (!gymId) {
       toast.error('No gym selected');
       return;
     }
 
     try {
-      const result = await updateGymCurrencyRegion(gymId, data);
-      if (result.data) {
-        form.reset({
-          currency: result.data.currency,
-          region: result.data.region,
-          countryCode: result.data.countryCode,
-        });
-      }
+      setIsSaving(true);
+      const result = await updateGymCurrencyRegion(gymId, {
+        currency: selected.currency,
+        region: selected.regionCode,
+        countryCode: selected.callingCode,
+      });
+
+      // Refresh the app-wide currency so every amount reflects the new symbol.
+      queryClient.invalidateQueries({ queryKey: ['gymCurrency', gymId] });
+      setSaved(selected);
       toast.success(result.success);
     } catch (error) {
       toast.error(
@@ -111,57 +107,56 @@ export default function RegionalSettings({ gymId }: RegionalSettingsProps) {
           ? error.message
           : 'Failed to update currency and regional settings'
       );
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const isDirty = form.formState.isDirty;
-
   return (
-    <FormProvider {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        <SettingsSection
-          icon={Globe}
-          title="Currency & Regional Settings"
-          description="Configure currency, region, and country code preferences"
-          headerAction={
-            isDirty ? (
-              <SettingsDirtyActions
-                onDiscard={() => form.reset()}
-                onSave={form.handleSubmit(onSubmit)}
-                isSaving={isSaving}
-                isBusy={isSaving || isPrefilling || !gymId}
-              />
-            ) : undefined
-          }
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <KFormField
-              fieldType={KFormFieldType.SELECT}
-              control={form.control}
-              name="currency"
-              label="Currency"
-              options={CURRENCIES}
-              className="bg-gray-50 dark:bg-primary-blue-400"
-            />
-            <KFormField
-              fieldType={KFormFieldType.SELECT}
-              control={form.control}
-              name="region"
-              label="Region"
-              options={REGIONS}
-              className="bg-gray-50 dark:bg-primary-blue-400"
-            />
-            <KFormField
-              fieldType={KFormFieldType.SELECT}
-              control={form.control}
-              name="countryCode"
-              label="Country Code"
-              options={COUNTRY_CODES}
-              className="bg-gray-50 dark:bg-primary-blue-400"
-            />
+    <SettingsSection
+      icon={Globe}
+      title="Currency & Regional Settings"
+      description="Pick your country to set the currency, region, and dial code used across the app"
+      className="min-h-[280px]"
+      background={<RegionMap selectedCcn3={selected.ccn3} />}
+      headerAction={
+        isDirty ? (
+          <SettingsDirtyActions
+            onDiscard={() => setSelected(saved)}
+            onSave={handleSave}
+            isSaving={isSaving}
+            isBusy={isSaving || isPrefilling || !gymId}
+          />
+        ) : undefined
+      }
+    >
+      <div className="space-y-4 xl:max-w-lg">
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-secondary-blue-100">
+            Country
+          </label>
+          <CountrySelect
+            selected={selected}
+            onSelect={setSelected}
+            disabled={isSaving || isPrefilling || !gymId}
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-md border border-secondary-blue-400 bg-gray-50 dark:bg-secondary-blue-500 px-3 py-2.5">
+            <p className="text-xs text-secondary-blue-200">Currency</p>
+            <p className="mt-0.5 text-sm font-medium text-white">
+              {selected.currency} ({selected.symbol})
+            </p>
           </div>
-        </SettingsSection>
-      </form>
-    </FormProvider>
+          <div className="rounded-md border border-secondary-blue-400 bg-gray-50 dark:bg-secondary-blue-500 px-3 py-2.5">
+            <p className="text-xs text-secondary-blue-200">Country code</p>
+            <p className="mt-0.5 text-sm font-medium text-white">
+              {selected.cca2} ({selected.callingCode})
+            </p>
+          </div>
+        </div>
+      </div>
+    </SettingsSection>
   );
 }

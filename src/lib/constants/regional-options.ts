@@ -16,19 +16,32 @@ const getCurrencyName = (currencyCode: string) => {
   }
 };
 
-const getCurrencySymbol = (currencyCode: string) => {
+/**
+ * Resolves the display symbol for an ISO 4217 currency code (e.g. `USD` → `$`,
+ * `INR` → `₹`) using `Intl.NumberFormat`. When no glyph exists the upper-cased
+ * code is returned with a trailing space for readability (e.g. `AED → "AED "`),
+ * mirroring the mobile app's `getCurrencySymbol`.
+ */
+export const getCurrencySymbol = (currencyCode?: string | null): string => {
+  if (!currencyCode) return '';
+
+  const upperCode = currencyCode.toUpperCase();
+
   try {
     const parts = new Intl.NumberFormat('en', {
       style: 'currency',
-      currency: currencyCode,
+      currency: upperCode,
       currencyDisplay: 'narrowSymbol',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).formatToParts(1);
 
-    return parts.find((part) => part.type === 'currency')?.value || '';
+    const symbol = parts.find((part) => part.type === 'currency')?.value || '';
+    const finalSymbol = symbol || upperCode;
+
+    return finalSymbol.length === 3 ? `${finalSymbol} ` : finalSymbol;
   } catch {
-    return '';
+    return upperCode;
   }
 };
 

@@ -6,6 +6,7 @@ import { KSheet } from '@/components/shared/form/k-sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useCurrency } from '@/hooks/use-currency';
 import { usePaySalary } from '@/hooks/use-payroll';
 import { getAvatarColor } from '@/lib/avatar-utils';
 import { calculateTotalAmount, getPaymentMonth } from '@/lib/payroll-utils';
@@ -27,6 +28,7 @@ interface AddPaymentProps {
 const AddPayment = ({ open, onOpenChange, members }: AddPaymentProps) => {
   const { gymBranch } = useGymBranch();
   const { user } = useAuth();
+  const { currencySymbol } = useCurrency();
   const paySalaryMutation = usePaySalary();
   const [isPaymentDetailsOpen, setIsPaymentDetailsOpen] = useState(false);
   const [isPaymentSuccessOpen, setIsPaymentSuccessOpen] = useState(false);
@@ -161,7 +163,7 @@ const AddPayment = ({ open, onOpenChange, members }: AddPaymentProps) => {
     }
   };
 
-  const formattedTotal = formatCurrency(totalAmountToPay);
+  const formattedTotal = formatCurrency(totalAmountToPay, currencySymbol);
 
   return (
     <>
@@ -248,7 +250,7 @@ const AddPayment = ({ open, onOpenChange, members }: AddPaymentProps) => {
                       </div>
 
                       <span className="text-sm font-medium text-white">
-                        {formatCurrency(member.salary)}
+                        {formatCurrency(member.salary, currencySymbol)}
                       </span>
                     </label>
                   );

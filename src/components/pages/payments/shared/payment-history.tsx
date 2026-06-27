@@ -4,6 +4,7 @@ import { ArrowLeft, History } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useCurrency } from '@/hooks/use-currency';
 import { formatDateTime } from '@/lib/utils';
 
 type PaymentHistoryItem = {
@@ -30,6 +31,7 @@ export function PaymentHistory({
   showRecent = false,
   isLoading = false,
 }: PaymentHistoryProps) {
+  const { currencySymbol } = useCurrency();
   const displayHistory = showRecent ? history.slice(0, 2) : history;
 
   if (showRecent && history.length === 0 && !isLoading) return null;
@@ -68,7 +70,8 @@ export function PaymentHistory({
                   className="flex justify-between items-center text-xs"
                 >
                   <div className="text-white">
-                    ₹{payment.amount} - {payment.paymentMethod}
+                    {currencySymbol}
+                    {payment.amount} - {payment.paymentMethod}
                   </div>
                   <div className="text-primary-blue-200">
                     {formatDateTime(payment.paymentDate, 'date')}
@@ -119,7 +122,10 @@ export function PaymentHistory({
               className="flex justify-between items-center p-3 rounded-md border border-primary-blue-400 bg-primary-blue-500/10"
             >
               <div>
-                <div className="text-white font-medium">₹{payment.amount}</div>
+                <div className="text-white font-medium">
+                  {currencySymbol}
+                  {payment.amount}
+                </div>
                 <div className="text-xs text-primary-blue-200">
                   {payment.paymentMethod}
                 </div>

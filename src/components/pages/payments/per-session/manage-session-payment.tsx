@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useAppDialog } from '@/hooks/use-app-dialog';
+import { useCurrency } from '@/hooks/use-currency';
 import { paymentMethodOptions } from '@/lib/constants';
 import { safeParseDate } from '@/lib/utils';
 import { useGymBranch } from '@/providers/gym-branch-provider';
@@ -55,6 +56,7 @@ export function ManageSessionPaymentSheet({
   const [selectedSessions, setSelectedSessions] = useState<number[]>([]);
   const { showConfirm } = useAppDialog();
   const { gymBranch } = useGymBranch();
+  const { currencySymbol } = useCurrency();
 
   const { data: sessionData, isLoading } = useMemberSessionDetails(
     member?.memberId || null,
@@ -112,7 +114,7 @@ export function ManageSessionPaymentSheet({
 
     showConfirm({
       title: 'Record Session Payment',
-      description: `Record ₹${selectedAmount} payment for ${selectedSessions.length} session(s)?`,
+      description: `Record ${currencySymbol}${selectedAmount} payment for ${selectedSessions.length} session(s)?`,
       confirmLabel: 'Record Payment',
       onConfirm: () => {
         recordPayment(
@@ -195,7 +197,8 @@ export function ManageSessionPaymentSheet({
                   Session Rate
                 </div>
                 <div className="text-white font-bold text-lg">
-                  ₹{memberInfo.sessionRate}
+                  {currencySymbol}
+                  {memberInfo.sessionRate}
                 </div>
               </div>
             </div>
@@ -226,7 +229,8 @@ export function ManageSessionPaymentSheet({
                 </div>
                 <div className="flex items-baseline gap-2">
                   <span className="text-2xl font-bold text-alert-red-300">
-                    ₹{summary.totalPending}
+                    {currencySymbol}
+                    {summary.totalPending}
                   </span>
                   <span className="text-sm text-primary-blue-200">pending</span>
                 </div>
@@ -344,7 +348,8 @@ export function ManageSessionPaymentSheet({
 
                       <div className="text-right">
                         <div className="text-sm font-medium text-white">
-                          ₹{session.sessionRate}
+                          {currencySymbol}
+                          {session.sessionRate}
                         </div>
                         {isPaid && session.paymentMethod && (
                           <div className="text-xs text-primary-blue-200">
@@ -393,7 +398,8 @@ export function ManageSessionPaymentSheet({
                       Total Amount
                     </div>
                     <div className="text-white font-bold text-lg">
-                      ₹{selectedAmount.toLocaleString()}
+                      {currencySymbol}
+                      {selectedAmount.toLocaleString()}
                     </div>
                   </div>
                 </div>
@@ -417,7 +423,7 @@ export function ManageSessionPaymentSheet({
                       fieldType={KFormFieldType.INPUT}
                       control={form.control}
                       name="amount"
-                      label="Amount (₹)"
+                      label={`Amount (${currencySymbol})`}
                       type="number"
                       placeholder="0"
                       size="sm"

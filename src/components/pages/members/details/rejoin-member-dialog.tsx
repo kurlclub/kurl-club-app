@@ -21,6 +21,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Form } from '@/components/ui/form';
+import { useCurrency } from '@/hooks/use-currency';
 import { FormOptionsResponse } from '@/hooks/use-gymform-options';
 import { paymentMethodOptions } from '@/lib/constants';
 import { toUtcDateOnlyISOString } from '@/lib/utils';
@@ -68,6 +69,7 @@ export function RejoinMemberDialog({
 }: RejoinMemberDialogProps) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { currencySymbol } = useCurrency();
   const autoFilledFeeRef = useRef<string>('');
   const form = useForm<RejoinFormValues>({ defaultValues: getDefaultValues() });
 
@@ -174,7 +176,7 @@ export function RejoinMemberDialog({
               />
               {selectedPlan && (
                 <p className="mt-1.5 text-xs text-primary-blue-100">
-                  Plan fee: {formatCurrency(selectedPlan.fee)} ·{' '}
+                  Plan fee: {formatCurrency(selectedPlan.fee, currencySymbol)} ·{' '}
                   {selectedPlan.durationInDays} days
                 </p>
               )}

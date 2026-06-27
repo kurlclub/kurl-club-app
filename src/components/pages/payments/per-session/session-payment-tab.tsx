@@ -7,6 +7,7 @@ import { Calendar, IndianRupee, Users } from 'lucide-react';
 
 import InfoCard from '@/components/shared/cards/info-card';
 import { Spinner } from '@/components/shared/loader';
+import { useCurrency } from '@/hooks/use-currency';
 import { api } from '@/lib/api';
 import { SessionPaymentMember, SessionPaymentResponse } from '@/types/payment';
 
@@ -22,6 +23,7 @@ export function SessionPaymentTab({ gymId }: Props) {
   const [selectedMember, setSelectedMember] =
     useState<SessionPaymentMember | null>(null);
   const [isPaymentSheetOpen, setIsPaymentSheetOpen] = useState(false);
+  const { currencySymbol } = useCurrency();
 
   const { data, isLoading } = useQuery({
     queryKey: ['session-payments', gymId],
@@ -55,7 +57,8 @@ export function SessionPaymentTab({ gymId }: Props) {
   const columns = createSessionPaymentColumns(
     handleRecordPayment,
     undefined,
-    false
+    false,
+    currencySymbol
   );
 
   if (isLoading) {

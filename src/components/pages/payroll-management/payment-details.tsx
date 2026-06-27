@@ -6,6 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useCurrency } from '@/hooks/use-currency';
 import { getAvatarColor } from '@/lib/avatar-utils';
 import {
   calculateTotalAmount,
@@ -39,6 +40,7 @@ const PaymentDetails = ({
   paymentMonth,
   isProcessing = false,
 }: PaymentDetailsProps) => {
+  const { currencySymbol } = useCurrency();
   const members = selectedMembers?.length
     ? selectedMembers
     : details
@@ -50,7 +52,7 @@ const PaymentDetails = ({
   const isBulkPayment = members.length > 1;
   const amount = totalAmount ?? calculateTotalAmount(members);
   const { formattedDate, formattedTime } = formatPaymentDateTime();
-  const formattedTotal = formatCurrency(amount);
+  const formattedTotal = formatCurrency(amount, currencySymbol);
   const payrollMonthLabel = formatPaymentMonthLabel(paymentMonth);
 
   return (
@@ -130,7 +132,7 @@ const PaymentDetails = ({
                   </div>
 
                   <p className="text-sm font-medium text-white">
-                    {formatCurrency(member.salary)}
+                    {formatCurrency(member.salary, currencySymbol)}
                   </p>
                 </div>
               );

@@ -17,6 +17,8 @@ interface SettingsSectionProps {
   description?: string;
   /** Trailing header slot, e.g. dirty-state Save/Discard buttons. */
   headerAction?: ReactNode;
+  /** Full-bleed layer rendered behind the header + content (e.g. a map). */
+  background?: ReactNode;
   children: ReactNode;
   className?: string;
   contentClassName?: string;
@@ -32,6 +34,7 @@ export function SettingsSection({
   title,
   description,
   headerAction,
+  background,
   children,
   className,
   contentClassName,
@@ -40,28 +43,32 @@ export function SettingsSection({
     <Card
       className={cn(
         'bg-secondary-blue-500/80 backdrop-blur-sm border-secondary-blue-400',
+        background && 'relative overflow-hidden',
         className
       )}
     >
-      <CardHeader className="pb-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-3">
-            <Icon className="h-5 w-5 text-primary-green-500 mt-0.5 shrink-0" />
-            <div>
-              <CardTitle className="text-white">{title}</CardTitle>
-              {description && (
-                <CardDescription className="text-secondary-blue-200 mt-1">
-                  {description}
-                </CardDescription>
-              )}
+      {background && <div className="absolute inset-0 z-0">{background}</div>}
+      <div className={cn(background && 'relative z-10')}>
+        <CardHeader className="pb-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <Icon className="h-5 w-5 text-primary-green-500 mt-0.5 shrink-0" />
+              <div>
+                <CardTitle className="text-white">{title}</CardTitle>
+                {description && (
+                  <CardDescription className="text-secondary-blue-200 mt-1">
+                    {description}
+                  </CardDescription>
+                )}
+              </div>
             </div>
+            {headerAction}
           </div>
-          {headerAction}
-        </div>
-      </CardHeader>
-      <CardContent className={cn('pt-0', contentClassName)}>
-        {children}
-      </CardContent>
+        </CardHeader>
+        <CardContent className={cn('pt-0', contentClassName)}>
+          {children}
+        </CardContent>
+      </div>
     </Card>
   );
 }

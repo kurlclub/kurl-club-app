@@ -10,6 +10,7 @@ import {
 } from 'recharts';
 
 import { RevenueBreakdownEmptyIcon } from '@/components/shared/icons/revenue-breakdown-empty-icon';
+import { useCurrency } from '@/hooks/use-currency';
 import { cn } from '@/lib/utils';
 import { ReportsAndExpensesData } from '@/types/reports-and-expenses';
 import { formatCurrency } from '@/utils/format-currency';
@@ -32,9 +33,15 @@ interface CustomTooltipProps {
     };
   }>;
   total: number;
+  currencySymbol: string;
 }
 
-const CustomTooltip = ({ active, payload, total }: CustomTooltipProps) => {
+const CustomTooltip = ({
+  active,
+  payload,
+  total,
+  currencySymbol,
+}: CustomTooltipProps) => {
   if (active && payload?.[0]) {
     const data = payload[0].payload;
 
@@ -49,7 +56,7 @@ const CustomTooltip = ({ active, payload, total }: CustomTooltipProps) => {
         </div>
 
         <p className="text-secondary-blue-200 text-xs">
-          {formatCurrency(data.amount)}
+          {formatCurrency(data.amount, currencySymbol)}
         </p>
 
         <p className="text-secondary-blue-200 text-xs">
@@ -63,6 +70,7 @@ const CustomTooltip = ({ active, payload, total }: CustomTooltipProps) => {
 };
 
 const RevenueChart = ({ report, className }: RevenueChartProps) => {
+  const { currencySymbol } = useCurrency();
   const total = report.totalExpenses || 0;
   const hasBreakdownData = hasExpenseBreakdownData(report);
 
@@ -114,13 +122,20 @@ const RevenueChart = ({ report, className }: RevenueChartProps) => {
                           fontSize={16}
                           fontWeight="bold"
                         >
-                          {formatCurrency(total)}
+                          {formatCurrency(total, currencySymbol)}
                         </tspan>
                       </text>
                     )}
                   />
                 </Pie>
-                <Tooltip content={<CustomTooltip total={total} />} />
+                <Tooltip
+                  content={
+                    <CustomTooltip
+                      total={total}
+                      currencySymbol={currencySymbol}
+                    />
+                  }
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -139,7 +154,7 @@ const RevenueChart = ({ report, className }: RevenueChartProps) => {
                 </div>
                 <div className="text-right">
                   <div className="text-[13px] font-bold leading-normal">
-                    {formatCurrency(item.amount)}
+                    {formatCurrency(item.amount, currencySymbol)}
                   </div>
                   <div className="text-[11px] text-primary-blue-100">
                     {total

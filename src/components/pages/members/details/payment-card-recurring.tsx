@@ -12,6 +12,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useCurrency } from '@/hooks/use-currency';
 import { FormOptionsResponse } from '@/hooks/use-gymform-options';
 import {
   calculateDaysRemaining,
@@ -36,6 +37,7 @@ export function RecurringPaymentCard({
   onGenerateInvoice,
   isFrozen,
 }: RecurringPaymentCardProps) {
+  const { currencySymbol } = useCurrency();
   const { currentCycle, membershipPlanId } = member;
 
   if (!currentCycle) {
@@ -173,7 +175,8 @@ export function RecurringPaymentCard({
               <div
                 className={`text-lg font-bold ${outstandingAmount > 0 ? 'text-red-400' : 'text-green-400'}`}
               >
-                ₹{outstandingAmount.toLocaleString()}
+                {currencySymbol}
+                {outstandingAmount.toLocaleString()}
               </div>
               <div className="text-primary-blue-50 text-xs">
                 Total Outstanding
@@ -187,7 +190,7 @@ export function RecurringPaymentCard({
 
             <div className="text-center flex-1">
               <div className="text-lg font-bold text-blue-400">
-                ₹
+                {currencySymbol}
                 {currentCycle.lastAmountPaid != null
                   ? currentCycle.lastAmountPaid.toLocaleString()
                   : 0}

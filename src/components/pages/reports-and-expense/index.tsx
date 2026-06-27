@@ -17,6 +17,7 @@ import { FeatureLockOverlay } from '@/components/shared/subscription';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useCurrency } from '@/hooks/use-currency';
 import { useSheet } from '@/hooks/use-sheet';
 import { useSubscriptionAccess } from '@/hooks/use-subscription-access';
 import { toUtcDateOnlyISOString } from '@/lib/utils';
@@ -119,59 +120,63 @@ const previewExpensesByDate = [
   },
 ];
 
-const PreviewExpenseSidebar = () => (
-  <aside className="rounded-lg border border-secondary-blue-500 bg-secondary-blue-500 p-5 w-full xl:max-w-100 xl:sticky xl:top-17.5 xl:h-[calc(100vh-180px)] overflow-hidden flex flex-col">
-    <h3 className="text-[28px] leading-none font-semibold text-white">
-      Expenses
-    </h3>
-    <div className="mt-4 flex-1 min-h-0 space-y-5 overflow-y-auto pr-1">
-      {previewExpensesByDate.map((section) => (
-        <div key={section.date} className="space-y-3">
-          <h4 className="text-[32px] leading-none font-semibold text-white">
-            {section.date}
-          </h4>
-          <div className="space-y-2">
-            {section.items.map((item, index) => (
-              <div
-                key={`${item.title}-${index}`}
-                className="flex items-center justify-between gap-2 rounded-lg border border-primary-blue-400/40 bg-primary-blue-400/15 px-3 py-2"
-              >
-                <div className="min-w-0 flex items-center gap-2.5">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-green-500 text-[11px] font-semibold text-on-accent">
-                    ₹
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-base font-medium text-white">
-                      {item.title}
-                    </p>
-                    <p className="truncate text-sm text-primary-blue-100">
-                      {item.notes}
-                    </p>
-                  </div>
-                </div>
+const PreviewExpenseSidebar = () => {
+  const { currencySymbol } = useCurrency();
 
-                <div className="text-right">
-                  <div
-                    className={`text-base font-semibold ${
-                      item.amount.startsWith('-')
-                        ? 'text-alert-red-400'
-                        : 'text-neutral-green-300'
-                    }`}
-                  >
-                    {item.amount}
+  return (
+    <aside className="rounded-lg border border-secondary-blue-500 bg-secondary-blue-500 p-5 w-full xl:max-w-100 xl:sticky xl:top-17.5 xl:h-[calc(100vh-180px)] overflow-hidden flex flex-col">
+      <h3 className="text-[28px] leading-none font-semibold text-white">
+        Expenses
+      </h3>
+      <div className="mt-4 flex-1 min-h-0 space-y-5 overflow-y-auto pr-1">
+        {previewExpensesByDate.map((section) => (
+          <div key={section.date} className="space-y-3">
+            <h4 className="text-[32px] leading-none font-semibold text-white">
+              {section.date}
+            </h4>
+            <div className="space-y-2">
+              {section.items.map((item, index) => (
+                <div
+                  key={`${item.title}-${index}`}
+                  className="flex items-center justify-between gap-2 rounded-lg border border-primary-blue-400/40 bg-primary-blue-400/15 px-3 py-2"
+                >
+                  <div className="min-w-0 flex items-center gap-2.5">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-green-500 text-[11px] font-semibold text-on-accent">
+                      {currencySymbol}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-base font-medium text-white">
+                        {item.title}
+                      </p>
+                      <p className="truncate text-sm text-primary-blue-100">
+                        {item.notes}
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-[11px] text-primary-blue-100">
-                    {item.time}
-                  </p>
+
+                  <div className="text-right">
+                    <div
+                      className={`text-base font-semibold ${
+                        item.amount.startsWith('-')
+                          ? 'text-alert-red-400'
+                          : 'text-neutral-green-300'
+                      }`}
+                    >
+                      {item.amount}
+                    </div>
+                    <p className="text-[11px] text-primary-blue-100">
+                      {item.time}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
-    </div>
-  </aside>
-);
+        ))}
+      </div>
+    </aside>
+  );
+};
 
 const LockedReportsState = ({
   message,
