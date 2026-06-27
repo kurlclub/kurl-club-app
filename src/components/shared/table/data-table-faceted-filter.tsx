@@ -19,6 +19,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 interface DataTableFacetedFilterProps {
   title?: string;
@@ -30,6 +31,10 @@ interface DataTableFacetedFilterProps {
   }[];
   selectedValues?: string[];
   onFilterChange?: (values: string[] | undefined) => void;
+  /** Show individual label badges up to this count; collapse to "N selected" beyond it. */
+  maxBadges?: number;
+  /** Extra classes for the trigger button (e.g. when placed on a lighter surface). */
+  triggerClassName?: string;
 }
 
 export function DataTableFacetedFilter({
@@ -37,6 +42,8 @@ export function DataTableFacetedFilter({
   options,
   selectedValues = [],
   onFilterChange,
+  maxBadges = 2,
+  triggerClassName,
 }: DataTableFacetedFilterProps) {
   const [open, setOpen] = React.useState(false);
   const selectedSet = new Set(selectedValues);
@@ -44,7 +51,11 @@ export function DataTableFacetedFilter({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 border-dashed">
+        <Button
+          variant="outline"
+          size="sm"
+          className={cn('h-8 border-dashed', triggerClassName)}
+        >
           <PlusCircle />
           {title}
           {selectedSet.size > 0 && (
@@ -60,7 +71,7 @@ export function DataTableFacetedFilter({
                 {selectedSet.size}
               </Badge>
               <div className="hidden space-x-1 lg:flex">
-                {selectedSet.size > 2 ? (
+                {selectedSet.size > maxBadges ? (
                   <Badge
                     variant="secondary"
                     className="rounded-xs px-1 font-normal"
