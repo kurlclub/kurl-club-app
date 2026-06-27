@@ -141,16 +141,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         const currentGymId = resolvedSession.session?.user?.gyms?.[0]?.gymId;
         await refreshSession(uid, currentGymId);
       } catch (error) {
-        console.warn('Failed to hydrate session:', error);
-        clearSessionStorage();
-        applySession(null);
+        const status = (error as { status?: number })?.status;
+
+        if (status === 401 || status === 403) {
+          // Definitive auth rejection — clear and send to login.
+          clearSessionStorage();
+          applySession(null);
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('gymBranch');
+          }
+          router.push('/auth/login');
+        } else {
+          // Transient (network/5xx) — keep the cached session applied above.
+          console.warn(
+            'Session revalidation failed; keeping cached session',
+            error
+          );
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
     void hydrateSession();
-  }, [applySession, persistSession, refreshSession]);
+  }, [applySession, persistSession, refreshSession, router]);
 
   const handleLogin = async (email: string, password: string) => {
     try {

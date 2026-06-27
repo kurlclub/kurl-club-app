@@ -83,17 +83,13 @@ export const GymBranchProvider: React.FC<{ children: React.ReactNode }> = ({
     };
   }, [clearGymBranch]);
 
-  // Keep localStorage synchronized with auth-derived gym branch.
+  // Persist the active gym. Never clear it on user===null — logout handles that
+  // explicitly, so a transient auth blip can't wipe the selection.
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     if (user?.gyms && user.gyms.length > 0) {
       localStorage.setItem('gymBranch', JSON.stringify(gymBranch));
-      return;
-    }
-
-    if (user === null) {
-      localStorage.removeItem('gymBranch');
     }
   }, [gymBranch, user]);
 
