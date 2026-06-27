@@ -2,6 +2,7 @@ import Image from 'next/image';
 
 import { ArrowDown, ArrowUp } from 'lucide-react';
 
+import { useCurrency } from '@/hooks/use-currency';
 import { cn } from '@/lib/utils';
 import { ReportsAndExpensesData } from '@/types/reports-and-expenses';
 import { formatCurrency } from '@/utils/format-currency';
@@ -15,8 +16,8 @@ interface ValueCardProps {
   isEmptyState: boolean;
 }
 
-const formatSignedCurrency = (value: number) => {
-  const absoluteValue = formatCurrency(Math.abs(value));
+const formatSignedCurrency = (value: number, currencySymbol: string) => {
+  const absoluteValue = formatCurrency(Math.abs(value), currencySymbol);
   return value < 0 ? `-${absoluteValue}` : absoluteValue;
 };
 
@@ -26,6 +27,7 @@ const ValueCard = ({
   trendPercentage,
   isEmptyState,
 }: ValueCardProps) => {
+  const { currencySymbol } = useCurrency();
   const isPositiveTrend = !isEmptyState && trendPercentage > 0;
   const isNegativeTrend = !isEmptyState && trendPercentage < 0;
 
@@ -42,7 +44,7 @@ const ValueCard = ({
         ) : null}
       </div>
       <span className="text-[18px] leading-normal">
-        {formatCurrency(value)}
+        {formatCurrency(value, currencySymbol)}
       </span>
       <span className="text-[11px] text-primary-blue-100">
         {isEmptyState
@@ -61,6 +63,7 @@ interface NetProfitBannerProps {
 }
 
 const NetProfitBanner = ({ report, className }: NetProfitBannerProps) => {
+  const { currencySymbol } = useCurrency();
   const isEmptyState = isSummaryEmpty(report);
   const isNetPositive = report.netProfit >= 0;
   const statusPillClass = isEmptyState
@@ -70,7 +73,7 @@ const NetProfitBanner = ({ report, className }: NetProfitBannerProps) => {
       : 'bg-alert-red-500/20 border-alert-red-500';
   const collectionsLabel = isEmptyState
     ? 'No collections recorded yet'
-    : `Current member collections ${formatCurrency(report.currentMemberCollections)}`;
+    : `Current member collections ${formatCurrency(report.currentMemberCollections, currencySymbol)}`;
 
   return (
     <div
@@ -91,7 +94,7 @@ const NetProfitBanner = ({ report, className }: NetProfitBannerProps) => {
           Net {isNetPositive ? 'profit' : 'loss'}
         </span>
         <span className="mt-1 text-[36px] leading-normal">
-          {formatSignedCurrency(report.netProfit)}
+          {formatSignedCurrency(report.netProfit, currencySymbol)}
         </span>
         <div className="flex flex-wrap items-center gap-2 mt-3">
           <span

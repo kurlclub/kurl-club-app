@@ -68,7 +68,8 @@ const ActionsCell: React.FC<{
 export const createSessionPaymentColumns = (
   onRecord?: (member: SessionPaymentMember) => void,
   onGenerateInvoice?: (member: SessionPaymentMember) => void,
-  showInvoice: boolean = false
+  showInvoice: boolean = false,
+  currencySymbol: string = '₹'
 ): ColumnDef<SessionPaymentMember>[] => [
   {
     accessorKey: 'memberIdentifier',
@@ -149,9 +150,13 @@ export const createSessionPaymentColumns = (
       return (
         <div className="min-w-[180px] pr-4">
           <div className="flex justify-between text-sm mb-1">
-            <span className="text-white">₹{paymentSummary.paid || 0}</span>
+            <span className="text-white">
+              {currencySymbol}
+              {paymentSummary.paid || 0}
+            </span>
             <span className="text-primary-blue-200">
-              ₹{paymentSummary.total || 0}
+              {currencySymbol}
+              {paymentSummary.total || 0}
             </span>
           </div>
           <div className="w-full bg-primary-blue-300/30 rounded-full h-1.5 mb-1">
@@ -162,7 +167,8 @@ export const createSessionPaymentColumns = (
           </div>
           {paymentSummary.pending > 0 && (
             <div className="text-xs text-alert-red-300">
-              ₹{paymentSummary.pending || 0} pending
+              {currencySymbol}
+              {paymentSummary.pending || 0} pending
             </div>
           )}
         </div>
@@ -194,7 +200,8 @@ export const createSessionPaymentColumns = (
         <div className="min-w-[120px]">
           <div className="text-white text-sm">{packageName || '-'}</div>
           <div className="text-xs text-primary-blue-100">
-            Per session • ₹{sessionFee || 0}
+            Per session • {currencySymbol}
+            {sessionFee || 0}
           </div>
         </div>
       );

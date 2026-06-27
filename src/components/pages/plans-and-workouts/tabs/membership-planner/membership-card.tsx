@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 
 import { Card, CardFooter } from '@/components/ui/card';
+import { useCurrency } from '@/hooks/use-currency';
 import type { MembershipPlan } from '@/types/membership-plan';
 
 interface WorkoutCardProps {
@@ -15,6 +16,7 @@ interface WorkoutCardProps {
 }
 
 export function MembershipCard({ plan, onClick }: WorkoutCardProps) {
+  const { formatAmount } = useCurrency();
   const isPerSession = plan.billingType === 'PerSession';
   const BillingIcon = isPerSession ? CalendarClock : RefreshCw;
   const billingLabel = isPerSession ? 'Per Session' : 'Recurring';
@@ -97,7 +99,7 @@ export function MembershipCard({ plan, onClick }: WorkoutCardProps) {
                     : 'text-primary-green-200'
                 }`}
               >
-                ₹{new Intl.NumberFormat('en-IN').format(Number(plan.fee))}
+                {formatAmount(Number(plan.fee))}
               </span>
               <span
                 className={`inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium ${

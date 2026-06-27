@@ -11,6 +11,7 @@ import {
 interface Option {
   label: string;
   value: string;
+  icon?: React.ReactNode;
 }
 
 export const KSelect = React.forwardRef<
@@ -98,7 +99,14 @@ export const KSelect = React.forwardRef<
                 key={option.value}
                 value={option.value}
               >
-                {option.label}
+                {option.icon ? (
+                  <span className="flex items-center gap-2">
+                    {option.icon}
+                    {option.label}
+                  </span>
+                ) : (
+                  option.label
+                )}
               </SelectItem>
             ))}
             {filteredOptions.length === 0 && (

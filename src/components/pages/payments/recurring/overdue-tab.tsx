@@ -7,6 +7,7 @@ import { IndianRupee, Users } from 'lucide-react';
 
 import InfoCard from '@/components/shared/cards/info-card';
 import { TableSkeleton } from '@/components/shared/table';
+import { useCurrency } from '@/hooks/use-currency';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useSheet } from '@/hooks/use-sheet';
 import { FilterConfig } from '@/lib/filters';
@@ -36,6 +37,7 @@ export function OverdueTab() {
 
   const { gymBranch } = useGymBranch();
   const gymId = gymBranch?.gymId || 0;
+  const { currencySymbol } = useCurrency();
 
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearch = useDebounce(searchTerm, 500);
@@ -82,7 +84,8 @@ export function OverdueTab() {
       planName: p.displayName,
     })) || [],
     handleGenerateInvoice,
-    false
+    false,
+    currencySymbol
   ) as ColumnDef<MemberPaymentDetails>[];
 
   const dynamicFilters: FilterConfig[] = [

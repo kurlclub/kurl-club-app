@@ -10,6 +10,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useCurrency } from '@/hooks/use-currency';
 import { formatDateTime } from '@/lib/utils';
 import { SessionPaymentMember } from '@/types/payment';
 
@@ -26,6 +27,7 @@ export function SessionPaymentCard({
   onGenerateInvoice,
   isFrozen,
 }: SessionPaymentCardProps) {
+  const { currencySymbol } = useCurrency();
   const {
     sessionFee,
     unpaidSessions,
@@ -97,7 +99,7 @@ export function SessionPaymentCard({
           <Info size={12} />
           <p className="text-xs">
             {unpaidSessions} unpaid session
-            {unpaidSessions > 1 ? 's' : ''} • ₹
+            {unpaidSessions > 1 ? 's' : ''} • {currencySymbol}
             {totalSessionDebt.toLocaleString()} pending
           </p>
         </div>
@@ -110,7 +112,8 @@ export function SessionPaymentCard({
             Session Overview
           </span>
           <span className="text-secondary-blue-50 text-sm">
-            ₹{sessionFee}/session
+            {currencySymbol}
+            {sessionFee}/session
           </span>
         </div>
 
@@ -159,7 +162,8 @@ export function SessionPaymentCard({
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-2">
             <div className="text-center flex-1">
               <div className="text-lg font-bold text-green-400">
-                ₹{totalPaid.toLocaleString()}
+                {currencySymbol}
+                {totalPaid.toLocaleString()}
               </div>
               <div className="text-primary-blue-50 text-xs">Total Paid</div>
               {lastPayment && (
@@ -178,7 +182,8 @@ export function SessionPaymentCard({
               <div
                 className={`text-lg font-bold ${hasUnpaid ? 'text-red-400' : 'text-green-400'}`}
               >
-                ₹{totalPending.toLocaleString()}
+                {currencySymbol}
+                {totalPending.toLocaleString()}
               </div>
               <div className="text-primary-blue-50 text-xs">Outstanding</div>
               {lastSession && (
@@ -195,7 +200,8 @@ export function SessionPaymentCard({
 
             <div className="text-center flex-1">
               <div className="text-lg font-bold text-white">
-                ₹{lastPayment?.amountPaid?.toLocaleString() || 0}
+                {currencySymbol}
+                {lastPayment?.amountPaid?.toLocaleString() || 0}
               </div>
               <div className="text-primary-blue-50 text-xs">Last Payment</div>
             </div>

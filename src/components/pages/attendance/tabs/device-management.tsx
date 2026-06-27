@@ -28,6 +28,11 @@ import {
 } from '@/services/attendance';
 import type { BiometricDevice } from '@/types/attendance';
 
+import {
+  DEVICE_PROVIDERS,
+  DeviceProviderRadioGroup,
+  ProviderLogo,
+} from '../device-providers';
 import { DeviceTableView } from '../table';
 import { createDeviceColumns } from '../table/device-columns';
 
@@ -38,16 +43,18 @@ type DeviceWithMeta = BiometricDevice & {
   activationCode?: string;
 };
 
-const DEVICE_PROVIDER_OPTIONS = [
-  { label: 'Hikvision', value: 'Hikvision' },
-  { label: 'eSSL', value: 'eSSL' },
-  { label: 'Matrix', value: 'Matrix' },
-  { label: 'Realtime', value: 'Realtime' },
-  { label: 'ZKTeco', value: 'ZKTeco' },
-  { label: 'Suprema', value: 'Suprema' },
-  { label: 'Anviz', value: 'Anviz' },
-  { label: 'Virdi', value: 'Virdi' },
-] as const;
+const DEVICE_PROVIDER_OPTIONS = DEVICE_PROVIDERS.map(({ label, value }) => ({
+  label,
+  value,
+}));
+
+const DEVICE_PROVIDER_SELECT_OPTIONS = DEVICE_PROVIDERS.map(
+  ({ label, value }) => ({
+    label,
+    value,
+    icon: <ProviderLogo provider={value} />,
+  })
+);
 
 const deviceFilters: FilterConfig[] = [
   {
@@ -143,7 +150,7 @@ const mapApiDeviceToViewModel = (
   activationCode: device.activationCode || '',
   ipAddress: 'N/A',
   port: 0,
-  status: 'online',
+  status: device.isOnline ? 'online' : 'offline',
   lastSeen: device.modifiedAt || device.createdAt || new Date().toISOString(),
   location: device.manufacturer,
 });
@@ -372,7 +379,6 @@ export default function DeviceManagement() {
           className="max-w-125"
           trigger={
             <Button
-              disabled={devices.length >= 1}
               className="bg-primary-green-500 text-black hover:bg-primary-green-600"
               onClick={() => {
                 setEditingDeviceId(null);
@@ -405,14 +411,30 @@ export default function DeviceManagement() {
                 label="Device Name"
                 mandetory
               />
-              <KFormField
-                fieldType={KFormFieldType.SELECT}
-                control={form.control}
-                name="deviceProvider"
-                label="Device Provider"
-                options={[...DEVICE_PROVIDER_OPTIONS]}
-                mandetory
-              />
+              {DEVICE_PROVIDERS.length <= 3 ? (
+                <KFormField
+                  fieldType={KFormFieldType.SKELETON}
+                  control={form.control}
+                  name="deviceProvider"
+                  renderSkeleton={(field) => (
+                    <DeviceProviderRadioGroup
+                      value={field.value as string}
+                      onChange={field.onChange}
+                      label="Device Provider"
+                      mandatory
+                    />
+                  )}
+                />
+              ) : (
+                <KFormField
+                  fieldType={KFormFieldType.SELECT}
+                  control={form.control}
+                  name="deviceProvider"
+                  label="Device Provider"
+                  options={DEVICE_PROVIDER_SELECT_OPTIONS}
+                  mandetory
+                />
+              )}
               <KFormField
                 fieldType={KFormFieldType.INPUT}
                 control={form.control}

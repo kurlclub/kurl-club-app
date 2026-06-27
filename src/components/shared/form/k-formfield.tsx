@@ -75,6 +75,7 @@ export enum KFormFieldType {
 interface Option {
   label: string;
   value: string;
+  icon?: React.ReactNode;
 }
 
 interface CustomProps<T extends FieldValues> {

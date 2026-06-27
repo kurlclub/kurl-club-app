@@ -1,3 +1,4 @@
+import { useCurrency } from '@/hooks/use-currency';
 import type { PayrollSummary } from '@/types/payroll-management';
 import { formatCurrency } from '@/utils/format-currency';
 
@@ -40,11 +41,18 @@ const CardWrapper = ({
   summary: PayrollSummary;
   isLoading?: boolean;
 }) => {
+  const { currencySymbol } = useCurrency();
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-3 gap-4">
-        <InfoCard amount="₹0" paidCount={0} totalCount={0} isPaid />
-        <InfoCard amount="₹0" paidCount={0} totalCount={0} />
+        <InfoCard
+          amount={`${currencySymbol}0`}
+          paidCount={0}
+          totalCount={0}
+          isPaid
+        />
+        <InfoCard amount={`${currencySymbol}0`} paidCount={0} totalCount={0} />
       </div>
     );
   }
@@ -52,13 +60,13 @@ const CardWrapper = ({
   return (
     <div className="grid grid-cols-3 gap-4">
       <InfoCard
-        amount={formatCurrency(summary.totalPaid)}
+        amount={formatCurrency(summary.totalPaid, currencySymbol)}
         paidCount={summary.paidCount}
         totalCount={summary.totalEmployees}
         isPaid
       />
       <InfoCard
-        amount={formatCurrency(summary.totalUnpaid)}
+        amount={formatCurrency(summary.totalUnpaid, currencySymbol)}
         paidCount={summary.unpaidCount}
         totalCount={summary.totalEmployees}
       />

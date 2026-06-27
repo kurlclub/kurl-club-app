@@ -1,19 +1,19 @@
 import {
-  Award,
   Calendar,
+  Flame,
   Percent,
   TrendingDown,
   TrendingUp,
+  Trophy,
   UserCheck,
   Users,
 } from 'lucide-react';
-import { motion } from 'motion/react';
 
 import InfoCard from '@/components/shared/cards/info-card';
-import { MedalIcon } from '@/components/shared/icons';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
+import { cn } from '@/lib/utils';
 import { useGymBranch } from '@/providers/gym-branch-provider';
 import { useMemberAnalytics } from '@/services/attendance';
 import type { MemberInsight } from '@/types/attendance';
@@ -23,23 +23,69 @@ import { MemberInsightsTableView, insightsColumns } from '../table';
 const MemberAvatar = ({
   name,
   src,
-  ringClass = 'ring-white dark:ring-secondary-blue-500',
+  className,
 }: {
   name: string;
   src?: string | null;
-  ringClass?: string;
+  className?: string;
 }) => {
   const avatarStyle = getAvatarColor(name);
   const initials = getInitials(name);
   return (
-    <Avatar className={`h-7 w-7 ring-2 ${ringClass}`}>
+    <Avatar className={cn('h-9 w-9', className)}>
       <AvatarImage src={src || undefined} alt={name} />
-      <AvatarFallback className="text-[10px] font-semibold" style={avatarStyle}>
+      <AvatarFallback className="text-xs font-semibold" style={avatarStyle}>
         {initials}
       </AvatarFallback>
     </Avatar>
   );
 };
+
+function InsightCard({
+  icon,
+  iconClassName,
+  title,
+  badge,
+  children,
+}: {
+  icon: React.ReactNode;
+  iconClassName: string;
+  title: string;
+  badge: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <Card className="flex h-full flex-col border border-gray-200/70 dark:border-white/5 bg-white dark:bg-secondary-blue-500 rounded-xl overflow-hidden">
+      <CardHeader className="flex-row items-center justify-between gap-2 space-y-0 px-4 py-3.5 border-b border-gray-100 dark:border-white/5">
+        <CardTitle className="flex items-center gap-2.5 text-base font-semibold text-gray-900 dark:text-white">
+          <span
+            className={cn(
+              'flex h-7 w-7 items-center justify-center rounded-lg',
+              iconClassName
+            )}
+          >
+            {icon}
+          </span>
+          {title}
+        </CardTitle>
+        {badge}
+      </CardHeader>
+      <CardContent className="flex-1 p-1.5">{children}</CardContent>
+    </Card>
+  );
+}
+
+const EmptyState = ({ message }: { message: string }) => (
+  <div className="flex h-full min-h-35 items-center justify-center px-4 text-center text-sm text-gray-400 dark:text-white/40">
+    {message}
+  </div>
+);
+
+const RANK_STYLES = [
+  'bg-secondary-yellow-500/15 text-secondary-yellow-600 dark:text-secondary-yellow-300',
+  'bg-gray-400/15 text-gray-500 dark:text-gray-300',
+  'bg-amber-700/15 text-amber-700 dark:text-amber-500',
+];
 
 function TopPerformersCard({
   topPerformers,
@@ -51,101 +97,71 @@ function TopPerformersCard({
     visits: number;
   }>;
 }) {
-  const getMedalVariant = (index: number): 'gold' | 'silver' | 'bronze' => {
-    if (index === 0) return 'gold';
-    if (index === 1) return 'silver';
-    return 'bronze';
-  };
-
   return (
-    <Card className="border-none bg-white dark:bg-secondary-blue-500 rounded-lg overflow-hidden">
-      <CardHeader className="p-5 pb-3">
-        <CardTitle className="text-gray-900 dark:text-white text-base font-normal leading-normal flex items-center gap-2">
-          <Award size={16} className="text-secondary-yellow-500" />
-          Top Performers
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-5 pt-0">
-        <div className="space-y-2">
-          {topPerformers.map((member, index) => {
-            const isFirst = index === 0;
-
-            return (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1, duration: 0.3 }}
-                className={`group relative flex items-center gap-3 p-2.5 rounded-lg transition-all ${
-                  isFirst
-                    ? 'bg-linear-to-r from-secondary-yellow-500/10 to-transparent border border-secondary-yellow-500/30'
-                    : 'glass-effect glass-effect-hover'
-                }`}
-              >
-                {isFirst && (
-                  <motion.div
-                    className="absolute inset-0 bg-linear-to-r from-primary-green-500/5 to-transparent rounded-lg"
-                    animate={{ opacity: [0.5, 1, 0.5] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  />
+    <InsightCard
+      icon={<Trophy size={15} className="text-secondary-yellow-500" />}
+      iconClassName="bg-secondary-yellow-500/10"
+      title="Top Performers"
+      badge={
+        <span className="rounded-full bg-gray-100 dark:bg-white/5 px-2 py-0.5 text-xs font-medium text-gray-500 dark:text-white/50">
+          {topPerformers.length}
+        </span>
+      }
+    >
+      {topPerformers.length === 0 ? (
+        <EmptyState message="No attendance recorded yet." />
+      ) : (
+        <ul className="flex flex-col">
+          {topPerformers.map((member, index) => (
+            <li
+              key={index}
+              className="flex items-center gap-3 rounded-lg px-2.5 py-2 transition-colors hover:bg-gray-50 dark:hover:bg-white/3"
+            >
+              <span
+                className={cn(
+                  'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold tabular-nums',
+                  RANK_STYLES[index] ??
+                    'bg-gray-100 text-gray-400 dark:bg-white/5 dark:text-white/40'
                 )}
-
-                <div className="relative z-10 flex items-center gap-3 flex-1 min-w-0">
-                  <div className="relative shrink-0">
-                    <motion.div
-                      whileHover={{ scale: 1.1 }}
-                      transition={{ type: 'spring', stiffness: 300 }}
-                    >
-                      <MemberAvatar
-                        name={member.memberName}
-                        src={member.photoPath}
-                        ringClass={
-                          isFirst
-                            ? 'ring-primary-green-500/50'
-                            : 'ring-white dark:ring-secondary-blue-500'
-                        }
-                      />
-                    </motion.div>
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ delay: index * 0.1 + 0.2, type: 'spring' }}
-                      className="absolute -bottom-1.5 -right-1.5"
-                    >
-                      <MedalIcon
-                        variant={getMedalVariant(index)}
-                        width={18}
-                        height={18}
-                      />
-                    </motion.div>
-                  </div>
-
-                  <div className="flex-1 min-w-0 pt-0.5">
-                    <div className="text-gray-900 dark:text-white text-sm font-medium truncate">
-                      {member.memberName}
-                    </div>
-                    <div className="text-[11px] text-gray-500 dark:text-gray-400">
-                      {member.visits} visits
-                    </div>
-                  </div>
-                </div>
-
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  className="relative z-10 shrink-0 flex items-center gap-1 bg-primary-green-500/10 px-2 py-1 rounded-full"
-                >
-                  <span className="text-xs">🔥</span>
-                  <span className="text-xs font-bold text-primary-green-600 dark:text-primary-green-400">
-                    {member.streak}d
-                  </span>
-                </motion.div>
-              </motion.div>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
+              >
+                {index + 1}
+              </span>
+              <MemberAvatar name={member.memberName} src={member.photoPath} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
+                  {member.memberName}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-white/50">
+                  {member.visits} visits
+                </p>
+              </div>
+              {member.streak > 0 ? (
+                <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-gray-600 dark:text-white/70">
+                  <Flame
+                    size={13}
+                    className="text-secondary-yellow-500"
+                    fill="currentColor"
+                  />
+                  <span className="tabular-nums">{member.streak}d</span>
+                </span>
+              ) : (
+                <span className="shrink-0 text-xs text-gray-300 dark:text-white/30">
+                  —
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </InsightCard>
   );
+}
+
+function formatLastVisit(daysAgo: number | null): string {
+  if (daysAgo === null) return 'Never';
+  if (daysAgo === 0) return 'Today';
+  if (daysAgo === 1) return 'Yesterday';
+  return `${daysAgo}d ago`;
 }
 
 function AtRiskMembersCard({
@@ -154,64 +170,56 @@ function AtRiskMembersCard({
   atRiskMembers: Array<{
     memberName: string;
     photoPath: string | null;
-    lastVisit: string;
+    daysAgo: number | null;
     visits: number;
   }>;
 }) {
   return (
-    <Card className="relative border-none bg-white dark:bg-secondary-blue-500 rounded-lg overflow-hidden">
-      <CardHeader className="p-5 pb-3">
-        <CardTitle className="text-gray-900 dark:text-white text-base font-normal leading-normal flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <TrendingDown size={16} className="text-alert-red-500" />
-            At Risk Members
-          </div>
-          <span className="text-[10px] font-medium text-alert-red-600 dark:text-alert-red-400 bg-alert-red-500/10 px-2 py-1 rounded-full">
-            {atRiskMembers.length} MEMBERS
-          </span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-5 pt-0">
-        <div className="relative max-h-[200px] overflow-y-auto pr-2">
-          <div className="space-y-2">
-            {atRiskMembers.map((member, index) => (
-              <div
-                key={index}
-                className="relative flex items-start justify-between gap-3 p-2.5 glass-effect glass-effect-hover rounded-lg transition-all"
-              >
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="relative z-10 shrink-0">
-                    <MemberAvatar
-                      name={member.memberName}
-                      src={member.photoPath}
-                    />
-                    <div className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white dark:border-secondary-blue-500 bg-alert-red-500" />
-                  </div>
-                  <div className="flex-1 min-w-0 pt-0.5">
-                    <div className="text-gray-900 dark:text-white text-sm font-medium truncate">
-                      {member.memberName}
-                    </div>
-                    <div className="text-[11px] text-gray-500 dark:text-gray-400">
-                      {member.visits} visits this month
-                    </div>
-                  </div>
-                </div>
-                <div className="shrink-0 text-right pt-0.5">
-                  <div className="text-xs font-semibold text-alert-red-500">
-                    {member.lastVisit.split(' ')[0]}
-                  </div>
-                  <div className="text-[10px] text-gray-500 dark:text-gray-400">
-                    {member.lastVisit.split(' ')[1]}{' '}
-                    {member.lastVisit.split(' ')[2]}
-                  </div>
-                </div>
+    <InsightCard
+      icon={<TrendingDown size={15} className="text-alert-red-500" />}
+      iconClassName="bg-alert-red-500/10"
+      title="At Risk Members"
+      badge={
+        <span className="rounded-full bg-alert-red-500/10 px-2 py-0.5 text-xs font-medium text-alert-red-600 dark:text-alert-red-400">
+          {atRiskMembers.length}
+        </span>
+      }
+    >
+      {atRiskMembers.length === 0 ? (
+        <EmptyState message="No members are at risk right now." />
+      ) : (
+        <ul className="flex max-h-42 flex-col overflow-y-auto">
+          {atRiskMembers.map((member, index) => (
+            <li
+              key={index}
+              className="flex items-center gap-3 rounded-lg px-2.5 py-2 transition-colors hover:bg-gray-50 dark:hover:bg-white/3"
+            >
+              <MemberAvatar
+                name={member.memberName}
+                src={member.photoPath}
+                className="ring-2 ring-alert-red-500/30"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
+                  {member.memberName}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-white/50">
+                  {member.visits} visits this month
+                </p>
               </div>
-            ))}
-          </div>
-        </div>
-      </CardContent>
-      <div className="absolute bottom-0 left-0 w-full h-12 bg-linear-to-t from-white dark:from-secondary-blue-500 to-transparent pointer-events-none" />
-    </Card>
+              <div className="shrink-0 text-right">
+                <p className="text-xs font-medium text-alert-red-500 tabular-nums">
+                  {formatLastVisit(member.daysAgo)}
+                </p>
+                <p className="text-[11px] text-gray-400 dark:text-white/40">
+                  last visit
+                </p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </InsightCard>
   );
 }
 
@@ -304,12 +312,7 @@ export default function MemberInsights() {
   const atRiskMembers = (analyticsData?.atRiskMembers || []).map((member) => ({
     memberName: member.memberName,
     photoPath: member.photoPath,
-    lastVisit:
-      member.daysAgo === null
-        ? 'Never'
-        : member.daysAgo === 0
-          ? 'Today'
-          : `${member.daysAgo} days ago`,
+    daysAgo: member.daysAgo,
     visits: member.visits,
   }));
 

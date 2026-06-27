@@ -1,3 +1,4 @@
+import { useCurrency } from '@/hooks/use-currency';
 import { cn } from '@/lib/utils';
 import { ReportsAndExpensesData } from '@/types/reports-and-expenses';
 import { formatCurrency } from '@/utils/format-currency';
@@ -10,6 +11,7 @@ interface ProfitChartProps {
 }
 
 const ProfitChart = ({ report, className }: ProfitChartProps) => {
+  const { currencySymbol } = useCurrency();
   const data = [
     {
       label: 'Memberships',
@@ -61,7 +63,7 @@ const ProfitChart = ({ report, className }: ProfitChartProps) => {
             Tracked flow
           </div>
           <div className="text-[18px] font-semibold">
-            {formatCurrency(total)}
+            {formatCurrency(total, currencySymbol)}
           </div>
         </div>
       </div>
@@ -117,7 +119,7 @@ const ProfitChart = ({ report, className }: ProfitChartProps) => {
             </div>
 
             <span className="text-[20px] font-medium leading-tight">
-              {formatCurrency(item.value)}
+              {formatCurrency(item.value, currencySymbol)}
             </span>
 
             <span className="text-[11px] text-primary-blue-100 leading-tight">

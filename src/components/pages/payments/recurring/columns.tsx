@@ -81,7 +81,8 @@ export const createPaymentColumns = (
   onRecord?: (member: MemberPaymentDetails) => void,
   membershipPlans: Array<{ membershipPlanId: number; planName: string }> = [],
   onGenerateInvoice?: (member: MemberPaymentDetails) => void,
-  showInvoice: boolean = false
+  showInvoice: boolean = false,
+  currencySymbol: string = '₹'
 ): ColumnDef<RecurringPaymentMember>[] => [
   {
     accessorKey: 'memberIdentifier',
@@ -180,8 +181,14 @@ export const createPaymentColumns = (
       return (
         <div className="min-w-[180px] pr-4">
           <div className="flex justify-between text-sm mb-1">
-            <span className="text-white">₹{amountPaid}</span>
-            <span className="text-primary-blue-200">₹{totalBilled}</span>
+            <span className="text-white">
+              {currencySymbol}
+              {amountPaid}
+            </span>
+            <span className="text-primary-blue-200">
+              {currencySymbol}
+              {totalBilled}
+            </span>
           </div>
           <div className="w-full bg-primary-blue-300/30 rounded-full h-1.5 mb-1">
             <div
@@ -191,7 +198,8 @@ export const createPaymentColumns = (
           </div>
           {pendingAmount > 0 && (
             <div className="text-xs text-alert-red-300">
-              ₹{pendingAmount} pending
+              {currencySymbol}
+              {pendingAmount} pending
             </div>
           )}
         </div>
@@ -244,7 +252,8 @@ export const createPaymentColumns = (
           </div>
           {planFee != null ? (
             <div className="text-xs text-primary-blue-100">
-              Current cycle • ₹{planFee}
+              Current cycle • {currencySymbol}
+              {planFee}
             </div>
           ) : null}
         </div>

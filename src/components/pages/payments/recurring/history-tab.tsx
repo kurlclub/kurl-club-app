@@ -14,6 +14,7 @@ import {
   TableSkeleton,
 } from '@/components/shared/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useCurrency } from '@/hooks/use-currency';
 import { useDebounce } from '@/hooks/use-debounce';
 import { getAvatarColor, getInitials } from '@/lib/avatar-utils';
 import { FilterConfig } from '@/lib/filters';
@@ -24,7 +25,9 @@ import {
   usePaymentHistory,
 } from '@/services/payments';
 
-const columns: ColumnDef<GymPaymentHistoryRecord>[] = [
+const createColumns = (
+  currencySymbol: string
+): ColumnDef<GymPaymentHistoryRecord>[] => [
   {
     accessorKey: 'memberIdentifier',
     header: 'Member ID',
@@ -74,7 +77,8 @@ const columns: ColumnDef<GymPaymentHistoryRecord>[] = [
     cell: ({ row }) => (
       <div className="min-w-[100px]">
         <div className="text-white text-sm font-semibold">
-          ₹{row.original.amount.toLocaleString()}
+          {currencySymbol}
+          {row.original.amount.toLocaleString()}
         </div>
       </div>
     ),
@@ -193,6 +197,8 @@ const columns: ColumnDef<GymPaymentHistoryRecord>[] = [
 export function HistoryTab() {
   const { gymBranch } = useGymBranch();
   const gymId = gymBranch?.gymId || 0;
+  const { currencySymbol } = useCurrency();
+  const columns = createColumns(currencySymbol);
 
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearch = useDebounce(searchTerm, 500);
